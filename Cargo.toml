@@ -4,7 +4,11 @@ version = "0.1.0"
 authors = ["Emad Jacob Maroun"]
 
 description = "Graph library"
-license = "MIT"
+license = "MIT/UNLICENCE"
 
 
 [dependencies]
+
+[dev-dependencies]
+quickcheck = "0.4"
+

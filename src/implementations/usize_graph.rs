@@ -4,6 +4,7 @@ use std::result::Result;
 
 use graph::{Graph, Sourced, Sinked, Weighted};
 
+
 pub struct UsizeEdge {
 	pub source: usize,
 	pub sink: usize,
@@ -26,7 +27,7 @@ impl Weighted<()> for UsizeEdge {
 		()
 	}
 }
-
+#[derive(Clone,Debug)]
 pub struct UsizeGraph {
 	edges: Vec<Vec<usize>>,
 }
@@ -40,8 +41,22 @@ impl UsizeGraph {
 		g
 	}
 	
-	pub fn set_edge(&mut self, source: usize, target: usize) -> () {
+	pub fn new_vertex(&mut self)-> usize{
+		//if self.edges.len() < 9 {
+			self.edges.push(Vec::new());
+		//}
+		self.edges.len() - 1
+	}
+	
+	pub fn set_edge(mut self, source: usize, target: usize) -> UsizeGraph {
 		self.edges[source].push(target);
+		self
+	}
+	
+	pub fn remove_edge(mut self, source: usize, sink:usize) -> UsizeGraph{
+		let (index,_) = self.edges[source].iter().enumerate().find(move|v| *v.1 == sink).unwrap();
+		self.edges[source].remove(index);
+		self
 	}
 }
 
