@@ -15,9 +15,28 @@ fn can_add_vertex(mut g: ArbitraryUsizeGraph) -> bool{
 	init_v + 1 == g.graph.number_of_vertices()
 }
 
+fn can_only_add_valid_edge(g: ArbitraryUsizeGraph,
+							  source: usize, sink: usize) -> bool
+{
+	let original = g.graph;
+	let edge = UsizeEdge{source, sink};
+	
+	if source < original.number_of_vertices() &&
+		sink < original.number_of_vertices() {
+		original.add_edge(edge).1
+	}else{
+		!original.add_edge(edge).1
+	}
+}
+
 quickcheck!{
 	fn prop_can_add_vertex(g: ArbitraryUsizeGraph) -> bool{
 		can_add_vertex(g)
+	}
+	fn prop_can_only_add_valid_edge(g: ArbitraryUsizeGraph,
+								source: usize, sink: usize) -> bool
+	{
+		can_only_add_valid_edge(g, source, sink)
 	}
 }
 

@@ -188,9 +188,9 @@ impl Mutating<UsizeGraph> for UsizeGraph{
 	fn remove_edge(mut self, e: Self::Edge) -> (UsizeGraph, bool) {
 		if e.source < self.edges.len() {
 			let index;
-			match self.edges[e.source].iter().find(|&&v| v == e.sink) {
-				Some(i) => 	index = (*i, true),
-				None => 	index =  (0, false),
+			match self.edges[e.source].iter().enumerate().find(|&(_,&v)| v == e.sink) {
+				Some((i,_)) => 	index = (i, true),
+				None 		=> 	index = (0, false),
 			}
 			if index.1 {
 				self.edges[e.source].remove(index.0);
