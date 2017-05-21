@@ -4,7 +4,7 @@ use std::result::Result;
 
 use graph::{Graph, Sourced, Sinked, Weighted};
 
-
+#[derive(Clone,Debug)]
 pub struct UsizeEdge {
 	pub source: usize,
 	pub sink: usize,
@@ -65,6 +65,8 @@ impl Graph for UsizeGraph {
 	type Vertex = usize;
 	type Weight = ();
 	type Edge = UsizeEdge;
+	type Outgoing = UsizeEdge;
+	type Incoming = UsizeEdge;
 	
 	fn number_of_vertices(&self) -> usize {
 		self.edges.len()
@@ -98,22 +100,27 @@ impl Graph for UsizeGraph {
 		result
 	}
 	
-	fn outgoing_edges(&self, v: &Self::Vertex) -> Result<Vec<Self::Vertex>, ()> {
+	fn outgoing_edges(&self, v: &Self::Vertex) -> Result<Vec<Self::Outgoing>, ()> {
 		if *v >= self.edges.len() {
 			Err(())
 		} else {
-			Ok(self.edges[*v].clone())
+			let mut result = Vec::new();
+			let ref out_edges = self.edges[*v];
+			for i in 0..out_edges.len()  {
+				result.push(UsizeEdge{source: *v, sink: out_edges[i]});
+			}
+			Ok(result)
 		}
 	}
 	
-	fn incoming_edges(&self, v: &Self::Vertex) -> Result<Vec<Self::Vertex>, ()> {
+	fn incoming_edges(&self, v: &Self::Vertex) -> Result<Vec<Self::Incomming>, ()> {
 		if *v >= self.edges.len() {
 			return Err(());
 		}
 		let mut result = Vec::new();
 		for i in 0..self.edges.len() {
 			if self.edges[i].contains(v) {
-				result.push(i);
+				result.push(UsizeEdge{source: i, sink: *v});
 			}
 		}
 		Ok(result)

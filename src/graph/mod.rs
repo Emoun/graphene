@@ -18,6 +18,9 @@ pub trait Graph {
 	type Vertex: Clone;
 	type Weight: Clone;
 	type Edge: Sourced<Self::Vertex> + Sinked<Self::Vertex> + Weighted<Self::Weight>;
+	type Outgoing: Sinked<Self::Vertex> + Weighted<Self::Weight>;
+	type Incoming: Sourced<Self::Vertex> + Weighted<Self::Weight>;
+	
 	
 	fn number_of_vertices(&self) -> usize;
 	
@@ -27,10 +30,11 @@ pub trait Graph {
 	
 	fn all_edges(&self) -> Vec<Self::Edge>;
 	
-	fn outgoing_edges(&self, v: &Self::Vertex) -> Result<Vec<Self::Vertex>, ()>;
+	fn outgoing_edges(&self, v: &Self::Vertex) -> Result<Vec<Self::Outgoing>, ()>;
 	
-	fn incoming_edges(&self, v: &Self::Vertex) -> Result<Vec<Self::Vertex>, ()>;
+	fn incoming_edges(&self, v: &Self::Vertex) -> Result<Vec<Self::Incoming>, ()>;
 	
 	fn edges_between(&self, source: &Self::Vertex, sink: &Self::Vertex) -> Result<Vec<Self::Weight>, ()>;
+	
 }
 

@@ -2,7 +2,7 @@ extern crate graphene;
 extern crate quickcheck;
 
 use graphene::implementations::UsizeGraph;
-use graphene::graph::Graph;
+use graphene::graph::*;
 use quickcheck::{Arbitrary, Gen};
 
 #[derive(Clone,Debug)]
@@ -37,7 +37,7 @@ impl Arbitrary for ArbitraryUsizeGraph {
 			match new_graph.outgoing_edges(&v){
 				Ok(o) =>
 					for e in o{
-						new_graph = new_graph.remove_edge(v, e);
+						new_graph = new_graph.remove_edge(v, e.sink());
 						result.push(ArbitraryUsizeGraph {graph : new_graph.clone()});
 					},
 				_ => (),
