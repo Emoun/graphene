@@ -37,7 +37,7 @@ impl Arbitrary for ArbitraryUsizeGraph {
 			match new_graph.outgoing_edges(&v){
 				Ok(o) =>
 					for e in o{
-						new_graph = new_graph.remove_edge(v, e.sink());
+						new_graph = new_graph.delete_edge(v, e.sink());
 						result.push(ArbitraryUsizeGraph {graph : new_graph.clone()});
 					},
 				_ => (),

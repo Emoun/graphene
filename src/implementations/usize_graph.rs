@@ -2,7 +2,7 @@ use std::collections::HashSet;
 use std::vec::Vec;
 use std::result::Result;
 
-use graph::{Graph, Sourced, Sinked, Weighted};
+use graph::*;
 
 #[derive(Clone,Debug)]
 pub struct UsizeEdge {
@@ -22,11 +22,6 @@ impl Sinked<usize> for UsizeEdge {
 	}
 }
 
-impl Weighted<()> for UsizeEdge {
-	fn weight(&self) -> () {
-		()
-	}
-}
 #[derive(Clone,Debug)]
 pub struct UsizeGraph {
 	edges: Vec<Vec<usize>>,
@@ -53,7 +48,7 @@ impl UsizeGraph {
 		self
 	}
 	
-	pub fn remove_edge(mut self, source: usize, sink:usize) -> UsizeGraph{
+	pub fn delete_edge(mut self, source: usize, sink:usize) -> UsizeGraph{
 		let (index,_) = self.edges[source].iter().enumerate().find(move|v| *v.1 == sink).unwrap();
 		self.edges[source].remove(index);
 		self
@@ -63,7 +58,6 @@ impl UsizeGraph {
 
 impl Graph for UsizeGraph {
 	type Vertex = usize;
-	type Weight = ();
 	type Edge = UsizeEdge;
 	type Outgoing = UsizeEdge;
 	type Incoming = UsizeEdge;
@@ -113,7 +107,7 @@ impl Graph for UsizeGraph {
 		}
 	}
 	
-	fn incoming_edges(&self, v: &Self::Vertex) -> Result<Vec<Self::Incomming>, ()> {
+	fn incoming_edges(&self, v: &Self::Vertex) -> Result<Vec<Self::Incoming>, ()> {
 		if *v >= self.edges.len() {
 			return Err(());
 		}
@@ -126,17 +120,94 @@ impl Graph for UsizeGraph {
 		Ok(result)
 	}
 	
-	
-	fn edges_between(&self, source: &Self::Vertex, target: &Self::Vertex) -> Result<Vec<Self::Weight>, ()> {
-		let len = self.edges.len();
-		if *source >= len || *target >= len {
-			return Err(());
-		}
-		
+	fn edges_between(&self, v1: &Self::Vertex, v2: &Self::Vertex) -> Result<Vec<Self::Edge>,()> {
 		let mut result = Vec::new();
-		if self.edges[*source].contains(target) {
-			result.push(());
+		
+		let len = self.edges.len();
+		if *v1 < len && *v2 < len {
+			let ref v1_out = self.edges[*v1];
+			for i in v1_out{
+				if *i == *v2{
+					result.push(UsizeEdge{source: *v1, sink: *v2});
+				}
+			}
+			let ref v2_out = self.edges[*v2];
+			for i in v2_out {
+				if *i == *v1 {
+					result.push(UsizeEdge{source: *v2, sink: *v1});
+				}
+			}
+			Ok(result)
+		}else{
+			Err(())
 		}
-		Ok(result)
+	}
+}
+
+impl Mutating<UsizeGraph> for UsizeGraph{
+	type Vertex = usize;
+	type Edge = UsizeEdge;
+	
+	fn add_vertex(mut self, v: Self::Vertex) -> (UsizeGraph, bool) {
+		if v == self.edges.len() {
+			self.edges.push(Vec::new());
+			(self, true)
+		}else{
+			(self, false)
+		}
+	}
+	
+	fn remove_vertex(mut self, v: Self::Vertex) -> (UsizeGraph, bool) {
+		let nr_v_old = self.edges.len();
+		if v < nr_v_old {
+			
+			//Remove all incoming edges to v
+			let v_old_in = self.incoming_edges(&v).unwrap();
+			for e in v_old_in{
+				self = self.remove_edge(e).0;
+			}
+			
+			//Remove v, swapping the last edge in
+			self.edges.swap_remove(v);
+			
+			//remap all edges from last to new v
+			let nr_v_new = self.edges.len();
+			for so in 0..nr_v_new {
+				//For each vertice
+				//any edge pointing to the old last value
+				//should now point to v
+				for si in 0..self.edges[so].len(){
+					if self.edges[so][si] == nr_v_new {
+						self.edges[so][si] = v;
+					}
+				}
+			}
+			return (self, true);
+		}
+		(self, false)
+	}
+	
+	fn add_edge(mut self, e: Self::Edge) -> (UsizeGraph, bool) {
+		let nr_v = self.edges.len();
+		if e.source < nr_v && e.sink < nr_v {
+			self.edges[e.source].push(e.sink);
+			return (self,true);
+		}
+		(self, false)
+	}
+	
+	fn remove_edge(mut self, e: Self::Edge) -> (UsizeGraph, bool) {
+		if e.source < self.edges.len() {
+			let index;
+			match self.edges[e.source].iter().find(|&&v| v == e.sink) {
+				Some(i) => 	index = (*i, true),
+				None => 	index =  (0, false),
+			}
+			if index.1 {
+				self.edges[e.source].remove(index.0);
+				return (self, true);
+			}
+		}
+		(self,false)
 	}
 }

@@ -54,7 +54,7 @@ fn main_test() -> Result<(), ()> {
 	assert!(g.incoming_edges(&0)?.len() == 1);
 	assert!(g.incoming_edges(&1)?.len() == 1);
 	
-	g = g.remove_edge(1,0);
+	g = g.delete_edge(1,0);
 	assert!(g.number_of_vertices() == 2);
 	assert!(g.number_of_edges() == 1);
 	assert!(g.outgoing_edges(&0)?.len() == 1);

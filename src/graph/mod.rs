@@ -16,10 +16,9 @@ pub trait Weighted<W> {
 
 pub trait Graph {
 	type Vertex: Clone;
-	type Weight: Clone;
-	type Edge: Sourced<Self::Vertex> + Sinked<Self::Vertex> + Weighted<Self::Weight>;
-	type Outgoing: Sinked<Self::Vertex> + Weighted<Self::Weight>;
-	type Incoming: Sourced<Self::Vertex> + Weighted<Self::Weight>;
+	type Edge: Sourced<Self::Vertex> + Sinked<Self::Vertex>;
+	type Outgoing: Sinked<Self::Vertex>;
+	type Incoming: Sourced<Self::Vertex>;
 	
 	
 	fn number_of_vertices(&self) -> usize;
@@ -34,7 +33,21 @@ pub trait Graph {
 	
 	fn incoming_edges(&self, v: &Self::Vertex) -> Result<Vec<Self::Incoming>, ()>;
 	
-	fn edges_between(&self, source: &Self::Vertex, sink: &Self::Vertex) -> Result<Vec<Self::Weight>, ()>;
+	fn edges_between(&self, v1: &Self::Vertex, v2: &Self::Vertex) -> Result<Vec<Self::Edge>,()>;
+	
+}
+
+pub trait Mutating<G>{
+	type Vertex: Clone;
+	type Edge: Sourced<Self::Vertex> + Sinked<Self::Vertex>;
+	
+	fn add_vertex(self, v: Self::Vertex) -> (G,bool);
+	
+	fn remove_vertex(self, v: Self::Vertex) -> (G,bool);
+	
+	fn add_edge(self, e: Self::Edge) -> (G, bool);
+	
+	fn remove_edge(self, e: Self::Edge) -> (G, bool);
 	
 }
 
