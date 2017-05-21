@@ -42,17 +42,6 @@ impl UsizeGraph {
 		//}
 		self.edges.len() - 1
 	}
-	
-	pub fn set_edge(mut self, source: usize, target: usize) -> UsizeGraph {
-		self.edges[source].push(target);
-		self
-	}
-	
-	pub fn delete_edge(mut self, source: usize, sink:usize) -> UsizeGraph{
-		let (index,_) = self.edges[source].iter().enumerate().find(move|v| *v.1 == sink).unwrap();
-		self.edges[source].remove(index);
-		self
-	}
 }
 
 

@@ -4,8 +4,8 @@ extern crate graphene;
 extern crate quickcheck;
 mod arbitraries;
 
-use graphene::implementations::UsizeGraph;
-use graphene::graph::Graph;
+use graphene::implementations::*;
+use graphene::graph::*;
 use arbitraries::{ArbitraryUsizeGraph};
 
 
@@ -38,7 +38,7 @@ fn main_test() -> Result<(), ()> {
 	assert!(g.incoming_edges(&0)?.len() == 0);
 	assert!(g.incoming_edges(&1)?.len() == 0);
 	
-	g = g.set_edge(0, 1);
+	g = g.add_edge(UsizeEdge{source: 0,sink: 1}).0;
 	assert!(g.number_of_vertices() == 2);
 	assert!(g.number_of_edges() == 1);
 	assert!(g.outgoing_edges(&0)?.len() == 1);
@@ -46,7 +46,7 @@ fn main_test() -> Result<(), ()> {
 	assert!(g.incoming_edges(&0)?.len() == 0);
 	assert!(g.incoming_edges(&1)?.len() == 1);
 	
-	g = g.set_edge(1, 0);
+	g = g.add_edge(UsizeEdge{source: 1,sink: 0}).0;
 	assert!(g.number_of_vertices() == 2);
 	assert!(g.number_of_edges() == 2);
 	assert!(g.outgoing_edges(&0)?.len() == 1);
@@ -54,7 +54,7 @@ fn main_test() -> Result<(), ()> {
 	assert!(g.incoming_edges(&0)?.len() == 1);
 	assert!(g.incoming_edges(&1)?.len() == 1);
 	
-	g = g.delete_edge(1,0);
+	g = g.remove_edge(UsizeEdge{source: 1,sink: 0}).0;
 	assert!(g.number_of_vertices() == 2);
 	assert!(g.number_of_edges() == 1);
 	assert!(g.outgoing_edges(&0)?.len() == 1);
