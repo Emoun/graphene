@@ -60,4 +60,7 @@ pub trait StableGraph<'a,V,E,O,I> : Graph<'a,
 		E: Sourced<&'a V> + Sinked<&'a V>,
 		O: Sinked<&'a V>,
 		I: Sourced<&'a V>,
-{}
+{
+	fn valid_ref(&self, v: &'a V) -> bool;
+	
+}

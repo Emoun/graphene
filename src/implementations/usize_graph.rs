@@ -50,22 +50,6 @@ impl UsizeGraph {
 		Some(g)
 	}
 	
-	#[allow(dead_code)]
-	fn valid_ref(&self, v: &usize) -> Result<(),()>{
-		let borrowed_values_enum = (&self.values).iter().enumerate();
-		let mut valid = false;
-		for (_, value_b) in borrowed_values_enum {
-			if value_b == v {
-				valid = true;
-			}
-		}
-		if !valid {
-			Err(())
-		}else{
-			Ok(())
-		}
-	}
-	
 	fn find_indices(&self, refs: Vec<&usize>) -> Vec<Result<usize,()>>{
 		let mut result = Vec::new();
 		result.reserve(refs.len());
@@ -230,5 +214,19 @@ impl<'a> StableGraph<
 	UsizeEdge<'a>,
 	UsizeEdge<'a>,
 	UsizeEdge<'a>
-> for UsizeGraph{}
+> for UsizeGraph
+{
+	
+	fn valid_ref(&self, v: &usize) -> bool{
+		let borrowed_values_enum = (&self.values).iter().enumerate();
+		let mut valid = false;
+		for (_, value_b) in borrowed_values_enum {
+			if value_b == v {
+				valid = true;
+			}
+		}
+		valid
+	}
+	
+}
 
