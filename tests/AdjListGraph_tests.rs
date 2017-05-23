@@ -21,10 +21,8 @@ fn create_adjListGraph(vertices: Vec<usize>) -> Option<AdjListGraph<usize>>{
 	AdjListGraph::new(vertices, edges)
 }
 
-
-
 //Property functions
-fn create_adjListGraph_has_correct_vertex_count(vertices: Vec<usize>) -> bool{
+fn created_adjListGraph_has_correct_vertex_count(vertices: Vec<usize>) -> bool{
 	let v_count = vertices.len();
 	
 	match create_adjListGraph(vertices){
@@ -35,9 +33,24 @@ fn create_adjListGraph_has_correct_vertex_count(vertices: Vec<usize>) -> bool{
 	}
 }
 
+fn create_adjListGraph_has_correct_edge_count(vertices: Vec<usize>) -> bool{
+	let v_count = vertices.len();
+	
+	match create_adjListGraph(vertices){
+		Some(g) => {
+			g.edge_count() == v_count
+		}
+		None => false,
+	}
+}
+
 //Test runners
 quickcheck!{
-	fn prop_create_adjListGraph_has_correct_vertex_count(vertices: Vec<usize>) -> bool{
+	fn prop_created_adjListGraph_has_correct_vertex_count(vertices: Vec<usize>) -> bool{
 		create_adjListGraph_has_correct_vertex_count(vertices)
+	}
+
+	fn prop_created_adjListGraph_has_correct_edge_count(vertices: Vec<usize>) -> bool{
+		created_adjListGraph_has_correct_vertex_count(vertices)
 	}
 }
