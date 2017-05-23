@@ -1,8 +1,5 @@
-#[derive(Clone, Debug)]
-pub struct AdjListGraph<T> {
-	edges: Vec<Vec<usize>>,
-	values:Vec<T>,
-}
+use implementations::adjacency_list::*;
+
 
 impl<T> AdjListGraph<T> {
 	
