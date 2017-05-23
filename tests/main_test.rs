@@ -23,19 +23,6 @@ fn create_graph(vertices: Vec<usize>) -> Option<UsizeGraph>{
 	UsizeGraph::new(vertices, edges)
 }
 
-fn create_adjListGraph(vertices: Vec<usize>) -> Option<AdjListGraph<usize>>{
-	let v_count  = vertices.len();
-	
-	//Create all edges
-	let mut edges = Vec::new();
-	for i in 0..v_count{
-		edges.push((i, vertices[i]%v_count));
-	}
-	
-	//Create graph
-	AdjListGraph::new(vertices, edges)
-}
-
 //Property functions
 fn created_graph_has_correct_vertex_count(vertices: Vec<usize>) -> bool{
 	let v_count = vertices.len();
@@ -94,17 +81,6 @@ fn created_graph_has_correct_vertices(vertices: Vec<usize>) -> bool{
 	}
 }
 
-fn create_adjListGraph_has_correct_vertex_count(vertices: Vec<usize>) -> bool{
-	let v_count = vertices.len();
-	
-	match create_adjListGraph(vertices){
-		Some(g) => {
-			g.vertex_count() == v_count
-		}
-		None => false,
-	}
-}
-
 //Test runners
 quickcheck!{
 
@@ -120,9 +96,6 @@ quickcheck!{
 		created_graph_has_correct_vertices(vertices)
 	}
 	
-	fn prop_create_adjListGraph_has_correct_vertex_count(vertices: Vec<usize>) -> bool{
-		create_adjListGraph_has_correct_vertex_count(vertices)
-	}
 	/*
 	fn prop_can_add_vertex(g: ArbitraryUsizeGraph, val: usize) -> bool{
 		can_add_vertex(g,val)
