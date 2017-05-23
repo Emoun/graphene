@@ -12,52 +12,66 @@ pub trait Weighted<W> {
 }
 
 
-pub trait Graph<'a> {
+pub trait FineGrainedGraph<'a>{
 	type Vertex: Clone;
-	type Edge: Sourced<Self::Vertex> + Sinked<Self::Vertex>;
-	type Outgoing: Sinked<Self::Vertex>;
-	type Incoming: Sourced<Self::Vertex>;
+	type VertexCollector;
+	type EdgeCollector;
+	type OutgoingCollector;
+	type IncomingCollector;
 	
 	fn vertex_count(&'a self) -> usize;
 	
 	fn edge_count(&'a self) -> usize;
 	
-	fn all_vertices(&'a self) -> Vec<Self::Vertex>;
+	fn all_vertices(&'a self) -> Self::VertexCollector;
 	
-	fn all_edges(&'a self) -> Vec<Self::Edge>;
+	fn all_edges(&'a self) -> Self::EdgeCollector;
 	
-	fn outgoing_edges(&'a self, v: Self::Vertex) -> Result<Vec<Self::Outgoing>, ()>;
+	fn outgoing_edges(&'a self, v: Self::Vertex) -> Result<Self::OutgoingCollector, ()>;
 	
-	fn incoming_edges(&'a self, v: Self::Vertex) -> Result<Vec<Self::Incoming>, ()>;
+	fn incoming_edges(&'a self, v: Self::Vertex) -> Result<Self::IncomingCollector, ()>;
 	
-	fn edges_between(&'a self, v1: Self::Vertex, v2: Self::Vertex) -> Result<Vec<Self::Edge>,()>;
+	fn edges_between(&'a self, v1: Self::Vertex, v2: Self::Vertex) -> Result<Self::EdgeCollector,()>;
 	
 }
 
-pub trait StableGraph<'a,V,E,O,I> : Graph<'a,
-	Vertex = &'a V,
-	Edge = E,
-	Outgoing = O,
-	Incoming = I,
+pub trait Graph<'a,V,E,O,I> : FineGrainedGraph<'a,
+	Vertex= 			V,
+	VertexCollector=	Vec<V>,
+	EdgeCollector =  	Vec<E>,
+	OutgoingCollector = Vec<O>,
+	IncomingCollector = Vec<I>,
 >
 where
-	V: 'a,
+	V: Clone,
 	E: Sourced<Self::Vertex> + Sinked<Self::Vertex>,
 	O: Sinked<Self::Vertex>,
 	I: Sourced<Self::Vertex>,
-{}
-
-pub trait Mutating<'a, G> where G: 'a{
-	type Vertex: Clone;
-	type Edge: Sourced<Self::Vertex> + Sinked<Self::Vertex>;
-	
-	fn add_vertex(self, v: Self::Vertex) -> Result<G,(G, Self::Vertex)>;
-	
-	fn remove_vertex(self, v: &'a Self::Vertex)
-		-> Result<(G, Self::Vertex), (G, &'a Self::Vertex)>;
-	
-	fn add_edge(self, e: Self::Edge) -> Result<(G, Self::Edge),(G, Self::Edge)>;
-	
-	fn remove_edge(self, e: Self::Edge) -> Result<G,(G, Self::Edge)>;
-	
+{
 }
+
+pub trait StableGraph<'a,V,E,O,I> : Graph<'a,
+	&'a V,
+	E,
+	O,
+	I,
+>
+where
+	V: 'a,
+	E: Sourced<&'a V> + Sinked<&'a V>,
+	O: Sinked<&'a V>,
+	I: Sourced<&'a V>,
+{}
+/*
+pub trait Mutable<'a,V,E,O,I>: StableGraph<'a,V,E,O,I>
+where
+	V:,
+	E:,
+	O:,
+	E:,
+{
+
+
+
+}
+*/
