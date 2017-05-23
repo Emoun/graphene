@@ -13,11 +13,11 @@ pub trait CollectorBinding<V,G> : GraphBinding<G>{
 }
 
 pub trait Mutable<'a,G,V,E,O,I,Vc,Ec,Oc,Ic>: FineGrainedGraph<'a,
-	Vertex				=	V,
-	VertexCollector		=	Vc,
-	EdgeCollector 		=  	Ec,
-	OutgoingCollector 	=	Oc,
-	IncomingCollector 	=	Ic,
+	V,
+	Vc,
+	Ec,
+	Oc,
+	Ic,
 >
 	where
 		G:	Mutable<'a,G,V,E,O,I,Vc,Ec,Oc,Ic>,

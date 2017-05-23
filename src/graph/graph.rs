@@ -11,41 +11,45 @@ pub trait Weighted<W> {
 	fn weight(&self) -> &W;
 }
 
-pub trait FineGrainedGraph<'a>{
-	type Vertex: Clone;
-	type VertexCollector;
-	type EdgeCollector;
-	type OutgoingCollector;
-	type IncomingCollector;
+pub trait FineGrainedGraph<'a,
+	Vertex,
+	VertexCollector,
+	EdgeCollector,
+	OutgoingCollector,
+	IncomingCollector,
+>
+where
+	Vertex : Clone,
+{
 	
 	fn vertex_count(&'a self) -> usize;
 	
 	fn edge_count(&'a self) -> usize;
 	
-	fn all_vertices(&'a self) -> Self::VertexCollector;
+	fn all_vertices(&'a self) -> VertexCollector;
 	
-	fn all_edges(&'a self) -> Self::EdgeCollector;
+	fn all_edges(&'a self) -> EdgeCollector;
 	
-	fn outgoing_edges(&'a self, v: Self::Vertex) -> Result<Self::OutgoingCollector, ()>;
+	fn outgoing_edges(&'a self, v: Vertex) -> Result<OutgoingCollector, ()>;
 	
-	fn incoming_edges(&'a self, v: Self::Vertex) -> Result<Self::IncomingCollector, ()>;
+	fn incoming_edges(&'a self, v: Vertex) -> Result<IncomingCollector, ()>;
 	
-	fn edges_between(&'a self, v1: Self::Vertex, v2: Self::Vertex) -> Result<Self::EdgeCollector,()>;
+	fn edges_between(&'a self, v1: Vertex, v2: Vertex) -> Result<EdgeCollector,()>;
 	
 }
 
 pub trait Graph<'a,V,E,O,I> : FineGrainedGraph<'a,
-	Vertex				=	V,
-	VertexCollector		=	Vec<V>,
-	EdgeCollector 		=  	Vec<E>,
-	OutgoingCollector 	=	Vec<O>,
-	IncomingCollector 	=	Vec<I>,
+	V,
+	Vec<V>,
+	Vec<E>,
+	Vec<O>,
+	Vec<I>,
 >
 	where
 		V: Clone,
-		E: Sourced<Self::Vertex> + Sinked<Self::Vertex>,
-		O: Sinked<Self::Vertex>,
-		I: Sourced<Self::Vertex>,
+		E: Sourced<V> + Sinked<V>,
+		O: Sinked<V>,
+		I: Sourced<V>,
 {
 }
 

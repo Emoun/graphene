@@ -90,12 +90,13 @@ impl UsizeGraph {
 	}
 }
 
-impl<'a> FineGrainedGraph<'a> for UsizeGraph {
-	type Vertex =&'a usize;
-	type VertexCollector = Vec<Self::Vertex>;
-	type EdgeCollector = Vec<UsizeEdge<'a>>;
-	type OutgoingCollector = Vec<UsizeEdge<'a>>;
-	type IncomingCollector = Vec<UsizeEdge<'a>>;
+impl<'a> FineGrainedGraph<'a,
+	&'a usize,
+	Vec<&'a usize>,
+	Vec<UsizeEdge<'a>>,
+	Vec<UsizeEdge<'a>>,
+	Vec<UsizeEdge<'a>>,
+> for UsizeGraph {
 	
 	fn vertex_count(&'a self) -> usize {
 		self.values.len()
@@ -110,7 +111,7 @@ impl<'a> FineGrainedGraph<'a> for UsizeGraph {
 		sum
 	}
 	
-	fn all_vertices(&'a self) -> Self::VertexCollector {
+	fn all_vertices(&'a self) -> Vec<&'a usize> {
 		let mut result = Vec::new();
 		
 		//For each value, output a reference to it
@@ -120,7 +121,7 @@ impl<'a> FineGrainedGraph<'a> for UsizeGraph {
 		result
 	}
 	
-	fn all_edges(&'a self) -> Self::EdgeCollector {
+	fn all_edges(&'a self) -> Vec<UsizeEdge<'a>> {
 		let mut result = Vec::new();
 		
 		//For each vertex
@@ -136,7 +137,7 @@ impl<'a> FineGrainedGraph<'a> for UsizeGraph {
 		result
 	}
 	
-	fn outgoing_edges(&'a self, v: Self::Vertex) -> Result<Self::OutgoingCollector, ()> {
+	fn outgoing_edges(&'a self, v: &'a usize) -> Result<Vec<UsizeEdge<'a>>, ()> {
 		
 		//validate reference
 		let v_i = self.find_indices(vec![v])[0]?;
@@ -153,7 +154,7 @@ impl<'a> FineGrainedGraph<'a> for UsizeGraph {
 		Ok(result)
 	}
 	
-	fn incoming_edges(&'a self, v: Self::Vertex) -> Result<Self::IncomingCollector, ()> {
+	fn incoming_edges(&'a self, v: &'a usize) -> Result<Vec<UsizeEdge<'a>>, ()> {
 		
 		//validate reference
 		let v_i = self.find_indices(vec![v])[0]?;
@@ -172,7 +173,7 @@ impl<'a> FineGrainedGraph<'a> for UsizeGraph {
 		Ok(result)
 	}
 	
-	fn edges_between(&'a self, v1: Self::Vertex, v2: Self::Vertex) -> Result<Self::EdgeCollector,()> {
+	fn edges_between(&'a self, v1: &'a usize, v2: &'a usize) -> Result<Vec<UsizeEdge<'a>>,()> {
 		
 		//Get both indices
 		let indices = self.find_indices(vec![v1, v2]);
