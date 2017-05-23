@@ -12,17 +12,21 @@ pub struct ArbitraryUsizeGraph {
 
 impl Arbitrary for ArbitraryUsizeGraph {
 	fn arbitrary<G: Gen>(g: &mut G) -> Self {
-		let vertices = g.gen_range(1, 100) as usize;
-		let mut graph = UsizeGraph::new(vertices);
+		let v_count = g.gen_range(1, 100) as usize;
+		let mut graph = UsizeGraph::new(vec![]);
+		for i in 0..v_count{
+			graph = graph.add_vertex(g.gen_range(1,100)).unwrap();
+		}
+		let vertices = graph.all_vertices();
 		
 		//How many edges
 		let edges = g.gen_range(0, 100);
 		for _ in 0..edges {
-			let source: usize = g.gen_range(0, vertices);
-			let sink: usize  = g.gen_range(0, vertices);
-			assert!(source < vertices);
-			assert!(sink < vertices);
-			graph = graph.add_edge(UsizeEdge{source, sink}).0;
+			
+			let source_i: usize = g.gen_range(0, v_count);
+			let sink_i: usize  = g.gen_range(0, v_count);
+			graph = graph.add_edge(UsizeEdge{	source: vertices[source_i],
+												sink: vertices[sink_i]}).unwrap().0;
 		}
 		ArbitraryUsizeGraph {graph}
 	}
@@ -32,22 +36,24 @@ impl Arbitrary for ArbitraryUsizeGraph {
 		let mut new_graph;
 		
 		//Shrink by removing an edge
-		for v in 0..self.graph.number_of_vertices(){
+		for v_i in 0..self.graph.vertex_count(){
 			new_graph = self.graph.clone();
-			match new_graph.outgoing_edges(&v){
+			let vertices = new_graph.all_vertices();
+			match new_graph.outgoing_edges(vertices[v_i]){
 				Ok(o) =>
 					for e in o{
-						new_graph = new_graph.remove_edge(e).0;
+						new_graph = new_graph.remove_edge(e).unwrap();
 						result.push(ArbitraryUsizeGraph {graph : new_graph.clone()});
 					},
-				_ => (),
+				_ => panic!("Impossible"),
 			}
 		}
 		
 		//Shrink by removing a vertex
-		for v in 0..self.graph.number_of_vertices() {
+		for v_i in 0..self.graph.vertex_count(){
 			new_graph = self.graph.clone();
-			new_graph = new_graph.remove_vertex(v).0;
+			let vertices = new_graph.all_vertices();
+			new_graph = new_graph.remove_vertex(vertices[v_i]).unwrap().0;
 			result.push(ArbitraryUsizeGraph {graph : new_graph});
 		}
 		

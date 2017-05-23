@@ -1,202 +1,319 @@
-use std::collections::HashSet;
 use std::vec::Vec;
 use std::result::Result;
 
 use graph::*;
 
-#[derive(Clone,Debug)]
-pub struct UsizeEdge {
-	pub source: usize,
-	pub sink: usize,
+#[derive(Clone, Debug)]
+pub struct UsizeEdge<'a> {
+	pub source: &'a usize,
+	pub sink: &'a usize,
 }
 
-impl Sourced<usize> for UsizeEdge {
-	fn source(&self) -> usize {
+impl<'a> Sourced<usize> for UsizeEdge<'a> {
+	fn source(&self) -> &usize {
 		self.source
 	}
 }
 
-impl Sinked<usize> for UsizeEdge {
-	fn sink(&self) -> usize {
-		self.sink
+impl<'a> Sinked<usize> for UsizeEdge<'a> {
+	fn sink(&self) -> &usize {
+		&self.sink
 	}
 }
 
-#[derive(Clone,Debug)]
+#[derive(Clone, Debug)]
 pub struct UsizeGraph {
 	edges: Vec<Vec<usize>>,
+	values:Vec<usize>,
 }
 
 impl UsizeGraph {
-	pub fn new(n: usize) -> UsizeGraph {
-		let mut g = UsizeGraph { edges: Vec::new() };
-		for _ in 0..n {
+	pub fn new(values: Vec<usize>) -> UsizeGraph {
+		let mut g = UsizeGraph { edges: Vec::new(), values: values };
+		
+		for _ in 0..g.values.len(){
 			g.edges.push(Vec::new());
 		}
 		g
 	}
 	
-	pub fn new_vertex(&mut self)-> usize{
-		//if self.edges.len() < 9 {
-			self.edges.push(Vec::new());
-		//}
-		self.edges.len() - 1
+	#[allow(dead_code)]
+	fn valid_ref(&self, v: &usize) -> Result<(),()>{
+		let borrowed_values_enum = (&self.values).iter().enumerate();
+		let mut valid = false;
+		for (_, value_b) in borrowed_values_enum {
+			if value_b == v {
+				valid = true;
+			}
+		}
+		if !valid {
+			Err(())
+		}else{
+			Ok(())
+		}
+	}
+	
+	fn find_indices(&self, refs: Vec<&usize>) -> Vec<Result<usize,()>>{
+		let mut result = Vec::new();
+		result.reserve(refs.len());
+		
+		//For each ref
+		'outer:
+		for (ref_i, &ref_) in refs.iter().enumerate(){
+			//Go through all values
+			let borrowed_values_enum = (&self.values).iter().enumerate();
+			for (value_i, value_ref ) in borrowed_values_enum{
+				//If the reference points to the value
+				if value_ref == ref_ {
+					//Collect the index of the value
+					result[ref_i] = Ok(value_i);
+					continue 'outer;
+				}
+			}
+			//The reference does not point to a value in the graph
+			result[ref_i] = Err(());
+		}
+		result
+	}
+	
+	fn find_refs(&self, indices: &Vec<usize>) -> Vec<Result<&usize,()>>{
+		let mut result = Vec::new();
+		result.reserve(indices.len());
+		
+		//for each index
+		for i in 0..indices.len(){
+			if indices[i] < self.values.len() {
+				//Get its reference from the values
+				result.push(Ok(&self.values[indices[i]]));
+			}else{
+				result.push(Err(()));
+			}
+		}
+		return result
 	}
 }
 
-
-impl Graph for UsizeGraph {
-	type Vertex = usize;
-	type Edge = UsizeEdge;
-	type Outgoing = UsizeEdge;
-	type Incoming = UsizeEdge;
+impl<'a> Graph<'a> for UsizeGraph {
+	type Vertex =usize;
+	type Edge = UsizeEdge<'a>;
+	type Outgoing = UsizeEdge<'a>;
+	type Incoming = UsizeEdge<'a>;
 	
-	fn number_of_vertices(&self) -> usize {
-		self.edges.len()
+	fn vertex_count(&'a self) -> usize {
+		self.values.len()
 	}
 	
-	fn number_of_edges(&self) -> usize {
+	fn edge_count(&'a self) -> usize {
 		let mut sum = 0;
+		//For each vertex, count the outgoing edges
 		for v in self.edges.iter() {
 			sum += v.len();
 		}
 		sum
 	}
 	
-	fn all_vertices(&self) -> HashSet<Self::Vertex> {
-		let mut result = HashSet::new();
-		for i in 0..self.edges.len() {
-			result.insert(i);
+	fn all_vertices(&'a self) -> Vec<&Self::Vertex> {
+		let mut result = Vec::new();
+		
+		//For each value, output a reference to it
+		for value_b in &self.values {
+			result.push(value_b);
 		}
 		result
 	}
 	
-	fn all_edges(&self) -> Vec<Self::Edge> {
+	fn all_edges(&'a self) -> Vec<Self::Edge> {
 		let mut result = Vec::new();
 		
-		for i in 0..self.edges.len() {
-			for j in self.edges[i].iter() {
-				result.push(UsizeEdge { source: i, sink: *j });
+		//For each vertex
+		for (i, v_out) in self.edges.iter().enumerate() {
+			let source_b = &self.values[i];
+			//For each outgoing edge
+			for sink_b in v_out.iter() {
+				//Return the edge
+				result.push(UsizeEdge { source: source_b, sink: sink_b });
 			}
 		}
 		
 		result
 	}
 	
-	fn outgoing_edges(&self, v: &Self::Vertex) -> Result<Vec<Self::Outgoing>, ()> {
-		if *v >= self.edges.len() {
-			Err(())
-		} else {
-			let mut result = Vec::new();
-			let ref out_edges = self.edges[*v];
-			for i in 0..out_edges.len()  {
-				result.push(UsizeEdge{source: *v, sink: out_edges[i]});
-			}
-			Ok(result)
-		}
-	}
-	
-	fn incoming_edges(&self, v: &Self::Vertex) -> Result<Vec<Self::Incoming>, ()> {
-		if *v >= self.edges.len() {
-			return Err(());
-		}
+	fn outgoing_edges(&'a self, v: &'a Self::Vertex) -> Result<Vec<Self::Outgoing>, ()> {
+		
+		//validate reference
+		let v_i = self.find_indices(vec![v])[0]?;
+		
 		let mut result = Vec::new();
-		for i in 0..self.edges.len() {
-			if self.edges[i].contains(v) {
-				result.push(UsizeEdge{source: i, sink: *v});
+		//extract all outgoing edges
+		let refs = self.find_refs(&self.edges[v_i]);
+		for ref_result in refs {
+			match ref_result {
+				Ok(ref_) => result.push(UsizeEdge{source: v, sink: ref_}),
+				_ => panic!("Impossible"),
 			}
 		}
 		Ok(result)
 	}
 	
-	fn edges_between(&self, v1: &Self::Vertex, v2: &Self::Vertex) -> Result<Vec<Self::Edge>,()> {
+	fn incoming_edges(&'a self, v: &'a Self::Vertex) -> Result<Vec<Self::Incoming>, ()> {
+		
+		//validate reference
+		let v_i = self.find_indices(vec![v])[0]?;
+		
+		let mut result = Vec::new();
+		//Go through all vertices
+		for (source_i, out_v) in self.edges.iter().enumerate() {
+			//Go through all outgoing edges for each
+			for &sink_i in out_v {
+				//If an edge points to v, collect it
+				if sink_i == v_i {
+					result.push(UsizeEdge{source: &self.values[source_i], sink: v});
+				}
+			}
+		}
+		Ok(result)
+	}
+	
+	fn edges_between(&'a self, v1: &'a Self::Vertex, v2: &'a Self::Vertex) -> Result<Vec<Self::Edge>,()> {
+		
+		//Get both indices
+		let indices = self.find_indices(vec![v1, v2]);
+		
+		//validate references
+		let v1_i = indices[0]?;
+		let v2_i = indices[1]?;
+		
+		//For each, find all edges to the other
 		let mut result = Vec::new();
 		
-		let len = self.edges.len();
-		if *v1 < len && *v2 < len {
-			let ref v1_out = self.edges[*v1];
-			for i in v1_out{
-				if *i == *v2{
-					result.push(UsizeEdge{source: *v1, sink: *v2});
+		//Go through all v1's outgoing edges
+		for &e in &self.edges[v1_i]{
+			if e == v2_i{
+				result.push(UsizeEdge{source: v1, sink: v2});
+			}
+		}
+		//Go through all v2's outgoing edges
+		for &e in &self.edges[v2_i]{
+			if e == v1_i{
+				result.push(UsizeEdge{source: v2, sink: v1});
+			}
+		}
+		Ok(result)
+	}
+}
+
+impl<'a> Mutating<'a, UsizeGraph> for UsizeGraph{
+	type Vertex = usize;
+	type Edge = UsizeEdge<'a>;
+	
+	fn add_vertex(mut self, v: Self::Vertex)
+		-> Result<UsizeGraph,(UsizeGraph, Self::Vertex)>
+	{
+		//Index value
+		self.values.push(v);
+		self.edges.push(Vec::new());
+		
+		//Return a reference to it
+		Ok(self)
+	}
+	
+	fn remove_vertex(mut self, v: &'a Self::Vertex)
+		-> Result	<	(UsizeGraph, Self::Vertex),
+						(UsizeGraph, &'a Self::Vertex)
+					>
+	{
+		//Get vertex index and validate
+		let v_i;
+		match self.find_indices(vec![v])[0] {
+			Err(_) => return Err((self, v)),
+			Ok(i) => v_i = i,
+		}
+		
+		//Remove all incoming edges to v
+		//Go through all vertices
+		for (_, out_v) in self.edges.iter().enumerate() {
+			let mut to_remove = Vec::new();
+			//Go through all outgoing edges
+			for (edge_i, &sink_i) in out_v.iter().enumerate() {
+				//If an edge points to v, collect its index
+				if sink_i == v_i {
+					to_remove.push(edge_i);
 				}
 			}
-			let ref v2_out = self.edges[*v2];
-			for i in v2_out {
-				if *i == *v1 {
-					result.push(UsizeEdge{source: *v2, sink: *v1});
+			//Delete all collected edges
+			for i in to_remove.len()..0{
+				//Delete the last indices first so
+				//so that the other indices aren't invalidated
+				to_remove.remove(i);
+			}
+		}
+		
+		//re-point all edges pointing to last value (last)
+		//to point to v
+		{
+			let old_last_i = self.values.len();
+			//For each vertex
+			for v_out in self.edges.iter_mut() {
+				//any edge pointing to the old last value
+				//should now point to v
+				for edge_i in 0..v_out.len() {
+					if v_out[edge_i] == old_last_i {
+						v_out[edge_i] = v_i;
+					}
 				}
 			}
-			Ok(result)
-		}else{
-			Err(())
+		}
+		
+		//Remove v, swapping in the value of last
+		let v_value = self.values[v_i];
+		self.values.swap_remove(v_i);
+		self.edges.swap_remove(v_i);
+		
+		Ok((self,v_value))
+	}
+	
+	fn add_edge(mut self, e: Self::Edge)
+		-> Result<(UsizeGraph, Self::Edge), (UsizeGraph, Self::Edge)>
+	{
+		//Find source and sink indices
+		let indices =  self.find_indices(vec![e.source, e.sink]);
+		
+		//Validate
+		match (indices[0], indices[1]) {
+			(Ok(source_i), Ok(sink_i)) => {
+				//add edge
+				self.edges[source_i].push(sink_i);
+				Ok((self, e))
+			}
+			//Invalid edge
+			_ => Err((self, e))
+		}
+	}
+	
+	fn remove_edge(mut self, e: Self::Edge)
+		-> Result<UsizeGraph,(UsizeGraph, Self::Edge)>
+	{
+		//Find source and sink indices
+		let indices =  self.find_indices(vec![e.source, e.sink]);
+		
+		//Validate
+		match (indices[0], indices[1]) {
+			(Ok(source_i), Ok(sink_i)) => {
+				//Find edge index in outgoing list
+				match self.edges[source_i].iter().position(|&i| i == sink_i){
+					//Edge present
+					Some(edge_i) => {
+						//Edge found, remove it
+						self.edges[source_i].remove(edge_i);
+						Ok(self)
+					}
+					//Edge not present
+					_ => Err((self, e))
+				}
+			}
+			//Invalid vertex references
+			_ => Err((self, e))
 		}
 	}
 }
 
-impl Mutating<UsizeGraph> for UsizeGraph{
-	type Vertex = usize;
-	type Edge = UsizeEdge;
-	
-	fn add_vertex(mut self, v: Self::Vertex) -> (UsizeGraph, bool) {
-		if v == self.edges.len() {
-			self.edges.push(Vec::new());
-			(self, true)
-		}else{
-			(self, false)
-		}
-	}
-	
-	fn remove_vertex(mut self, v: Self::Vertex) -> (UsizeGraph, bool) {
-		let nr_v_old = self.edges.len();
-		if v < nr_v_old {
-			
-			//Remove all incoming edges to v
-			let v_old_in = self.incoming_edges(&v).unwrap();
-			for e in v_old_in{
-				self = self.remove_edge(e).0;
-			}
-			
-			//Remove v, swapping the last edge in
-			self.edges.swap_remove(v);
-			
-			//remap all edges from last to new v
-			let nr_v_new = self.edges.len();
-			for so in 0..nr_v_new {
-				//For each vertice
-				//any edge pointing to the old last value
-				//should now point to v
-				for si in 0..self.edges[so].len(){
-					if self.edges[so][si] == nr_v_new {
-						self.edges[so][si] = v;
-					}
-				}
-			}
-			return (self, true);
-		}
-		(self, false)
-	}
-	
-	fn add_edge(mut self, e: Self::Edge) -> (UsizeGraph, bool) {
-		let nr_v = self.edges.len();
-		if e.source < nr_v && e.sink < nr_v {
-			self.edges[e.source].push(e.sink);
-			return (self,true);
-		}
-		(self, false)
-	}
-	
-	fn remove_edge(mut self, e: Self::Edge) -> (UsizeGraph, bool) {
-		if e.source < self.edges.len() {
-			let index;
-			match self.edges[e.source].iter().enumerate().find(|&(_,&v)| v == e.sink) {
-				Some((i,_)) => 	index = (i, true),
-				None 		=> 	index = (0, false),
-			}
-			if index.1 {
-				self.edges[e.source].remove(index.0);
-				return (self, true);
-			}
-		}
-		(self,false)
-	}
-}
