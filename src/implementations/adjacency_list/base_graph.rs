@@ -1,12 +1,12 @@
 #[derive(Clone, Debug)]
 pub struct AdjListGraph<T> {
-	edges: Vec<Vec<T>>,
+	edges: Vec<Vec<usize>>,
 	values:Vec<T>,
 }
 
-impl AdjListGraph<T> {
+impl<T> AdjListGraph<T> {
 	
-	pub fn new(values: Vec<T>, edges: Vec<(T, T)>) -> Option<AdjListGraph<T>> {
+	pub fn new(values: Vec<T>, edges: Vec<(usize, usize)>) -> Option<AdjListGraph<T>> {
 		let mut g = AdjListGraph{ edges: Vec::new(), values: values };
 		
 		//Validate all edges point to vertices
@@ -30,3 +30,4 @@ impl AdjListGraph<T> {
 	
 	
 }
+
