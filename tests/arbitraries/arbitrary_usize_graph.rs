@@ -9,7 +9,7 @@ use quickcheck::{Arbitrary, Gen};
 pub struct ArbitraryUsizeGraph {
 	pub graph : UsizeGraph,
 }
-
+/*
 impl Arbitrary for ArbitraryUsizeGraph {
 	fn arbitrary<G: Gen>(g: &mut G) -> Self {
 		let v_count = g.gen_range(1, 100) as usize;
@@ -60,3 +60,4 @@ impl Arbitrary for ArbitraryUsizeGraph {
 		Box::new(result.into_iter())
 	}
 }
+*/

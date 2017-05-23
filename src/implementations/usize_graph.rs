@@ -9,14 +9,14 @@ pub struct UsizeEdge<'a> {
 	pub sink: &'a usize,
 }
 
-impl<'a> Sourced<usize> for UsizeEdge<'a> {
-	fn source(&self) -> &usize {
+impl<'a> Sourced<&'a usize> for UsizeEdge<'a> {
+	fn source(&self) -> &'a usize {
 		self.source
 	}
 }
 
-impl<'a> Sinked<usize> for UsizeEdge<'a> {
-	fn sink(&self) -> &usize {
+impl<'a> Sinked<&'a usize> for UsizeEdge<'a> {
+	fn sink(&self) -> &'a usize {
 		&self.sink
 	}
 }
@@ -28,13 +28,26 @@ pub struct UsizeGraph {
 }
 
 impl UsizeGraph {
-	pub fn new(values: Vec<usize>) -> UsizeGraph {
+	pub fn new(values: Vec<usize>, edges: Vec<(usize, usize)>) -> Option<UsizeGraph> {
 		let mut g = UsizeGraph { edges: Vec::new(), values: values };
 		
+		//Validate all edges point to vertices
+		for &(source, sink) in &edges {
+			if source >= g.values.len() || sink >= g.values.len(){
+				return None;
+			}
+		}
+		
+		//Initialise adjacency list
 		for _ in 0..g.values.len(){
 			g.edges.push(Vec::new());
 		}
-		g
+		
+		//Insert each edge
+		for &(source, sink) in &edges {
+			g.edges[source].push(sink);
+		}
+		Some(g)
 	}
 	
 	#[allow(dead_code)]
@@ -94,7 +107,7 @@ impl UsizeGraph {
 }
 
 impl<'a> Graph<'a> for UsizeGraph {
-	type Vertex =usize;
+	type Vertex =&'a usize;
 	type Edge = UsizeEdge<'a>;
 	type Outgoing = UsizeEdge<'a>;
 	type Incoming = UsizeEdge<'a>;
@@ -112,7 +125,7 @@ impl<'a> Graph<'a> for UsizeGraph {
 		sum
 	}
 	
-	fn all_vertices(&'a self) -> Vec<&Self::Vertex> {
+	fn all_vertices(&'a self) -> Vec<Self::Vertex> {
 		let mut result = Vec::new();
 		
 		//For each value, output a reference to it
@@ -138,7 +151,7 @@ impl<'a> Graph<'a> for UsizeGraph {
 		result
 	}
 	
-	fn outgoing_edges(&'a self, v: &'a Self::Vertex) -> Result<Vec<Self::Outgoing>, ()> {
+	fn outgoing_edges(&'a self, v: Self::Vertex) -> Result<Vec<Self::Outgoing>, ()> {
 		
 		//validate reference
 		let v_i = self.find_indices(vec![v])[0]?;
@@ -155,7 +168,7 @@ impl<'a> Graph<'a> for UsizeGraph {
 		Ok(result)
 	}
 	
-	fn incoming_edges(&'a self, v: &'a Self::Vertex) -> Result<Vec<Self::Incoming>, ()> {
+	fn incoming_edges(&'a self, v: Self::Vertex) -> Result<Vec<Self::Incoming>, ()> {
 		
 		//validate reference
 		let v_i = self.find_indices(vec![v])[0]?;
@@ -174,7 +187,7 @@ impl<'a> Graph<'a> for UsizeGraph {
 		Ok(result)
 	}
 	
-	fn edges_between(&'a self, v1: &'a Self::Vertex, v2: &'a Self::Vertex) -> Result<Vec<Self::Edge>,()> {
+	fn edges_between(&'a self, v1: Self::Vertex, v2: Self::Vertex) -> Result<Vec<Self::Edge>,()> {
 		
 		//Get both indices
 		let indices = self.find_indices(vec![v1, v2]);
@@ -202,6 +215,14 @@ impl<'a> Graph<'a> for UsizeGraph {
 	}
 }
 
+impl<'a> StableGraph<
+	'a,
+	usize,
+	UsizeEdge<'a>,
+	UsizeEdge<'a>,
+	UsizeEdge<'a>
+> for UsizeGraph{}
+/*
 impl<'a> Mutating<'a, UsizeGraph> for UsizeGraph{
 	type Vertex = usize;
 	type Edge = UsizeEdge<'a>;
@@ -316,4 +337,4 @@ impl<'a> Mutating<'a, UsizeGraph> for UsizeGraph{
 		}
 	}
 }
-
+*/
