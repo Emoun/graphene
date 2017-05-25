@@ -7,14 +7,13 @@ extern crate quickcheck;
 use graphene::implementations::adjacency_list::*;
 use graphene::graph::*;
 use quickcheck::{Arbitrary,Gen};
+use std::collections::{HashMap};
 
 #[derive(Clone,Debug)]
 struct ArbitraryGraphDescription<V> where V: Arbitrary{
 	pub vertex_values: Vec<V>,
 	pub edges: Vec<(usize,usize)>,
 }
-
-
 
 impl Arbitrary for ArbitraryGraphDescription<u32>{
 	fn arbitrary<G: Gen>(g: &mut G) -> Self {
@@ -114,6 +113,8 @@ impl Arbitrary for ArbitraryGraphDescription<u32>{
 		Box::new(result.into_iter())
 	}
 }
+
+//Helper functions
 /*
 quickcheck! {
 	fn test_arbitrary_graph(Ag: ArbitraryGraphDescription<u32>) -> bool{
@@ -126,18 +127,24 @@ quickcheck! {
 	}
 }
 */
-//Helper functions
-fn create_adjListGraph(vertices: Vec<usize>) -> Option<AdjListGraph<usize>>{
-	let v_count  = vertices.len();
-	
-	//Create all edges
+
+///
+/// Returns all the edges in the given description
+/// by the value of the vertices they point to and from
+///
+fn edges_by_value<V>(desc: ArbitraryGraphDescription<V>)
+	-> (ArbitraryGraphDescription<V>, Vec<(V, V)>)
+where
+	V: Arbitrary
+{
 	let mut edges = Vec::new();
-	for i in 0..v_count{
-		edges.push((i, vertices[i]%v_count));
-	}
 	
-	//Create graph
-	AdjListGraph::new(vertices, edges)
+	for e in &desc.edges{
+		let t_source = desc.vertex_values[e.0].clone();
+		let t_sink = desc.vertex_values[e.1].clone();
+		edges.push((t_source, t_sink));
+	}
+	(desc, edges)
 }
 
 //Property functions
@@ -163,6 +170,121 @@ fn created_adjListGraph_has_correct_edge_count(g: ArbitraryGraphDescription<u32>
 	}
 }
 
+fn created_adjListGraph_has_correct_vertex_values(desc: ArbitraryGraphDescription<u32>) -> bool{
+	let vertex_clones = desc.vertex_values.clone();
+	
+	if let Some(g) = AdjListGraph::new(desc.vertex_values, desc.edges){
+		
+		//Track whether each vertex of the graph has been used
+		// to match an original vertex
+		let mut used = Vec::new();
+		used.resize(g.vertex_count(), false);
+		
+		//For each required vertex
+		'outer:
+		for &r_v in vertex_clones.iter(){
+			//Look through all the vertices in the graph
+			for (i, &v) in g.all_vertices().iter().enumerate(){
+				//If you find a vertex with the required value
+				if !used[i] && r_v == v{
+					//Assign it as used and move to the next required vertex
+					used[i] = true;
+					continue 'outer;
+				}
+			}
+			//If the required value is not found
+			return false;
+		}
+		return true;
+	}
+	false
+}
+
+fn created_adjListGraph_has_correct_edges(desc: ArbitraryGraphDescription<u32>) -> bool{
+	//Construct all expected edges
+	let (desc, expected_edges) = edges_by_value(desc);
+	
+	
+	if let Some(g) = AdjListGraph::new(desc.vertex_values, desc.edges){
+		//Track whether each edge in the graph has been used
+		// to match an expected edge
+		let mut used = Vec::new();
+		used.resize(g.edge_count(), false);
+		
+		//For each expected edge
+		'outer:
+		for (e_source, e_sink) in expected_edges {
+			//Look through all the edges in the graph
+			for (i, edge) in g.all_edges().iter().enumerate(){
+				//If you find an edge with the required value
+				//that has not been used before
+				if !used[i] &&
+					e_source == edge.source() &&
+					e_sink == edge.sink()
+				{
+					//Assign it as used and move to the next required vertex
+					used[i] = true;
+					continue 'outer;
+				}
+			}
+			//If the expected edge is not found
+			return false;
+		}
+		//All expected edges were found
+		return true;
+	}
+	false
+}
+
+fn created_adjListGraph_has_correct_outgoing_edges(desc: ArbitraryGraphDescription<u32>) -> bool{
+	
+	let (desc, edges_by_value) = edges_by_value(desc);
+	
+	//Construct expected outgoing edges
+	let mut expected_outgoing = HashMap::new();
+	for v in desc.vertex_values.iter().cloned(){
+		expected_outgoing.insert(v, Vec::new());
+	}
+	for e in edges_by_value{
+		expected_outgoing.get_mut(&e.0).unwrap().push(e.1);
+	}
+	
+	if let Some(g) = AdjListGraph::new(desc.vertex_values, desc.edges){
+		//For each vertex in the graph
+		for v in g.all_vertices() {
+			if let Ok(v_out) = g.outgoing_edges(v) {
+				//Track whether the outgoing edges have been used
+				//to match to an expected edge
+				let mut used = Vec::new();
+				used.resize(v_out.len(), false);
+				let expected_v_out = expected_outgoing.get(&v).unwrap();
+				//For each expected outgoing edge
+				'outer:
+				for &e_edge in expected_v_out{
+					//Look through all the outgoing edges in the graph
+					for (g_i, ref g_edge) in v_out.iter().enumerate(){
+						//If you find an unused matching edge
+						//mark it as used
+						if !used[g_i] &&
+							e_edge == g_edge.sink()
+						{
+							used[g_i] = true;
+							continue 'outer;
+						}
+					}
+					//No matching edge was found in the graph
+					return false;
+				}
+				//All expected edges matched an edge in the graph
+			}else {
+				unreachable!();
+			}
+		}
+		//For all vertices, the expected edges were found
+		return true;
+	}
+	false
+}
 
 //Test runners
 quickcheck!{
@@ -173,5 +295,17 @@ quickcheck!{
 	
 	fn prop_created_adjListGraph_has_correct_edge_count(g: ArbitraryGraphDescription<u32>) -> bool{
 		created_adjListGraph_has_correct_edge_count(g)
+	}
+	
+	fn prop_created_adjListGraph_has_correct_vertex_values(g: ArbitraryGraphDescription<u32>) -> bool{
+		created_adjListGraph_has_correct_vertex_values(g)
+	}
+	
+	fn prop_created_adjListGraph_has_correct_edges(desc: ArbitraryGraphDescription<u32>) -> bool{
+		created_adjListGraph_has_correct_edges(desc)
+	}
+	
+	fn prop_created_adjListGraph_has_correct_outgoing_edges(desc: ArbitraryGraphDescription<u32>) -> bool{
+		created_adjListGraph_has_correct_outgoing_edges(desc)
 	}
 }

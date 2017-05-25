@@ -21,7 +21,7 @@ pub trait Mutable<'a,G,V,E,O,I,Vc,Ec,Oc,Ic>: FineGrainedGraph<'a,
 >
 	where
 		G:	Mutable<'a,G,V,E,O,I,Vc,Ec,Oc,Ic>,
-		V: 	Clone,
+		V: 	Clone + Eq,
 		Vc:	CollectorBinding<V,G>,
 		Ec:	CollectorBinding<E,G>,
 		Oc:	CollectorBinding<O,G>,

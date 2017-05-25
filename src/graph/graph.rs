@@ -19,7 +19,7 @@ pub trait FineGrainedGraph<'a,
 	IncomingCollector,
 >
 where
-	Vertex : Clone,
+	Vertex : Clone + Eq
 {
 	
 	fn vertex_count(&'a self) -> usize;
@@ -46,7 +46,7 @@ pub trait Graph<'a,V,E,O,I> : FineGrainedGraph<'a,
 	Vec<I>,
 >
 	where
-		V: Clone,
+		V: Clone + Eq,
 		E: Sourced<V> + Sinked<V>,
 		O: Sinked<V>,
 		I: Sourced<V>,
@@ -60,7 +60,7 @@ pub trait StableGraph<'a,V,E,O,I> : Graph<'a,
 	I,
 >
 	where
-		V: 'a,
+		V: 'a + Eq,
 		E: Sourced<&'a V> + Sinked<&'a V>,
 		O: Sinked<&'a V>,
 		I: Sourced<&'a V>,

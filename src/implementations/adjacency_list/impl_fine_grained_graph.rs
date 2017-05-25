@@ -12,7 +12,7 @@ impl<'a, T> FineGrainedGraph<'a,
 >
 for AdjListGraph<T>
 	where
-		T: Copy,
+		T: Copy + Eq
 {
 	fn vertex_count(&'a self) -> usize {
 		self.values.len()
@@ -38,11 +38,32 @@ for AdjListGraph<T>
 	}
 	
 	fn all_edges(&'a self) -> Vec<BaseEdge<T>> {
-		unimplemented!()
+		let mut result = Vec::new();
+		
+		//For each vertex (source)
+		for (source_i, ref out) in self.edges.iter().enumerate() {
+			let source_value = self.values[source_i];
+			//For each outgoing edge (sink)
+			for &sink_i in out.iter() {
+				let sink_value = self.values[sink_i];
+				//Return the edge
+				result.push(BaseEdge { source: source_value, sink: sink_value });
+			}
+		}
+		result
 	}
 	
 	fn outgoing_edges(&'a self, v: T) -> Result<Vec<BaseEdge<T>>, ()> {
-		unimplemented!()
+		if let Some(i) = self.get_index(v){
+			Ok(self.edges[i].iter().map(
+				|&sink_i|
+					BaseEdge{source: v,
+					sink: self.get_value(sink_i).unwrap()}
+			).collect())
+		}else {
+			Err(())
+		}
+		
 	}
 	
 	fn incoming_edges(&'a self, v: T) -> Result<Vec<BaseEdge<T>>, ()> {
