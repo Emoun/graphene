@@ -1,3 +1,4 @@
+
 #![allow(non_snake_case)]
 extern crate graphene;
 #[cfg(test)]
@@ -8,6 +9,7 @@ use graphene::implementations::adjacency_list::*;
 use graphene::graph::*;
 use quickcheck::{Arbitrary,Gen};
 use std::collections::{HashMap};
+use std::hash::Hash;
 
 #[derive(Clone,Debug)]
 struct ArbitraryGraphDescription<V> where V: Arbitrary{
@@ -147,165 +149,291 @@ where
 	(desc, edges)
 }
 
-//Property functions
-fn created_adjListGraph_has_correct_vertex_count(g: ArbitraryGraphDescription<u32>) -> bool{
-	let v_count = g.vertex_values.len();
+fn unordered_sublist<B,P,F>(sublist:&Vec<B>, superlist:&Vec<P>, equal: F) -> bool
+where F: Fn(&B, &P) -> bool,
+{
+	//Track whether each element in the superlist has been used
+	// to match an element of the sublist
+	let mut used = Vec::new();
+	used.resize(superlist.len(),false);
 	
-	match AdjListGraph::new(g.vertex_values, g.edges){
-		Some(g) => {
-			g.vertex_count() == v_count
-		}
-		None => false,
-	}
-}
-
-fn created_adjListGraph_has_correct_edge_count(g: ArbitraryGraphDescription<u32>) -> bool{
-	let e_count = g.edges.len();
-	
-	match AdjListGraph::new(g.vertex_values, g.edges){
-		Some(g) => {
-			g.edge_count() == e_count
-		}
-		None => false,
-	}
-}
-
-fn created_adjListGraph_has_correct_vertex_values(desc: ArbitraryGraphDescription<u32>) -> bool{
-	let vertex_clones = desc.vertex_values.clone();
-	
-	if let Some(g) = AdjListGraph::new(desc.vertex_values, desc.edges){
-		
-		//Track whether each vertex of the graph has been used
-		// to match an original vertex
-		let mut used = Vec::new();
-		used.resize(g.vertex_count(), false);
-		
-		//For each required vertex
-		'outer:
-		for &r_v in vertex_clones.iter(){
-			//Look through all the vertices in the graph
-			for (i, &v) in g.all_vertices().iter().enumerate(){
-				//If you find a vertex with the required value
-				if !used[i] && r_v == v{
-					//Assign it as used and move to the next required vertex
+	//For each sublist element
+	'outer:
+	for sub_e in sublist{
+		//Look through all superelements
+		for (i, super_e) in superlist.iter().enumerate(){
+			//If the element is unused
+			if !used[i] {
+				//if they are equal
+				if equal(&sub_e,super_e) {
+					//Assign the super element as used and move to the nex subelement
 					used[i] = true;
 					continue 'outer;
 				}
 			}
-			//If the required value is not found
-			return false;
 		}
-		return true;
+		//The subelement was not found
+		return false;
+	}
+	//All subelement were found
+	true
+}
+
+fn after_graph_init<V,F>(desc: ArbitraryGraphDescription<V>, holds: F) -> bool
+where 	F: Fn(ArbitraryGraphDescription<V>, AdjListGraph<V>) -> bool,
+		V: Arbitrary + Clone + Eq
+{
+	if let Some(g) = AdjListGraph::new(
+		desc.vertex_values.clone(), desc.edges.clone())
+	{
+		return holds(desc, g);
 	}
 	false
 }
 
-fn created_adjListGraph_has_correct_edges(desc: ArbitraryGraphDescription<u32>) -> bool{
-	//Construct all expected edges
-	let (desc, expected_edges) = edges_by_value(desc);
-	
-	
-	if let Some(g) = AdjListGraph::new(desc.vertex_values, desc.edges){
-		//Track whether each edge in the graph has been used
-		// to match an expected edge
-		let mut used = Vec::new();
-		used.resize(g.edge_count(), false);
-		
-		//For each expected edge
-		'outer:
-		for (e_source, e_sink) in expected_edges {
-			//Look through all the edges in the graph
-			for (i, edge) in g.all_edges().iter().enumerate(){
-				//If you find an edge with the required value
-				//that has not been used before
-				if !used[i] &&
-					e_source == edge.source() &&
-					e_sink == edge.sink()
-				{
-					//Assign it as used and move to the next required vertex
-					used[i] = true;
-					continue 'outer;
-				}
-			}
-			//If the expected edge is not found
-			return false;
-		}
-		//All expected edges were found
-		return true;
-	}
-	false
-}
-
-fn created_adjListGraph_has_correct_outgoing_edges(desc: ArbitraryGraphDescription<u32>) -> bool{
-	
+fn expected_edges_for_vertices<V>(desc: ArbitraryGraphDescription<V>, outgoing: bool)
+								  -> (ArbitraryGraphDescription<V>, HashMap<V,Vec<V>>)
+where
+	V:Arbitrary + Clone + Eq + Hash
+{
 	let (desc, edges_by_value) = edges_by_value(desc);
 	
-	//Construct expected outgoing edges
-	let mut expected_outgoing = HashMap::new();
+	//Construct expected outgoing/incoming edges for each vertex.
+	//Create the map
+	let mut edges_for = HashMap::new();
+	//Initialize each vertex for empty outgoing
 	for v in desc.vertex_values.iter().cloned(){
-		expected_outgoing.insert(v, Vec::new());
+		edges_for.insert(v, Vec::new());
 	}
+	//For each edge
 	for e in edges_by_value{
-		expected_outgoing.get_mut(&e.0).unwrap().push(e.1);
+		if outgoing {
+			//If the outgoing edges are wanted,
+			//Put the sink of the edge in the source's
+			//map
+			edges_for.get_mut(&e.0).unwrap().push(e.1);
+		}else{
+			//If the incoming edges are wanted,
+			//Put the source of the edge in the sink's
+			//map
+			edges_for.get_mut(&e.1).unwrap().push(e.0);
+		}
 	}
+	(desc, edges_for)
+}
+
+//Property functions
+
+fn init_correct_vertex_count(desc:ArbitraryGraphDescription<u32>) -> bool{
+	after_graph_init(desc, |d, g|{
+		g.vertex_count() == d.vertex_values.len()
+	})
+}
+
+fn init_correct_edge_count(desc: ArbitraryGraphDescription<u32>) -> bool{
+	after_graph_init(desc, |d, g|{
+		g.edge_count() == d.edges.len()
+	})
+}
+
+fn init_expected_vertices_subsetof_graph(desc: ArbitraryGraphDescription<u32>) -> bool{
+	after_graph_init(desc, |d,g|{
+		unordered_sublist(&d.vertex_values, &g.all_vertices(), |e_v, g_v|{
+			e_v == g_v
+		})
+	})
+}
+
+fn init_graph_vertices_subsetof_expected(desc: ArbitraryGraphDescription<u32>) -> bool{
+	after_graph_init(desc, |d,g|{
+		unordered_sublist(&g.all_vertices(), &d.vertex_values, |g_v, e_v|{
+			e_v == g_v
+		})
+	})
+}
+
+fn init_expected_edges_subsetof_graph(desc: ArbitraryGraphDescription<u32>) -> bool{
+	after_graph_init(desc, |d,g|{
+		unordered_sublist(&edges_by_value(d).1, &g.all_edges(), |&expected, ref g_edge|{
+			expected.0 == g_edge.source() &&
+				expected.1 == g_edge.sink()
+		})
+	})
+}
+
+fn init_graph_edges_subsetof_expected(desc: ArbitraryGraphDescription<u32>) -> bool{
+	after_graph_init(desc, |d,g|{
+		unordered_sublist(&g.all_edges(), &edges_by_value(d).1, |ref g_edge, &expected|{
+			expected.0 == g_edge.source() &&
+				expected.1 == g_edge.sink()
+		})
+	})
+}
+
+fn init_expected_outgoing_edges_subsetof_graph(desc: ArbitraryGraphDescription<u32>) -> bool{
 	
-	if let Some(g) = AdjListGraph::new(desc.vertex_values, desc.edges){
+	let (desc, expected_outgoing) = expected_edges_for_vertices(desc, true);
+	
+	after_graph_init(desc, |_, g|{
 		//For each vertex in the graph
 		for v in g.all_vertices() {
-			if let Ok(v_out) = g.outgoing_edges(v) {
-				//Track whether the outgoing edges have been used
-				//to match to an expected edge
-				let mut used = Vec::new();
-				used.resize(v_out.len(), false);
-				let expected_v_out = expected_outgoing.get(&v).unwrap();
-				//For each expected outgoing edge
-				'outer:
-				for &e_edge in expected_v_out{
-					//Look through all the outgoing edges in the graph
-					for (g_i, ref g_edge) in v_out.iter().enumerate(){
-						//If you find an unused matching edge
-						//mark it as used
-						if !used[g_i] &&
-							e_edge == g_edge.sink()
-						{
-							used[g_i] = true;
-							continue 'outer;
-						}
-					}
-					//No matching edge was found in the graph
+			if let (Ok(v_out), Some(v_expected_out)) = (g.outgoing_edges(v) , expected_outgoing.get(&v)){
+				
+				if !unordered_sublist(v_expected_out, &v_out, |&e_v, g_edge| {
+					e_v == g_edge.sink()
+				} ){
 					return false;
 				}
-				//All expected edges matched an edge in the graph
+				
 			}else {
 				unreachable!();
 			}
 		}
 		//For all vertices, the expected edges were found
 		return true;
-	}
-	false
+	})
+}
+
+fn init_graph_outgoing_edges_subsetof_expected(desc: ArbitraryGraphDescription<u32>) -> bool{
+	
+	let (desc, expected_outgoing) = expected_edges_for_vertices(desc,true);
+	
+	after_graph_init(desc, |_, g|{
+		//For each vertex in the graph
+		for v in g.all_vertices() {
+			if let (Ok(v_out), Some(v_expected_out)) = (g.outgoing_edges(v) , expected_outgoing.get(&v)){
+				
+				if !unordered_sublist(&v_out, v_expected_out, |g_edge, &e_v| {
+					e_v == g_edge.sink()
+				} ){
+					return false;
+				}
+				
+			}else {
+				unreachable!();
+			}
+		}
+		//For all vertices, the expected edges were found
+		return true;
+	})
+}
+
+fn init_expected_incoming_edges_subsetof_graph(desc: ArbitraryGraphDescription<u32>) -> bool{
+	
+	let (desc, expected_incoming) = expected_edges_for_vertices(desc, false);
+	
+	after_graph_init(desc, |_, g|{
+		//For each vertex in the graph
+		for v in g.all_vertices() {
+			if let (Ok(v_in), Some(v_expected_in)) = (g.incoming_edges(v) , expected_incoming.get(&v)){
+				
+				if !unordered_sublist(v_expected_in, &v_in, |&e_v, g_edge| {
+					e_v == g_edge.source()
+				} ){
+					return false;
+				}
+				
+			}else {
+				unreachable!();
+			}
+		}
+		//For all vertices, the expected edges were found
+		return true;
+	})
+}
+
+fn init_graph_incoming_edges_subsetof_expected(desc: ArbitraryGraphDescription<u32>) -> bool{
+	
+	let (desc, expected_incoming) = expected_edges_for_vertices(desc, false);
+	
+	after_graph_init(desc, |_, g|{
+		//For each vertex in the graph
+		for v in g.all_vertices() {
+			if let (Ok(v_in), Some(v_expected_in)) = (g.incoming_edges(v) , expected_incoming.get(&v)){
+				
+				if !unordered_sublist(&v_in, v_expected_in, |g_edge, &e_v| {
+					e_v == g_edge.source()
+				} ){
+					return false;
+				}
+				
+			}else {
+				unreachable!();
+			}
+		}
+		//For all vertices, the expected edges were found
+		return true;
+	})
 }
 
 //Test runners
 quickcheck!{
+	fn AdjListGraph_PROP_init_correct_vertex_count(g: ArbitraryGraphDescription<u32>) -> bool {
+		init_correct_vertex_count(g)
+	}
+	fn AdjListGraph_PROP_init_correct_edge_count(g: ArbitraryGraphDescription<u32>) -> bool {
+		init_correct_edge_count(g)
+	}
+	fn AdjListGraph_PROP_init_expected_vertices_subsetof_graph(g: ArbitraryGraphDescription<u32>) -> bool {
+		init_expected_vertices_subsetof_graph(g)
+	}
+	
+	fn AdjListGraph_PROP_init_graph_vertices_subsetof_expected(g: ArbitraryGraphDescription<u32>) -> bool{
+		init_graph_vertices_subsetof_expected(g)
+	}
+	
+	fn AdjListGraph_PROP_init_expected_edges_subsetof_graph(g: ArbitraryGraphDescription<u32>) -> bool {
+		init_expected_edges_subsetof_graph(g)
+	}
+	
+	fn AdjListGraph_PROP_init_graph_edges_subsetof_expected(g: ArbitraryGraphDescription<u32>) -> bool {
+		init_graph_edges_subsetof_expected(g)
+	}
+	
+	fn AdjListGraph_PROP_init_expected_outgoing_edges_subsetof_graph(g: ArbitraryGraphDescription<u32>) -> bool {
+		init_expected_outgoing_edges_subsetof_graph(g)
+	}
+	
+	fn AdjListGraph_PROP_init_graph_outgoing_edges_subsetof_expected(g: ArbitraryGraphDescription<u32>) -> bool {
+		init_graph_outgoing_edges_subsetof_expected(g)
+	}
 
-	fn prop_created_adjListGraph_has_correct_vertex_count(g: ArbitraryGraphDescription<u32>) -> bool{
-		created_adjListGraph_has_correct_vertex_count(g)
+	fn AdjListGraph_PROP_init_expected_incoming_edges_subsetof_graph(g: ArbitraryGraphDescription<u32>) -> bool{
+		init_expected_incoming_edges_subsetof_graph(g)
 	}
 	
-	fn prop_created_adjListGraph_has_correct_edge_count(g: ArbitraryGraphDescription<u32>) -> bool{
-		created_adjListGraph_has_correct_edge_count(g)
-	}
-	
-	fn prop_created_adjListGraph_has_correct_vertex_values(g: ArbitraryGraphDescription<u32>) -> bool{
-		created_adjListGraph_has_correct_vertex_values(g)
-	}
-	
-	fn prop_created_adjListGraph_has_correct_edges(desc: ArbitraryGraphDescription<u32>) -> bool{
-		created_adjListGraph_has_correct_edges(desc)
-	}
-	
-	fn prop_created_adjListGraph_has_correct_outgoing_edges(desc: ArbitraryGraphDescription<u32>) -> bool{
-		created_adjListGraph_has_correct_outgoing_edges(desc)
+	fn AdjListGraph_PROP_init_graph_incoming_edges_subsetof_expected(g: ArbitraryGraphDescription<u32>) -> bool{
+		init_graph_incoming_edges_subsetof_expected(g)
 	}
 }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
