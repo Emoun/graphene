@@ -1,5 +1,5 @@
 
-use graph::FineGrainedGraph;
+use graph::BaseGraph;
 
 pub trait GraphBinding<G>{
 	
@@ -12,20 +12,16 @@ pub trait CollectorBinding<V,G> : GraphBinding<G>{
 	
 }
 
-pub trait Mutable<'a,G,V,E,O,I,Vc,Ec,Oc,Ic>: FineGrainedGraph<'a,
+pub trait Mutable<'a,G,V,E,Vc,Ec,>: BaseGraph<'a,
 	V,
 	Vc,
 	Ec,
-	Oc,
-	Ic,
 >
 	where
-		G:	Mutable<'a,G,V,E,O,I,Vc,Ec,Oc,Ic>,
+		G:	Mutable<'a,G,V,E,Vc,Ec,>,
 		V: 	Clone + Eq,
 		Vc:	CollectorBinding<V,G>,
 		Ec:	CollectorBinding<E,G>,
-		Oc:	CollectorBinding<O,G>,
-		Ec:	CollectorBinding<I,G>,
 {
 	fn get_mutable(self) -> G;
 	

@@ -1,9 +1,9 @@
 
-mod impl_fine_grained_graph;
+mod impl_base_graph;
 mod base_edge;
 
 pub use self::base_edge::*;
-pub use self::impl_fine_grained_graph::*;
+pub use self::impl_base_graph::*;
 
 #[derive(Clone,Debug)]
 pub struct BaseEdge<T>

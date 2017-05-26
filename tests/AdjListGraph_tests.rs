@@ -226,13 +226,13 @@ where
 
 fn init_correct_vertex_count(desc:ArbitraryGraphDescription<u32>) -> bool{
 	after_graph_init(desc, |d, g|{
-		g.vertex_count() == d.vertex_values.len()
+		g.all_vertices().len() == d.vertex_values.len()
 	})
 }
 
 fn init_correct_edge_count(desc: ArbitraryGraphDescription<u32>) -> bool{
 	after_graph_init(desc, |d, g|{
-		g.edge_count() == d.edges.len()
+		g.all_edges().len() == d.edges.len()
 	})
 }
 
@@ -270,102 +270,6 @@ fn init_graph_edges_subsetof_expected(desc: ArbitraryGraphDescription<u32>) -> b
 	})
 }
 
-fn init_expected_outgoing_edges_subsetof_graph(desc: ArbitraryGraphDescription<u32>) -> bool{
-	
-	let (desc, expected_outgoing) = expected_edges_for_vertices(desc, true);
-	
-	after_graph_init(desc, |_, g|{
-		//For each vertex in the graph
-		for v in g.all_vertices() {
-			if let (Ok(v_out), Some(v_expected_out)) = (g.outgoing_edges(v) , expected_outgoing.get(&v)){
-				
-				if !unordered_sublist(v_expected_out, &v_out, |&e_v, g_edge| {
-					e_v == g_edge.sink()
-				} ){
-					return false;
-				}
-				
-			}else {
-				unreachable!();
-			}
-		}
-		//For all vertices, the expected edges were found
-		return true;
-	})
-}
-
-fn init_graph_outgoing_edges_subsetof_expected(desc: ArbitraryGraphDescription<u32>) -> bool{
-	
-	let (desc, expected_outgoing) = expected_edges_for_vertices(desc,true);
-	
-	after_graph_init(desc, |_, g|{
-		//For each vertex in the graph
-		for v in g.all_vertices() {
-			if let (Ok(v_out), Some(v_expected_out)) = (g.outgoing_edges(v) , expected_outgoing.get(&v)){
-				
-				if !unordered_sublist(&v_out, v_expected_out, |g_edge, &e_v| {
-					e_v == g_edge.sink()
-				} ){
-					return false;
-				}
-				
-			}else {
-				unreachable!();
-			}
-		}
-		//For all vertices, the expected edges were found
-		return true;
-	})
-}
-
-fn init_expected_incoming_edges_subsetof_graph(desc: ArbitraryGraphDescription<u32>) -> bool{
-	
-	let (desc, expected_incoming) = expected_edges_for_vertices(desc, false);
-	
-	after_graph_init(desc, |_, g|{
-		//For each vertex in the graph
-		for v in g.all_vertices() {
-			if let (Ok(v_in), Some(v_expected_in)) = (g.incoming_edges(v) , expected_incoming.get(&v)){
-				
-				if !unordered_sublist(v_expected_in, &v_in, |&e_v, g_edge| {
-					e_v == g_edge.source()
-				} ){
-					return false;
-				}
-				
-			}else {
-				unreachable!();
-			}
-		}
-		//For all vertices, the expected edges were found
-		return true;
-	})
-}
-
-fn init_graph_incoming_edges_subsetof_expected(desc: ArbitraryGraphDescription<u32>) -> bool{
-	
-	let (desc, expected_incoming) = expected_edges_for_vertices(desc, false);
-	
-	after_graph_init(desc, |_, g|{
-		//For each vertex in the graph
-		for v in g.all_vertices() {
-			if let (Ok(v_in), Some(v_expected_in)) = (g.incoming_edges(v) , expected_incoming.get(&v)){
-				
-				if !unordered_sublist(&v_in, v_expected_in, |g_edge, &e_v| {
-					e_v == g_edge.source()
-				} ){
-					return false;
-				}
-				
-			}else {
-				unreachable!();
-			}
-		}
-		//For all vertices, the expected edges were found
-		return true;
-	})
-}
-
 //Test runners
 quickcheck!{
 	fn AdjListGraph_PROP_init_correct_vertex_count(g: ArbitraryGraphDescription<u32>) -> bool {
@@ -388,22 +292,6 @@ quickcheck!{
 	
 	fn AdjListGraph_PROP_init_graph_edges_subsetof_expected(g: ArbitraryGraphDescription<u32>) -> bool {
 		init_graph_edges_subsetof_expected(g)
-	}
-	
-	fn AdjListGraph_PROP_init_expected_outgoing_edges_subsetof_graph(g: ArbitraryGraphDescription<u32>) -> bool {
-		init_expected_outgoing_edges_subsetof_graph(g)
-	}
-	
-	fn AdjListGraph_PROP_init_graph_outgoing_edges_subsetof_expected(g: ArbitraryGraphDescription<u32>) -> bool {
-		init_graph_outgoing_edges_subsetof_expected(g)
-	}
-
-	fn AdjListGraph_PROP_init_expected_incoming_edges_subsetof_graph(g: ArbitraryGraphDescription<u32>) -> bool{
-		init_expected_incoming_edges_subsetof_graph(g)
-	}
-	
-	fn AdjListGraph_PROP_init_graph_incoming_edges_subsetof_expected(g: ArbitraryGraphDescription<u32>) -> bool{
-		init_graph_incoming_edges_subsetof_expected(g)
 	}
 }
 
