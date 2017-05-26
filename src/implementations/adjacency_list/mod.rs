@@ -5,10 +5,10 @@ mod base_edge;
 pub use self::base_edge::*;
 pub use self::impl_base_graph::*;
 
-#[derive(Clone,Debug)]
+#[derive(Copy,Clone,Debug,PartialEq,Eq)]
 pub struct BaseEdge<T>
 	where
-		T:Copy,
+		T:Copy+Eq,
 {
 	source: T,
 	sink:T,

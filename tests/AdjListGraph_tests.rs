@@ -8,8 +8,6 @@ extern crate quickcheck;
 use graphene::implementations::adjacency_list::*;
 use graphene::graph::*;
 use quickcheck::{Arbitrary,Gen};
-use std::collections::{HashMap};
-use std::hash::Hash;
 
 #[derive(Clone,Debug)]
 struct ArbitraryGraphDescription<V> where V: Arbitrary{
@@ -65,7 +63,7 @@ impl Arbitrary for ArbitraryGraphDescription<u32>{
 		//Shrink by reducing a vertex value
 		let mut new_values;
 		for (i,&val) in self.vertex_values.iter().enumerate(){
-			if val > 0 {
+			if val > 0  && !self.vertex_values.contains(&(val-1)){
 				new_values = self.vertex_values.clone();
 				new_values[i] = val - 1;
 				result.push(ArbitraryGraphDescription { vertex_values: new_values, edges: self.edges.clone() });
@@ -96,10 +94,10 @@ impl Arbitrary for ArbitraryGraphDescription<u32>{
 					
 					//Any pointing to or from the last edge
 					//now point to v
-					if e.0 == self.vertex_values.len() {
+					if e.0 == self.vertex_values.len()-1 {
 						t_edge.0 = i;
 					}
-					if e.1 == self.vertex_values.len() {
+					if e.1 == self.vertex_values.len()-1 {
 						t_edge.1 = i;
 					}
 					new_edges.push(t_edge);
@@ -134,8 +132,8 @@ quickcheck! {
 /// Returns all the edges in the given description
 /// by the value of the vertices they point to and from
 ///
-fn edges_by_value<V>(desc: ArbitraryGraphDescription<V>)
-	-> (ArbitraryGraphDescription<V>, Vec<(V, V)>)
+fn edges_by_value<V>(desc: &ArbitraryGraphDescription<V>)
+	-> Vec<(V, V)>
 where
 	V: Arbitrary
 {
@@ -146,7 +144,7 @@ where
 		let t_sink = desc.vertex_values[e.1].clone();
 		edges.push((t_source, t_sink));
 	}
-	(desc, edges)
+	edges
 }
 
 fn unordered_sublist<B,P,F>(sublist:&Vec<B>, superlist:&Vec<P>, equal: F) -> bool
@@ -179,96 +177,358 @@ where F: Fn(&B, &P) -> bool,
 	true
 }
 
-fn after_graph_init<V,F>(desc: ArbitraryGraphDescription<V>, holds: F) -> bool
-where 	F: Fn(ArbitraryGraphDescription<V>, AdjListGraph<V>) -> bool,
-		V: Arbitrary + Clone + Eq
+fn after_graph_init<F>(desc: &ArbitraryGraphDescription<u32>, holds: F) -> bool
+where 	F: Fn(AdjListGraph<u32>) -> bool,
 {
 	if let Some(g) = AdjListGraph::new(
 		desc.vertex_values.clone(), desc.edges.clone())
 	{
-		return holds(desc, g);
+		return holds(g);
 	}
 	false
 }
 
-fn expected_edges_for_vertices<V>(desc: ArbitraryGraphDescription<V>, outgoing: bool)
-								  -> (ArbitraryGraphDescription<V>, HashMap<V,Vec<V>>)
-where
-	V:Arbitrary + Clone + Eq + Hash
-{
-	let (desc, edges_by_value) = edges_by_value(desc);
+fn find_addable_value(g:&AdjListGraph<u32>, v:u32)-> u32{
+	let mut new_v = v;
+	while g.all_vertices().contains(&new_v){
+		new_v = if new_v == std::u32::MAX {0}else { new_v + 1 };
+	}
+	new_v
+}
+
+fn add_appropriate_value(g: &mut AdjListGraph<u32>, v: u32) -> u32{
+	let new_v = find_addable_value(&g, v);
 	
-	//Construct expected outgoing/incoming edges for each vertex.
-	//Create the map
-	let mut edges_for = HashMap::new();
-	//Initialize each vertex for empty outgoing
-	for v in desc.vertex_values.iter().cloned(){
-		edges_for.insert(v, Vec::new());
+	g.add_vertex(new_v).unwrap();
+	new_v
+}
+
+fn edges_subsetof_graph(edges: &Vec<(u32,u32)>, g: &AdjListGraph<u32>) -> bool{
+	unordered_sublist(edges, &g.all_edges(), |&expected, ref g_edge|{
+		expected.0 == g_edge.source() &&
+			expected.1 == g_edge.sink()
+	})
+}
+
+fn remove_appropriate_vertex(desc:&ArbitraryGraphDescription<u32>, g: &mut AdjListGraph<u32>,  index:usize)
+-> (usize,u32){
+	let removed_i = appropriate_index(index,desc);
+	let removed_v = desc.vertex_values[removed_i];
+	
+	g.remove_vertex(removed_v).unwrap();
+	(removed_i, removed_v)
+}
+
+fn edges_independent_of_vertex(desc:&ArbitraryGraphDescription<u32>, v: u32) -> Vec<(u32,u32)>{
+	
+	let value_edges = edges_by_value(desc);
+	let mut result = Vec::new();
+	for &e in value_edges.iter().filter(|&&(source,sink)| source != v && sink != v){
+		result.push(e);
 	}
-	//For each edge
-	for e in edges_by_value{
-		if outgoing {
-			//If the outgoing edges are wanted,
-			//Put the sink of the edge in the source's
-			//map
-			edges_for.get_mut(&e.0).unwrap().push(e.1);
-		}else{
-			//If the incoming edges are wanted,
-			//Put the source of the edge in the sink's
-			//map
-			edges_for.get_mut(&e.1).unwrap().push(e.0);
-		}
+	result
+}
+
+fn appropriate_index(i: usize, desc:&ArbitraryGraphDescription<u32>)-> usize{
+	i % desc.vertex_values.len()
+}
+
+fn add_appropriate_edge(desc:&ArbitraryGraphDescription<u32>, g: &mut AdjListGraph<u32>,
+						   source_i_cand: usize, sink_i_cand: usize)
+-> BaseEdge<u32>
+{
+	let source_i = appropriate_index(source_i_cand, desc);
+	let sink_i = appropriate_index(sink_i_cand, desc);
+	
+	let source_v = desc.vertex_values[source_i];
+	let sink_v = desc.vertex_values[sink_i];
+	let added_edge = BaseEdge::new(source_v, sink_v);
+	g.add_edge(added_edge).unwrap();
+	added_edge
+}
+
+fn original_edges_maintained_subsetof_graph_after<F>(desc: ArbitraryGraphDescription<u32>, action: F)
+ -> bool
+where
+	F: Fn(&ArbitraryGraphDescription<u32>, &mut AdjListGraph<u32>) -> ()
+{
+	after_graph_init(&desc, | mut g|{
+		action(&desc, &mut g);
+		edges_subsetof_graph(&edges_by_value(&desc), &g)
+	})
+	
+}
+
+fn graph_subsetof_edges(g: &AdjListGraph<u32>,edges: &Vec<(u32,u32)>) -> bool{
+	unordered_sublist(&g.all_edges(), edges, |ref g_edge, &expected|{
+		expected.0 == g_edge.source() &&
+			expected.1 == g_edge.sink()
+	})
+}
+
+fn unordered_sublist_equal<T>(sublist:&Vec<T>, superlist:&Vec<T>) -> bool
+where
+	T: Eq
+{
+	unordered_sublist(sublist, superlist, |v_sub, v_super|{
+		v_sub == v_super
+	})
+}
+
+fn after_init_and_add_edge<F>(desc: &ArbitraryGraphDescription<u32>,
+						   source_i_cand: usize, sink_i_cand:usize, holds: F)
+-> bool
+where
+	F: Fn(AdjListGraph<u32>, BaseEdge<u32>) -> bool,
+{
+	after_graph_init(desc, |mut g| {
+		let edge = add_appropriate_edge(desc, &mut g, source_i_cand, sink_i_cand);
+		holds(g, edge)
+	})
+}
+
+fn invalidate_vertice(mut v: u32, desc: &ArbitraryGraphDescription<u32>) -> u32{
+	
+	while desc.vertex_values.contains(&v){
+		v =
+			if v == std::u32::MAX {0}
+				else { v + 1 };
 	}
-	(desc, edges_for)
+	v
 }
 
 //Property functions
 
+macro_rules! holds_if{
+	{
+		$e:expr
+	}=> {
+		if $e {
+			return true;
+		}
+	}
+}
+
+
 fn init_correct_vertex_count(desc:ArbitraryGraphDescription<u32>) -> bool{
-	after_graph_init(desc, |d, g|{
-		g.all_vertices().len() == d.vertex_values.len()
+	after_graph_init(&desc, |g|{
+		g.all_vertices().len() == desc.vertex_values.len()
 	})
 }
 
 fn init_correct_edge_count(desc: ArbitraryGraphDescription<u32>) -> bool{
-	after_graph_init(desc, |d, g|{
-		g.all_edges().len() == d.edges.len()
+	after_graph_init(&desc, |g|{
+		g.all_edges().len() == desc.edges.len()
 	})
 }
 
 fn init_expected_vertices_subsetof_graph(desc: ArbitraryGraphDescription<u32>) -> bool{
-	after_graph_init(desc, |d,g|{
-		unordered_sublist(&d.vertex_values, &g.all_vertices(), |e_v, g_v|{
-			e_v == g_v
-		})
+	after_graph_init(&desc, |g|{
+		unordered_sublist_equal(&desc.vertex_values, &g.all_vertices())
 	})
 }
 
 fn init_graph_vertices_subsetof_expected(desc: ArbitraryGraphDescription<u32>) -> bool{
-	after_graph_init(desc, |d,g|{
-		unordered_sublist(&g.all_vertices(), &d.vertex_values, |g_v, e_v|{
-			e_v == g_v
-		})
+	after_graph_init(&desc, |g|{
+		unordered_sublist_equal(&g.all_vertices(), &desc.vertex_values)
 	})
 }
 
 fn init_expected_edges_subsetof_graph(desc: ArbitraryGraphDescription<u32>) -> bool{
-	after_graph_init(desc, |d,g|{
-		unordered_sublist(&edges_by_value(d).1, &g.all_edges(), |&expected, ref g_edge|{
-			expected.0 == g_edge.source() &&
-				expected.1 == g_edge.sink()
+	original_edges_maintained_subsetof_graph_after(desc, |_,_|())
+}
+
+fn init_graph_edges_subsetof_expected(desc: ArbitraryGraphDescription<u32>) -> bool{
+	after_graph_init(&desc, |g|{
+		graph_subsetof_edges(&g, &edges_by_value(&desc))
+	})
+}
+
+fn add_vertex_increases_vertex_count(desc: ArbitraryGraphDescription<u32>, v: u32) -> bool{
+	after_graph_init(&desc, | mut g|{
+		add_appropriate_value(&mut g,v);
+		(desc.vertex_values.len() + 1) == g.all_vertices().len()
+	})
+}
+
+fn add_vertex_maintains_original_vertices(desc: ArbitraryGraphDescription<u32>, v: u32) -> bool{
+	after_graph_init(&desc, | mut g|{
+		add_appropriate_value(&mut g,v);
+		unordered_sublist_equal(&desc.vertex_values, &g.all_vertices())
+	})
+}
+
+fn add_vertex_contains_added_value(desc: ArbitraryGraphDescription<u32>, v: u32) -> bool{
+	after_graph_init(&desc, | mut g|{
+		let new_v = add_appropriate_value(&mut g,v);
+		g.all_vertices().contains(&new_v)
+	})
+}
+
+fn add_vertex_rejects_existing_value(desc: ArbitraryGraphDescription<u32>, v: usize) -> bool{
+	after_graph_init(&desc, | mut g|{
+		holds_if!(g.all_vertices().len() == 0);
+		
+		let verts = g.all_vertices();
+		let i =  v % verts.len();
+		
+		g.add_vertex(verts[i]).is_err()
+	})
+}
+
+fn add_vertex_maintains_edge_count(desc: ArbitraryGraphDescription<u32>, v: u32) -> bool{
+	after_graph_init(&desc, | mut g|{
+		add_appropriate_value(&mut g,v);
+		desc.edges.len() == g.all_edges().len()
+	})
+}
+
+fn add_vertex_maintains_original_edges(desc: ArbitraryGraphDescription<u32>, v: u32) -> bool{
+	
+	original_edges_maintained_subsetof_graph_after(desc, |_, g|{
+		add_appropriate_value(g,v);
+	})
+}
+
+fn remove_vertex_decreases_vertex_count(desc: ArbitraryGraphDescription<u32>, i: usize) -> bool{
+	holds_if!{desc.vertex_values.len() == 0};
+	
+	after_graph_init(&desc, | mut g|{
+		remove_appropriate_vertex(&desc,&mut g,i);
+		(desc.vertex_values.len() - 1) == g.all_vertices().len()
+	})
+}
+
+fn remove_vertex_maintains_unremoved_vertices(desc: ArbitraryGraphDescription<u32>, i: usize) -> bool{
+	holds_if!{desc.vertex_values.len() == 0};
+	
+	after_graph_init(&desc, | mut g|{
+		let (rem_i, _) = remove_appropriate_vertex(&desc,&mut g,i);
+		let mut vertex_clones = desc.vertex_values.clone();
+		vertex_clones.remove(rem_i);
+		unordered_sublist_equal(&vertex_clones, &g.all_vertices())
+	})
+}
+
+fn remove_vertex_removes_vertex_from_graph(desc: ArbitraryGraphDescription<u32>, i: usize) -> bool{
+	holds_if!{desc.vertex_values.len() == 0};
+	
+	after_graph_init(&desc, | mut g|{
+		let (_, removed_v) = remove_appropriate_vertex(&desc,&mut g,i);
+		
+		!g.all_vertices().contains(&removed_v)
+	})
+}
+
+fn remove_vertex_after_independent_edges_subsetof_graph(desc: ArbitraryGraphDescription<u32>, i: usize) -> bool{
+	holds_if!{desc.vertex_values.len() == 0};
+	
+	after_graph_init(&desc, | mut g|{
+		let (_, removed_v) = remove_appropriate_vertex(&desc,&mut g,i);
+		let indy_edges = edges_independent_of_vertex(&desc, removed_v);
+		
+		unordered_sublist(&indy_edges, &g.all_edges(), |&(e_source, e_sink), g_edge|{
+			e_source == g_edge.source() &&
+				e_sink == g_edge.sink()
 		})
 	})
 }
 
-fn init_graph_edges_subsetof_expected(desc: ArbitraryGraphDescription<u32>) -> bool{
-	after_graph_init(desc, |d,g|{
-		unordered_sublist(&g.all_edges(), &edges_by_value(d).1, |ref g_edge, &expected|{
-			expected.0 == g_edge.source() &&
-				expected.1 == g_edge.sink()
+fn remove_vertex_after_graph_subsetof_independent_edges(desc: ArbitraryGraphDescription<u32>, i: usize) -> bool{
+	holds_if!{desc.vertex_values.len() == 0};
+	
+	after_graph_init(&desc, | mut g|{
+		let (_, removed_v) = remove_appropriate_vertex(&desc,&mut g,i);
+		
+		let indy_edges = edges_independent_of_vertex(&desc, removed_v);
+		
+		unordered_sublist(&g.all_edges(), &indy_edges, |g_edge, &(e_source, e_sink)|{
+			e_source == g_edge.source() &&
+				e_sink == g_edge.sink()
 		})
 	})
 }
+
+fn remove_vertex_rejects_absent_vertex(desc: ArbitraryGraphDescription<u32>, v:u32) -> bool{
+	
+	after_graph_init(&desc, | mut g|{
+		let mut value = v;
+		while g.all_vertices().contains(&value){
+			value += 1;
+		}
+		
+		g.remove_vertex(value).is_err()
+	})
+}
+
+fn add_edge_increases_edge_count(desc: ArbitraryGraphDescription<u32>,
+								 source_i_cand: usize, sink_i_cand:usize)
+	-> bool
+{
+	holds_if!(desc.vertex_values.len() == 0);
+	
+	after_init_and_add_edge(&desc, source_i_cand, sink_i_cand, |g,_|{
+		g.all_edges().len() == (desc.edges.len() + 1)
+	})
+}
+
+fn add_edge_maintain_original_edges(desc: ArbitraryGraphDescription<u32>,
+									source_i_cand: usize, sink_i_cand:usize)
+									-> bool
+{
+	holds_if!(desc.vertex_values.len() == 0);
+	
+	original_edges_maintained_subsetof_graph_after(desc, |d, g|{
+		add_appropriate_edge(d, g, source_i_cand,sink_i_cand);
+	})
+}
+
+fn add_edge_graph_subsetof_original_edges_and_added_edge(desc: ArbitraryGraphDescription<u32>,
+							   source_i_cand: usize, sink_i_cand:usize)
+							   -> bool
+{
+	holds_if!(desc.vertex_values.len() == 0);
+	after_graph_init(&desc, |mut g|{
+		let edge = add_appropriate_edge(&desc,&mut g, source_i_cand, sink_i_cand);
+		let mut original_edges_v = edges_by_value(&desc);
+		original_edges_v.push((edge.source(), edge.sink()));
+		graph_subsetof_edges(&g, &original_edges_v)
+	})
+}
+
+fn add_edge_maintains_vertices(desc: ArbitraryGraphDescription<u32>,
+							   source_i_cand: usize, sink_i_cand:usize)
+							   -> bool
+{
+	holds_if!(desc.vertex_values.len() == 0);
+	after_init_and_add_edge(&desc, source_i_cand, sink_i_cand, |g, _|{
+		unordered_sublist_equal(&desc.vertex_values, &g.all_vertices()) &&
+			unordered_sublist_equal(&g.all_vertices(), &desc.vertex_values)
+	})
+}
+
+fn add_edge_reject_invalid_source(desc: ArbitraryGraphDescription<u32>,
+								  source: u32, sink: u32) -> bool
+{
+	after_graph_init(&desc, | mut g|{
+		let invalid_source = invalidate_vertice(source, &desc);
+		
+		g.add_edge(BaseEdge::new(invalid_source, sink)).is_err()
+	})
+}
+
+fn add_edge_reject_invalid_sink(desc: ArbitraryGraphDescription<u32>,
+								  source: u32, sink: u32) -> bool
+{
+	after_graph_init(&desc, | mut g|{
+		let invalid_sink = invalidate_vertice(sink, &desc);
+		
+		g.add_edge(BaseEdge::new(source ,invalid_sink)).is_err()
+	})
+}
+
+
+
 
 //Test runners
 quickcheck!{
@@ -292,6 +552,90 @@ quickcheck!{
 	
 	fn AdjListGraph_PROP_init_graph_edges_subsetof_expected(g: ArbitraryGraphDescription<u32>) -> bool {
 		init_graph_edges_subsetof_expected(g)
+	}
+	
+	fn AdjListGraph_PROP_add_vertex_increases_vertex_count(desc: ArbitraryGraphDescription<u32>, v: u32) -> bool{
+		add_vertex_increases_vertex_count(desc, v)
+	}
+	
+	fn AdjListGraph_PROP_add_vertex_maintains_original_vertices(desc: ArbitraryGraphDescription<u32>, v: u32) -> bool{
+		add_vertex_maintains_original_vertices(desc, v)
+	}
+
+	fn AdjListGraph_PROP_add_vertex_contains_added_value(desc: ArbitraryGraphDescription<u32>, v: u32) -> bool{
+		add_vertex_contains_added_value(desc,v)
+	}
+	
+	fn AdjListGraph_PROP_add_vertex_rejects_existing_value(desc: ArbitraryGraphDescription<u32>, v: usize) -> bool{
+		add_vertex_rejects_existing_value(desc, v)
+	}
+	
+	fn AdjListGraph_PROP_add_vertex_maintains_edge_count(desc: ArbitraryGraphDescription<u32>, v: u32) -> bool{
+		add_vertex_maintains_edge_count(desc, v)
+	}
+	
+	fn AdjListGraph_PROP_add_vertex_maintains_original_edges(desc: ArbitraryGraphDescription<u32>, v: u32) -> bool{
+		add_vertex_maintains_original_edges(desc, v)
+	}
+	
+	fn AdjListGraph_PROP_remove_vertex_decreases_vertex_count(desc: ArbitraryGraphDescription<u32>, i: usize) -> bool{
+		remove_vertex_decreases_vertex_count(desc,i)
+	}
+	
+	fn AdjListGraph_PROP_remove_vertex_maintains_unremoved_vertices(desc: ArbitraryGraphDescription<u32>, i: usize) -> bool{
+		remove_vertex_maintains_unremoved_vertices(desc, i)
+	}
+	
+	fn AdjListGraph_PROP_remove_vertex_removes_vertex_from_graph(desc: ArbitraryGraphDescription<u32>, i: usize) -> bool{
+		remove_vertex_removes_vertex_from_graph(desc, i)
+	}
+	
+	fn AdjListGraph_PROP_remove_vertex_after_independent_edges_subsetof_graph(desc: ArbitraryGraphDescription<u32>, i: usize) -> bool{
+		remove_vertex_after_independent_edges_subsetof_graph(desc, i)
+	}
+	
+	fn AdjListGraph_PROP_remove_vertex_after_graph_subsetof_independent_edges(desc: ArbitraryGraphDescription<u32>, i: usize) -> bool{
+		remove_vertex_after_graph_subsetof_independent_edges(desc, i)
+	}
+	
+	fn AdjListGraph_PROP_remove_vertex_rejects_absent_vertex(desc: ArbitraryGraphDescription<u32>, v:u32) -> bool{
+		remove_vertex_rejects_absent_vertex(desc, v)
+	}
+	
+	fn AdjListGraph_PROP_add_edge_increases_edge_count(desc: ArbitraryGraphDescription<u32>,
+								 source_i_cand: usize, sink_i_cand:usize)
+	-> bool{
+		add_edge_increases_edge_count(desc, source_i_cand, sink_i_cand)
+	}
+	
+	fn AdjListGraph_PROP_add_edge_maintain_original_edges(desc: ArbitraryGraphDescription<u32>,
+								 source_i_cand: usize, sink_i_cand:usize)
+	-> bool{
+		add_edge_maintain_original_edges(desc, source_i_cand, sink_i_cand)
+	}
+	
+	fn AdjListGraph_PROP_add_edge_graph_subsetof_original_edges_and_added_edge
+	(desc: ArbitraryGraphDescription<u32>,source_i_cand: usize, sink_i_cand:usize)
+	-> bool{
+		add_edge_graph_subsetof_original_edges_and_added_edge(desc, source_i_cand, sink_i_cand)
+	}
+	
+	fn AdjListGraph_PROP_add_edge_maintains_vertices
+	(desc: ArbitraryGraphDescription<u32>,source_i_cand: usize, sink_i_cand:usize)
+	-> bool{
+		add_edge_maintains_vertices(desc, source_i_cand, sink_i_cand)
+	}
+	
+	fn AdjListGraph_PROP_add_edge_reject_invalid_source
+	(desc: ArbitraryGraphDescription<u32>,source: u32, sink:u32)
+	-> bool{
+		add_edge_reject_invalid_source(desc, source, sink)
+	}
+	
+	fn AdjListGraph_PROP_add_edge_reject_invalid_sink
+	(desc: ArbitraryGraphDescription<u32>,source: u32, sink:u32)
+	-> bool{
+		add_edge_reject_invalid_sink(desc, source, sink)
 	}
 }
 
