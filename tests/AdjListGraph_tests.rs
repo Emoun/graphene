@@ -247,6 +247,20 @@ fn add_appropriate_edge(desc:&ArbitraryGraphDescription<u32>, g: &mut AdjListGra
 	added_edge
 }
 
+fn remove_appropriate_edge(desc:&ArbitraryGraphDescription<u32>, g: &mut AdjListGraph<u32>,
+							edge_index_cand: usize)
+-> (usize, BaseEdge<u32>)
+{
+	let edge_index = edge_index_cand % desc.edges.len();
+	let v_source_i = desc.edges[edge_index].0;
+	let v_sink_i = desc.edges[edge_index].1;
+	
+	let edge = BaseEdge::new(desc.vertex_values[v_source_i], desc.vertex_values[v_sink_i]);
+	
+	g.remove_edge(edge).unwrap();
+	(edge_index, edge)
+}
+
 fn original_edges_maintained_subsetof_graph_after<F>(desc: ArbitraryGraphDescription<u32>, action: F)
  -> bool
 where
@@ -287,6 +301,19 @@ where
 	})
 }
 
+fn after_init_and_remove_edge<F>(desc: &ArbitraryGraphDescription<u32>,
+							  edge_index: usize, holds: F)
+							  -> bool
+	where
+		F: Fn(AdjListGraph<u32>, (usize, BaseEdge<u32>)) -> bool,
+{
+	after_graph_init(desc, |mut g| {
+		let edge = remove_appropriate_edge(desc, &mut g, edge_index);
+		holds(g, edge)
+	})
+}
+
+
 fn invalidate_vertice(mut v: u32, desc: &ArbitraryGraphDescription<u32>) -> u32{
 	
 	while desc.vertex_values.contains(&v){
@@ -295,6 +322,20 @@ fn invalidate_vertice(mut v: u32, desc: &ArbitraryGraphDescription<u32>) -> u32{
 				else { v + 1 };
 	}
 	v
+}
+
+fn equal_description_and_graph_vertices(desc: &ArbitraryGraphDescription<u32>, g: &AdjListGraph<u32> )
+										-> bool
+{
+	unordered_sublist_equal(&desc.vertex_values, &g.all_vertices()) &&
+		unordered_sublist_equal(&g.all_vertices(), &desc.vertex_values)
+}
+
+fn equal_description_and_graph_edges(desc: &ArbitraryGraphDescription<u32>, g: &AdjListGraph<u32> )
+										-> bool
+{
+	edges_subsetof_graph(&edges_by_value(&desc), &g) &&
+		graph_subsetof_edges(&g, &edges_by_value(&desc))
 }
 
 //Property functions
@@ -502,8 +543,7 @@ fn add_edge_maintains_vertices(desc: ArbitraryGraphDescription<u32>,
 {
 	holds_if!(desc.vertex_values.len() == 0);
 	after_init_and_add_edge(&desc, source_i_cand, sink_i_cand, |g, _|{
-		unordered_sublist_equal(&desc.vertex_values, &g.all_vertices()) &&
-			unordered_sublist_equal(&g.all_vertices(), &desc.vertex_values)
+		equal_description_and_graph_vertices(&desc, &g)
 	})
 }
 
@@ -527,7 +567,91 @@ fn add_edge_reject_invalid_sink(desc: ArbitraryGraphDescription<u32>,
 	})
 }
 
+fn remove_edge_decreases_edge_count(desc: ArbitraryGraphDescription<u32>,
+								edge_index: usize) -> bool
+{
+	holds_if!(desc.edges.len() == 0);
+	after_init_and_remove_edge(&desc, edge_index, |g, _|{
+		(desc.edges.len() -1) == g.all_edges().len()
+	})
+}
 
+fn remove_edge_maintains_vertices(desc: ArbitraryGraphDescription<u32>,
+								  edge_index: usize) -> bool
+{
+	holds_if!(desc.edges.len() == 0);
+	
+	after_init_and_remove_edge(&desc, edge_index, |g, _|{
+		equal_description_and_graph_vertices(&desc, &g)
+	})
+}
+
+fn remove_edge_after_graph_is_equals_to_desc_minus_edge(desc: ArbitraryGraphDescription<u32>,
+														edge_index: usize) -> bool
+{
+	holds_if!(desc.edges.len() == 0);
+	
+	after_init_and_remove_edge(&desc, edge_index, |g, (i,_)|{
+		let mut desc_clone = desc.clone();
+		desc_clone.edges.remove(i);
+		equal_description_and_graph_edges(&desc_clone, &g)
+	})
+}
+
+fn remove_edge_rejects_non_edge(	desc: ArbitraryGraphDescription<u32>,
+									source_i_cand:usize, sink_i_cand: usize)
+	-> bool
+{
+	holds_if!(desc.vertex_values.len() == 0);
+	after_graph_init(&desc, |mut g|{
+		let v_nr = desc.vertex_values.len();
+		let mut source_i = source_i_cand % v_nr;
+		let mut sink_i = sink_i_cand % v_nr;
+		
+		let mut i = 0;
+		while desc.edges.contains(&(source_i, sink_i)) && i<v_nr {
+			source_i += 1;
+			source_i %= v_nr;
+			let mut j = 0;
+			while desc.edges.contains(&(source_i,sink_i)) && j < v_nr{
+				sink_i += 1;
+				sink_i %= v_nr;
+				j += 1;
+			}
+			i += 1;
+		}
+		if desc.edges.contains(&(source_i, sink_i)) {
+			//The graph contains all edge possibilities.
+			//Since we cannot find an edge that is not present,
+			//the property must hold
+			return true;
+		}
+		let edge = BaseEdge::new(desc.vertex_values[source_i], desc.vertex_values[sink_i]);
+		g.remove_edge(edge).is_err()
+	})
+}
+
+fn remove_edge_rejects_invalid_source(	desc: ArbitraryGraphDescription<u32>,
+									source:u32, sink: u32)
+									-> bool
+{
+	after_graph_init(&desc, | mut g|{
+		let invalid_source = invalidate_vertice(source, &desc);
+		
+		g.remove_edge(BaseEdge::new(invalid_source, sink)).is_err()
+	})
+}
+
+fn remove_edge_rejects_invalid_sink(	desc: ArbitraryGraphDescription<u32>,
+										  source:u32, sink: u32)
+										  -> bool
+{
+	after_graph_init(&desc, | mut g|{
+		let invalid_sink = invalidate_vertice(sink, &desc);
+		
+		g.remove_edge(BaseEdge::new(source, invalid_sink)).is_err()
+	})
+}
 
 
 //Test runners
@@ -636,6 +760,44 @@ quickcheck!{
 	(desc: ArbitraryGraphDescription<u32>,source: u32, sink:u32)
 	-> bool{
 		add_edge_reject_invalid_sink(desc, source, sink)
+	}
+	
+	fn AdjListGraph_PROP_remove_edge_decreases_edge_count
+	(desc: ArbitraryGraphDescription<u32>, edge_index: usize)
+	-> bool{
+		remove_edge_decreases_edge_count(desc, edge_index)
+	}
+	
+	fn AdjListGraph_PROP_remove_edge_maintains_vertices
+	(desc: ArbitraryGraphDescription<u32>, edge_index: usize)
+	-> bool{
+		remove_edge_maintains_vertices(desc, edge_index)
+	}
+	
+	fn AdjListGraph_PROP_remove_edge_after_graph_is_equals_to_desc_minus_edge
+	(desc: ArbitraryGraphDescription<u32>, edge_index: usize)
+	-> bool{
+		remove_edge_after_graph_is_equals_to_desc_minus_edge(desc, edge_index)
+	}
+
+	fn AdjListGraph_PROP_remove_edge_rejects_non_edge
+	(desc: ArbitraryGraphDescription<u32>, source: usize, sink:usize)
+	-> bool{
+		remove_edge_rejects_non_edge(desc, source, sink)
+	}
+	
+	fn AdjListGraph_PROP_remove_edge_rejects_invalid_source
+	(desc: ArbitraryGraphDescription<u32>,source:u32, sink: u32)
+	-> bool
+	{
+		remove_edge_rejects_invalid_source(desc, source, sink)
+	}
+	
+	fn AdjListGraph_PROP_remove_edge_rejects_invalid_sink
+	(desc: ArbitraryGraphDescription<u32>,source:u32, sink: u32)
+	-> bool
+	{
+		remove_edge_rejects_invalid_sink(desc, source, sink)
 	}
 }
 

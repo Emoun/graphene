@@ -123,7 +123,13 @@ where
 	}
 	
 	pub fn remove_edge(&mut self, e: BaseEdge<T>)-> Result<BaseEdge<T>, BaseEdge<T>>{
-		unimplemented!()
+		self.if_valid_edge(e, |s, source_i, sink_i|{
+			if let Some(i) = s.edges[source_i].iter().position(|&sink_cand| sink_cand == sink_i) {
+				s.edges[source_i].remove(i);
+				return Ok(e);
+			}
+			Err(e)
+		})
 	}
 	
 }
