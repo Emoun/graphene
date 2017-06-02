@@ -1,5 +1,7 @@
-//Imports submodule usize_graph
+//!
+//! Contains common graph implementations.
+//!
+
 pub mod adjacency_list;
 
-// exports identifiers from usize_graph submodule to any user of self (common)
 
