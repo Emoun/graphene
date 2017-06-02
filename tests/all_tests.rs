@@ -6,5 +6,5 @@ extern crate graphene;
 #[macro_use]
 extern crate quickcheck;
 
-mod implementations;
+mod common;
 mod arbitraries;

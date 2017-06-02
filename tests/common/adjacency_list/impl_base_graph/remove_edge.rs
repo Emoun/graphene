@@ -54,7 +54,7 @@ fn rejects_non_edge(	desc: ArbitraryGraphDescription<u32>,
 			i += 1;
 		}
 		if desc.edges.contains(&(source_i, sink_i)) {
-			//The graph contains all edge possibilities.
+			//The core contains all edge possibilities.
 			//Since we cannot find an edge that is not present,
 			//the property must hold
 			return true;

@@ -3,7 +3,7 @@ mod impl_base_graph;
 
 pub use self::impl_base_graph::*;
 
-use graph::*;
+use core::*;
 
 #[derive(Clone, Debug)]
 pub struct AdjListGraph<T> {

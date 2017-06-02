@@ -1,5 +1,5 @@
-use implementations::adjacency_list::*;
-use graph::*;
+use common::adjacency_list::*;
+use core::*;
 
 
 
@@ -97,7 +97,7 @@ for AdjListGraph<T>
 			self.edges.swap_remove(v_i);
 			return Ok(());
 		}
-		//Vertex not part of the graph
+		//Vertex not part of the core
 		Err(())
 	}
 	

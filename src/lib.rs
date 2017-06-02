@@ -1,2 +1,2 @@
-pub mod graph;
-pub mod implementations;
+pub mod core;
+pub mod common;

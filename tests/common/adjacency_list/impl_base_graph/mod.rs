@@ -6,5 +6,5 @@ mod remove_vertex;
 
 use super::utilities::*;
 #[allow(unused_imports)]
-use graphene::graph::*;
+use graphene::core::*;
 use arbitraries::*;

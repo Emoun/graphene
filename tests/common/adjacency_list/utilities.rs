@@ -1,6 +1,6 @@
 
-use graphene::implementations::adjacency_list::*;
-use graphene::graph::*;
+use graphene::common::adjacency_list::*;
+use graphene::core::*;
 use quickcheck::*;
 use arbitraries::*;
 use std;
