@@ -59,7 +59,7 @@ fn rejects_non_edge(	desc: ArbitraryGraphDescription<u32>,
 			//the property must hold
 			return true;
 		}
-		let edge = BaseEdge::new(desc.vertex_values[source_i], desc.vertex_values[sink_i]);
+		let edge = BaseEdge::new(desc.vertex_values[source_i], desc.vertex_values[sink_i],());
 		g.remove_edge(edge).is_err()
 	})
 }
@@ -71,7 +71,7 @@ fn rejects_invalid_source(	desc: ArbitraryGraphDescription<u32>,
 	after_graph_init(&desc, | mut g|{
 		let invalid_source = invalidate_vertice(source, &desc);
 		
-		g.remove_edge(BaseEdge::new(invalid_source, sink)).is_err()
+		g.remove_edge(BaseEdge::new(invalid_source, sink,())).is_err()
 	})
 }
 
@@ -82,7 +82,7 @@ fn rejects_invalid_sink(	desc: ArbitraryGraphDescription<u32>,
 	after_graph_init(&desc, | mut g|{
 		let invalid_sink = invalidate_vertice(sink, &desc);
 		
-		g.remove_edge(BaseEdge::new(source, invalid_sink)).is_err()
+		g.remove_edge(BaseEdge::new(source, invalid_sink,())).is_err()
 	})
 }
 

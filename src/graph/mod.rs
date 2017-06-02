@@ -1,5 +1,5 @@
+mod base_graph;
+mod base_edge;
 
-mod mutable;
-mod graph;
-pub use self::mutable::*;
-pub use self::graph::*;
+pub use self::base_graph::*;
+pub use self::base_edge::*;

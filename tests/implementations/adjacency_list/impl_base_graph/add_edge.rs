@@ -52,7 +52,7 @@ fn reject_invalid_source(desc: ArbitraryGraphDescription<u32>,
 	after_graph_init(&desc, | mut g|{
 		let invalid_source = invalidate_vertice(source, &desc);
 		
-		g.add_edge(BaseEdge::new(invalid_source, sink)).is_err()
+		g.add_edge(BaseEdge::new(invalid_source, sink,())).is_err()
 	})
 }
 
@@ -62,7 +62,7 @@ fn reject_invalid_sink(desc: ArbitraryGraphDescription<u32>,
 	after_graph_init(&desc, | mut g|{
 		let invalid_sink = invalidate_vertice(sink, &desc);
 		
-		g.add_edge(BaseEdge::new(source ,invalid_sink)).is_err()
+		g.add_edge(BaseEdge::new(source ,invalid_sink,())).is_err()
 	})
 }
 

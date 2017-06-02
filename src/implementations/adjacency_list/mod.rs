@@ -1,18 +1,9 @@
 
 mod impl_base_graph;
-mod base_edge;
 
-pub use self::base_edge::*;
 pub use self::impl_base_graph::*;
 
-#[derive(Copy,Clone,Debug,PartialEq,Eq)]
-pub struct BaseEdge<T>
-	where
-		T:Copy+Eq,
-{
-	source: T,
-	sink:T,
-}
+use graph::*;
 
 #[derive(Clone, Debug)]
 pub struct AdjListGraph<T> {
@@ -22,7 +13,7 @@ pub struct AdjListGraph<T> {
 
 impl<T> AdjListGraph<T>
 	where
-		T: Eq + Clone
+		T: Eq + Copy
 {
 	
 	pub fn new(values: Vec<T>, edges: Vec<(usize, usize)>) -> Option<AdjListGraph<T>> {
@@ -59,5 +50,15 @@ impl<T> AdjListGraph<T>
 		}
 	}
 	
+	fn if_valid_edge<F>(&mut self, e:BaseEdge<T,()>, cont: F) -> Result<(), ()>
+		where F: Fn(&mut Self,usize, usize)-> Result<(),()>
+	{
+		if let (Some(source_i), Some(sink_i))
+		= (self.get_index(e.source()), self.get_index(e.sink()))
+			{
+				return cont(self, source_i, sink_i);
+			}
+		Err(())
+	}
 }
 

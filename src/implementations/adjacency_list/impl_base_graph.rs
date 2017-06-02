@@ -3,15 +3,17 @@ use graph::*;
 
 
 
-impl<'a, T> BaseGraph<'a,
-	T,
-	Vec<T>,
-	Vec<BaseEdge<T>>,
->
+impl<'a, T> BaseGraph<'a>
 for AdjListGraph<T>
 	where
 		T: Copy + Eq
 {
+	type Vertex = T;
+	type Weight = ();
+	type VertexIter = Vec<T>;
+	type EdgeIter = Vec<BaseEdge<T,()>>;
+	
+	
 	fn all_vertices(&'a self) -> Vec<T> {
 		let mut result = Vec::new();
 		
@@ -22,7 +24,7 @@ for AdjListGraph<T>
 		result
 	}
 	
-	fn all_edges(&'a self) -> Vec<BaseEdge<T>> {
+	fn all_edges(&'a self) -> Vec<BaseEdge<T,()>> {
 		let mut result = Vec::new();
 		
 		//For each vertex (source)
@@ -32,40 +34,24 @@ for AdjListGraph<T>
 			for &sink_i in out.iter() {
 				let sink_value = self.values[sink_i];
 				//Return the edge
-				result.push(BaseEdge { source: source_value, sink: sink_value });
+				result.push(BaseEdge::new(source_value, sink_value,()));
 			}
 		}
 		result
 	}
-}
-
-impl<T> AdjListGraph<T>
-where
-	T: Copy + Eq
-{
-	fn if_valid_edge<F>(&mut self, e:BaseEdge<T>, cont: F) -> Result<BaseEdge<T>, BaseEdge<T>>
-		where F: Fn(&mut Self,usize, usize)-> Result<BaseEdge<T>, BaseEdge<T>>
-	{
-		if let (Some(source_i), Some(sink_i))
-		= (self.get_index(e.source()), self.get_index(e.sink()))
-			{
-				return cont(self, source_i, sink_i);
-			}
-		Err(e)
-	}
 	
-	pub fn add_vertex(&mut self, v: T) -> Result<T,T>{
+	fn add_vertex(&mut self, v: T) -> Result<(),()>{
 		
 		if self.values.contains(&v){
-			Err(v)
+			Err(())
 		}else{
 			self.values.push(v);
 			self.edges.push(Vec::new());
-			Ok(v)
+			Ok(())
 		}
 	}
 	
-	pub fn remove_vertex(&mut self, v: T) -> Result<T,T>{
+	fn remove_vertex(&mut self, v: T) -> Result<(),()>{
 		//Get index of vertex
 		if let Some(v_i) = self.get_index(v){
 			/* Remove all incoming edges to v
@@ -109,30 +95,30 @@ where
 			 */
 			self.values.swap_remove(v_i);
 			self.edges.swap_remove(v_i);
-			return Ok(v);
+			return Ok(());
 		}
 		//Vertex not part of the graph
-		Err(v)
+		Err(())
 	}
 	
-	pub fn add_edge(&mut self, e: BaseEdge<T>) -> Result<BaseEdge<T>, BaseEdge<T>>{
+	fn add_edge(&mut self, e: BaseEdge<T,()>) -> Result<(), ()>{
 		self.if_valid_edge( e, |s, source_i, sink_i|{
 			s.edges[source_i].push(sink_i);
-			Ok(e)
+			Ok(())
 		})
 	}
 	
-	pub fn remove_edge(&mut self, e: BaseEdge<T>)-> Result<BaseEdge<T>, BaseEdge<T>>{
+	fn remove_edge(&mut self, e: BaseEdge<T,()>)-> Result<(), ()>{
 		self.if_valid_edge(e, |s, source_i, sink_i|{
 			if let Some(i) = s.edges[source_i].iter().position(|&sink_cand| sink_cand == sink_i) {
 				s.edges[source_i].remove(i);
-				return Ok(e);
+				return Ok(());
 			}
-			Err(e)
+			Err(())
 		})
 	}
-	
 }
+
 
 
 

@@ -126,27 +126,27 @@ pub fn appropriate_index(i: usize, desc:&ArbitraryGraphDescription<u32>)-> usize
 
 pub fn add_appropriate_edge(desc:&ArbitraryGraphDescription<u32>, g: &mut AdjListGraph<u32>,
 						   source_i_cand: usize, sink_i_cand: usize)
--> BaseEdge<u32>
+-> BaseEdge<u32,()>
 {
 	let source_i = appropriate_index(source_i_cand, desc);
 	let sink_i = appropriate_index(sink_i_cand, desc);
 	
 	let source_v = desc.vertex_values[source_i];
 	let sink_v = desc.vertex_values[sink_i];
-	let added_edge = BaseEdge::new(source_v, sink_v);
+	let added_edge = BaseEdge::new(source_v, sink_v,());
 	g.add_edge(added_edge).unwrap();
 	added_edge
 }
 
 pub fn remove_appropriate_edge(desc:&ArbitraryGraphDescription<u32>, g: &mut AdjListGraph<u32>,
 							edge_index_cand: usize)
--> (usize, BaseEdge<u32>)
+-> (usize, BaseEdge<u32,()>)
 {
 	let edge_index = edge_index_cand % desc.edges.len();
 	let v_source_i = desc.edges[edge_index].0;
 	let v_sink_i = desc.edges[edge_index].1;
 	
-	let edge = BaseEdge::new(desc.vertex_values[v_source_i], desc.vertex_values[v_sink_i]);
+	let edge = BaseEdge::new(desc.vertex_values[v_source_i], desc.vertex_values[v_sink_i],());
 	
 	g.remove_edge(edge).unwrap();
 	(edge_index, edge)
@@ -184,7 +184,7 @@ pub fn after_init_and_add_edge<F>(desc: &ArbitraryGraphDescription<u32>,
 						   source_i_cand: usize, sink_i_cand:usize, holds: F)
 -> bool
 where
-	F: Fn(AdjListGraph<u32>, BaseEdge<u32>) -> bool,
+	F: Fn(AdjListGraph<u32>, BaseEdge<u32,()>) -> bool,
 {
 	after_graph_init(desc, |mut g| {
 		let edge = add_appropriate_edge(desc, &mut g, source_i_cand, sink_i_cand);
@@ -196,7 +196,7 @@ pub fn after_init_and_remove_edge<F>(desc: &ArbitraryGraphDescription<u32>,
 							  edge_index: usize, holds: F)
 							  -> bool
 	where
-		F: Fn(AdjListGraph<u32>, (usize, BaseEdge<u32>)) -> bool,
+		F: Fn(AdjListGraph<u32>, (usize, BaseEdge<u32,()>)) -> bool,
 {
 	after_graph_init(desc, |mut g| {
 		let edge = remove_appropriate_edge(desc, &mut g, edge_index);
