@@ -3,18 +3,18 @@ use core::*;
 
 
 
-impl<'a, T> BaseGraph<'a>
-for AdjListGraph<T>
-	where
-		T: Copy + Eq
+impl<'a, V,W> BaseGraph<'a> for AdjListGraph<V,W>
+where
+	V: Copy + Eq,
+	W: Copy + Eq,
 {
-	type Vertex = T;
-	type Weight = ();
-	type VertexIter = Vec<T>;
-	type EdgeIter = Vec<BaseEdge<T,()>>;
+	type Vertex = V;
+	type Weight = W;
+	type VertexIter = Vec<V>;
+	type EdgeIter = Vec<BaseEdge<V,W>>;
 	
 	
-	fn all_vertices(&'a self) -> Vec<T> {
+	fn all_vertices(&'a self) -> Vec<V> {
 		let mut result = Vec::new();
 		
 		//For each value, output a copy
@@ -24,23 +24,23 @@ for AdjListGraph<T>
 		result
 	}
 	
-	fn all_edges(&'a self) -> Vec<BaseEdge<T,()>> {
+	fn all_edges(&'a self) -> Vec<BaseEdge<V,W>> {
 		let mut result = Vec::new();
 		
 		//For each vertex (source)
 		for (source_i, ref out) in self.edges.iter().enumerate() {
 			let source_value = self.values[source_i];
 			//For each outgoing edge (sink)
-			for &sink_i in out.iter() {
+			for &(sink_i, weight ) in out.iter() {
 				let sink_value = self.values[sink_i];
 				//Return the edge
-				result.push(BaseEdge::new(source_value, sink_value,()));
+				result.push(BaseEdge::new(source_value, sink_value, weight));
 			}
 		}
 		result
 	}
 	
-	fn add_vertex(&mut self, v: T) -> Result<(),()>{
+	fn add_vertex(&mut self, v: V) -> Result<(),()>{
 		
 		if self.values.contains(&v){
 			Err(())
@@ -51,7 +51,7 @@ for AdjListGraph<T>
 		}
 	}
 	
-	fn remove_vertex(&mut self, v: T) -> Result<(),()>{
+	fn remove_vertex(&mut self, v: V) -> Result<(),()>{
 		//Get index of vertex
 		if let Some(v_i) = self.get_index(v){
 			/* Remove all incoming edges to v
@@ -63,7 +63,7 @@ for AdjListGraph<T>
 				let ref mut t_v_out = self.edges[t_v_i];
 				for i in 0..t_v_out.len() {
 					//If an edge points to v, collect its index
-					if t_v_out[i] == v_i {
+					if t_v_out[i].0 == v_i {
 						to_remove.push(i);
 					}
 				}
@@ -85,8 +85,8 @@ for AdjListGraph<T>
 				//should now point to v
 				let ref mut t_v_out = self.edges[t_v_i];
 				for edge_i in 0..t_v_out.len(){
-					if t_v_out[edge_i] == last_i {
-						t_v_out[edge_i] = v_i
+					if t_v_out[edge_i].0 == last_i {
+						t_v_out[edge_i].0 = v_i
 					}
 				}
 			}
@@ -101,16 +101,18 @@ for AdjListGraph<T>
 		Err(())
 	}
 	
-	fn add_edge(&mut self, e: BaseEdge<T,()>) -> Result<(), ()>{
-		self.if_valid_edge( e, |s, source_i, sink_i|{
-			s.edges[source_i].push(sink_i);
+	fn add_edge(&mut self, e: BaseEdge<V,W>) -> Result<(), ()>{
+		self.if_valid_edge( e, |s, source_i, sink_i, weight|{
+			s.edges[source_i].push((sink_i,weight));
 			Ok(())
 		})
 	}
 	
-	fn remove_edge(&mut self, e: BaseEdge<T,()>)-> Result<(), ()>{
-		self.if_valid_edge(e, |s, source_i, sink_i|{
-			if let Some(i) = s.edges[source_i].iter().position(|&sink_cand| sink_cand == sink_i) {
+	fn remove_edge(&mut self, e: BaseEdge<V,W>)-> Result<(), ()>{
+		self.if_valid_edge(e, |s, source_i, sink_i, weight|{
+			if let Some(i) = s.edges[source_i].iter().position(|&(sink_cand, w )| {
+				sink_cand == sink_i && w == weight
+			}) {
 				s.edges[source_i].remove(i);
 				return Ok(());
 			}

@@ -6,34 +6,23 @@ use arbitraries::*;
 use std;
 
 //Helper functions
-/*
-quickcheck! {
-	fn test_arbitrary_graph(Ag: ArbitraryGraphDescription<u32>) -> bool{
-		println!("Original: {:?}", Ag);
-		
-		for a in Ag.shrink(){
-			println!("Shrunk: {:?}", a);
-		}
-		true
-	}
-}
-*/
 
 ///
 /// Returns all the edges in the given description
 /// by the value of the vertices they point to and from
 ///
-pub fn edges_by_value<V>(desc: &ArbitraryGraphDescription<V>)
-	-> Vec<(V, V)>
+pub fn edges_by_value<V,W>(desc: &GraphDescription<V,W>)
+	-> Vec<(V, V,W)>
 where
-	V: Arbitrary
+	V: Arbitrary + Copy + Eq,
+	W: Arbitrary + Copy + Eq,
 {
 	let mut edges = Vec::new();
 	
 	for e in &desc.edges{
-		let t_source = desc.vertex_values[e.0].clone();
-		let t_sink = desc.vertex_values[e.1].clone();
-		edges.push((t_source, t_sink));
+		let t_source = desc.values[e.0];
+		let t_sink = desc.values[e.1];
+		edges.push((t_source, t_sink, e.2));
 	}
 	edges
 }
@@ -68,18 +57,24 @@ where F: Fn(&B, &P) -> bool,
 	true
 }
 
-pub fn after_graph_init<F>(desc: &ArbitraryGraphDescription<u32>, holds: F) -> bool
-where 	F: Fn(AdjListGraph<u32>) -> bool,
+pub fn after_graph_init<V,W,F>(desc: &GraphDescription<V,W>, holds: F) -> bool
+where
+	V: Arbitrary + Copy + Eq,
+	W: Arbitrary + Copy + Eq,
+	F: Fn(AdjListGraph<V,W>) -> bool,
 {
 	if let Some(g) = AdjListGraph::new(
-		desc.vertex_values.clone(), desc.edges.clone())
+		desc.values.clone(), desc.edges.clone())
 	{
 		return holds(g);
 	}
 	false
 }
 
-pub fn find_addable_value(g:&AdjListGraph<u32>, v:u32)-> u32{
+pub fn find_addable_value<W>(g:&AdjListGraph<u32,W>, v:u32)-> u32
+where
+	W: Arbitrary + Copy + Eq,
+{
 	let mut new_v = v;
 	while g.all_vertices().contains(&new_v){
 		new_v = if new_v == std::u32::MAX {0}else { new_v + 1 };
@@ -87,87 +82,129 @@ pub fn find_addable_value(g:&AdjListGraph<u32>, v:u32)-> u32{
 	new_v
 }
 
-pub fn add_appropriate_value(g: &mut AdjListGraph<u32>, v: u32) -> u32{
+pub fn add_appropriate_value<W>(g: &mut AdjListGraph<u32,W>, v: u32) -> u32
+where
+	W: Arbitrary + Copy + Eq,
+{
 	let new_v = find_addable_value(&g, v);
 	
 	g.add_vertex(new_v).unwrap();
 	new_v
 }
 
-pub fn edges_subsetof_graph(edges: &Vec<(u32,u32)>, g: &AdjListGraph<u32>) -> bool{
+pub fn edges_subsetof_graph<V,W>(edges: &Vec<(V,V,W)>, g: &AdjListGraph<V,W>) -> bool
+where
+	V: Arbitrary + Copy + Eq,
+	W: Arbitrary + Copy + Eq,
+{
 	unordered_sublist(edges, &g.all_edges(), |&expected, ref g_edge|{
-		expected.0 == g_edge.source() &&
-			expected.1 == g_edge.sink()
+		expected.0 == g_edge.source &&
+			expected.1 == g_edge.sink &&
+			expected.2 == g_edge.weight
 	})
 }
 
-pub fn remove_appropriate_vertex(desc:&ArbitraryGraphDescription<u32>, g: &mut AdjListGraph<u32>,  index:usize)
--> (usize,u32){
+pub fn remove_appropriate_vertex <V,W>(
+	desc:&GraphDescription<V,W>,
+	g: &mut AdjListGraph<V,W>,
+	index:usize)
+	-> (usize,V)
+	where
+		V: Arbitrary + Copy + Eq,
+		W: Arbitrary + Copy + Eq,
+{
 	let removed_i = appropriate_index(index,desc);
-	let removed_v = desc.vertex_values[removed_i];
+	let removed_v = desc.values[removed_i];
 	
 	g.remove_vertex(removed_v).unwrap();
 	(removed_i, removed_v)
 }
 
-pub fn edges_independent_of_vertex(desc:&ArbitraryGraphDescription<u32>, v: u32) -> Vec<(u32,u32)>{
+pub fn edges_independent_of_vertex<V,W>(
+	desc:&GraphDescription<V,W>,
+	v: V)
+	-> Vec<(V, V, W)>
+	where
+		V: Arbitrary + Copy + Eq,
+		W: Arbitrary + Copy + Eq,
+{
 	
 	let value_edges = edges_by_value(desc);
 	let mut result = Vec::new();
-	for &e in value_edges.iter().filter(|&&(source,sink)| source != v && sink != v){
+	for &e in value_edges.iter().filter(|&&(source,sink,_)| source != v && sink != v){
 		result.push(e);
 	}
 	result
 }
 
-pub fn appropriate_index(i: usize, desc:&ArbitraryGraphDescription<u32>)-> usize{
-	i % desc.vertex_values.len()
+pub fn appropriate_index<V,W>(i: usize, desc:&GraphDescription<V,W>) -> usize
+	where
+		V: Arbitrary + Copy + Eq,
+		W: Arbitrary + Copy + Eq,
+{
+	i % desc.values.len()
 }
 
-pub fn add_appropriate_edge(desc:&ArbitraryGraphDescription<u32>, g: &mut AdjListGraph<u32>,
-						   source_i_cand: usize, sink_i_cand: usize)
--> BaseEdge<u32,()>
+pub fn add_appropriate_edge<V,W>(	desc:&GraphDescription<V,W>, g: &mut AdjListGraph<V,W>,
+									source_i_cand: usize, sink_i_cand: usize, weight: W)
+	-> BaseEdge<V,W>
+	where
+		V: Arbitrary + Copy + Eq,
+		W: Arbitrary + Copy + Eq,
 {
 	let source_i = appropriate_index(source_i_cand, desc);
 	let sink_i = appropriate_index(sink_i_cand, desc);
 	
-	let source_v = desc.vertex_values[source_i];
-	let sink_v = desc.vertex_values[sink_i];
-	let added_edge = BaseEdge::new(source_v, sink_v,());
+	let source_v = desc.values[source_i];
+	let sink_v = desc.values[sink_i];
+	let added_edge = BaseEdge::new(source_v, sink_v, weight);
 	g.add_edge(added_edge).unwrap();
 	added_edge
 }
 
-pub fn remove_appropriate_edge(desc:&ArbitraryGraphDescription<u32>, g: &mut AdjListGraph<u32>,
-							edge_index_cand: usize)
--> (usize, BaseEdge<u32,()>)
+pub fn remove_appropriate_edge<V,W>(	desc:&GraphDescription<V,W>,
+										g: &mut AdjListGraph<V,W>,
+										edge_index_cand: usize)
+	-> (usize, BaseEdge<V,W>)
+	where
+		V: Arbitrary + Copy + Eq,
+		W: Arbitrary + Copy + Eq,
 {
 	let edge_index = edge_index_cand % desc.edges.len();
-	let v_source_i = desc.edges[edge_index].0;
-	let v_sink_i = desc.edges[edge_index].1;
+	let desc_edge = desc.edges[edge_index];
+	let v_source_i = desc_edge.0;
+	let v_sink_i = desc_edge.1;
 	
-	let edge = BaseEdge::new(desc.vertex_values[v_source_i], desc.vertex_values[v_sink_i],());
+	let edge = BaseEdge::new(desc.values[v_source_i], desc.values[v_sink_i], desc_edge.2);
 	
 	g.remove_edge(edge).unwrap();
 	(edge_index, edge)
 }
 
-pub fn original_edges_maintained_subsetof_graph_after<F>(desc: ArbitraryGraphDescription<u32>, action: F)
- -> bool
-where
-	F: Fn(&ArbitraryGraphDescription<u32>, &mut AdjListGraph<u32>) -> ()
+pub fn original_edges_maintained_subsetof_graph_after<V,W,F>(
+	desc: GraphDescription<V,W>,
+	action: F)
+	-> bool
+	where
+		V: Arbitrary + Copy + Eq,
+		W: Arbitrary + Copy + Eq,
+		F: Fn(&GraphDescription<V,W>, &mut AdjListGraph<V,W>) -> ()
 {
 	after_graph_init(&desc, | mut g|{
 		action(&desc, &mut g);
 		edges_subsetof_graph(&edges_by_value(&desc), &g)
 	})
-	
 }
 
-pub fn graph_subsetof_edges(g: &AdjListGraph<u32>,edges: &Vec<(u32,u32)>) -> bool{
+pub fn graph_subsetof_edges<V,W>(g: &AdjListGraph<V,W>,edges: &Vec<(V,V,W)>) -> bool
+	where
+		V: Arbitrary + Copy + Eq,
+		W: Arbitrary + Copy + Eq,
+{
 	unordered_sublist(&g.all_edges(), edges, |ref g_edge, &expected|{
-		expected.0 == g_edge.source() &&
-			expected.1 == g_edge.sink()
+		expected.0 == g_edge.source &&
+			expected.1 == g_edge.sink &&
+			expected.2 == g_edge.weight
 	})
 }
 
@@ -180,23 +217,26 @@ where
 	})
 }
 
-pub fn after_init_and_add_edge<F>(desc: &ArbitraryGraphDescription<u32>,
-						   source_i_cand: usize, sink_i_cand:usize, holds: F)
--> bool
-where
-	F: Fn(AdjListGraph<u32>, BaseEdge<u32,()>) -> bool,
+pub fn after_init_and_add_edge<V,W,F>(	desc: &GraphDescription<V,W>, source_i_cand: usize,
+										sink_i_cand:usize, weight: W, holds: F)
+	-> bool
+	where
+		V: Arbitrary + Copy + Eq,
+		W: Arbitrary + Copy + Eq,
+		F: Fn(AdjListGraph<V,W>, BaseEdge<V,W>) -> bool,
 {
 	after_graph_init(desc, |mut g| {
-		let edge = add_appropriate_edge(desc, &mut g, source_i_cand, sink_i_cand);
+		let edge = add_appropriate_edge(desc, &mut g, source_i_cand, sink_i_cand, weight);
 		holds(g, edge)
 	})
 }
 
-pub fn after_init_and_remove_edge<F>(desc: &ArbitraryGraphDescription<u32>,
-							  edge_index: usize, holds: F)
-							  -> bool
+pub fn after_init_and_remove_edge<V,W,F>(desc: &GraphDescription<V,W>, edge_index: usize, holds: F)
+	-> bool
 	where
-		F: Fn(AdjListGraph<u32>, (usize, BaseEdge<u32,()>)) -> bool,
+		V: Arbitrary + Copy + Eq,
+		W: Arbitrary + Copy + Eq,
+		F: Fn(AdjListGraph<V,W>, (usize, BaseEdge<V,W>)) -> bool,
 {
 	after_graph_init(desc, |mut g| {
 		let edge = remove_appropriate_edge(desc, &mut g, edge_index);
@@ -205,9 +245,12 @@ pub fn after_init_and_remove_edge<F>(desc: &ArbitraryGraphDescription<u32>,
 }
 
 
-pub fn invalidate_vertice(mut v: u32, desc: &ArbitraryGraphDescription<u32>) -> u32{
+pub fn invalidate_vertice<W>(mut v: u32, desc: &GraphDescription<u32,W>) -> u32
+	where
+		W: Arbitrary + Copy + Eq,
+{
 	
-	while desc.vertex_values.contains(&v){
+	while desc.values.contains(&v){
 		v =
 			if v == std::u32::MAX {0}
 				else { v + 1 };
@@ -215,15 +258,23 @@ pub fn invalidate_vertice(mut v: u32, desc: &ArbitraryGraphDescription<u32>) -> 
 	v
 }
 
-pub fn equal_description_and_graph_vertices(desc: &ArbitraryGraphDescription<u32>, g: &AdjListGraph<u32> )
-										-> bool
+pub fn equal_description_and_graph_vertices<V,W>(
+	desc: &GraphDescription<V,W>, g: &AdjListGraph<V,W> )
+	-> bool
+	where
+		V: Arbitrary + Copy + Eq,
+		W: Arbitrary + Copy + Eq,
 {
-	unordered_sublist_equal(&desc.vertex_values, &g.all_vertices()) &&
-		unordered_sublist_equal(&g.all_vertices(), &desc.vertex_values)
+	unordered_sublist_equal(&desc.values, &g.all_vertices()) &&
+		unordered_sublist_equal(&g.all_vertices(), &desc.values)
 }
 
-pub fn equal_description_and_graph_edges(desc: &ArbitraryGraphDescription<u32>, g: &AdjListGraph<u32> )
-										-> bool
+pub fn equal_description_and_graph_edges<V,W>(
+	desc: &GraphDescription<V,W>, g: &AdjListGraph<V,W> )
+	-> bool
+	where
+		V: Arbitrary + Copy + Eq,
+		W: Arbitrary + Copy + Eq,
 {
 	edges_subsetof_graph(&edges_by_value(&desc), &g) &&
 		graph_subsetof_edges(&g, &edges_by_value(&desc))

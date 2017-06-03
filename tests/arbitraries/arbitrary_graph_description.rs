@@ -1,96 +1,174 @@
 use quickcheck::{Arbitrary,Gen};
 
+///
+/// A description of a graph with vertex values of type `V` and edge
+/// weights of type `W`.
+///
+/// There are `.values.len()` vertices in the graph. Each vertex is identified by an index
+/// (`0...values.len()`) where vertex `0` has value `.values[0]`, `1` has value `.values[1]`, etc.
+/// Vertices have unique values in the graph.
+///
+/// There are `.edges.len()` edges in the graph. Each edge `e` goes from vertex `e.0` (using the
+/// vertices indeces) to vertex `e.1` and has weight `e.2`. Edges are unordered and can be duplicated.
+///
+///
 #[derive(Clone,Debug)]
-pub struct ArbitraryGraphDescription<V> where V: Arbitrary{
-	pub vertex_values: Vec<V>,
-	pub edges: Vec<(usize,usize)>,
+pub struct GraphDescription<V,W>
+where
+	V: Arbitrary + Copy + Eq,
+	W: Arbitrary + Copy + Eq,
+{
+	pub values: Vec<V>,
+	pub edges: Vec<(usize,usize,W)>,
 }
 
-impl Arbitrary for ArbitraryGraphDescription<u32>{
+impl<V,W> Arbitrary for GraphDescription<V,W>
+where
+	V: Arbitrary + Copy + Eq,
+	W: Arbitrary + Copy + Eq,
+{
 	fn arbitrary<G: Gen>(g: &mut G) -> Self {
-		let MAX_VALUES = 10;
+		
+		// Set the maximum amount of vertices and edges
+		let COUNT = 10;
 		let mut vertex_values = Vec::new();
 		let mut edges = Vec::new();
-		//Decide the amount of vertices
-		let vertex_count = g.gen_range(0,MAX_VALUES);
 		
+		//Decide the amount of vertices
+		let vertex_count = g.gen_range(0,COUNT);
+		
+		/* If the amount of vertices is 0, no edges can be created.
+		 */
 		if vertex_count > 0 {
 			//Decide the amount of edges
-			let edge_count = g.gen_range(0, MAX_VALUES);
+			let edge_count = g.gen_range(0, COUNT);
 			
-			//Create vertex values
-			let mut next_value = g.gen_range(0, MAX_VALUES);
+			/* Create vertex values ensuring that
+			 * each vertex has a unique value
+			 */
+			let mut next_value = V::arbitrary(g);
+			//For each vertex
 			for _ in 0..vertex_count {
-				//Make sure the values are unique
+				// As long as the created value is already used by another vertex
 				while vertex_values.contains(&next_value) {
-					next_value = g.gen_range(0, MAX_VALUES);
+					// Create a new value
+					next_value = V::arbitrary(g);
 				}
 				vertex_values.push(next_value);
 			}
 			
-			//Create edges
-			
-			let mut t_source;
-			let mut t_sink;
+			/* Create edges
+			 */
+			//For each edge
 			for _ in 0..edge_count {
-				t_source = g.next_u32() % vertex_count;
-				t_sink = g.next_u32() % vertex_count;
-				
-				edges.push((t_source as usize, t_sink as usize))
+				/* Create a valid edge
+				 */
+				let t_source = usize::arbitrary(g) % vertex_count;
+				let t_sink = usize::arbitrary(g) % vertex_count;
+				let t_weight = W::arbitrary(g);
+				edges.push((t_source, t_sink, t_weight))
 			}
 		}
-		ArbitraryGraphDescription{vertex_values, edges}
+		GraphDescription { values: vertex_values, edges}
 	}
 	
 	fn shrink(&self) -> Box<Iterator<Item=Self>> {
 		
-		//Base case
-		if self.vertex_values.len() == 0 {
+		/* Base case
+		 */
+		if self.values.len() == 0 {
 			return Box::new(Vec::new().into_iter());
 		}
 		
 		let mut result = Vec::new();
 		
-		//Shrink by reducing a vertex value
+		/* Shrink by shrinking vertices
+		 */
 		let mut new_values;
-		for (i,&val) in self.vertex_values.iter().enumerate(){
-			if val > 0  && !self.vertex_values.contains(&(val-1)){
-				new_values = self.vertex_values.clone();
-				new_values[i] = val - 1;
-				result.push(ArbitraryGraphDescription { vertex_values: new_values, edges: self.edges.clone() });
+		//For each vertex
+		for (i,&val) in self.values.iter().enumerate(){
+			//Get all possible shrinkages
+			let shrunk_values = val.shrink();
+			//For each shrunk value
+			for s in shrunk_values{
+				//If no other vertex has that value
+				if !self.values.contains(&s) {
+					/* Add to the result a desc copy where that vertex
+					 * has been shrunk to the value.
+					 */
+					new_values = self.values.clone();
+					new_values[i] = s;
+					result.push(GraphDescription {
+						values: new_values, edges: self.edges.clone()});
+				}
 			}
 		}
 		
-		//Shrink by removing an edge
+		/* Shrink by shrinking edge weights
+		 */
 		let mut new_edges;
+		//For each edge
+		for (i, &(so,si,we)) in self.edges.iter().enumerate() {
+			//Get all possible shrinkages
+			let shrunk_weights = we.shrink();
+			//For each shrunk weight
+			for s_w in shrunk_weights{
+				/* Add to the result a desc copy where that
+				 * edge weight has been shrunk to the value.
+				 */
+				new_edges = self.edges.clone();
+				new_edges[i] = (so,si,s_w);
+				result.push(GraphDescription {
+					values: self.values.clone(), edges: new_edges});
+			}
+		}
+		
+		/* Shrink by removing an edge
+		 */
+		//For each edge
 		for (i, _ ) in self.edges.iter().enumerate(){
+			/* Add to the result a copy of the desc
+			 * without the edge
+			 */
 			new_edges = self.edges.clone();
 			new_edges.remove(i);
-			result.push(ArbitraryGraphDescription {
-				vertex_values: self.vertex_values.clone(),
+			result.push(GraphDescription {
+				values: self.values.clone(),
 				edges: new_edges });
 		}
 		
+		/* Shrink by removing a vertex
+		 */
 		let mut t_edge;
-		//Shrink by removing a vertex (v)
-		for (i,_) in self.vertex_values.iter().enumerate(){
-			new_values = self.vertex_values.clone();
+		//For each vertex (v)
+		for (i,_) in self.values.iter().enumerate(){
+			// Clone the vertices
+			new_values = self.values.clone();
 			new_edges = Vec::new();
 			
 			//For all edges
 			for &e in self.edges.iter(){
-				//Remove any pointing to or from v
+				/* Any edge originally connected to v is removed.
+				 * Any edge connected to the last vertex is changed
+				 * to connect to v. Later, v is removed and the last vertex
+				 * takes its place, meaning all the edges now point to the right
+				 * vertices again.
+				 */
+				// Any edge not connected to the vertex
 				if e.0 != i && e.1 != i {
 					t_edge = e;
 					
-					//Any pointing to or from the last edge
-					//now point to v
-					if e.0 == self.vertex_values.len()-1 {
+					// If its source is the last vertex
+					if e.0 == self.values.len()-1 {
+						// Make v its source
 						t_edge.0 = i;
 					}
-					if e.1 == self.vertex_values.len()-1 {
+					// If its sink is the last vertex
+					if e.1 == self.values.len()-1 {
+						// Make v its sink
 						t_edge.1 = i;
 					}
+					// Keep the edge in the desc
 					new_edges.push(t_edge);
 				}
 			}
@@ -98,9 +176,23 @@ impl Arbitrary for ArbitraryGraphDescription<u32>{
 			//Replace v with the last vertex
 			new_values.swap_remove(i);
 			
-			result.push(ArbitraryGraphDescription{vertex_values: new_values, edges: new_edges});
+			// Add to the result a copy of the desc where the above changes are in effect
+			result.push(GraphDescription { values: new_values, edges: new_edges});
 		}
 		
 		Box::new(result.into_iter())
 	}
 }
+
+/*
+quickcheck! {
+	fn test_arbitrary_graph(Ag: GraphDescription<u32,u32>) -> bool{
+		println!("Original: {:?}", Ag);
+		
+		for a in Ag.shrink(){
+			println!("Shrunk: {:?}", a);
+		}
+		true
+	}
+}
+*/
