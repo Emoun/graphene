@@ -2,6 +2,7 @@
 //! Contains common graph implementations.
 //!
 
-pub mod adjacency_list;
+mod adjacency_list;
 
+pub use self::adjacency_list::*;
 

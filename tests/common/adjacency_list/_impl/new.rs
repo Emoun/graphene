@@ -1,4 +1,5 @@
 use super::*;
+use graphene::common::AdjListGraph;
 
 fn correct_vertex_count(desc: GraphDescription<u32,u32>) -> bool{
 	after_graph_init(&desc, |g|{
@@ -34,6 +35,16 @@ fn graph_edges_subsetof_expected(desc: GraphDescription<u32,u32>) -> bool{
 	})
 }
 
+fn rejects_duplicates(mut desc: GraphDescription<u32,u32>, v_i_cand:usize) -> bool {
+	holds_if!(desc.values.len() == 0);
+	
+	let v_i = v_i_cand % desc.values.len();
+	let v = desc.values[v_i];
+	desc.values.push(v);
+	
+	AdjListGraph::new(desc.values, desc.edges).is_none()
+}
+
 
 //Test runners
 quickcheck!{
@@ -59,4 +70,7 @@ quickcheck!{
 		graph_edges_subsetof_expected(g)
 	}
 	
+	fn PROP_rejects_duplicates(desc: GraphDescription<u32,u32>, v_i_cand:usize) -> bool {
+		rejects_duplicates(desc, v_i_cand)
+	}
 }

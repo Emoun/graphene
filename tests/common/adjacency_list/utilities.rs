@@ -1,5 +1,5 @@
 
-use graphene::common::adjacency_list::*;
+use graphene::common::*;
 use graphene::core::*;
 use quickcheck::*;
 use arbitraries::*;

@@ -18,6 +18,16 @@ impl<V,W> AdjListGraph<V,W>
 {
 	
 	pub fn new(values: Vec<V>, edges: Vec<(usize, usize,W)>) -> Option<AdjListGraph<V,W>> {
+		
+		//Validate no duplicate vertices
+		let mut seen = Vec::new();
+		for v in values.iter() {
+			if seen.contains(v) {
+				return None;
+			}else{
+				seen.push(*v);
+			}
+		}
 		let mut g = AdjListGraph{ edges: Vec::new(), values: values };
 		
 		//Validate all edges point to vertices

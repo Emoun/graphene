@@ -3,7 +3,7 @@ use core::*;
 
 
 
-impl<'a, V,W> BaseGraph<'a> for AdjListGraph<V,W>
+impl< V, W> BaseGraph for AdjListGraph<V,W>
 where
 	V: Copy + Eq,
 	W: Copy + Eq,
@@ -13,8 +13,11 @@ where
 	type VertexIter = Vec<V>;
 	type EdgeIter = Vec<BaseEdge<V,W>>;
 	
+	fn empty_graph() -> AdjListGraph<V,W>{
+		AdjListGraph{values: Vec::new(), edges: Vec::new()}
+	}
 	
-	fn all_vertices(&'a self) -> Vec<V> {
+	fn all_vertices(&self) -> Vec<V> {
 		let mut result = Vec::new();
 		
 		//For each value, output a copy
@@ -24,7 +27,7 @@ where
 		result
 	}
 	
-	fn all_edges(&'a self) -> Vec<BaseEdge<V,W>> {
+	fn all_edges(& self) -> Vec<BaseEdge<V,W>> {
 		let mut result = Vec::new();
 		
 		//For each vertex (source)
@@ -121,7 +124,15 @@ where
 	}
 }
 
+#[test]
+fn empty_has_no_vertices(){
+	assert_eq!(0, AdjListGraph::<u32,u32>::empty_graph().all_vertices().len());
+}
 
+#[test]
+fn empty_has_no_edges(){
+	assert_eq!(0, AdjListGraph::<u32,u32>::empty_graph().all_edges().len());
+}
 
 
 

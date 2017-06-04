@@ -18,7 +18,7 @@ use super::*;
 ///
 ///
 ///
-pub trait BaseGraph<'a,>
+pub trait BaseGraph
 {
 	/// Type of the vertices in the graph.
 	type Vertex: Copy + Eq;
@@ -30,14 +30,28 @@ pub trait BaseGraph<'a,>
 	type EdgeIter: IntoIterator<Item=BaseEdge<Self::Vertex,Self::Weight>>;
 	
 	///
+	/// Creates an empty graph. I.e a graph with no vertices and no edges.
+	///
+	/// Properties:
+	///
+	/// - `empty().all_vertices().into_iter().next() == None`
+	/// - `empty().all_edges().into_iter().next() == None`
+	/// - `empty().add_vertex(v) == Ok(())`
+	/// - `empty().add_edge(e) == Err(())`
+	/// - `empty().remove_vertex(v) == Err(())`
+	/// - `empty().remove_edge(e) == Err(())`
+	///
+	fn empty_graph() -> Self;
+	
+	///
 	/// Returns copies of all current vertices in the graph.
 	///
-	fn all_vertices(&'a self) -> Self::VertexIter;
+	fn all_vertices(&self) -> Self::VertexIter;
 	
 	///
 	/// Returns copies of all current edges in the graph.
 	///
-	fn all_edges(&'a self) -> Self::EdgeIter;
+	fn all_edges(&self) -> Self::EdgeIter;
 	
 	///
 	/// Adds the given vertex to graph as long as no equal vertex is already
@@ -62,7 +76,7 @@ pub trait BaseGraph<'a,>
 	/// - The graph is unchanged.
 	///
 	///
-	fn add_vertex(&'a mut self, v: Self::Vertex) -> Result<(),()>;
+	fn add_vertex(&mut self, v: Self::Vertex) -> Result<(),()>;
 	
 	///
 	/// Removes the given vertex from the graph, assuming it is present.
@@ -87,7 +101,7 @@ pub trait BaseGraph<'a,>
 	///
 	///
 	///
-	fn remove_vertex(&'a mut self, v: Self::Vertex) -> Result<(),()>;
+	fn remove_vertex(&mut self, v: Self::Vertex) -> Result<(),()>;
 	
 	///
 	/// Adds the given edge to the graph assuming it connects to valid vertices.
@@ -106,7 +120,7 @@ pub trait BaseGraph<'a,>
 	///
 	/// - The graph is unchanged.
 	///
-	fn add_edge(&'a mut self, e: BaseEdge<Self::Vertex,Self::Weight>) -> Result<(),()>;
+	fn add_edge(&mut self, e: BaseEdge<Self::Vertex,Self::Weight>) -> Result<(),()>;
 	
 	///
 	/// Removes the given edge from the graph, assuming it is already present.
@@ -126,6 +140,41 @@ pub trait BaseGraph<'a,>
 	///
 	/// - The graph is unchanged.
 	///
-	fn remove_edge(&'a mut self, e: BaseEdge<Self::Vertex,Self::Weight>) -> Result<(),()>;
+	fn remove_edge(&mut self, e: BaseEdge<Self::Vertex,Self::Weight>) -> Result<(),()>;
+	
+	///
+	/// Creates a graph containing the given vertices and edges. There can be no
+	/// duplicate vertices and all edges must connect to the given vertices.
+	///
+	/// ###Returns:
+	///
+	/// - `Ok`: If the given graph description is valid, the created graph is returned.
+	/// - `Err`: If the given graph description is invalid.
+	///
+	fn graph(	vertices: Vec<Self::Vertex>,
+			 	edges: Vec<(Self::Vertex, Self::Vertex,Self::Weight)>)
+		-> Result<Self,()>
+		where
+			Self: Sized,
+	{
+		let mut g = Self::empty_graph();
+		
+		/* Add all vertices
+		 */
+		for v in vertices {
+			//Make sure the vertex is added
+			g.add_vertex(v)?;
+		}
+		
+		/* Add all edges
+		 */
+		for (so,si,w) in edges {
+			// Make sure the edge is added
+			g.add_edge(BaseEdge::new(so,si,w))?;
+		}
+		
+		Ok(g)
+	}
+	
 }
 
