@@ -60,9 +60,9 @@ impl<'a,V,W,Vi,Ei,G> Unconstrainer<'a,V,W,Vi,Ei,G>
 	
 	pub fn constrain(mut self) -> Result<(),()> {
 		match self.execute_unconstrained_operations(){
-			Err(i) =>{
+			Err(ops) =>{
 				// One of the operations failed, therefore roll back changes
-				self.rollback_operations(i);
+				self.rollback_operations(ops);
 				Err(())
 			}
 			Ok(()) =>{
@@ -78,11 +78,11 @@ impl<'a,V,W,Vi,Ei,G> Unconstrainer<'a,V,W,Vi,Ei,G>
 		}
 	}
 	
-	fn rollback_operations(&mut self, i:usize) {
+	fn rollback_operations(&mut self, rollback_count:usize) {
 		let ref operations = self.operations;
 		let ref mut graph = self.graph;
 		
-		for j in (0..(i+1)).rev(){
+		for j in (0..(rollback_count)).rev(){
 			unsafe{
 				match operations[j] {
 					AddVertex(v) => graph.uncon_remove_vertex(v),
@@ -109,7 +109,9 @@ impl<'a,V,W,Vi,Ei,G> Unconstrainer<'a,V,W,Vi,Ei,G>
 				}
 			}{
 				Err(()) =>{
-					// Failed at operation i
+					/* Operation i failed
+					 */
+					// Rollback all operations that executed before the (i+1)'th
 					return Err(i);
 				}
 				Ok(())	=> i += 1,

@@ -4,12 +4,13 @@ use super::*;
 /// A marker trait for graphs containing unique edges.
 ///
 /// An edge is unique if it is the only edge in the graph
-/// connecting vertex v1 to vertex v2.
-///
-/// If the graph is also directed then between two vertices v1 and v2
-/// two edges are allowed: (v1,v2) and (v2,v1).
+/// connecting two vertices.
+/// If the graph is directed then between two vertices v1 and v2
+/// two edges are allowed: (v1,v2,_) and (v2,v1,_).
 /// If the graph is undirected, there may only be one edge of either
-/// (v1,v2) or (v1,v2)
+/// (v1,v2,_) or (v1,v2,_).
+/// Regardless of directedness, only one loop is allowed for each vertex,
+/// i.e. only one (v,v,_).
 ///
 ///
 pub trait Unique<V,W,Vi,Ei>: BaseGraph<Vertex=V,Weight=W,VertexIter=Vi,EdgeIter=Ei>
@@ -20,6 +21,7 @@ pub trait Unique<V,W,Vi,Ei>: BaseGraph<Vertex=V,Weight=W,VertexIter=Vi,EdgeIter=
 		Ei: EdgeIter<V,W>,
 {}
 
+#[derive(Clone,Debug)]
 pub struct UniqueGraph<V,W,Vi,Ei,G>
 	where
 		V: Vertex,
@@ -90,6 +92,27 @@ impl<V,W,Vi,Ei,G> ConstrainedGraph for UniqueGraph<V,W,Vi,Ei,G>
 {
 	fn invariant_holds(&self) -> bool {
 		
+		// For each vertex
+		for v1 in self.all_vertices(){
+			
+			for v2 in self.all_vertices(){
+				// Find all edges from v1 to v2
+				let mut v1_to_v2 = self.all_edges().into_iter().filter(|edge|{
+					edge.source == v1 && edge.sink == v2
+				});
+				
+				// Make sure there is at most 1
+				v1_to_v2.next();
+				
+				// If there is another one
+				if let Some(_) = v1_to_v2.next(){
+					// Invariant doesn't hold
+					return false;
+				}
+			}
+		}
+		// Invariant holds, make sure the inner graph's invariant also holds
+		self.graph.invariant_holds()
 	}
 	
 	unsafe fn uncon_add_vertex(&mut self, v: Self::Vertex) -> Result<(), ()> {

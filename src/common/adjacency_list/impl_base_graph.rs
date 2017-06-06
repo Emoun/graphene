@@ -4,9 +4,9 @@ use core::*;
 
 
 impl<V,W> BaseGraph for AdjListGraph<V,W>
-where
-	V: Vertex,
-	W: Weight,
+	where
+		V: Vertex,
+		W: Weight,
 {
 	type Vertex = V;
 	type Weight = W;
@@ -123,6 +123,33 @@ where
 		})
 	}
 }
+
+impl<V,W> ConstrainedGraph for AdjListGraph<V,W>
+	where
+		V: Vertex,
+		W: Weight,
+{
+	fn invariant_holds(&self) -> bool {
+		true
+	}
+	
+	unsafe fn uncon_add_vertex(&mut self, v: Self::Vertex) -> Result<(), ()> {
+		self.add_vertex(v)
+	}
+	
+	unsafe fn uncon_remove_vertex(&mut self, v: Self::Vertex) -> Result<(), ()> {
+		self.remove_vertex(v)
+	}
+	
+	unsafe fn uncon_add_edge(&mut self, e: BaseEdge<Self::Vertex, Self::Weight>) -> Result<(), ()> {
+		self.add_edge(e)
+	}
+	
+	unsafe fn uncon_remove_edge(&mut self, e: BaseEdge<Self::Vertex, Self::Weight>) -> Result<(), ()> {
+		self.remove_edge(e)
+	}
+}
+
 
 #[test]
 fn empty_has_no_vertices(){
