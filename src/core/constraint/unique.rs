@@ -14,18 +14,18 @@ use super::*;
 ///
 pub trait Unique<V,W,Vi,Ei>: BaseGraph<Vertex=V,Weight=W,VertexIter=Vi,EdgeIter=Ei>
 	where
-		V: Copy + Eq,
-		W: Copy + Eq,
-		Vi: IntoIterator<Item=V>,
-		Ei: IntoIterator<Item=BaseEdge<V,W>>
+		V: Vertex,
+		W: Weight,
+		Vi: VertexIter<V>,
+		Ei: EdgeIter<V,W>,
 {}
 
 pub struct UniqueGraph<V,W,Vi,Ei,G>
 	where
-		V: Copy + Eq,
-		W: Copy + Eq,
-		Vi: IntoIterator<Item=V>,
-		Ei: IntoIterator<Item=BaseEdge<V,W>>,
+		V: Vertex,
+		W: Weight,
+		Vi: VertexIter<V>,
+		Ei: EdgeIter<V,W>,
 		G: BaseGraph<Vertex=V,Weight=W,VertexIter=Vi,EdgeIter=Ei>,
 {
 	graph: G
