@@ -1,4 +1,5 @@
 use super::*;
+use std::iter::FromIterator;
 
 pub trait Vertex: Copy + Eq{}
 impl<T> Vertex for T
@@ -10,24 +11,24 @@ impl<T> Weight for T
 	where T: Copy + Eq
 {}
 
-pub trait VertexIter<V>: IntoIterator<Item=V>
+pub trait VertexIter<V>: IntoIterator<Item=V> + FromIterator<V>
 	where
 		V: Vertex
 {}
 impl<T,V> VertexIter<V> for T
 	where
-		T: IntoIterator<Item=V>,
+		T: IntoIterator<Item=V> + FromIterator<V>,
 		V: Vertex,
 {}
 
-pub trait EdgeIter<V,W>: IntoIterator<Item=BaseEdge<V,W>>
+pub trait EdgeIter<V,W>: IntoIterator<Item=BaseEdge<V,W>> + FromIterator<BaseEdge<V,W>>
 	where
 		V: Vertex,
 		W: Weight,
 {}
 impl<T,V,W> EdgeIter<V,W> for T
 	where
-		T: IntoIterator<Item=BaseEdge<V,W>>,
+		T: IntoIterator<Item=BaseEdge<V,W>> + FromIterator<BaseEdge<V,W>>,
 		V: Vertex,
 		W: Weight,
 {}
@@ -206,6 +207,24 @@ pub trait BaseGraph
 		}
 		
 		Ok(g)
+	}
+	
+	///
+	/// Returns all edges that are connect to both the given vertices.
+	///
+	/// I.e. all edges where e == (v1,v2,_) or e == (v2,v1,_)
+	///
+	fn edges_between(&self, v1: Self::Vertex, v2: Self::Vertex) -> Self::EdgeIter{
+		let all_edges = self.all_edges().into_iter();
+		
+		// Filter out any edge that is not connected to both vertices
+		let relevant = all_edges.filter(|edge|{
+			(edge.source == v1 && edge.sink == v2) ||
+				(edge.source == v2 && edge.sink == v1)
+		});
+		
+		// Return the result
+		relevant.collect()
 	}
 	
 }
