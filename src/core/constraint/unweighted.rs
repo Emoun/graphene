@@ -5,7 +5,5 @@ pub trait Unweighted<V,Vi,Ei>: BaseGraph<Vertex=V,Weight=(),VertexIter=Vi,EdgeIt
 		V: Copy + Eq,
 		Vi: IntoIterator<Item=V>,
 		Ei: IntoIterator<Item=BaseEdge<V,()>>
-{
-
-}
+{}
 
