@@ -3,10 +3,10 @@ use core::*;
 
 
 
-impl< V, W> BaseGraph for AdjListGraph<V,W>
+impl<V,W> BaseGraph for AdjListGraph<V,W>
 where
-	V: Copy + Eq,
-	W: Copy + Eq,
+	V: Vertex,
+	W: Weight,
 {
 	type Vertex = V;
 	type Weight = W;

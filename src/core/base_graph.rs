@@ -1,5 +1,37 @@
 use super::*;
 
+pub trait Vertex: Copy + Eq{}
+impl<T> Vertex for T
+	where T: Copy + Eq
+{}
+
+pub trait Weight: Copy + Eq{}
+impl<T> Weight for T
+	where T: Copy + Eq
+{}
+
+pub trait VertexIter<V>: IntoIterator<Item=V>
+	where
+		V: Vertex
+{}
+impl<T,V> VertexIter<V> for T
+	where
+		T: IntoIterator<Item=V>,
+		V: Vertex,
+{}
+
+pub trait EdgeIter<V,W>: IntoIterator<Item=BaseEdge<V,W>>
+	where
+		V: Vertex,
+		W: Weight,
+{}
+impl<T,V,W> EdgeIter<V,W> for T
+	where
+		T: IntoIterator<Item=BaseEdge<V,W>>,
+		V: Vertex,
+		W: Weight,
+{}
+
 ///
 /// The basic graph interface.
 ///
@@ -21,13 +53,13 @@ use super::*;
 pub trait BaseGraph
 {
 	/// Type of the vertices in the graph.
-	type Vertex: Copy + Eq;
+	type Vertex: Vertex;
 	/// Type of the weights in the graph.
-	type Weight: Copy + Eq;
+	type Weight: Weight;
 	/// Type of the collection returned with vertices.
-	type VertexIter: IntoIterator<Item=Self::Vertex>;
+	type VertexIter: VertexIter<Self::Vertex>;
 	// Type of the collection returned with edges.
-	type EdgeIter: IntoIterator<Item=BaseEdge<Self::Vertex,Self::Weight>>;
+	type EdgeIter: EdgeIter<Self::Vertex, Self::Weight>;
 	
 	///
 	/// Creates an empty graph. I.e a graph with no vertices and no edges.

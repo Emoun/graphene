@@ -1,4 +1,5 @@
-use quickcheck::{Arbitrary,Gen};
+
+use super::*;
 
 ///
 /// A description of a graph with vertex values of type `V` and edge
@@ -15,8 +16,8 @@ use quickcheck::{Arbitrary,Gen};
 #[derive(Clone,Debug)]
 pub struct GraphDescription<V,W>
 where
-	V: Arbitrary + Copy + Eq,
-	W: Arbitrary + Copy + Eq,
+	V: ArbVertex,
+	W: ArbWeight,
 {
 	pub values: Vec<V>,
 	pub edges: Vec<(usize,usize,W)>,
@@ -24,8 +25,8 @@ where
 
 impl<V,W> Arbitrary for GraphDescription<V,W>
 where
-	V: Arbitrary + Copy + Eq,
-	W: Arbitrary + Copy + Eq,
+	V: ArbVertex,
+	W: ArbWeight,
 {
 	fn arbitrary<G: Gen>(g: &mut G) -> Self {
 		
