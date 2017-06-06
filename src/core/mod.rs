@@ -7,6 +7,8 @@
 mod base_graph;
 mod base_edge;
 mod constraint;
+mod constrained_graph;
 
 pub use self::base_graph::*;
 pub use self::base_edge::*;
+pub use self::constrained_graph::*;

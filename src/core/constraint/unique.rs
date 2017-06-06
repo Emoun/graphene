@@ -79,3 +79,32 @@ impl<V,W,Vi,Ei,G> BaseGraph for UniqueGraph<V,W,Vi,Ei,G>
 		self.graph.remove_edge(e)
 	}
 }
+
+impl<V,W,Vi,Ei,G> ConstrainedGraph for UniqueGraph<V,W,Vi,Ei,G>
+	where
+		V: Vertex,
+		W: Weight,
+		Vi: VertexIter<V>,
+		Ei: EdgeIter<V,W>,
+		G: ConstrainedGraph<Vertex=V,Weight=W,VertexIter=Vi,EdgeIter=Ei>,
+{
+	fn invariant_holds(&self) -> bool {
+		
+	}
+	
+	unsafe fn uncon_add_vertex(&mut self, v: Self::Vertex) -> Result<(), ()> {
+		self.graph.uncon_add_vertex(v)
+	}
+	
+	unsafe fn uncon_remove_vertex(&mut self, v: Self::Vertex) -> Result<(), ()> {
+		self.graph.uncon_remove_vertex(v)
+	}
+	
+	unsafe fn uncon_add_edge(&mut self, e: BaseEdge<Self::Vertex, Self::Weight>) -> Result<(), ()> {
+		self.graph.uncon_add_edge(e)
+	}
+	
+	unsafe fn uncon_remove_edge(&mut self, e: BaseEdge<Self::Vertex, Self::Weight>) -> Result<(), ()> {
+		self.graph.uncon_remove_edge(e)
+	}
+}
