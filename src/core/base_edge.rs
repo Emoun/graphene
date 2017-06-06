@@ -1,4 +1,4 @@
-
+use super::*;
 ///
 /// Represents an edge between two vertices in a graph.
 ///
@@ -11,8 +11,8 @@
 #[derive(Copy,Clone,Debug,PartialEq,Eq)]
 pub struct BaseEdge<V,W>
 where
-	V: Copy+Eq,
-	W: Copy+Eq,
+	V: Vertex,
+	W: Weight,
 {
 	/// The vertex the edge starts in.
 	pub source: V,
@@ -22,7 +22,7 @@ where
 	pub weight: W,
 }
 
-impl<V:Copy+Eq, W:Copy+Eq> BaseEdge<V,W>{
+impl<V:Vertex, W:Weight> BaseEdge<V,W>{
 	
 	/// Creates a new edge
 	pub fn new(source: V, sink: V, weight: W)-> BaseEdge<V,W>{

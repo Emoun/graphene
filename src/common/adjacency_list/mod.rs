@@ -13,8 +13,8 @@ pub struct AdjListGraph<V,W> {
 
 impl<V,W> AdjListGraph<V,W>
 	where
-		V: Copy + Eq,
-		W: Copy + Eq
+		V: Vertex,
+		W: Weight,
 {
 	
 	pub fn new(values: Vec<V>, edges: Vec<(usize, usize,W)>) -> Option<AdjListGraph<V,W>> {

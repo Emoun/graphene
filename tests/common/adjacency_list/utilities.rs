@@ -14,8 +14,8 @@ use std;
 pub fn edges_by_value<V,W>(desc: &GraphDescription<V,W>)
 	-> Vec<(V, V,W)>
 where
-	V: Arbitrary + Copy + Eq,
-	W: Arbitrary + Copy + Eq,
+	V: ArbVertex,
+	W: ArbWeight,
 {
 	let mut edges = Vec::new();
 	
@@ -59,8 +59,8 @@ where F: Fn(&B, &P) -> bool,
 
 pub fn after_graph_init<V,W,F>(desc: &GraphDescription<V,W>, holds: F) -> bool
 where
-	V: Arbitrary + Copy + Eq,
-	W: Arbitrary + Copy + Eq,
+	V: ArbVertex,
+	W: ArbWeight,
 	F: Fn(AdjListGraph<V,W>) -> bool,
 {
 	if let Some(g) = AdjListGraph::new(
@@ -73,7 +73,7 @@ where
 
 pub fn find_addable_value<W>(g:&AdjListGraph<u32,W>, v:u32)-> u32
 where
-	W: Arbitrary + Copy + Eq,
+	W: ArbWeight,
 {
 	let mut new_v = v;
 	while g.all_vertices().contains(&new_v){
@@ -84,7 +84,7 @@ where
 
 pub fn add_appropriate_value<W>(g: &mut AdjListGraph<u32,W>, v: u32) -> u32
 where
-	W: Arbitrary + Copy + Eq,
+	W: ArbWeight,
 {
 	let new_v = find_addable_value(&g, v);
 	
@@ -94,8 +94,8 @@ where
 
 pub fn edges_subsetof_graph<V,W>(edges: &Vec<(V,V,W)>, g: &AdjListGraph<V,W>) -> bool
 where
-	V: Arbitrary + Copy + Eq,
-	W: Arbitrary + Copy + Eq,
+	V: ArbVertex,
+	W: ArbWeight,
 {
 	unordered_sublist(edges, &g.all_edges(), |&expected, ref g_edge|{
 		expected.0 == g_edge.source &&
@@ -110,8 +110,8 @@ pub fn remove_appropriate_vertex <V,W>(
 	index:usize)
 	-> (usize,V)
 	where
-		V: Arbitrary + Copy + Eq,
-		W: Arbitrary + Copy + Eq,
+		V: ArbVertex,
+		W: ArbWeight,
 {
 	let removed_i = appropriate_index(index,desc);
 	let removed_v = desc.values[removed_i];
@@ -125,8 +125,8 @@ pub fn edges_independent_of_vertex<V,W>(
 	v: V)
 	-> Vec<(V, V, W)>
 	where
-		V: Arbitrary + Copy + Eq,
-		W: Arbitrary + Copy + Eq,
+		V: ArbVertex,
+		W: ArbWeight,
 {
 	
 	let value_edges = edges_by_value(desc);
@@ -139,8 +139,8 @@ pub fn edges_independent_of_vertex<V,W>(
 
 pub fn appropriate_index<V,W>(i: usize, desc:&GraphDescription<V,W>) -> usize
 	where
-		V: Arbitrary + Copy + Eq,
-		W: Arbitrary + Copy + Eq,
+		V: ArbVertex,
+		W: ArbWeight,
 {
 	i % desc.values.len()
 }
@@ -149,8 +149,8 @@ pub fn add_appropriate_edge<V,W>(	desc:&GraphDescription<V,W>, g: &mut AdjListGr
 									source_i_cand: usize, sink_i_cand: usize, weight: W)
 	-> BaseEdge<V,W>
 	where
-		V: Arbitrary + Copy + Eq,
-		W: Arbitrary + Copy + Eq,
+		V: ArbVertex,
+		W: ArbWeight,
 {
 	let source_i = appropriate_index(source_i_cand, desc);
 	let sink_i = appropriate_index(sink_i_cand, desc);
@@ -167,8 +167,8 @@ pub fn remove_appropriate_edge<V,W>(	desc:&GraphDescription<V,W>,
 										edge_index_cand: usize)
 	-> (usize, BaseEdge<V,W>)
 	where
-		V: Arbitrary + Copy + Eq,
-		W: Arbitrary + Copy + Eq,
+		V: ArbVertex,
+		W: ArbWeight,
 {
 	let edge_index = edge_index_cand % desc.edges.len();
 	let desc_edge = desc.edges[edge_index];
@@ -186,8 +186,8 @@ pub fn original_edges_maintained_subsetof_graph_after<V,W,F>(
 	action: F)
 	-> bool
 	where
-		V: Arbitrary + Copy + Eq,
-		W: Arbitrary + Copy + Eq,
+		V: ArbVertex,
+		W: ArbWeight,
 		F: Fn(&GraphDescription<V,W>, &mut AdjListGraph<V,W>) -> ()
 {
 	after_graph_init(&desc, | mut g|{
@@ -198,8 +198,8 @@ pub fn original_edges_maintained_subsetof_graph_after<V,W,F>(
 
 pub fn graph_subsetof_edges<V,W>(g: &AdjListGraph<V,W>,edges: &Vec<(V,V,W)>) -> bool
 	where
-		V: Arbitrary + Copy + Eq,
-		W: Arbitrary + Copy + Eq,
+		V: ArbVertex,
+		W: ArbWeight,
 {
 	unordered_sublist(&g.all_edges(), edges, |ref g_edge, &expected|{
 		expected.0 == g_edge.source &&
@@ -221,8 +221,8 @@ pub fn after_init_and_add_edge<V,W,F>(	desc: &GraphDescription<V,W>, source_i_ca
 										sink_i_cand:usize, weight: W, holds: F)
 	-> bool
 	where
-		V: Arbitrary + Copy + Eq,
-		W: Arbitrary + Copy + Eq,
+		V: ArbVertex,
+		W: ArbWeight,
 		F: Fn(AdjListGraph<V,W>, BaseEdge<V,W>) -> bool,
 {
 	after_graph_init(desc, |mut g| {
@@ -234,8 +234,8 @@ pub fn after_init_and_add_edge<V,W,F>(	desc: &GraphDescription<V,W>, source_i_ca
 pub fn after_init_and_remove_edge<V,W,F>(desc: &GraphDescription<V,W>, edge_index: usize, holds: F)
 	-> bool
 	where
-		V: Arbitrary + Copy + Eq,
-		W: Arbitrary + Copy + Eq,
+		V: ArbVertex,
+		W: ArbWeight,
 		F: Fn(AdjListGraph<V,W>, (usize, BaseEdge<V,W>)) -> bool,
 {
 	after_graph_init(desc, |mut g| {
@@ -247,7 +247,7 @@ pub fn after_init_and_remove_edge<V,W,F>(desc: &GraphDescription<V,W>, edge_inde
 
 pub fn invalidate_vertice<W>(mut v: u32, desc: &GraphDescription<u32,W>) -> u32
 	where
-		W: Arbitrary + Copy + Eq,
+		W: ArbWeight,
 {
 	
 	while desc.values.contains(&v){
@@ -262,8 +262,8 @@ pub fn equal_description_and_graph_vertices<V,W>(
 	desc: &GraphDescription<V,W>, g: &AdjListGraph<V,W> )
 	-> bool
 	where
-		V: Arbitrary + Copy + Eq,
-		W: Arbitrary + Copy + Eq,
+		V: ArbVertex,
+		W: ArbWeight,
 {
 	unordered_sublist_equal(&desc.values, &g.all_vertices()) &&
 		unordered_sublist_equal(&g.all_vertices(), &desc.values)
@@ -273,8 +273,8 @@ pub fn equal_description_and_graph_edges<V,W>(
 	desc: &GraphDescription<V,W>, g: &AdjListGraph<V,W> )
 	-> bool
 	where
-		V: Arbitrary + Copy + Eq,
-		W: Arbitrary + Copy + Eq,
+		V: ArbVertex,
+		W: ArbWeight,
 {
 	edges_subsetof_graph(&edges_by_value(&desc), &g) &&
 		graph_subsetof_edges(&g, &edges_by_value(&desc))
