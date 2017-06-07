@@ -129,25 +129,7 @@ impl<V,W> ConstrainedGraph for AdjListGraph<V,W>
 		V: Vertex,
 		W: Weight,
 {
-	fn invariant_holds(&self) -> bool {
-		true
-	}
-	
-	unsafe fn uncon_add_vertex(&mut self, v: Self::Vertex) -> Result<(), ()> {
-		self.add_vertex(v)
-	}
-	
-	unsafe fn uncon_remove_vertex(&mut self, v: Self::Vertex) -> Result<(), ()> {
-		self.remove_vertex(v)
-	}
-	
-	unsafe fn uncon_add_edge(&mut self, e: BaseEdge<Self::Vertex, Self::Weight>) -> Result<(), ()> {
-		self.add_edge(e)
-	}
-	
-	unsafe fn uncon_remove_edge(&mut self, e: BaseEdge<Self::Vertex, Self::Weight>) -> Result<(), ()> {
-		self.remove_edge(e)
-	}
+	impl_base_constraint!{}
 }
 
 

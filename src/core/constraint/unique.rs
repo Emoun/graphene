@@ -1,7 +1,9 @@
+
 use super::*;
 
+
 ///
-/// A marker trait for graphs containing unique edges.
+/// A marker trait for graphs containing only unique edges.
 ///
 /// An edge is unique if it is the only edge in the graph
 /// connecting two vertices.
@@ -13,14 +15,14 @@ use super::*;
 /// i.e. only one (v,v,_).
 ///
 ///
-pub trait Unique<V,W,Vi,Ei>: BaseGraph<Vertex=V,Weight=W,VertexIter=Vi,EdgeIter=Ei>
-	where
-		V: Vertex,
-		W: Weight,
-		Vi: VertexIter<V>,
-		Ei: EdgeIter<V,W>,
-{}
+///
+pub trait Unique: ConstrainedGraph{}
 
+///
+/// A graph wrapper that enforces the `Unique` constraint on any graph its given.
+///
+/// See <INSERT LINK TO `Unique`> for a complete description.
+///
 #[derive(Clone,Debug)]
 pub struct UniqueGraph<V,W,Vi,Ei,G>
 	where
@@ -28,10 +30,19 @@ pub struct UniqueGraph<V,W,Vi,Ei,G>
 		W: Weight,
 		Vi: VertexIter<V>,
 		Ei: EdgeIter<V,W>,
-		G: BaseGraph<Vertex=V,Weight=W,VertexIter=Vi,EdgeIter=Ei>,
+		G: ConstrainedGraph<Vertex=V,Weight=W,VertexIter=Vi,EdgeIter=Ei>,
 {
 	graph: G
 }
+
+impl<V,W,Vi,Ei,G> Unique for UniqueGraph<V,W,Vi,Ei,G>
+	where
+		V: Vertex,
+		W: Weight,
+		Vi: VertexIter<V>,
+		Ei: EdgeIter<V,W>,
+		G: ConstrainedGraph<Vertex=V,Weight=W,VertexIter=Vi,EdgeIter=Ei>,
+{}
 
 impl<V,W,Vi,Ei,G> BaseGraph for UniqueGraph<V,W,Vi,Ei,G>
 	where
@@ -39,7 +50,7 @@ impl<V,W,Vi,Ei,G> BaseGraph for UniqueGraph<V,W,Vi,Ei,G>
 		W: Weight,
 		Vi: VertexIter<V>,
 		Ei: EdgeIter<V,W>,
-		G: BaseGraph<Vertex=V,Weight=W,VertexIter=Vi,EdgeIter=Ei>,
+		G: ConstrainedGraph<Vertex=V,Weight=W,VertexIter=Vi,EdgeIter=Ei>,
 {
 	type Vertex = V;
 	type Weight = W;
@@ -50,21 +61,13 @@ impl<V,W,Vi,Ei,G> BaseGraph for UniqueGraph<V,W,Vi,Ei,G>
 		UniqueGraph{graph: G::empty_graph()}
 	}
 	
-	fn all_vertices(&self) -> Self::VertexIter {
-		self.graph.all_vertices()
-	}
+	wrap!{graph.all_vertices(&self) -> Self::VertexIter}
 	
-	fn all_edges(&self) -> Self::EdgeIter {
-		self.graph.all_edges()
-	}
+	wrap!{graph.all_edges(&self) -> Self::EdgeIter}
 	
-	fn add_vertex(&mut self, v: Self::Vertex) -> Result<(), ()> {
-		self.graph.add_vertex(v)
-	}
+	wrap!{graph.add_vertex(&mut self, v: Self::Vertex) -> Result<(), ()>}
 	
-	fn remove_vertex(&mut self, v: Self::Vertex) -> Result<(), ()> {
-		self.graph.remove_vertex(v)
-	}
+	wrap!{graph.remove_vertex(&mut self, v: Self::Vertex) -> Result<(), ()>}
 	
 	fn add_edge(&mut self, e: BaseEdge<Self::Vertex, Self::Weight>) -> Result<(), ()> {
 		// If the edge is already present in the graph (ignoring weight)
@@ -77,9 +80,7 @@ impl<V,W,Vi,Ei,G> BaseGraph for UniqueGraph<V,W,Vi,Ei,G>
 		self.graph.add_edge(e)
 	}
 	
-	fn remove_edge(&mut self, e: BaseEdge<Self::Vertex, Self::Weight>) -> Result<(), ()> {
-		self.graph.remove_edge(e)
-	}
+	wrap!{graph.remove_edge(&mut self, e: BaseEdge<Self::Vertex, Self::Weight>) -> Result<(), ()>}
 }
 
 impl<V,W,Vi,Ei,G> ConstrainedGraph for UniqueGraph<V,W,Vi,Ei,G>
@@ -115,19 +116,12 @@ impl<V,W,Vi,Ei,G> ConstrainedGraph for UniqueGraph<V,W,Vi,Ei,G>
 		self.graph.invariant_holds()
 	}
 	
-	unsafe fn uncon_add_vertex(&mut self, v: Self::Vertex) -> Result<(), ()> {
-		self.graph.uncon_add_vertex(v)
-	}
+	wrap!{unsafe graph.uncon_add_vertex(&mut self, v: Self::Vertex) -> Result<(), ()>}
 	
-	unsafe fn uncon_remove_vertex(&mut self, v: Self::Vertex) -> Result<(), ()> {
-		self.graph.uncon_remove_vertex(v)
-	}
+	wrap!{unsafe graph.uncon_remove_vertex(&mut self, v: Self::Vertex) -> Result<(), ()>}
 	
-	unsafe fn uncon_add_edge(&mut self, e: BaseEdge<Self::Vertex, Self::Weight>) -> Result<(), ()> {
-		self.graph.uncon_add_edge(e)
-	}
+	wrap!{unsafe graph.uncon_add_edge(&mut self, e: BaseEdge<Self::Vertex, Self::Weight>) -> Result<(), ()>}
 	
-	unsafe fn uncon_remove_edge(&mut self, e: BaseEdge<Self::Vertex, Self::Weight>) -> Result<(), ()> {
-		self.graph.uncon_remove_edge(e)
-	}
+	wrap!{unsafe graph.uncon_remove_edge(&mut self, e: BaseEdge<Self::Vertex, Self::Weight>) -> Result<(), ()>}
 }
+
