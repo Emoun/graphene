@@ -72,11 +72,9 @@ macro_rules! wrap_uncon_methods{
 	}
 }
 
-mod unweighted;
 mod undirected;
 mod unique;
 
-pub use self::unweighted::*;
 pub use self::undirected::*;
 pub use self::unique::*;
 

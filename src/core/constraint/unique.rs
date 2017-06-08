@@ -16,7 +16,11 @@ use super::*;
 ///
 ///
 ///
-pub trait Unique: ConstrainedGraph{}
+pub trait Unique: ConstrainedGraph
+	where
+		<Self::VertexIter as IntoIterator>::IntoIter: ExactSizeIterator,
+		<Self::EdgeIter as IntoIterator>::IntoIter: ExactSizeIterator,
+{}
 
 ///
 /// A graph wrapper that enforces the `Unique` constraint on any graph its given.
@@ -30,6 +34,8 @@ pub struct UniqueGraph<V,W,Vi,Ei,G>
 		W: Weight,
 		Vi: VertexIter<V>,
 		Ei: EdgeIter<V,W>,
+		<Vi as IntoIterator>::IntoIter: ExactSizeIterator,
+		<Ei as IntoIterator>::IntoIter: ExactSizeIterator,
 		G: ConstrainedGraph<Vertex=V,Weight=W,VertexIter=Vi,EdgeIter=Ei>,
 {
 	graph: G
@@ -41,6 +47,8 @@ impl<V,W,Vi,Ei,G> Unique for UniqueGraph<V,W,Vi,Ei,G>
 		W: Weight,
 		Vi: VertexIter<V>,
 		Ei: EdgeIter<V,W>,
+		<Vi as IntoIterator>::IntoIter: ExactSizeIterator,
+		<Ei as IntoIterator>::IntoIter: ExactSizeIterator,
 		G: ConstrainedGraph<Vertex=V,Weight=W,VertexIter=Vi,EdgeIter=Ei>,
 {}
 
@@ -50,6 +58,8 @@ impl<V,W,Vi,Ei,G> BaseGraph for UniqueGraph<V,W,Vi,Ei,G>
 		W: Weight,
 		Vi: VertexIter<V>,
 		Ei: EdgeIter<V,W>,
+		<Vi as IntoIterator>::IntoIter: ExactSizeIterator,
+		<Ei as IntoIterator>::IntoIter: ExactSizeIterator,
 		G: ConstrainedGraph<Vertex=V,Weight=W,VertexIter=Vi,EdgeIter=Ei>,
 {
 	type Vertex = V;
@@ -89,6 +99,8 @@ impl<V,W,Vi,Ei,G> ConstrainedGraph for UniqueGraph<V,W,Vi,Ei,G>
 		W: Weight,
 		Vi: VertexIter<V>,
 		Ei: EdgeIter<V,W>,
+		<Vi as IntoIterator>::IntoIter: ExactSizeIterator,
+		<Ei as IntoIterator>::IntoIter: ExactSizeIterator,
 		G: ConstrainedGraph<Vertex=V,Weight=W,VertexIter=Vi,EdgeIter=Ei>,
 {
 	fn invariant_holds(&self) -> bool {

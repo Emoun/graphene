@@ -19,6 +19,8 @@ pub struct Unconstrainer<'a,V,W,Vi,Ei,G>
 		W: Weight,
 		Vi: VertexIter<V>,
 		Ei: EdgeIter<V,W>,
+		<Vi as IntoIterator>::IntoIter: ExactSizeIterator,
+		<Ei as IntoIterator>::IntoIter: ExactSizeIterator,
 		G: 'a + ConstrainedGraph<Vertex=V,Weight=W,VertexIter=Vi,EdgeIter=Ei>
 {
 	graph: &'a mut G,
@@ -31,6 +33,8 @@ impl<'a,V,W,Vi,Ei,G> Unconstrainer<'a,V,W,Vi,Ei,G>
 		W: Weight,
 		Vi: VertexIter<V>,
 		Ei: EdgeIter<V,W>,
+		<Vi as IntoIterator>::IntoIter: ExactSizeIterator,
+		<Ei as IntoIterator>::IntoIter: ExactSizeIterator,
 		G: ConstrainedGraph<Vertex=V,Weight=W,VertexIter=Vi,EdgeIter=Ei>
 {
 	
@@ -126,6 +130,8 @@ impl<'a,V,W,Vi,Ei,G> Unconstrainer<'a,V,W,Vi,Ei,G>
 pub trait ConstrainedGraph: BaseGraph
 where
 	Self: Sized,
+	<Self::VertexIter as IntoIterator>::IntoIter: ExactSizeIterator,
+	<Self::EdgeIter as IntoIterator>::IntoIter: ExactSizeIterator,
 {
 	fn invariant_holds(&self) -> bool;
 	

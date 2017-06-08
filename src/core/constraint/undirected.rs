@@ -25,6 +25,8 @@ pub trait Undirected<V,W,Vi,Ei>: ConstrainedGraph<Vertex=V,Weight=W,VertexIter=V
 		W: Weight,
 		Vi: VertexIter<V>,
 		Ei: EdgeIter<V,W>,
+		<Vi as IntoIterator>::IntoIter: ExactSizeIterator,
+		<Ei as IntoIterator>::IntoIter: ExactSizeIterator,
 {}
 
 ///
@@ -39,6 +41,8 @@ pub struct UndirectedGraph<V,W,Vi,Ei,G>
 		W: Weight,
 		Vi: VertexIter<V>,
 		Ei: EdgeIter<V,W>,
+		<Vi as IntoIterator>::IntoIter: ExactSizeIterator,
+		<Ei as IntoIterator>::IntoIter: ExactSizeIterator,
 		G: ConstrainedGraph<Vertex=V,Weight=W,VertexIter=Vi,EdgeIter=Ei>,
 {
 	graph: G
@@ -50,6 +54,8 @@ impl<V,W,Vi,Ei,G> BaseGraph for UndirectedGraph<V,W,Vi,Ei,G>
 		W: Weight,
 		Vi: VertexIter<V>,
 		Ei: EdgeIter<V,W>,
+		<Vi as IntoIterator>::IntoIter: ExactSizeIterator,
+		<Ei as IntoIterator>::IntoIter: ExactSizeIterator,
 		G: ConstrainedGraph<Vertex=V,Weight=W,VertexIter=Vi,EdgeIter=Ei>,
 {
 	type Vertex = V;
@@ -70,19 +76,17 @@ impl<V,W,Vi,Ei,G> BaseGraph for UndirectedGraph<V,W,Vi,Ei,G>
 	wrap!{graph.remove_vertex(&mut self, v: Self::Vertex) -> Result<(), ()>}
 	
 	fn add_edge(&mut self, e: BaseEdge<Self::Vertex, Self::Weight>) -> Result<(), ()> {
-		unsafe {
-			self.uncon_add_edge(e)?;
-			self.uncon_add_edge(BaseEdge::new(e.sink, e.source, e.weight))?;
-			Ok(())
-		}
+		self.unconstrained()
+			.add_edge(e)
+			.add_edge(BaseEdge::new(e.sink, e.source, e.weight))
+			.constrain()
 	}
 	
 	fn remove_edge(&mut self, e: BaseEdge<Self::Vertex, Self::Weight>) -> Result<(), ()> {
-		unsafe {
-			self.uncon_remove_edge(e)?;
-			self.uncon_remove_edge(BaseEdge::new(e.sink, e.source, e.weight))?;
-			Ok(())
-		}
+		self.unconstrained()
+			.remove_edge(e)
+			.remove_edge(BaseEdge::new(e.sink, e.source, e.weight))
+			.constrain()
 	}
 }
 
@@ -92,13 +96,47 @@ impl<V,W,Vi,Ei,G> ConstrainedGraph for UndirectedGraph<V,W,Vi,Ei,G>
 		W: Weight,
 		Vi: VertexIter<V>,
 		Ei: EdgeIter<V,W>,
+		<Vi as IntoIterator>::IntoIter: ExactSizeIterator,
+		<Ei as IntoIterator>::IntoIter: ExactSizeIterator,
 		G: ConstrainedGraph<Vertex=V,Weight=W,VertexIter=Vi,EdgeIter=Ei>,
 {
 	fn invariant_holds(&self) -> bool {
 	
-	
-	
+		let edges = self.all_edges().into_iter();
 		
+		/* If the number of edges is not even
+		 * the invariant cannot possibly hold.
+		 */
+		if ( edges.len() % 2) != 0 {
+			return false;
+		}
+		
+		/* Keep track of edges that have yet to be matched with
+		 * a corresponding edge in the other direction
+		 */
+		let mut unmatched_edges: Vec<BaseEdge<V,W>> = Vec::new();
+		
+		// For each edge
+		for e in edges{
+			// If the edge can be matched with a previously unmatched edge
+			if let Some(i) = unmatched_edges.iter().position(|temp| {
+				temp.source == e.sink &&
+					temp.sink == e.source &&
+					temp.weight == e.weight
+			} ){
+				/* Discard both edges
+				 */
+				unmatched_edges.swap_remove(i);
+			}else{
+				// Add the edge to the unmatched set
+				unmatched_edges.push(e);
+			}
+		}
+		
+		// The invariant holds if there are no unmatched edges left
+		// and the wrapped graph's invariant holds
+		unmatched_edges.is_empty() &&
+			self.graph.invariant_holds()
 	}
 	
 	wrap_uncon_methods!{graph}
