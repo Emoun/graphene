@@ -72,6 +72,8 @@ macro_rules! wrap_uncon_methods{
 	}
 }
 
+#[macro_use]
+mod custom_graph;
 mod undirected;
 mod unique;
 

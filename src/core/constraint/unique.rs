@@ -38,7 +38,7 @@ pub struct UniqueGraph<V,W,Vi,Ei,G>
 		<Ei as IntoIterator>::IntoIter: ExactSizeIterator,
 		G: ConstrainedGraph<Vertex=V,Weight=W,VertexIter=Vi,EdgeIter=Ei>,
 {
-	graph: G
+	pub graph: G
 }
 
 impl<V,W,Vi,Ei,G> Unique for UniqueGraph<V,W,Vi,Ei,G>
