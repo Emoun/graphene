@@ -1,17 +1,23 @@
 use super::*;
 
 ///
-/// A marker trait for graphs that is effectively undirected.
+/// A marker trait for graphs that are effectively undirected.
 ///
 /// Formally, the trait guarantees that for any edge connecting two vertices , (v1,v2,w),
-/// there is an edge connecting the same two vertices in the other directed, (v2,v1,w), with
+/// there is an edge connecting the same two vertices in the other direction, (v2,v1,w), with
 /// the same weight.
-/// All `BasicGraph` methods must upholds the undirected invariant. This means adding an edge
-/// must automatically add an edge in the other direction, and removing one must also remove on in
-/// the other direction.
 ///
-/// Consumers of the trait must manually treat the two edges as one undirected edge where needed.
+/// All implementations must upholds the undirected invariant by assuming any edge it receives
+/// as a parameter is undirected and is therefore equal to receiving the two corresponding directed
+/// edges. When the implementer outputs edges it must be in the directed pair form. I.e for every
+/// undirected edge (v1,v2,w) in the undirected graph, outputs must provide the two directed edges
+/// (v1,v2,w) and (v2,v1,w).
 ///
+/// All consumers of this trait specifically, must handle the input to and output from the graph
+/// in a way consistent with the above specification.
+///
+/// It is the responsibility of the owner of the graph to make sure that any method
+/// which does not specifically require a `Undirected` graph can logically handle it.
 ///
 pub trait Undirected<V,W,Vi,Ei>: ConstrainedGraph<Vertex=V,Weight=W,VertexIter=Vi,EdgeIter=Ei>
 	where
@@ -55,28 +61,28 @@ impl<V,W,Vi,Ei,G> BaseGraph for UndirectedGraph<V,W,Vi,Ei,G>
 		UndirectedGraph{graph: G::empty_graph()}
 	}
 	
-	fn all_vertices(&self) -> Self::VertexIter {
-		self.graph.all_vertices()
-	}
+	wrap!{graph.all_vertices(&self) -> Self::VertexIter}
 	
-	fn all_edges(&self) -> Self::EdgeIter {
-		self.graph.all_edges()
-	}
+	wrap!{graph.all_edges(&self) -> Self::EdgeIter}
 	
-	fn add_vertex(&mut self, v: Self::Vertex) -> Result<(), ()> {
-		self.graph.add_vertex(v)
-	}
+	wrap!{graph.add_vertex(&mut self, v: Self::Vertex) -> Result<(), ()>}
 	
-	fn remove_vertex(&mut self, v: Self::Vertex) -> Result<(), ()> {
-		self.graph.remove_vertex(v)
-	}
+	wrap!{graph.remove_vertex(&mut self, v: Self::Vertex) -> Result<(), ()>}
 	
 	fn add_edge(&mut self, e: BaseEdge<Self::Vertex, Self::Weight>) -> Result<(), ()> {
-		unimplemented!()
+		unsafe {
+			self.uncon_add_edge(e)?;
+			self.uncon_add_edge(BaseEdge::new(e.sink, e.source, e.weight))?;
+			Ok(())
+		}
 	}
 	
 	fn remove_edge(&mut self, e: BaseEdge<Self::Vertex, Self::Weight>) -> Result<(), ()> {
-		unimplemented!()
+		unsafe {
+			self.uncon_remove_edge(e)?;
+			self.uncon_remove_edge(BaseEdge::new(e.sink, e.source, e.weight))?;
+			Ok(())
+		}
 	}
 }
 
@@ -89,23 +95,12 @@ impl<V,W,Vi,Ei,G> ConstrainedGraph for UndirectedGraph<V,W,Vi,Ei,G>
 		G: ConstrainedGraph<Vertex=V,Weight=W,VertexIter=Vi,EdgeIter=Ei>,
 {
 	fn invariant_holds(&self) -> bool {
-		unimplemented!()
+	
+	
+	
+		
 	}
 	
-	unsafe fn uncon_add_vertex(&mut self, v: Self::Vertex) -> Result<(), ()> {
-		unimplemented!()
-	}
-	
-	unsafe fn uncon_remove_vertex(&mut self, v: Self::Vertex) -> Result<(), ()> {
-		unimplemented!()
-	}
-	
-	unsafe fn uncon_add_edge(&mut self, e: BaseEdge<Self::Vertex, Self::Weight>) -> Result<(), ()> {
-		unimplemented!()
-	}
-	
-	unsafe fn uncon_remove_edge(&mut self, e: BaseEdge<Self::Vertex, Self::Weight>) -> Result<(), ()> {
-		unimplemented!()
-	}
+	wrap_uncon_methods!{graph}
 }
 

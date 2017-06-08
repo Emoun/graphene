@@ -115,13 +115,6 @@ impl<V,W,Vi,Ei,G> ConstrainedGraph for UniqueGraph<V,W,Vi,Ei,G>
 		// Invariant holds, make sure the inner graph's invariant also holds
 		self.graph.invariant_holds()
 	}
-	
-	wrap!{unsafe graph.uncon_add_vertex(&mut self, v: Self::Vertex) -> Result<(), ()>}
-	
-	wrap!{unsafe graph.uncon_remove_vertex(&mut self, v: Self::Vertex) -> Result<(), ()>}
-	
-	wrap!{unsafe graph.uncon_add_edge(&mut self, e: BaseEdge<Self::Vertex, Self::Weight>) -> Result<(), ()>}
-	
-	wrap!{unsafe graph.uncon_remove_edge(&mut self, e: BaseEdge<Self::Vertex, Self::Weight>) -> Result<(), ()>}
+	wrap_uncon_methods!{graph}
 }
 

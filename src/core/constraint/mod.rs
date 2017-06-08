@@ -53,6 +53,25 @@ macro_rules! wrap {
 	};
 }
 
+///
+/// Wrappes the four uncon_* methods from `ConstrainedGraph` using `wrap!`.
+/// Must be called inside an impl of `ConstrainedGraph`.
+///
+#[macro_export]
+macro_rules! wrap_uncon_methods{
+	{
+		$wrapped_member:ident
+	} => {
+		wrap!{unsafe $wrapped_member.uncon_add_vertex(&mut self, v: Self::Vertex) -> Result<(), ()>}
+	
+		wrap!{unsafe $wrapped_member.uncon_remove_vertex(&mut self, v: Self::Vertex) -> Result<(), ()>}
+	
+		wrap!{unsafe $wrapped_member.uncon_add_edge(&mut self, e: BaseEdge<Self::Vertex, Self::Weight>) -> Result<(), ()>}
+	
+		wrap!{unsafe $wrapped_member.uncon_remove_edge(&mut self, e: BaseEdge<Self::Vertex, Self::Weight>) -> Result<(), ()>}
+	}
+}
+
 mod unweighted;
 mod undirected;
 mod unique;
