@@ -184,6 +184,20 @@ pub trait BaseGraph
 	fn remove_edge(&mut self, e: BaseEdge<Self::Vertex,Self::Weight>) -> Result<(),()>;
 	
 	///
+	/// Returns the number of vertices in the graph.
+	///
+	fn vertex_count(&self) -> usize {
+		self.all_vertices().into_iter().len()
+	}
+	
+	///
+	/// Returns the number of edges in the graph.
+	///
+	fn edge_count(&self) -> usize {
+		self.all_edges().into_iter().len()
+	}
+	
+	///
 	/// Creates a graph containing the given vertices and edges. There can be no
 	/// duplicate vertices and all edges must connect to the given vertices.
 	///
