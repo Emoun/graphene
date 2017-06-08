@@ -13,11 +13,14 @@ impl<T> Weight for T
 
 pub trait VertexIter<V>: IntoIterator<Item=V> + FromIterator<V>
 	where
-		V: Vertex
+		V: Vertex,
+		Self::IntoIter : ExactSizeIterator<Item=V>
+		
 {}
 impl<T,V> VertexIter<V> for T
 	where
 		T: IntoIterator<Item=V> + FromIterator<V>,
+		T::IntoIter: ExactSizeIterator<Item=V>,
 		V: Vertex,
 {}
 
@@ -25,10 +28,12 @@ pub trait EdgeIter<V,W>: IntoIterator<Item=BaseEdge<V,W>> + FromIterator<BaseEdg
 	where
 		V: Vertex,
 		W: Weight,
+		Self::IntoIter : ExactSizeIterator<Item=BaseEdge<V,W>>
 {}
 impl<T,V,W> EdgeIter<V,W> for T
 	where
 		T: IntoIterator<Item=BaseEdge<V,W>> + FromIterator<BaseEdge<V,W>>,
+		T::IntoIter: ExactSizeIterator<Item=BaseEdge<V,W>>,
 		V: Vertex,
 		W: Weight,
 {}
@@ -52,6 +57,9 @@ impl<T,V,W> EdgeIter<V,W> for T
 ///
 ///
 pub trait BaseGraph
+	where
+		<Self::VertexIter as IntoIterator>::IntoIter: ExactSizeIterator,
+		<Self::EdgeIter as IntoIterator>::IntoIter: ExactSizeIterator,
 {
 	/// Type of the vertices in the graph.
 	type Vertex: Vertex;
