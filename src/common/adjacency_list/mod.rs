@@ -2,7 +2,6 @@
 mod impl_base_graph;
 
 pub use self::impl_base_graph::*;
-
 use core::*;
 
 #[derive(Clone, Debug)]
