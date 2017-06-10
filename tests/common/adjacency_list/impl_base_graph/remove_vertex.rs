@@ -3,7 +3,7 @@ use super::*;
 fn decreases_vertex_count(desc: GraphDescription<u32,u32>, i: usize) -> bool{
 	holds_if!{desc.values.len() == 0};
 	
-	after_graph_init(&desc, | mut g|{
+	AdjListGraph_init(&desc, |mut g|{
 		remove_appropriate_vertex(&desc,&mut g,i);
 		(desc.values.len() - 1) == g.all_vertices().len()
 	})
@@ -12,7 +12,7 @@ fn decreases_vertex_count(desc: GraphDescription<u32,u32>, i: usize) -> bool{
 fn maintains_unremoved_vertices(desc: GraphDescription<u32,u32>, i: usize) -> bool{
 	holds_if!{desc.values.len() == 0};
 	
-	after_graph_init(&desc, | mut g|{
+	AdjListGraph_init(&desc, |mut g|{
 		let (rem_i, _) = remove_appropriate_vertex(&desc,&mut g,i);
 		let mut vertex_clones = desc.values.clone();
 		vertex_clones.remove(rem_i);
@@ -23,7 +23,7 @@ fn maintains_unremoved_vertices(desc: GraphDescription<u32,u32>, i: usize) -> bo
 fn removes_vertex_from_graph(desc: GraphDescription<u32,u32>, i: usize) -> bool{
 	holds_if!{desc.values.len() == 0};
 	
-	after_graph_init(&desc, | mut g|{
+	AdjListGraph_init(&desc, |mut g|{
 		let (_, removed_v) = remove_appropriate_vertex(&desc,&mut g,i);
 		
 		!g.all_vertices().contains(&removed_v)
@@ -33,9 +33,9 @@ fn removes_vertex_from_graph(desc: GraphDescription<u32,u32>, i: usize) -> bool{
 fn after_independent_edges_subsetof_graph(desc: GraphDescription<u32,u32>, i: usize) -> bool{
 	holds_if!{desc.values.len() == 0};
 	
-	after_graph_init(&desc, | mut g|{
+	AdjListGraph_init(&desc, |mut g|{
 		let (_, removed_v) = remove_appropriate_vertex(&desc,&mut g,i);
-		let indy_edges = edges_independent_of_vertex(&desc, removed_v);
+		let indy_edges = edges_not_incident_on_vertex(&desc, removed_v);
 		
 		unordered_sublist(&indy_edges, &g.all_edges(), |&(e_source, e_sink, _), g_edge|{
 			e_source == g_edge.source() &&
@@ -47,10 +47,10 @@ fn after_independent_edges_subsetof_graph(desc: GraphDescription<u32,u32>, i: us
 fn after_graph_subsetof_independent_edges(desc: GraphDescription<u32,u32>, i: usize) -> bool{
 	holds_if!{desc.values.len() == 0};
 	
-	after_graph_init(&desc, | mut g|{
+	AdjListGraph_init(&desc, |mut g|{
 		let (_, removed_v) = remove_appropriate_vertex(&desc,&mut g,i);
 		
-		let indy_edges = edges_independent_of_vertex(&desc, removed_v);
+		let indy_edges = edges_not_incident_on_vertex(&desc, removed_v);
 		
 		unordered_sublist(&g.all_edges(), &indy_edges, |g_edge, &(e_source, e_sink, _)|{
 			e_source == g_edge.source() &&
@@ -61,7 +61,7 @@ fn after_graph_subsetof_independent_edges(desc: GraphDescription<u32,u32>, i: us
 
 fn rejects_absent_vertex(desc: GraphDescription<u32,u32>, v:u32) -> bool{
 	
-	after_graph_init(&desc, | mut g|{
+	AdjListGraph_init(&desc, |mut g|{
 		let mut value = v;
 		while g.all_vertices().contains(&value){
 			value += 1;

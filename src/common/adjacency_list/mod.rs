@@ -52,6 +52,7 @@ impl<V,W> AdjListGraph<V,W>
 		self.values.iter().position(|ref value| **value == v)
 	}
 	
+	#[allow(dead_code)]
 	fn get_value(&self, i: usize) -> Option<V>{
 		if i < self.values.len() {
 			Some(self.values[i].clone())

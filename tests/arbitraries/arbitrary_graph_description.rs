@@ -10,7 +10,7 @@ use super::*;
 /// Vertices have unique values in the graph.
 ///
 /// There are `.edges.len()` edges in the graph. Each edge `e` goes from vertex `e.0` (using the
-/// vertices indeces) to vertex `e.1` and has weight `e.2`. Edges are unordered and can be duplicated.
+/// vertices indices) to vertex `e.1` and has weight `e.2`. Edges are unordered and can be duplicated.
 ///
 ///
 #[derive(Clone,Debug)]
@@ -19,7 +19,9 @@ where
 	V: ArbVertex,
 	W: ArbWeight,
 {
+	///Values of the verices
 	pub values: Vec<V>,
+	/// Edges between the vertices (given by their index in `.values`
 	pub edges: Vec<(usize,usize,W)>,
 }
 
@@ -185,15 +187,29 @@ where
 	}
 }
 
-/*
-quickcheck! {
-	fn test_arbitrary_graph(Ag: GraphDescription<u32,u32>) -> bool{
-		println!("Original: {:?}", Ag);
+impl<V,W> GraphDescription<V,W>
+	where
+		V: ArbVertex,
+		W: ArbWeight,
+{
+	///
+	/// Returns all the edges by the value of the vertices they are incident on
+	///
+	pub fn edges_by_value(&self) -> Vec<(V,V,W)>
+	{
+		let mut edges = Vec::new();
 		
-		for a in Ag.shrink(){
-			println!("Shrunk: {:?}", a);
+		for e in &self.edges{
+			let t_source = self.values[e.0];
+			let t_sink = self.values[e.1];
+			edges.push((t_source, t_sink, e.2));
 		}
-		true
+		edges
 	}
 }
-*/
+
+
+
+
+
+

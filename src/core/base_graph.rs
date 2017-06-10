@@ -67,7 +67,7 @@ pub trait BaseGraph
 	type Weight: Weight;
 	/// Type of the collection returned with vertices.
 	type VertexIter: VertexIter<Self::Vertex>;
-	// Type of the collection returned with edges.
+	/// Type of the collection returned with edges.
 	type EdgeIter: EdgeIter<Self::Vertex, Self::Weight>;
 	
 	///
