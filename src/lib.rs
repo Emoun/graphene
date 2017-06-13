@@ -29,7 +29,7 @@
 //! given a directed edge **v1** -> **v2**, then the `source` vertex is **v1** and the
 //! `sink` vertex is **v2**. Likewise, the edge is *sourced* in **v1** and *sinked* (the misspelling
 //! of 'sunk' is intentional) in **v2**. For both directed and undirected graphs the edge is
-//! *indident* on **v1** and **v2**.
+//! *incident* on **v1** and **v2**.
 //!
 //! The crate is divided in three modules:
 //!
@@ -84,6 +84,18 @@
 //! 	assert_eq!(g.edges_between(1,2).len(), 2);
 //! }
 //! ```
+//!
+//! # Vertices and Edges
+//!
+//! In `graphene` vertices have a value, which is use to identify each vertex. Therefore, these
+//! values must be unique for every vertex in the graph. Internally, a graph implementation may
+//! manage its vertices as it wishes, but it must comminicate with  the outside world using the vertices'
+//! values.
+//!
+//! Edges are identified by the tuple `(source,sink,weight)`. Edges do not have to be unique in the
+//! graph, which means two edges with the same source, sink and weight are practically indistinguishable.
+//! This is by design, as if the information in the tuple is not enough to distinguish two edges,
+//! then choosing either one should not make a difference.
 //!
 //! # Directionality
 //!
@@ -163,7 +175,7 @@
 //!
 //! - How do i initialize an unweighted graph, it seems then all require a weight, e.g. AdjListGraph<V,W>?
 //!
-//! By convention, `()`, is treated as the lack of a weight. Therefore, AdjListGraph<V,()> is
+//! By convention, `()` is treated as the lack of a weight. Therefore, AdjListGraph<V,()> is
 //! an unweighted graph.
 //!
 //!
