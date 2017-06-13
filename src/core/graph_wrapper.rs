@@ -111,6 +111,11 @@ macro_rules! impl_BaseGraph_for_wrapper{
 		}
 	}
 }
+
+///
+/// Implements `ConstrainedGraph` for a `GraphWrapper` by having all methods
+/// call the corresponding wrapped graph methods.
+///
 #[macro_export]
 macro_rules! impl_ConstrainedGraph_for_wrapper{
 	{
@@ -132,8 +137,8 @@ macro_rules! impl_ConstrainedGraph_for_wrapper{
 }
 
 ///
-/// Implements `ConstrainedGraph` for a `GraphWrapper` by having all methods
-/// call the corresponding wrapped graph methods.
+/// Implements the given list of constraints for the given GraphWrapper,
+/// which must be generic over a `ContainedGraph` (`<G>`).
 ///
 #[macro_export]
 macro_rules! impl_constraints_for_wrapper{

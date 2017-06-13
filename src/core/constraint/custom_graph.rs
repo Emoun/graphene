@@ -1,6 +1,7 @@
 
 ///
 /// A macro for defining a custom graph with a specific set of constraints.
+///
 /// The resulting graph is generic over vertices and weights (<V,W>) and implement
 /// `GraphWrapper` and the constraints given.
 ///
