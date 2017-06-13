@@ -22,62 +22,40 @@ pub trait Unique: ConstrainedGraph
 		<Self::EdgeIter as IntoIterator>::IntoIter: ExactSizeIterator,
 {}
 
-///
-/// A graph wrapper that enforces the `Unique` constraint on any graph its given.
-///
-/// See <INSERT LINK TO `Unique`> for a complete description.
-///
-#[derive(Clone,Debug)]
-pub struct UniqueGraph<V,W,Vi,Ei,G>
-	where
-		V: Vertex,
-		W: Weight,
-		Vi: VertexIter<V>,
-		Ei: EdgeIter<V,W>,
-		<Vi as IntoIterator>::IntoIter: ExactSizeIterator,
-		<Ei as IntoIterator>::IntoIter: ExactSizeIterator,
-		G: ConstrainedGraph<Vertex=V,Weight=W,VertexIter=Vi,EdgeIter=Ei>,
-{
-	pub graph: G
+graph_wrapper!{
+	///
+	/// A graph wrapper that enforces the `Unique` constraint on any graph its given.
+	///
+	/// See <INSERT LINK TO `Unique`> for a complete description.
+	///
+	struct UniqueGraph
 }
+impl_constraints_for_wrapper!{UniqueGraph : Unique}
 
-impl<V,W,Vi,Ei,G> Unique for UniqueGraph<V,W,Vi,Ei,G>
+impl<G> BaseGraph for UniqueGraph<G>
 	where
-		V: Vertex,
-		W: Weight,
-		Vi: VertexIter<V>,
-		Ei: EdgeIter<V,W>,
-		<Vi as IntoIterator>::IntoIter: ExactSizeIterator,
-		<Ei as IntoIterator>::IntoIter: ExactSizeIterator,
-		G: ConstrainedGraph<Vertex=V,Weight=W,VertexIter=Vi,EdgeIter=Ei>,
-{}
-
-impl<V,W,Vi,Ei,G> BaseGraph for UniqueGraph<V,W,Vi,Ei,G>
-	where
-		V: Vertex,
-		W: Weight,
-		Vi: VertexIter<V>,
-		Ei: EdgeIter<V,W>,
-		<Vi as IntoIterator>::IntoIter: ExactSizeIterator,
-		<Ei as IntoIterator>::IntoIter: ExactSizeIterator,
-		G: ConstrainedGraph<Vertex=V,Weight=W,VertexIter=Vi,EdgeIter=Ei>,
+		G: ConstrainedGraph,
+		<G as BaseGraph>::Vertex: Vertex,
+		<G as BaseGraph>::Weight: Weight,
+		<<G as BaseGraph>::VertexIter as IntoIterator>::IntoIter: ExactSizeIterator,
+		<<G as BaseGraph>::EdgeIter as IntoIterator>::IntoIter: ExactSizeIterator,
 {
-	type Vertex = V;
-	type Weight = W;
-	type VertexIter = Vi;
-	type EdgeIter = Ei;
+	type Vertex = <G as BaseGraph>::Vertex;
+	type Weight = <G as BaseGraph>::Weight;
+	type VertexIter = <G as BaseGraph>::VertexIter;
+	type EdgeIter = <G as BaseGraph>::EdgeIter;
 	
 	fn empty_graph() -> Self {
-		UniqueGraph{graph: G::empty_graph()}
+		UniqueGraph::wrap(G::empty_graph())
 	}
 	
-	wrap!{graph.all_vertices(&self) -> Self::VertexIter}
+	wrapped_method!{all_vertices(&self) -> Self::VertexIter}
 	
-	wrap!{graph.all_edges(&self) -> Self::EdgeIter}
+	wrapped_method!{all_edges(&self) -> Self::EdgeIter}
 	
-	wrap!{graph.add_vertex(&mut self, v: Self::Vertex) -> Result<(), ()>}
+	wrapped_method!{add_vertex(&mut self, v: Self::Vertex) -> Result<(), ()>}
 	
-	wrap!{graph.remove_vertex(&mut self, v: Self::Vertex) -> Result<(), ()>}
+	wrapped_method!{remove_vertex(&mut self, v: Self::Vertex) -> Result<(), ()>}
 	
 	fn add_edge(&mut self, e: BaseEdge<Self::Vertex, Self::Weight>) -> Result<(), ()> {
 		// If the edge is already present in the graph (ignoring weight)
@@ -87,21 +65,19 @@ impl<V,W,Vi,Ei,G> BaseGraph for UniqueGraph<V,W,Vi,Ei,G>
 			// Disallow the addition
 			return Err(());
 		}
-		self.graph.add_edge(e)
+		self.wraps.add_edge(e)
 	}
 	
-	wrap!{graph.remove_edge(&mut self, e: BaseEdge<Self::Vertex, Self::Weight>) -> Result<(), ()>}
+	wrapped_method!{remove_edge(&mut self, e: BaseEdge<Self::Vertex, Self::Weight>) -> Result<(), ()>}
 }
 
-impl<V,W,Vi,Ei,G> ConstrainedGraph for UniqueGraph<V,W,Vi,Ei,G>
+impl<G> ConstrainedGraph for UniqueGraph<G>
 	where
-		V: Vertex,
-		W: Weight,
-		Vi: VertexIter<V>,
-		Ei: EdgeIter<V,W>,
-		<Vi as IntoIterator>::IntoIter: ExactSizeIterator,
-		<Ei as IntoIterator>::IntoIter: ExactSizeIterator,
-		G: ConstrainedGraph<Vertex=V,Weight=W,VertexIter=Vi,EdgeIter=Ei>,
+		G: ConstrainedGraph,
+		<G as BaseGraph>::Vertex: Vertex,
+		<G as BaseGraph>::Weight: Weight,
+		<<G as BaseGraph>::VertexIter as IntoIterator>::IntoIter: ExactSizeIterator,
+		<<G as BaseGraph>::EdgeIter as IntoIterator>::IntoIter: ExactSizeIterator,
 {
 	fn invariant_holds(&self) -> bool {
 		
@@ -125,8 +101,8 @@ impl<V,W,Vi,Ei,G> ConstrainedGraph for UniqueGraph<V,W,Vi,Ei,G>
 			}
 		}
 		// Invariant holds, make sure the inner graph's invariant also holds
-		self.graph.invariant_holds()
+		self.wraps.invariant_holds()
 	}
-	wrap_uncon_methods!{graph}
+	wrapped_uncon_methods!{}
 }
 

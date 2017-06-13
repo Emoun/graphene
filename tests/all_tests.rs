@@ -15,9 +15,11 @@ use graphene::core::*;
 use graphene::core::constraint::*;
 use graphene::common::*;
 
-
+///
+/// Custom graph that uses AdjListGraph and is Undirected and Unique
+///
 custom_graph!{
-	TestGraph
+	struct UndirectedUniqueGraph
 	where AdjListGraph
 	impl Undirected,Unique
 	use UndirectedGraph,UniqueGraph
@@ -25,7 +27,7 @@ custom_graph!{
 
 //#[test]
 fn testGraphTest(){
-	let mut g = TestGraph{graph: UndirectedGraph{graph: UniqueGraph{graph: AdjListGraph::<u32,()>::empty_graph()}}};
+	let mut g = UndirectedUniqueGraph::<u32,()>::empty_graph();
 	
 	g.add_vertex(1).unwrap();
 	g.add_vertex(2).unwrap();
@@ -34,65 +36,8 @@ fn testGraphTest(){
 	assert!(g.unconstrained().add_edge(BaseEdge::new(1,2,())).constrain().is_err());
 	
 	println!("{:?}", g);
+	println!("Wrappen: {:?}", g.wrapped());
 }
-
-///
-/// Custom graph that uses AdjListGraph and is Undirected and Unique
-///
-#[derive(Clone,Debug)]
-struct UndirectedUniqueGraph<V,W>
-	where
-		V: Vertex,
-		W: Weight,
-{
-	graph:	UndirectedGraph<V,W,<AdjListGraph<V,W> as BaseGraph>::VertexIter,<AdjListGraph<V,W> as BaseGraph>::EdgeIter,
-				UniqueGraph<V,W,<AdjListGraph<V,W> as BaseGraph>::VertexIter,<AdjListGraph<V,W> as BaseGraph>::EdgeIter,
-					AdjListGraph<V,W>>>
-}
-
-impl<V,W> BaseGraph for UndirectedUniqueGraph<V,W>
-	where
-		V: Vertex,
-		W: Weight,
-{
-	type Vertex = V;
-	type Weight = W;
-	type VertexIter = <AdjListGraph<V,W> as BaseGraph>::VertexIter;
-	type EdgeIter = <AdjListGraph<V,W> as BaseGraph>::EdgeIter;
-	fn empty_graph() -> Self {
-		UndirectedUniqueGraph { graph: UndirectedGraph{graph: UniqueGraph{graph: AdjListGraph::<V,W>::empty_graph()}}}
-	}
-	
-	wrap!{graph.all_vertices(&self) -> Self::VertexIter}
-	
-	wrap!{graph.all_edges(&self) -> Self::EdgeIter}
-	
-	wrap!{graph.add_vertex(&mut self, v: Self::Vertex) -> Result<(), ()>}
-	
-	wrap!{graph.remove_vertex(&mut self, v: Self::Vertex) -> Result<(), ()>}
-	
-	wrap!{graph.add_edge(&mut self, e: BaseEdge<Self::Vertex, Self::Weight>) -> Result<(), ()>}
-	
-	wrap!{graph.remove_edge(&mut self, e: BaseEdge<Self::Vertex, Self::Weight>) -> Result<(), ()>}
-}
-impl<V,W> ConstrainedGraph for 	UndirectedUniqueGraph<V,W>
-	where
-		V: Vertex,
-		W: Weight,
-{
-	wrap!{graph.invariant_holds(&self) -> bool}
-	
-	wrap_uncon_methods!{graph}
-}
-
-impl<V,W> Unique for UndirectedUniqueGraph<V,W>
-	where
-		V: Vertex,
-		W: Weight,{}
-impl<V,W> Undirected for UndirectedUniqueGraph<V,W>
-	where
-		V: Vertex,
-		W: Weight,{}
 
 //#[test]
 fn someTest(){
@@ -101,12 +46,11 @@ fn someTest(){
 	let mut uncon_g = AdjListGraph::graph(vertices.clone(), edges.clone()).unwrap();
 	
 	let mut unique_g = constraint::UniqueGraph::
-		<_,_,_,_,AdjListGraph<_,_>>::
+		<AdjListGraph<_,_>>::
 			graph(vertices.clone(),edges.clone()).unwrap();
 	
 	let mut undir_unique_g = constraint::UndirectedGraph::
-		<_,_,_,_,
-			constraint::UniqueGraph<_,_,_,_,AdjListGraph<_,_>>
+		<constraint::UniqueGraph<AdjListGraph<_,_>>
 			>::
 			graph(vertices.clone(),edges.clone()).unwrap();
 	
@@ -161,5 +105,3 @@ fn someTest(){
 	println!("Unique Graph: {:?}", unique_g);
 	
 }
-
-

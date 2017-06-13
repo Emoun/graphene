@@ -8,6 +8,8 @@
 //!
 //!
 //!
+use super::*;
+
 use arbitraries::*;
 use graphene::core::*;
 use graphene::common::*;
@@ -26,33 +28,8 @@ mod utilities;
 /// may have its own.
 ///
 ///
-pub struct GraphMock<V,W>{
-	graph: AdjListGraph<V,W>
-}
-
-impl<V,W> BaseGraph for GraphMock<V,W>
-	where
-		V: Vertex,
-		W: Weight,
-{
-	type Vertex = V;
-	type Weight = W;
-	type VertexIter = <AdjListGraph<V,W> as BaseGraph>::VertexIter;
-	type EdgeIter = <AdjListGraph<V,W> as BaseGraph>::EdgeIter;
+custom_graph!{
+	struct GraphMock
 	
-	fn empty_graph() -> Self {
-		GraphMock{graph: AdjListGraph::empty_graph()}
-	}
-	
-	wrap!{graph.all_vertices(&self) -> Self::VertexIter}
-	
-	wrap!{graph.all_edges(&self) -> Self::EdgeIter }
-	
-	wrap!{graph.add_vertex(&mut self, v: Self::Vertex) -> Result<(), ()> }
-	
-	wrap!{graph.remove_vertex(&mut self, v: Self::Vertex) -> Result<(), ()>}
-	
-	wrap!{graph.add_edge(&mut self, e: BaseEdge<Self::Vertex, Self::Weight>) -> Result<(), ()> }
-	
-	wrap!{graph.remove_edge(&mut self, e: BaseEdge<Self::Vertex, Self::Weight>) -> Result<(), ()> }
+	where AdjListGraph
 }
