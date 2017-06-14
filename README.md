@@ -1,6 +1,6 @@
 
 # graphene
-
+[![Build Status](https://travis-ci.org/Emoun/graphene.svg?branch=master)](https://travis-ci.org/Emoun/graphene)
 [![](http://meritbadge.herokuapp.com/graphene)](https://crates.io/crates/graphene)
 [![](https://docs.rs/graphene/badge.svg)](https://docs.rs/graphene)
 
