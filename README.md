@@ -7,6 +7,9 @@
 A general purpose, extensible [Graph Theory](https://en.wikipedia.org/wiki/Graph_theory)
 data type and algorithm library for Rust.
 
+This project is still in early design and development stage and is still changing a lot.
+A good public API is not the focus of the project yet, documentation may be scarce, and bugs may be rampant.
+
 
 
 ### License

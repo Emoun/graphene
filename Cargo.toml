@@ -3,9 +3,19 @@ name = "graphene"
 version = "0.1.1"
 authors = ["Emad Jacob Maroun"]
 
-description = "Graph library"
+description = "A general purpose, extensible [Graph Theory](https://en.wikipedia.org/wiki/Graph_theory) data type and algorithm library for Rust."
+
 license = "MIT/Unlicense"
 
+repository = "https://github.com/Emoun/graphene"
+
+keywords = ["graph","algorithm"]
+
+categories = ["data-structures","algorithms"]
+
+[badges]
+
+travis-ci = {repositry = Emoun/graphene}
 
 [dependencies]
 

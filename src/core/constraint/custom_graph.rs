@@ -11,7 +11,7 @@
 /// struct <graph name>
 /// where <name of type implementing ConstrainedGraph>
 /// impl (<constraint>),*
-/// use (<GraphWrapper to use to uphold the constraint, i.e. will wrap the ConstrainedGraph>).*
+/// use (<GraphWrapper to use to uphold the constraint, i.e. will wrap the ConstrainedGraph>),*
 /// ```
 ///
 /// The 'impl' and 'use' clauses are optional.
