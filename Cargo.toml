@@ -1,6 +1,6 @@
 [package]
 name = "graphene"
-version = "0.1.1"
+version = "0.1.2"
 authors = ["Emad Jacob Maroun"]
 
 description = "A general purpose, extensible [Graph Theory](https://en.wikipedia.org/wiki/Graph_theory) data type and algorithm library for Rust."
@@ -15,7 +15,7 @@ categories = ["data-structures","algorithms"]
 
 [badges]
 
-travis-ci = {repositry = Emoun/graphene}
+travis-ci = {repositry = "Emoun/graphene"}
 
 [dependencies]
 
