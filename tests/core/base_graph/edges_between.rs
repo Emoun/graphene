@@ -6,7 +6,11 @@ fn all_edges_incident_on_the_vertices(
 	-> bool
 {
 	GraphMock_init(&desc, |g|{
+		
 		if desc.values.len() == 0 {
+			// If the description says the graph has no vertices,
+			// then there can be no edges between the two given vertices,
+			// since they are not part of the graph.
 			return g.edges_between(v1_cand,v2_cand).len() == 0;
 		}
 		

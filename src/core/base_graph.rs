@@ -1,11 +1,19 @@
 use super::*;
 use std::iter::FromIterator;
 
+///
+/// Trait alias that specifies which traits a vertex
+/// value needs to implement
+///
 pub trait Vertex: Copy + Eq{}
 impl<T> Vertex for T
 	where T: Copy + Eq
 {}
 
+///
+/// Trait alias that specifies which traits an edge weight needs
+/// to implement.
+///
 pub trait Weight: Copy + Eq{}
 impl<T> Weight for T
 	where T: Copy + Eq
@@ -41,13 +49,13 @@ impl<T,V,W> EdgeIter<V,W> for T
 ///
 /// The basic graph interface.
 ///
-/// This is the main trait for all types graphs.
+/// This is the main trait for all types of graphs.
 ///
 /// The vertices in a graph are identified by their value, and must therefore be unique
 /// in the graph.
 ///
-/// The edges in a graph are identified by the vertices they connect and their weight.
-/// Edges do not have to be unique, but if there are duplicates (i.e. two or more edges connecting
+/// The edges in a graph are identified by the vertices they are incident on and their weight.
+/// Edges do not have to be unique, but if there are duplicates (i.e. two or more edges incident on
 /// the same vertices with the same weights) then any operation intended for one of the edges
 /// may happen on any one of them. E.g. If one of the edges is to be removed, then any
 /// one of them will be so.
@@ -236,7 +244,8 @@ pub trait BaseGraph
 	///
 	/// I.e. all edges where e == (v1,v2,_) or e == (v2,v1,_)
 	///
-	fn edges_between(&self, v1: Self::Vertex, v2: Self::Vertex) -> Self::EdgeIter{
+	fn edges_between(&self, v1: Self::Vertex, v2: Self::Vertex) -> Self::EdgeIter
+	{
 		let all_edges = self.all_edges().into_iter();
 		
 		// Filter out any edge that is not connected to both vertices
@@ -247,6 +256,26 @@ pub trait BaseGraph
 		
 		// Return the result
 		relevant.collect()
+	}
+	
+	///
+	/// Returns all edges that are sourced in the given vertex.
+	///
+	/// I.e. all edges where `e == (v,_,_)`
+	///
+	fn edges_sourced_in(&self, v: Self::Vertex) -> Self::EdgeIter
+	{
+		self.all_edges().into_iter().filter(|e| e.source() == v).collect::<Self::EdgeIter>()
+	}
+	
+	///
+	/// Returns all edges that are sinked in the given vertex.
+	///
+	/// I.e. all edges where `e == (_,v,_)`
+	///
+	fn edges_sinked_in(&self, v: Self::Vertex) -> Self::EdgeIter
+	{
+		self.all_edges().into_iter().filter(|e| e.sink() == v).collect::<Self::EdgeIter>()
 	}
 	
 }
