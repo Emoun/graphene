@@ -14,14 +14,13 @@ A good public API is not the focus of the project yet, documentation may be scar
 
 ### License
 
-Dual-licensed under the MIT license or the [UNLICENSE](http://unlicense.org/) at your option.
+Licensed under the MIT license.
 
-All content in this repository is licensed under these licenses at your option. Any file with its own license
-header is also licensed under the above licenses, at your option. If the header specifies a different
-license than the above, it must be seen as an additional choice of license and any of the above licenses
-or the header license can be chosen at your option.
+Any file with its own license header is also licensed under the above license, at your option.
+If the header specifies a different license than the above, it must be seen as an additional choice of license
+and the above license or the header license can be chosen at your option.
 
-Any intentional contribution to this repository is licensed under the above licenses in addition
+Any intentional contribution to this repository is licensed under the above license in addition
 to any contribution specific license without exception.
 
 
