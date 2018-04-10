@@ -43,6 +43,18 @@ macro_rules! custom_graph{
 	};
 	{
 		struct $graph_name:ident where $base_graph:ident impl $($con_traits:ident),*
+	} => {
+		custom_graph!{struct $graph_name where $base_graph}
+		custom_graph!{@impl_constraint_traits $graph_name; $($con_traits),*}
+	};
+	{
+		pub struct $graph_name:ident where $base_graph:ident impl $($con_traits:ident),*
+	} => {
+		custom_graph!{pub struct $graph_name where $base_graph }
+		custom_graph!{@impl_constraint_traits $graph_name; $($con_traits),*}
+	};
+	{
+		struct $graph_name:ident where $base_graph:ident impl $($con_traits:ident),*
 		use $($con_graph:ident),*
 	} => {
 		custom_graph!{struct $graph_name where $base_graph use $($con_graph),*}
@@ -55,6 +67,8 @@ macro_rules! custom_graph{
 		custom_graph!{pub struct $graph_name where $base_graph use $($con_graph),*}
 		custom_graph!{@impl_constraint_traits $graph_name; $($con_traits),*}
 	};
+	
+//helpers
 	{
 		@declare_struct
 		pub $graph_name:ident; $base_graph:ident; $($con_graph:ident),*
