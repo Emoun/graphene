@@ -1,10 +1,10 @@
 use super::*;
 
-// Private unconstrained
+// Private unconstrained unwrapped
 custom_graph!{
 	struct G1<V,W> where AdjListGraph<V,W>
 }
-// Public unconstrained
+// Public unconstrained unwrapped
 custom_graph!{
 	pub struct G2<S,P> where AdjListGraph<S,P>
 }
@@ -40,9 +40,13 @@ custom_graph!{
 custom_graph!{
 	pub struct G10<V,W> where AdjListGraph<V,W> impl Undirected, Unique use UndirectedGraph, UniqueGraph
 }
-// Private unconstrained unwrapped
+// Private unconstrained unwrapped non-generic
+custom_graph!{
+	struct G11 where AdjListGraph<i32,i32>
+}
 
 // The following tests show that the structs have been implemented correctly
+
 #[test]
 fn g1_test(){
 	let g = G1::<u32,()>::empty_graph();
@@ -101,7 +105,11 @@ fn g10_test(){
 	let _: &UndirectedGraph<UniqueGraph<AdjListGraph<_,_>>>  = g.wrapped();
 	
 }
-
+#[test]
+fn g11_test(){
+	let g = G11::empty_graph();
+	type_check_graph(&g);
+}
 
 // Functions to typecheck the generated structs
 macro_rules! typecheck_functions{
