@@ -30,6 +30,6 @@ pub mod constraints;
 ///
 ///
 custom_graph!{
-	pub struct GraphMock
-	where AdjListGraph
+	pub struct GraphMock<V,W>
+	where AdjListGraph<V,W>
 }

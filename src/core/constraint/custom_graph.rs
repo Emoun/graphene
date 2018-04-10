@@ -20,123 +20,144 @@
 #[macro_export]
 macro_rules! custom_graph{
 	{
-		struct $graph_name:ident where $base_graph:ident
+		struct $graph_name:ident<$V1:ident,$W1:ident>
+		where $base_graph:ident<$V2:ident,$W2:ident>
 	} => {
 		custom_graph!{@declare_struct_and_impl_minimum
-			$graph_name; $base_graph;}
+			$graph_name<$V1,$W1>; $base_graph<$V2,$W2>;}
 	};
 	{
-		pub struct $graph_name:ident where $base_graph:ident
+		pub struct $graph_name:ident<$V1:ident,$W1:ident>
+		where $base_graph:ident<$V2:ident,$W2:ident>
 	} => {
 		custom_graph!{@declare_struct_and_impl_minimum
-			pub $graph_name; $base_graph;}
+			pub $graph_name<$V1,$W1>; $base_graph<$V2,$W2>;}
 	};
 	{
-		struct $graph_name:ident where $base_graph:ident impl $($con_traits:ident),*
+		struct $graph_name:ident<$V1:ident,$W1:ident>
+		where $base_graph:ident<$V2:ident,$W2:ident>
+		impl $($con_traits:ident),*
 	} => {
-		custom_graph!{struct $graph_name where $base_graph}
-		custom_graph!{@impl_constraint_traits $graph_name; $($con_traits),*}
+		custom_graph!{struct $graph_name<$V1,$W1> where $base_graph<$V2,$W2>}
+		custom_graph!{@impl_constraint_traits $graph_name<$V1,$W1>; $($con_traits),*}
 	};
 	{
-		pub struct $graph_name:ident where $base_graph:ident impl $($con_traits:ident),*
+		pub struct $graph_name:ident<$V1:ident,$W1:ident>
+		where $base_graph:ident<$V2:ident,$W2:ident>
+		impl $($con_traits:ident),*
 	} => {
-		custom_graph!{pub struct $graph_name where $base_graph }
-		custom_graph!{@impl_constraint_traits $graph_name; $($con_traits),*}
+		custom_graph!{pub struct $graph_name<$V1,$W1> where $base_graph<$V2,$W2> }
+		custom_graph!{@impl_constraint_traits $graph_name<$V1,$W1>; $($con_traits),*}
 	};
 	{
-		struct $graph_name:ident where $base_graph:ident impl $($con_traits:ident),*
+		struct $graph_name:ident<$V1:ident,$W1:ident>
+		where $base_graph:ident<$V2:ident,$W2:ident>
+		impl $($con_traits:ident),*
 		use $($con_graph:ident),*
 	} => {
 		custom_graph!{@declare_struct_and_impl_minimum
-			$graph_name; $base_graph; $($con_graph),*}
-		custom_graph!{@impl_constraint_traits $graph_name; $($con_traits),*}
+			$graph_name<$V1,$W1>; $base_graph<$V2,$W2>; $($con_graph),*}
+		custom_graph!{@impl_constraint_traits $graph_name<$V1,$W1>; $($con_traits),*}
 	};
 	{
-		pub struct $graph_name:ident where $base_graph:ident impl $($con_traits:ident),*
+		pub struct $graph_name:ident<$V1:ident,$W1:ident>
+		where $base_graph:ident<$V2:ident,$W2:ident>
+		impl $($con_traits:ident),*
 		use $($con_graph:ident),*
 	} => {
 		custom_graph!{@declare_struct_and_impl_minimum
-			pub $graph_name; $base_graph; $($con_graph),*}
-		custom_graph!{@impl_constraint_traits $graph_name; $($con_traits),*}
+			pub $graph_name<$V1,$W1>; $base_graph<$V2,$W2>; $($con_graph),*}
+		custom_graph!{@impl_constraint_traits $graph_name<$V1,$W1>; $($con_traits),*}
 	};
 	
 //helpers
 	{
 		@declare_struct_and_impl_minimum
-		$graph_name:ident; $base_graph:ident; $($con_graph:ident),*
+		$graph_name:ident<$V1:ident,$W1:ident>;
+		$base_graph:ident<$V2:ident,$W2:ident>; $($con_graph:ident),*
 	}=>{
-		custom_graph!{@declare_struct $graph_name; $base_graph; $($con_graph),*}
-		custom_graph!{@impl_minimum_traits_and_derives $graph_name; $base_graph; $($con_graph),*}
+		custom_graph!{@declare_struct
+			$graph_name<$V1,$W1>; $base_graph<$V2,$W2>; $($con_graph),*}
+		custom_graph!{@impl_minimum_traits_and_derives
+			$graph_name<$V1,$W1>; $base_graph<$V2,$W2>; $($con_graph),*}
 	};
 	{
 		@declare_struct_and_impl_minimum
-		pub $graph_name:ident; $base_graph:ident; $($con_graph:ident),*
+		pub $graph_name:ident<$V1:ident,$W1:ident>;
+		$base_graph:ident<$V2:ident,$W2:ident>; $($con_graph:ident),*
 	}=>{
-		custom_graph!{@declare_struct pub $graph_name; $base_graph; $($con_graph),*}
-		custom_graph!{@impl_minimum_traits_and_derives $graph_name; $base_graph; $($con_graph),*}
+		custom_graph!{@declare_struct
+			pub $graph_name<$V1,$W1>; $base_graph<$V2,$W2>; $($con_graph),*}
+		custom_graph!{@impl_minimum_traits_and_derives
+			$graph_name<$V1,$W1>; $base_graph<$V2,$W2>; $($con_graph),*}
 	};
 	{
 		@declare_struct
-		pub $graph_name:ident; $base_graph:ident; $($con_graph:ident),*
+		pub $graph_name:ident<$V1:ident,$W1:ident>;
+		$base_graph:ident<$V2:ident,$W2:ident>; $($con_graph:ident),*
 	}=>{
 		// Define graph struct
-		pub struct $graph_name<V,W>
+		pub struct $graph_name<$V1,$W1>
 			where
-				V: Vertex,
-				W: Weight,
+				$V1: Vertex,
+				$W1: Weight,
 		{
 			wraps:
 			custom_graph!{
 				@in_struct
-				$($con_graph,$base_graph<V,W> >>)*
-				$base_graph<V,W>
+				$($con_graph,$base_graph<$V2,$W2> >>)*
+				$base_graph<$V2,$W2>
 			}
 		}
 	};
 	{
 		@declare_struct
-		$graph_name:ident; $base_graph:ident; $($con_graph:ident),*
+		$graph_name:ident<$V1:ident,$W1:ident>;
+		$base_graph:ident<$V2:ident,$W2:ident>; $($con_graph:ident),*
 	}=>{
 		// Define graph struct
-		struct $graph_name<V,W>
+		struct $graph_name<$V1,$W1>
 			where
-				V: Vertex,
-				W: Weight,
+				$V1: Vertex,
+				$W1: Weight,
 		{
 			wraps:
 			custom_graph!{
 				@in_struct
-				$($con_graph,$base_graph<V,W> >>)*
-				$base_graph<V,W>
+				$($con_graph,$base_graph<$V2,$W2> >>)*
+				$base_graph<$V2,$W2>
 			}
 		}
 	};
 	{
 		@impl_minimum_traits_and_derives
-		$graph_name:ident; $base_graph:ident; $($con_graph:ident),*
+		$graph_name:ident<$V1:ident,$W1:ident>;
+		$base_graph:ident<$V2:ident,$W2:ident>; $($con_graph:ident),*
 	}=>{
-		custom_graph!{@impl_graph_wrapper $graph_name; $base_graph; $($con_graph),*}
-		custom_graph!{@impl_base_graph $graph_name}
-		custom_graph!{@impl_contained_graph $graph_name}
-		custom_graph!{@derive_debug $graph_name}
-		custom_graph!{@derive_clone $graph_name}
+		custom_graph!{@impl_graph_wrapper
+			$graph_name<$V1,$W1>; $base_graph<$V2,$W2>; $($con_graph),*}
+		custom_graph!{@impl_base_graph $graph_name<$V1,$W1>}
+		custom_graph!{@impl_contained_graph $graph_name<$V1,$W1>}
+		custom_graph!{@derive_debug $graph_name<$V1,$W1>}
+		custom_graph!{@derive_clone $graph_name<$V1,$W1>}
 	};
 	{
 		@impl_graph_wrapper
-		$graph_name:ident; $base_graph:ident; $($con_graph:ident),*
+		$graph_name:ident<$V1:ident,$W1:ident>;
+		$base_graph:ident<$V2:ident,$W2:ident>; $($con_graph:ident),*
 	}=>{
 		// Impl GraphWrapper
-		impl<V,W> GraphWrapper for $graph_name<V,W>
+		impl<$V1,$W1> GraphWrapper for $graph_name<$V1,$W1>
 			where
-				V: Vertex,
-				W: Weight,
+				$V1: Vertex,
+				$W1: Weight,
 		{
 			custom_graph!{
 				@as_associated
 				custom_graph!{
 					@in_struct
-					$($con_graph,$base_graph<V,W> >>)*
-					$base_graph<V,W>
+					$($con_graph,$base_graph<$V2,$W2> >>)*
+					$base_graph<$V2,$W2>
 				}
 			}
 			
@@ -159,16 +180,16 @@ macro_rules! custom_graph{
 	};
 	{
 		@impl_base_graph
-		$graph_name:ident
+		$graph_name:ident<$V1:ident,$W1:ident>
 	}=>{
 		// Impl BaseGraph
-		impl<V,W> BaseGraph for $graph_name<V,W>
+		impl<$V1,$W1> BaseGraph for $graph_name<$V1,$W1>
 			where
-				V: Vertex,
-				W: Weight,
+				$V1: Vertex,
+				$W1: Weight,
 		{
-			type Vertex = V;
-			type Weight = W;
+			type Vertex = $V1;
+			type Weight = $W1;
 			type VertexIter = <<Self as GraphWrapper>::Wrapped as BaseGraph>::VertexIter;
 			type EdgeIter = <<Self as GraphWrapper>::Wrapped as BaseGraph>::EdgeIter;
 		
@@ -192,13 +213,13 @@ macro_rules! custom_graph{
 	};
 	{
 		@impl_contained_graph
-		$graph_name:ident
+		$graph_name:ident<$V1:ident,$W1:ident>
 	}=>{
 		//Impl ConstrainedGraph
-		impl<V,W> ConstrainedGraph for $graph_name<V,W>
+		impl<$V1,$W1> ConstrainedGraph for $graph_name<$V1,$W1>
 			where
-				V: Vertex,
-				W: Weight,
+				$V1: Vertex,
+				$W1: Weight,
 		{
 			wrapped_method!{invariant_holds(&self) -> bool}
 			
@@ -207,44 +228,44 @@ macro_rules! custom_graph{
 	};
 	{
 		@derive_debug
-		$graph_name:ident
+		$graph_name:ident<$V1:ident,$W1:ident>
 	}=>{
 		// Derive Debug
-		impl<V,W> std::fmt::Debug for $graph_name<V,W>
+		impl<$V1,$W1> std::fmt::Debug for $graph_name<$V1,$W1>
 			where
-				V: Vertex + std::fmt::Debug,
-				W: Weight + std::fmt::Debug,
+				$V1: Vertex + std::fmt::Debug,
+				$W1: Weight + std::fmt::Debug,
 		{
 			fn fmt(&self, f:&mut std::fmt::Formatter) -> std::fmt::Result{
-				write!(f, "{} {{ wraps: {:?} }}", stringify!($graph_name), self.wraps)
+				write!(f, "{} {{ wraps: {:?} }}", stringify!($graph_name<$V1,$W1>), self.wraps)
 			}
 		}
 	};
 	{
 		@derive_clone
-		$graph_name:ident
+		$graph_name:ident<$V1:ident,$W1:ident>
 	}=>{
 		//Derive Clone
-		impl<V,W> Clone for $graph_name<V,W>
+		impl<$V1,$W1> Clone for $graph_name<$V1,$W1>
 			where
-				V: Vertex,
-				W: Weight,
+				$V1: Vertex,
+				$W1: Weight,
 		{
-			fn clone(&self) -> $graph_name<V,W>{
+			fn clone(&self) -> $graph_name<$V1,$W1>{
 				$graph_name::wrap(self.wraps.clone())
 			}
 		}
 	};
 	{
 		@impl_constraint_traits
-		$graph_name:ident; $($con_traits:ident),*
+		$graph_name:ident<$V1:ident,$W1:ident>; $($con_traits:ident),*
 	}=>{
 		// Impl the constraint traits
 		$(
-			impl<V,W> $con_traits for $graph_name<V,W>
+			impl<$V1,$W1> $con_traits for $graph_name<$V1,$W1>
 				where
-				V: Vertex,
-				W: Weight,
+				$V1: Vertex,
+				$W1: Weight,
 			{}
 		)*
 	};

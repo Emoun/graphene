@@ -66,9 +66,9 @@
 //!
 //! custom_graph!{
 //! 	// Name of the resulting graph type
-//! 	struct MyGraph
+//! 	struct MyGraph<V,W>
 //! 	// The BaseGraph implementation to base the new graph on.
-//! 	where AdjListGraph
+//! 	where AdjListGraph<V,W>
 //! 	// The constraint trait the new graph implements
 //! 	impl Unique,Undirected
 //! 	// The graph wrappers that will constrain the BaseGraph implementation so that

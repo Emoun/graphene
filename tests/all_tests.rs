@@ -19,8 +19,8 @@ use graphene::common::*;
 /// Custom graph that uses AdjListGraph and is Undirected and Unique
 ///
 custom_graph!{
-	struct UndirectedUniqueGraph
-	where AdjListGraph
+	struct UndirectedUniqueGraph<V,W>
+	where AdjListGraph<V,W>
 	impl Undirected,Unique
 	use UndirectedGraph,UniqueGraph
 }

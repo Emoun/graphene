@@ -2,44 +2,45 @@ use super::*;
 
 // Private unconstrained
 custom_graph!{
-	struct G1 where AdjListGraph
+	struct G1<V,W> where AdjListGraph<V,W>
 }
 // Public unconstrained
 custom_graph!{
-	pub struct G2 where AdjListGraph
+	pub struct G2<S,P> where AdjListGraph<S,P>
 }
 // Private single-constrained unwrapped
 custom_graph!{
-	struct G3 where AdjListGraph impl Undirected
+	struct G3<V,W> where AdjListGraph<V,W> impl Undirected
 }
 // Public single-constrained unwrapped
 custom_graph!{
-	pub struct G4 where AdjListGraph impl Undirected
+	pub struct G4<S,P> where AdjListGraph<S,P> impl Undirected
 }
 // Private doubly-constrained unwrapped
 custom_graph!{
-	struct G5 where AdjListGraph impl Undirected, Unique
+	struct G5<V,W> where AdjListGraph<V,W> impl Undirected, Unique
 }
 // Public doubly-constrained unwrapped
 custom_graph!{
-	pub struct G6 where AdjListGraph impl Undirected, Unique
+	pub struct G6<S,P> where AdjListGraph<S,P> impl Undirected, Unique
 }
 // Private doubly-constrained single-wrapped
 custom_graph!{
-	struct G7 where AdjListGraph impl Undirected, Unique use UndirectedGraph
+	struct G7<V,W> where AdjListGraph<V,W> impl Undirected, Unique use UndirectedGraph
 }
 // Public doubly-constrained single-wrapped
 custom_graph!{
-	pub struct G8 where AdjListGraph impl Undirected, Unique use UndirectedGraph
+	pub struct G8<S,P> where AdjListGraph<S,P> impl Undirected, Unique use UndirectedGraph
 }
 // Private doubly-constrained doubly-wrapped
 custom_graph!{
-	struct G9 where AdjListGraph impl Undirected, Unique use UndirectedGraph, UniqueGraph
+	struct G9<S,P> where AdjListGraph<S,P> impl Undirected, Unique use UndirectedGraph, UniqueGraph
 }
 // Public doubly-constrained doubly-wrapped
 custom_graph!{
-	pub struct G10 where AdjListGraph impl Undirected, Unique use UndirectedGraph, UniqueGraph
+	pub struct G10<V,W> where AdjListGraph<V,W> impl Undirected, Unique use UndirectedGraph, UniqueGraph
 }
+// Private unconstrained unwrapped
 
 // The following tests show that the structs have been implemented correctly
 #[test]
@@ -100,6 +101,8 @@ fn g10_test(){
 	let _: &UndirectedGraph<UniqueGraph<AdjListGraph<_,_>>>  = g.wrapped();
 	
 }
+
+
 // Functions to typecheck the generated structs
 macro_rules! typecheck_functions{
 	{
