@@ -2,4 +2,5 @@ use super::*;
 
 mod custom_graph;
 
-use self::custom_graph::{G2,G4};
+// Tests that these structs have been macro expanded into public structs
+use self::custom_graph::{G2,G4,G6,G8,G10};

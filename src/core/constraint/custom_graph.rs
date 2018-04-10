@@ -22,24 +22,14 @@ macro_rules! custom_graph{
 	{
 		struct $graph_name:ident where $base_graph:ident
 	} => {
-		custom_graph!{struct $graph_name where $base_graph use}
+		custom_graph!{@declare_struct_and_impl_minimum
+			$graph_name; $base_graph;}
 	};
 	{
 		pub struct $graph_name:ident where $base_graph:ident
 	} => {
-		custom_graph!{pub struct $graph_name where $base_graph use}
-	};
-	{
-		struct $graph_name:ident where $base_graph:ident use $($con_graph:ident),*
-	} => {
-		custom_graph!{@declare_struct $graph_name; $base_graph; $($con_graph),*}
-		custom_graph!{@impl_minimum_traits_and_derives $graph_name; $base_graph; $($con_graph),*}
-	};
-	{
-		pub struct $graph_name:ident where $base_graph:ident use $($con_graph:ident),*
-	} => {
-		custom_graph!{@declare_struct pub $graph_name; $base_graph; $($con_graph),*}
-		custom_graph!{@impl_minimum_traits_and_derives $graph_name; $base_graph; $($con_graph),*}
+		custom_graph!{@declare_struct_and_impl_minimum
+			pub $graph_name; $base_graph;}
 	};
 	{
 		struct $graph_name:ident where $base_graph:ident impl $($con_traits:ident),*
@@ -57,18 +47,34 @@ macro_rules! custom_graph{
 		struct $graph_name:ident where $base_graph:ident impl $($con_traits:ident),*
 		use $($con_graph:ident),*
 	} => {
-		custom_graph!{struct $graph_name where $base_graph use $($con_graph),*}
+		custom_graph!{@declare_struct_and_impl_minimum
+			$graph_name; $base_graph; $($con_graph),*}
 		custom_graph!{@impl_constraint_traits $graph_name; $($con_traits),*}
 	};
 	{
 		pub struct $graph_name:ident where $base_graph:ident impl $($con_traits:ident),*
 		use $($con_graph:ident),*
 	} => {
-		custom_graph!{pub struct $graph_name where $base_graph use $($con_graph),*}
+		custom_graph!{@declare_struct_and_impl_minimum
+			pub $graph_name; $base_graph; $($con_graph),*}
 		custom_graph!{@impl_constraint_traits $graph_name; $($con_traits),*}
 	};
 	
 //helpers
+	{
+		@declare_struct_and_impl_minimum
+		$graph_name:ident; $base_graph:ident; $($con_graph:ident),*
+	}=>{
+		custom_graph!{@declare_struct $graph_name; $base_graph; $($con_graph),*}
+		custom_graph!{@impl_minimum_traits_and_derives $graph_name; $base_graph; $($con_graph),*}
+	};
+	{
+		@declare_struct_and_impl_minimum
+		pub $graph_name:ident; $base_graph:ident; $($con_graph:ident),*
+	}=>{
+		custom_graph!{@declare_struct pub $graph_name; $base_graph; $($con_graph),*}
+		custom_graph!{@impl_minimum_traits_and_derives $graph_name; $base_graph; $($con_graph),*}
+	};
 	{
 		@declare_struct
 		pub $graph_name:ident; $base_graph:ident; $($con_graph:ident),*
