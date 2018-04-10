@@ -18,6 +18,7 @@ use self::utilities::*;
 
 mod base_graph;
 mod utilities;
+pub mod constraints;
 
 
 ///
@@ -29,7 +30,6 @@ mod utilities;
 ///
 ///
 custom_graph!{
-	struct GraphMock
-	
+	pub struct GraphMock
 	where AdjListGraph
 }
