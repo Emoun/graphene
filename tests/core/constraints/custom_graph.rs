@@ -45,10 +45,28 @@ custom_graph!{
 custom_graph!{
 	struct G11 where AdjListGraph<i32,i32>
 }
-// Private unconstrained unwrapped non-generic
+// Public unconstrained unwrapped non-generic
 custom_graph!{
 	pub struct G12 where AdjListGraph<i32,i32>
 }
+// Private doubly-constrained unwrapped non-generic
+custom_graph!{
+	struct G13 where AdjListGraph<i32,i32> impl Undirected, Unique
+}
+// Public doubly-constrained unwrapped non-generic
+custom_graph!{
+	pub struct G14 where AdjListGraph<i32,i32> impl Undirected, Unique
+}
+// Private doubly-constrained doubly-wrapped non-generic
+custom_graph!{
+	struct G15 where AdjListGraph<i32,u32> use UniqueGraph, UndirectedGraph  impl Undirected, Unique
+}
+// Public doubly-constrained doubly-wrapped non-generic
+custom_graph!{
+	pub struct G16 where AdjListGraph<i32,u32> use UndirectedGraph, UniqueGraph impl Undirected, Unique
+}
+
+
 
 // The following tests show that the structs have been implemented correctly
 #[test]
@@ -119,6 +137,30 @@ fn g12_test(){
 	let g = G12::empty_graph();
 	type_check_graph(&g);
 }
+#[test]
+fn g13_test(){
+	let g = G13::empty_graph();
+	type_check_undirected_unique(&g);
+}
+#[test]
+fn g14_test(){
+	let g = G13::empty_graph();
+	type_check_undirected_unique(&g);
+}
+#[test]
+fn g15_test(){
+	let g = G15::empty_graph();
+	type_check_undirected_unique(&g);
+	let _: &UndirectedGraph<UniqueGraph<AdjListGraph<_,_>>> = g.wrapped();
+}
+#[test]
+fn g16_test(){
+	let g = G16::empty_graph();
+	type_check_undirected_unique(&g);
+	let _: &UniqueGraph<UndirectedGraph<AdjListGraph<_,_>>> = g.wrapped();
+}
+
+
 
 // Functions to typecheck the generated structs
 macro_rules! typecheck_functions{
