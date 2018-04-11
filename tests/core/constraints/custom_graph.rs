@@ -1,3 +1,4 @@
+
 use super::*;
 
 // Private unconstrained unwrapped
@@ -26,27 +27,30 @@ custom_graph!{
 }
 // Private doubly-constrained single-wrapped
 custom_graph!{
-	struct G7<V,W> where AdjListGraph<V,W> impl Undirected, Unique use UndirectedGraph
+	struct G7<V,W> where AdjListGraph<V,W> use UndirectedGraph impl Undirected, Unique
 }
 // Public doubly-constrained single-wrapped
 custom_graph!{
-	pub struct G8<S,P> where AdjListGraph<S,P> impl Undirected, Unique use UndirectedGraph
+	pub struct G8<S,P> where AdjListGraph<S,P> use UndirectedGraph impl Undirected, Unique
 }
 // Private doubly-constrained doubly-wrapped
 custom_graph!{
-	struct G9<S,P> where AdjListGraph<S,P> impl Undirected, Unique use UndirectedGraph, UniqueGraph
+	struct G9<S,P> where AdjListGraph<S,P> use UndirectedGraph, UniqueGraph impl Undirected, Unique
 }
 // Public doubly-constrained doubly-wrapped
 custom_graph!{
-	pub struct G10<V,W> where AdjListGraph<V,W> impl Undirected, Unique use UndirectedGraph, UniqueGraph
+	pub struct G10<V,W> where AdjListGraph<V,W>use UndirectedGraph, UniqueGraph impl Undirected, Unique
 }
 // Private unconstrained unwrapped non-generic
 custom_graph!{
 	struct G11 where AdjListGraph<i32,i32>
 }
+// Private unconstrained unwrapped non-generic
+custom_graph!{
+	pub struct G12 where AdjListGraph<i32,i32>
+}
 
 // The following tests show that the structs have been implemented correctly
-
 #[test]
 fn g1_test(){
 	let g = G1::<u32,()>::empty_graph();
@@ -95,19 +99,24 @@ fn g8_test(){
 fn g9_test(){
 	let g = G9::<u32,()>::empty_graph();
 	type_check_undirected_unique(&g);
-	let _: &UndirectedGraph<UniqueGraph<AdjListGraph<_,_>>> = g.wrapped();
+	let _: &UniqueGraph<UndirectedGraph<AdjListGraph<_,_>>> = g.wrapped();
 	
 }
 #[test]
 fn g10_test(){
 	let g = G10::<u32,()>::empty_graph();
 	type_check_undirected_unique(&g);
-	let _: &UndirectedGraph<UniqueGraph<AdjListGraph<_,_>>>  = g.wrapped();
+	let _: &UniqueGraph<UndirectedGraph<AdjListGraph<_,_>>> = g.wrapped();
 	
 }
 #[test]
 fn g11_test(){
 	let g = G11::empty_graph();
+	type_check_graph(&g);
+}
+#[test]
+fn g12_test(){
+	let g = G12::empty_graph();
 	type_check_graph(&g);
 }
 

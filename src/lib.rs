@@ -69,11 +69,12 @@
 //! 	struct MyGraph<V,W>
 //! 	// The BaseGraph implementation to base the new graph on.
 //! 	where AdjListGraph<V,W>
-//! 	// The constraint trait the new graph implements
-//! 	impl Unique,Undirected
 //! 	// The graph wrappers that will constrain the BaseGraph implementation so that
 //! 	// it upholds the constraint traits.
 //! 	use UniqueGraph,UndirectedGraph
+//! 	// The constraint traits the new graph implements
+//! 	impl Unique,Undirected
+//!
 //! }
 //!
 //!	fn main(){
