@@ -18,6 +18,7 @@ categories = ["data-structures","algorithms"]
 travis-ci = {repository = "Emoun/graphene"}
 
 [dependencies]
+dmutil = {git = "https://github.com/Emoun/dmutil"}
 
 [dev-dependencies]
 quickcheck = "0.6"
