@@ -31,5 +31,5 @@ pub mod constraints;
 ///
 custom_graph!{
 	pub struct GraphMock<V,W>
-	where AdjListGraph<V,W>
+	as AdjListGraph<V,W>
 }

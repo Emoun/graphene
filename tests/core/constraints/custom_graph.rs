@@ -3,70 +3,68 @@ use super::*;
 
 // Private unconstrained unwrapped
 custom_graph!{
-	struct G1<V,W> where AdjListGraph<V,W>
+	struct G1<V,W> as AdjListGraph<V,W>
 }
 // Public unconstrained unwrapped
 custom_graph!{
-	pub struct G2<S,P> where AdjListGraph<S,P>
+	pub struct G2<S,P> as AdjListGraph<S,P>
 }
 // Private single-constrained unwrapped
 custom_graph!{
-	struct G3<V,W> where AdjListGraph<V,W> impl Undirected
+	struct G3<V,W> as AdjListGraph<V,W> impl Undirected
 }
 // Public single-constrained unwrapped
 custom_graph!{
-	pub struct G4<S,P> where AdjListGraph<S,P> impl Undirected
+	pub struct G4<S,P> as AdjListGraph<S,P> impl Undirected
 }
 // Private doubly-constrained unwrapped
 custom_graph!{
-	struct G5<V,W> where AdjListGraph<V,W> impl Undirected, Unique
+	struct G5<V,W> as AdjListGraph<V,W> impl Undirected, Unique
 }
 // Public doubly-constrained unwrapped
 custom_graph!{
-	pub struct G6<S,P> where AdjListGraph<S,P> impl Undirected, Unique
+	pub struct G6<S,P> as AdjListGraph<S,P> impl Undirected, Unique
 }
 // Private doubly-constrained single-wrapped
 custom_graph!{
-	struct G7<V,W> where AdjListGraph<V,W> use UndirectedGraph impl Undirected, Unique
+	struct G7<V,W> as AdjListGraph<V,W> use UndirectedGraph impl Undirected, Unique
 }
 // Public doubly-constrained single-wrapped
 custom_graph!{
-	pub struct G8<S,P> where AdjListGraph<S,P> use UndirectedGraph impl Undirected, Unique
+	pub struct G8<S,P> as AdjListGraph<S,P> use UndirectedGraph impl Undirected, Unique
 }
 // Private doubly-constrained doubly-wrapped
 custom_graph!{
-	struct G9<S,P> where AdjListGraph<S,P> use UndirectedGraph, UniqueGraph impl Undirected, Unique
+	struct G9<S,P> as AdjListGraph<S,P> use UndirectedGraph, UniqueGraph impl Undirected, Unique
 }
 // Public doubly-constrained doubly-wrapped
 custom_graph!{
-	pub struct G10<V,W> where AdjListGraph<V,W>use UndirectedGraph, UniqueGraph impl Undirected, Unique
+	pub struct G10<V,W> as AdjListGraph<V,W>use UndirectedGraph, UniqueGraph impl Undirected, Unique
 }
 // Private unconstrained unwrapped non-generic
 custom_graph!{
-	struct G11 where AdjListGraph<i32,i32>
+	struct G11 as AdjListGraph<i32,i32>
 }
 // Public unconstrained unwrapped non-generic
 custom_graph!{
-	pub struct G12 where AdjListGraph<i32,i32>
+	pub struct G12 as AdjListGraph<i32,i32>
 }
 // Private doubly-constrained unwrapped non-generic
 custom_graph!{
-	struct G13 where AdjListGraph<i32,i32> impl Undirected, Unique
+	struct G13 as AdjListGraph<i32,i32> impl Undirected, Unique
 }
 // Public doubly-constrained unwrapped non-generic
 custom_graph!{
-	pub struct G14 where AdjListGraph<i32,i32> impl Undirected, Unique
+	pub struct G14 as AdjListGraph<i32,i32> impl Undirected, Unique
 }
 // Private doubly-constrained doubly-wrapped non-generic
 custom_graph!{
-	struct G15 where AdjListGraph<i32,u32> use UniqueGraph, UndirectedGraph  impl Undirected, Unique
+	struct G15 as AdjListGraph<i32,u32> use UniqueGraph, UndirectedGraph  impl Undirected, Unique
 }
 // Public doubly-constrained doubly-wrapped non-generic
 custom_graph!{
-	pub struct G16 where AdjListGraph<i32,u32> use UndirectedGraph, UniqueGraph impl Undirected, Unique
+	pub struct G16 as AdjListGraph<i32,u32> use UndirectedGraph, UniqueGraph impl Undirected, Unique
 }
-
-
 
 // The following tests show that the structs have been implemented correctly
 #[test]
@@ -159,8 +157,6 @@ fn g16_test(){
 	type_check_undirected_unique(&g);
 	let _: &UniqueGraph<UndirectedGraph<AdjListGraph<_,_>>> = g.wrapped();
 }
-
-
 
 // Functions to typecheck the generated structs
 macro_rules! typecheck_functions{

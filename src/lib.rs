@@ -68,7 +68,7 @@
 //! 	// Name of the resulting graph type
 //! 	struct MyGraph<V,W>
 //! 	// The BaseGraph implementation to base the new graph on.
-//! 	where AdjListGraph<V,W>
+//! 	as AdjListGraph<V,W>
 //! 	// The graph wrappers that will constrain the BaseGraph implementation so that
 //! 	// it upholds the constraint traits.
 //! 	use UniqueGraph,UndirectedGraph

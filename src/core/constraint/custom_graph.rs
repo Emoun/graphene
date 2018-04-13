@@ -9,7 +9,7 @@
 ///
 /// ``` text
 /// struct <graph name>
-/// where <name of type implementing ConstrainedGraph>
+/// as <name of type implementing ConstrainedGraph>
 /// impl (<constraint>),*
 /// use (<GraphWrapper to use to uphold the constraint, i.e. will wrap the ConstrainedGraph>),*
 /// ```
@@ -48,7 +48,7 @@ macro_rules! custom_graph{
 	};
 	{
 		[ $($stack:tt)* ]
-		where $base_graph:ident $($rest:tt)*
+		as $base_graph:ident $($rest:tt)*
 	} => {
 		custom_graph!{
 			[ $base_graph $($stack)* ] $($rest)*
