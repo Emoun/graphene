@@ -1,21 +1,70 @@
 
 ///
-/// A macro for defining a custom graph with a specific set of constraints.
+///Declares a custom graph with a specific set of constraints:
 ///
-/// The resulting graph is generic over vertices and weights (<V,W>) and implement
-/// `GraphWrapper` and the constraints given.
+///```
+///#[macro_use]
+///extern crate graphene;
 ///
-/// Syntax:
+///use graphene::core::{
+///    Vertex,Weight,GraphWrapper,
+///    constraint::{Unique,Undirected,UniqueGraph,UndirectedGraph}
+///};
+///use graphene::common::{AdjListGraph};
 ///
-/// ``` text
-/// struct <graph name>
-/// as <name of type implementing ConstrainedGraph>
-/// impl (<constraint>),*
-/// use (<GraphWrapper to use to uphold the constraint, i.e. will wrap the ConstrainedGraph>),*
-/// ```
+///custom_graph!{
+///    pub struct MyGraph<V,W>
+///    as AdjListGraph<V,W>
+///    use UndirectedGraph, UniqueGraph
+///    impl Undirected, Unique
+///    where V: Vertex, W: Weight
+///}
+///fn main(){}
+///```
 ///
-/// The 'impl' and 'use' clauses are optional.
+///### Syntax
 ///
+///* __`(pub) struct`__ : Defines the name of the graph struct to be created.
+/// Also defines the visibility of it in the usual syntax.
+///
+///* __`as`__ : The graph implementation to back up the created struct.
+///The struct is therefore just a wrapper around the backing implmentation.
+///
+///* __`use`__ : Graph wrappers to wrap around the backing graph to ensure
+///the chosen constraints are supported. The struct is then wrapped around
+///these wrappers.
+///
+///* __`impl`__ : Which constraints the struct implements. It is the users
+///responsibility to ensure that the struct, its backing graph and the wrappers
+///together maintain the required invariants of there constraints.
+///
+///* __`where`__ : Trait bounds on any generic type.
+///
+///The __`struct`__ and __`as`__ clauses are mandatory. __`use`__ is optional,
+///but, if present, must be followed by the __`impl`__ clause, while __`impl`__ may
+///appear without the __`use`__ clause. The __`where`__ is optional as
+///needed by the type system like any other __`where`__ clause.
+///
+///The above invocation of the macro can be read as follows:
+///
+/// Declare the public struct `MyGraph` as an `AdjListGraph` using
+/// `UndirectedGraph` and `UniqueGraph` to implement the constraints
+/// `Undirected` and `Unique`.
+///
+/// ### Produces
+///
+/// The resulting graph is a wrapper around the types given in the __`as`__
+/// and __`use`__ clauses. The macro guarantees that the struct implements
+/// the basic graph traits (most notably `BaseGraph` and `ConstrainedGraph`.
+/// Additionally, the traits in the __`impl`__ clause (and they should be constraint
+/// traits only), are implemented regardless of whether their invariants
+/// are maintained by the resulting struct. Therefore, the user should make
+/// sure that the specified backing graph and wrappers actually implement
+/// the constraint type that are specified.
+///
+/// Other than that, the struct is ready to use as a full blown graph
+/// without any need to implement anything else (excepting task specific
+/// functionality).
 ///
 #[macro_export]
 macro_rules! custom_graph{
@@ -348,7 +397,7 @@ macro_rules! custom_graph{
 		]
 	}=>{
 		// Impl GraphWrapper
-		impl$($struct_generics)* GraphWrapper for $struct_name $($struct_generics)*
+		impl$($struct_generics)* $crate::core::GraphWrapper for $struct_name $($struct_generics)*
 			where $($($where_clause)* ,)*
 		{
 			custom_graph!{
@@ -387,17 +436,17 @@ macro_rules! custom_graph{
 		]
 	}=>{
 		// Impl BaseGraph
-		impl$($struct_generics)* BaseGraph for $struct_name$($struct_generics)*
+		impl$($struct_generics)* $crate::core::BaseGraph for $struct_name$($struct_generics)*
 			where $($($where_clause)* ,)*
 		{
 			type Vertex = $T1;
 			type Weight = $T2;
-			type VertexIter = <<Self as GraphWrapper>::Wrapped as BaseGraph>::VertexIter;
-			type EdgeIter = <<Self as GraphWrapper>::Wrapped as BaseGraph>::EdgeIter;
+			type VertexIter = <<Self as $crate::core::GraphWrapper>::Wrapped as $crate::core::BaseGraph>::VertexIter;
+			type EdgeIter = <<Self as $crate::core::GraphWrapper>::Wrapped as $crate::core::BaseGraph>::EdgeIter;
 		
 			fn empty_graph() -> Self{
 				$struct_name::wrap(
-					<Self as GraphWrapper>::Wrapped::empty_graph()
+					<Self as $crate::core::GraphWrapper>::Wrapped::empty_graph()
 				)
 			}
 			wrapped_method!{all_vertices(&self) -> Self::VertexIter}
@@ -408,9 +457,9 @@ macro_rules! custom_graph{
 			
 			wrapped_method!{remove_vertex(&mut self, v: Self::Vertex) -> Result<(), ()>}
 			
-			wrapped_method!{add_edge(&mut self, e: BaseEdge<Self::Vertex, Self::Weight>) -> Result<(), ()>}
+			wrapped_method!{add_edge(&mut self, e: $crate::core::BaseEdge<Self::Vertex, Self::Weight>) -> Result<(), ()>}
 			
-			wrapped_method!{remove_edge(&mut self, e: BaseEdge<Self::Vertex, Self::Weight>) -> Result<(), ()>}
+			wrapped_method!{remove_edge(&mut self, e: $crate::core::BaseEdge<Self::Vertex, Self::Weight>) -> Result<(), ()>}
 		}
 	};
 	{
@@ -423,7 +472,7 @@ macro_rules! custom_graph{
 		]
 	}=>{
 		//Impl ConstrainedGraph
-		impl$($struct_generics)* ConstrainedGraph for $struct_name$($struct_generics)*
+		impl$($struct_generics)* $crate::core::ConstrainedGraph for $struct_name$($struct_generics)*
 			where $($($where_clause)* ,)*
 		{
 			wrapped_method!{invariant_holds(&self) -> bool}

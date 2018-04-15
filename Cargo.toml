@@ -1,6 +1,6 @@
 [package]
 name = "graphene"
-version = "0.1.4"
+version = "0.1.5"
 authors = ["Emad Jacob Maroun <emoun.open@gmail.com>"]
 
 description = "A general purpose, extensible Graph Theory data type and algorithm library for Rust."
@@ -18,7 +18,6 @@ categories = ["data-structures","algorithms"]
 travis-ci = {repository = "Emoun/graphene"}
 
 [dependencies]
-dmutil = {git = "https://github.com/Emoun/dmutil"}
 
 [dev-dependencies]
 quickcheck = "0.6"

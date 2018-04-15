@@ -65,9 +65,9 @@ macro_rules! wrapped_uncon_methods{
 	
 		wrapped_method!{unsafe uncon_remove_vertex(&mut self, v: Self::Vertex) -> Result<(), ()>}
 	
-		wrapped_method!{unsafe uncon_add_edge(&mut self, e: BaseEdge<Self::Vertex, Self::Weight>) -> Result<(), ()>}
+		wrapped_method!{unsafe uncon_add_edge(&mut self, e: $crate::core::BaseEdge<Self::Vertex, Self::Weight>) -> Result<(), ()>}
 	
-		wrapped_method!{unsafe uncon_remove_edge(&mut self, e: BaseEdge<Self::Vertex, Self::Weight>) -> Result<(), ()>}
+		wrapped_method!{unsafe uncon_remove_edge(&mut self, e: $crate::core::BaseEdge<Self::Vertex, Self::Weight>) -> Result<(), ()>}
 	}
 }
 
@@ -80,18 +80,18 @@ macro_rules! impl_BaseGraph_for_wrapper{
 	{
 		$graph_name:ident
 	} => {
-		impl<G> BaseGraph for $graph_name<G>
+		impl<G> $crate::core::BaseGraph for $graph_name<G>
 			where
-				G: ConstrainedGraph,
-				<G as BaseGraph>::Vertex: Vertex,
-				<G as BaseGraph>::Weight: Weight,
-				<<G as BaseGraph>::VertexIter as IntoIterator>::IntoIter: ExactSizeIterator,
-				<<G as BaseGraph>::EdgeIter as IntoIterator>::IntoIter: ExactSizeIterator,
+				G: $crate::core::ConstrainedGraph,
+				<G as $crate::core::BaseGraph>::Vertex: Vertex,
+				<G as $crate::core::BaseGraph>::Weight: Weight,
+				<<G as $crate::core::BaseGraph>::VertexIter as IntoIterator>::IntoIter: ExactSizeIterator,
+				<<G as $crate::core::BaseGraph>::EdgeIter as IntoIterator>::IntoIter: ExactSizeIterator,
 		{
-			type Vertex = <G as BaseGraph>::Vertex;
-			type Weight = <G as BaseGraph>::Weight;
-			type VertexIter = <G as BaseGraph>::VertexIter;
-			type EdgeIter = <G as BaseGraph>::EdgeIter;
+			type Vertex = <G as $crate::core::BaseGraph>::Vertex;
+			type Weight = <G as $crate::core::BaseGraph>::Weight;
+			type VertexIter = <G as $crate::core::BaseGraph>::VertexIter;
+			type EdgeIter = <G as $crate::core::BaseGraph>::EdgeIter;
 			
 			fn empty_graph() -> Self{
 				$graph_name::wrap(G::empty_graph())
@@ -105,9 +105,9 @@ macro_rules! impl_BaseGraph_for_wrapper{
 			
 			wrapped_method!{remove_vertex(&mut self, v: Self::Vertex) -> Result<(), ()>}
 			
-			wrapped_method!{add_edge(&mut self, e: BaseEdge<Self::Vertex, Self::Weight>) -> Result<(), ()>}
+			wrapped_method!{add_edge(&mut self, e: $crate::core::BaseEdge<Self::Vertex, Self::Weight>) -> Result<(), ()>}
 			
-			wrapped_method!{remove_edge(&mut self, e: BaseEdge<Self::Vertex, Self::Weight>) -> Result<(), ()>}
+			wrapped_method!{remove_edge(&mut self, e: $crate::core::BaseEdge<Self::Vertex, Self::Weight>) -> Result<(), ()>}
 		}
 	}
 }
@@ -121,13 +121,13 @@ macro_rules! impl_ConstrainedGraph_for_wrapper{
 	{
 	$graph_name:ident
 	} => {
-		impl<G> ConstrainedGraph for $graph_name<G>
+		impl<G> $crate::core::ConstrainedGraph for $graph_name<G>
 			where
-				G: ConstrainedGraph,
-				<G as BaseGraph>::Vertex: Vertex,
-				<G as BaseGraph>::Weight: Weight,
-				<<G as BaseGraph>::VertexIter as IntoIterator>::IntoIter: ExactSizeIterator,
-				<<G as BaseGraph>::EdgeIter as IntoIterator>::IntoIter: ExactSizeIterator,
+				G: $crate::core::ConstrainedGraph,
+				<G as $crate::core::BaseGraph>::Vertex: Vertex,
+				<G as $crate::core::BaseGraph>::Weight: Weight,
+				<<G as $crate::core::BaseGraph>::VertexIter as IntoIterator>::IntoIter: ExactSizeIterator,
+				<<G as $crate::core::BaseGraph>::EdgeIter as IntoIterator>::IntoIter: ExactSizeIterator,
 		{
 			wrapped_method!{invariant_holds(&self) -> bool}
 		
@@ -152,11 +152,11 @@ macro_rules! impl_constraints_for_wrapper{
 		$(
 			impl<G> $con_trait for $graph_name<G>
 				where
-					G: ConstrainedGraph,
-					<G as BaseGraph>::Vertex: Vertex,
-					<G as BaseGraph>::Weight: Weight,
-					<<G as BaseGraph>::VertexIter as IntoIterator>::IntoIter: ExactSizeIterator,
-					<<G as BaseGraph>::EdgeIter as IntoIterator>::IntoIter: ExactSizeIterator,
+					G: $crate::core::ConstrainedGraph,
+					<G as $crate::core::BaseGraph>::Vertex: Vertex,
+					<G as $crate::core::BaseGraph>::Weight: Weight,
+					<<G as $crate::core::BaseGraph>::VertexIter as IntoIterator>::IntoIter: ExactSizeIterator,
+					<<G as $crate::core::BaseGraph>::EdgeIter as IntoIterator>::IntoIter: ExactSizeIterator,
 			{}
 		)*
 	}
@@ -173,25 +173,25 @@ macro_rules! graph_wrapper{
 		struct $graph_name:ident
 	} =>{
 		$(#[$attr])*
-		#[derive(Debug,Clone)]
+		#[derive(Debug, Clone)]
 		pub struct $graph_name<G>
 			where
-				G: ConstrainedGraph,
-				<G as BaseGraph>::Vertex: Vertex,
-				<G as BaseGraph>::Weight: Weight,
-				<<G as BaseGraph>::VertexIter as IntoIterator>::IntoIter: ExactSizeIterator,
-				<<G as BaseGraph>::EdgeIter as IntoIterator>::IntoIter: ExactSizeIterator,
+				G: $crate::core::ConstrainedGraph,
+				<G as $crate::core::BaseGraph>::Vertex: Vertex,
+				<G as $crate::core::BaseGraph>::Weight: Weight,
+				<<G as $crate::core::BaseGraph>::VertexIter as IntoIterator>::IntoIter: ExactSizeIterator,
+				<<G as $crate::core::BaseGraph>::EdgeIter as IntoIterator>::IntoIter: ExactSizeIterator,
 		{
 			wraps: G
 		}
 		
-		impl<G> GraphWrapper for $graph_name<G>
+		impl<G> $crate::core::GraphWrapper for $graph_name<G>
 			where
-				G: ConstrainedGraph,
-				<G as BaseGraph>::Vertex: Vertex,
-				<G as BaseGraph>::Weight: Weight,
-				<<G as BaseGraph>::VertexIter as IntoIterator>::IntoIter: ExactSizeIterator,
-				<<G as BaseGraph>::EdgeIter as IntoIterator>::IntoIter: ExactSizeIterator,
+				G: $crate::core::ConstrainedGraph,
+				<G as $crate::core::BaseGraph>::Vertex: Vertex,
+				<G as $crate::core::BaseGraph>::Weight: Weight,
+				<<G as $crate::core::BaseGraph>::VertexIter as IntoIterator>::IntoIter: ExactSizeIterator,
+				<<G as $crate::core::BaseGraph>::EdgeIter as IntoIterator>::IntoIter: ExactSizeIterator,
 		{
 			
 			type Wrapped = G;

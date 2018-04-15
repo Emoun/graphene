@@ -6,8 +6,6 @@ extern crate graphene;
 #[cfg(test)]
 #[macro_use]
 extern crate quickcheck;
-#[macro_use]
-extern crate dmutil;
 
 
 #[macro_use]

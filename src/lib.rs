@@ -3,6 +3,68 @@
 //! `graphene` is a general purpose, extensible [Graph Theory](https://en.wikipedia.org/wiki/Graph_theory)
 //! data type and algorithm library.
 //!
+//! ### Quick Examples:
+//!
+//! Using `common::AdjListGraph`, we define a graph with 3 vertices
+//! **1** , **2** , **3** and 3 weighted edges ( **1** -(1)-> **2** -(2)-> **3** -(3)-> **1**):
+//!
+//! ```
+//! # #![allow(unused_variables)]
+//! use graphene::core::{BaseGraph, BaseEdge};
+//! use graphene::common::AdjListGraph;
+//!
+//! // `graph()` takes a Vec of vertex values and a Vec of edges
+//! // where an edge is a tuple, (v1,v2,w), of the source v1, the sink v2, and the weight w.
+//! let mut g = AdjListGraph::graph(vec![1,2,3], vec![(1,2,1),(2,3,2),(3,1,3)]).unwrap();
+//! //Adding a vertex
+//! assert!(g.add_vertex(4).is_ok());
+//! //Adding an edge
+//!	assert!(g.add_edge(BaseEdge::new(3,4,2)).is_ok());
+//! ```
+//! ---
+//!
+//! We can declare a different graph that does not allow edge duplicates (a unique graph) and
+//! is undirected (the previous graph wasn't Unique and was directed):
+//!
+//! ```
+//! #[macro_use]
+//! extern crate graphene;
+//! use graphene::core::{*,constraint::*};
+//! use graphene::common::AdjListGraph;
+//!
+//! custom_graph!{
+//! 	// Name of the resulting graph type
+//! 	struct MyGraph<V,W>
+//! 	// The BaseGraph implementation to base the new graph on.
+//! 	as AdjListGraph<V,W>
+//! 	// The graph wrappers that will constrain the BaseGraph implementation so that
+//! 	// it upholds the constraint traits.
+//! 	use UniqueGraph,UndirectedGraph
+//! 	// The constraint traits the new graph implements
+//! 	impl Unique,Undirected
+//! 	// The generic bounds
+//! 	where V: Vertex, W: Weight
+//! }
+//!
+//!	fn main(){
+//! 	let mut g = MyGraph::graph(vec![1,2,3], vec![(1,2,1),(2,3,2),(3,1,3)]).unwrap();
+//!		assert_eq!(g.edges_between(1,2).len(), 2);
+//!
+//! 	// Cannot add an edge that is already there because the graph
+//!		// is declared as Unique, meaning no two edges may be incident
+//!		// on the same vertices and have the weight.
+//! 	assert!(g.add_edge(BaseEdge::new(1,2,1)).is_err());
+//! 	assert_eq!(g.edges_between(1,2).len(), 2);
+//!
+//! 	// When a graph is undirected, the direction of the given edge
+//! 	// (whether 1 -> 2 or 2 -> 1) makes no difference.
+//! 	// Since the graph is unique, adding an edge in the opposite
+//! 	// direction as an existing edge is therefore illegal.
+//! 	assert!(g.add_edge(BaseEdge::new(2,1,1)).is_err());
+//! 	assert_eq!(g.edges_between(1,2).len(), 2);
+//! }
+//! ```
+//!
 //! # About
 //!
 //! `graphene` aims at providing general purpose traits, structs, and macros for defining
@@ -36,56 +98,6 @@
 //! - `core`: Contains the general purpose traits, structs, functions, and macros for graph implementation.
 //! - `algo` (**TODO**) : Contains graph algorithms that accept any graph that implements `core`.
 //! - `common`: Contains general purpose and commonly used graph implementations of `core` for quick usage.
-//!
-//! ### Quick Examples:
-//!
-//! Using the `common::AdjListGraph` that has no constraints to define a graph with 3 vertices
-//! **1** , **2** , **3** and 3 weighted edges ( **1** -(1)-> **2** -(2)-> **3** -(3)-> **1**):
-//!
-//! ```
-//! # #![allow(unused_variables)]
-//! use graphene::core::BaseGraph;
-//! use graphene::common::AdjListGraph;
-//!
-//! // `graph()` takes a Vec of vertex values and a Vec of edges
-//! // where an edge is a tuple, (v1,v2,w), of the source v1, the sink v2, and the weight w.
-//! let g = AdjListGraph::graph(vec![1,2,3], vec![(1,2,1),(2,3,2),(3,1,3)]);
-//!
-//! ```
-//! -
-//!
-//! Defining the same graph except that it does not allow edge duplicates (a unique graph) and
-//! is directed:
-//!
-//! ```
-//! #[macro_use]
-//! extern crate graphene;
-//! use graphene::core::*;
-//! use graphene::core::constraint::*;
-//! use graphene::common::AdjListGraph;
-//!
-//! custom_graph!{
-//! 	// Name of the resulting graph type
-//! 	struct MyGraph<V,W>
-//! 	// The BaseGraph implementation to base the new graph on.
-//! 	as AdjListGraph<V,W>
-//! 	// The graph wrappers that will constrain the BaseGraph implementation so that
-//! 	// it upholds the constraint traits.
-//! 	use UniqueGraph,UndirectedGraph
-//! 	// The constraint traits the new graph implements
-//! 	impl Unique,Undirected
-//! 	// The generic bounds
-//! 	where V: Vertex, W: Weight
-//! }
-//!
-//!	fn main(){
-//! 	let mut g = MyGraph::graph(vec![1,2,3], vec![(1,2,1),(2,3,2),(3,1,3)]).unwrap();
-//!
-//! 	assert_eq!(g.edges_between(1,2).len(), 2);
-//! 	assert!(g.add_edge(BaseEdge::new(1,2,1)).is_err());
-//! 	assert_eq!(g.edges_between(1,2).len(), 2);
-//! }
-//! ```
 //!
 //! # Vertices and Edges
 //!

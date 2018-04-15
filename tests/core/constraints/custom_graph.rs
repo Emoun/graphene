@@ -125,10 +125,6 @@ custom_graph!{
 	use UndirectedGraph, UniqueGraph impl Unique, Undirected,
 }
 
-
-
-
-
 // The following tests show that the structs have been implemented correctly
 #[test]
 fn g1_test(){
