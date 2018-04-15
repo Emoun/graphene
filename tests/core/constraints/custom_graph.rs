@@ -88,6 +88,36 @@ custom_graph!{
 	pub struct G16 as AdjListGraph<i32,u32>
 	use UndirectedGraph, UniqueGraph impl Undirected, Unique
 }
+// Private doubly-constrained doubly-wrapped weight-generic
+custom_graph!{
+	struct G17<V> as AdjListGraph<V,u32>
+	use UniqueGraph, UndirectedGraph
+	impl Undirected, Unique
+	where V:Vertex
+}
+// Public doubly-constrained doubly-wrapped weight-generic
+custom_graph!{
+	pub struct G18<V> as AdjListGraph<V,u32>
+	use UndirectedGraph, UniqueGraph impl Undirected, Unique
+	where V:Vertex
+}
+// Private doubly-constrained doubly-wrapped vertex-generic
+custom_graph!{
+	struct G19<V> as AdjListGraph<V,u32>
+	use UniqueGraph, UndirectedGraph
+	impl Undirected, Unique
+	where V:Vertex
+}
+// Public doubly-constrained doubly-wrapped vertex-generic
+custom_graph!{
+	pub struct G20<W> as AdjListGraph<u32,W>
+	use UndirectedGraph, UniqueGraph impl Undirected, Unique
+	where W: Weight
+}
+
+
+
+
 
 // The following tests show that the structs have been implemented correctly
 #[test]
@@ -177,6 +207,30 @@ fn g15_test(){
 #[test]
 fn g16_test(){
 	let g = G16::empty_graph();
+	type_check_undirected_unique(&g);
+	let _: &UniqueGraph<UndirectedGraph<AdjListGraph<_,_>>> = g.wrapped();
+}
+#[test]
+fn g17_test(){
+	let g = G17::<i32>::empty_graph();
+	type_check_undirected_unique(&g);
+	let _: &UndirectedGraph<UniqueGraph<AdjListGraph<_,_>>> = g.wrapped();
+}
+#[test]
+fn g18_test(){
+	let g = G18::<i32>::empty_graph();
+	type_check_undirected_unique(&g);
+	let _: &UniqueGraph<UndirectedGraph<AdjListGraph<_,_>>> = g.wrapped();
+}
+#[test]
+fn g19_test(){
+	let g = G19::<i32>::empty_graph();
+	type_check_undirected_unique(&g);
+	let _: &UndirectedGraph<UniqueGraph<AdjListGraph<_,_>>> = g.wrapped();
+}
+#[test]
+fn g20_test(){
+	let g = G20::<i32>::empty_graph();
 	type_check_undirected_unique(&g);
 	let _: &UniqueGraph<UndirectedGraph<AdjListGraph<_,_>>> = g.wrapped();
 }

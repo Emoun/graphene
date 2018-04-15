@@ -301,20 +301,20 @@ macro_rules! custom_graph{
 		@declare_struct
 		[	@where_clause[$([$($where_clause:tt)*])*]
 			@constraints[$($constraints:tt)*] @constraint_wrappers[$($constraint_wrappers:tt)*]
-			@generics[<$T1:ty,$T2:ty>] @base_graph_name[$base_graph_name:ident]
-			@generics[$(<$V1:ident,$W1:ident>)*] @struct_name[$struct_name:ident]
+			@generics[$($base_generics:tt)*] @base_graph_name[$base_graph_name:ident]
+			@generics[$($struct_generics:tt)*] @struct_name[$struct_name:ident]
 			@privacy[]
 		]
 	}=>{
 		// Define graph struct
-		struct $struct_name $(<$V1,$W1>)*
+		struct $struct_name $($struct_generics)*
 			where $($($where_clause)* ,)*
 		{
 			wraps:
 			custom_graph!{
 				@in_struct
 				$($constraint_wrappers,$base_graph_name>>)*
-				$base_graph_name<$T1,$T2>
+				$base_graph_name $($base_generics)*
 			}
 		}
 	};
@@ -322,20 +322,20 @@ macro_rules! custom_graph{
 		@declare_struct
 		[	@where_clause[$([$($where_clause:tt)*])*]
 			@constraints[$($constraints:tt)*] @constraint_wrappers[$($constraint_wrappers:tt)*]
-			@generics[<$T1:ty,$T2:ty>] @base_graph_name[$base_graph_name:ident]
-			@generics[$(<$V1:ident,$W1:ident>)*] @struct_name[$struct_name:ident]
+			@generics[$($base_generics:tt)*] @base_graph_name[$base_graph_name:ident]
+			@generics[$($struct_generics:tt)*] @struct_name[$struct_name:ident]
 			@privacy[pub]
 		]
 	}=>{
 		// Define graph struct
-		pub struct $struct_name $(<$V1,$W1>)*
+		pub struct $struct_name $($struct_generics)*
 			where $($($where_clause)* ,)*
 		{
 			wraps:
 			custom_graph!{
 				@in_struct
 				$($constraint_wrappers,$base_graph_name>>)*
-				$base_graph_name <$T1,$T2>
+				$base_graph_name $($base_generics)*
 			}
 		}
 	};
@@ -343,13 +343,13 @@ macro_rules! custom_graph{
 		@impl_graph_wrapper
 		[	@where_clause[$([$($where_clause:tt)*])*]
 			@constraints[$($constraints:tt)*] @constraint_wrappers[$($constraint_wrappers:tt)*]
-			@generics[<$T1:ty,$T2:ty>] @base_graph_name[$base_graph_name:ident]
-			@generics[$(<$V1:ident,$W1:ident>)*] @struct_name[$struct_name:ident]
+			@generics[$($base_generics:tt)*] @base_graph_name[$base_graph_name:ident]
+			@generics[$($struct_generics:tt)*]@struct_name[$struct_name:ident]
 			@privacy$privacy:tt
 		]
 	}=>{
 		// Impl GraphWrapper
-		impl$(<$V1,$W1>)* GraphWrapper for $struct_name$(<$V1,$W1>)*
+		impl$($struct_generics)* GraphWrapper for $struct_name $($struct_generics)*
 			where $($($where_clause)* ,)*
 		{
 			custom_graph!{
@@ -357,7 +357,7 @@ macro_rules! custom_graph{
 				custom_graph!{
 					@in_struct
 					$($constraint_wrappers,$base_graph_name >>)*
-					$base_graph_name<$T1,$T2>
+					$base_graph_name $($base_generics)*
 				}
 			}
 			
@@ -383,12 +383,12 @@ macro_rules! custom_graph{
 		[	@where_clause[$([$($where_clause:tt)*])*]
 			@constraints[$($constraints:tt)*] @constraint_wrappers[$($constraint_wrappers:tt)*]
 			@generics[<$T1:ty,$T2:ty>] @base_graph_name[$base_graph_name:ident]
-			@generics[$(<$V1:ident,$W1:ident>)*] @struct_name[$struct_name:ident]
+			@generics[$($struct_generics:tt)*] @struct_name[$struct_name:ident]
 			@privacy$privacy:tt
 		]
 	}=>{
 		// Impl BaseGraph
-		impl$(<$V1,$W1>)* BaseGraph for $struct_name$(<$V1,$W1>)*
+		impl$($struct_generics)* BaseGraph for $struct_name$($struct_generics)*
 			where $($($where_clause)* ,)*
 		{
 			type Vertex = $T1;
@@ -418,13 +418,13 @@ macro_rules! custom_graph{
 		@impl_contained_graph
 		[	@where_clause[$([$($where_clause:tt)*])*]
 			@constraints[$($constraints:tt)*] @constraint_wrappers[$($constraint_wrappers:tt)*]
-			@generics[<$T1:ty,$T2:ty>] @base_graph_name[$base_graph_name:ident]
-			@generics[$(<$V1:ident,$W1:ident>)*] @struct_name[$struct_name:ident]
+			@generics[$($base_generics:tt)*] @base_graph_name[$base_graph_name:ident]
+			@generics[$($struct_generics:tt)*] @struct_name[$struct_name:ident]
 			@privacy$privacy:tt
 		]
 	}=>{
 		//Impl ConstrainedGraph
-		impl$(<$V1,$W1>)* ConstrainedGraph for $struct_name$(<$V1,$W1>)*
+		impl$($struct_generics)* ConstrainedGraph for $struct_name$($struct_generics)*
 			where $($($where_clause)* ,)*
 		{
 			wrapped_method!{invariant_holds(&self) -> bool}
@@ -436,34 +436,34 @@ macro_rules! custom_graph{
 		@derive_debug
 		[	@where_clause[$([$($where_clause:tt)*])*]
 			@constraints[$($constraints:tt)*] @constraint_wrappers[$($constraint_wrappers:tt)*]
-			@generics[<$T1:ty,$T2:ty>] @base_graph_name[$base_graph_name:ident]
-			@generics[$(<$V1:ident,$W1:ident>)*] @struct_name[$struct_name:ident]
+			@generics[$($base_generics:tt)*] @base_graph_name[$base_graph_name:ident]
+			@generics[$($struct_generics:tt)*] @struct_name[$struct_name:ident]
 			@privacy$privacy:tt
 		]
 	}=>{
 		// Derive Debug
-		impl$(<$V1,$W1>)* std::fmt::Debug for $struct_name$(<$V1,$W1>)*
+		impl$($struct_generics)* std::fmt::Debug for $struct_name$($struct_generics)*
 			where $($($where_clause)* + std::fmt::Debug,)*
 		{
 			fn fmt(&self, f:&mut std::fmt::Formatter) -> std::fmt::Result{
-				write!(f, "{} {{ wraps: {:?} }}", stringify!($struct_name$(<$V1,$W1>)*), self.wraps)
-			}
+				write!(f, "{} {{ wraps: {:?} }}", stringify!($struct_name$($struct_generics)*), self.wraps)
+}
 		}
 	};
 	{
 		@derive_clone
 		[	@where_clause[$([$($where_clause:tt)*])*]
 			@constraints[$($constraints:tt)*] @constraint_wrappers[$($constraint_wrappers:tt)*]
-			@generics[<$T1:ty,$T2:ty>] @base_graph_name[$base_graph_name:ident]
-			@generics[$(<$V1:ident,$W1:ident>)*] @struct_name[$struct_name:ident]
+			@generics[$($base_generics:tt)*] @base_graph_name[$base_graph_name:ident]
+			@generics[$($struct_generics:tt)*] @struct_name[$struct_name:ident]
 			@privacy$privacy:tt
 		]
 	}=>{
 		//Derive Clone
-		impl$(<$V1,$W1>)* Clone for $struct_name$(<$V1,$W1>)*
+		impl$($struct_generics)* Clone for $struct_name$($struct_generics)*
 			where $($($where_clause)* ,)*
 		{
-			fn clone(&self) -> $struct_name$(<$V1,$W1>)*{
+			fn clone(&self) -> $struct_name$($struct_generics)*{
 				$struct_name::wrap(self.wraps.clone())
 			}
 		}
@@ -473,21 +473,21 @@ macro_rules! custom_graph{
 		[	@where_clause[$([$($where_clause:tt)*])*]
 			@constraints[$first_con_trait:ident $($constraints:tt)*]
 			@constraint_wrappers[$($constraint_wrappers:tt)*]
-			@generics[<$T1:ty,$T2:ty>] @base_graph_name[$base_graph_name:ident]
-			@generics[$(<$V1:ident,$W1:ident>)*] @struct_name[$struct_name:ident]
+			@generics[$($base_generics:tt)*] @base_graph_name[$base_graph_name:ident]
+			@generics[$($struct_generics:tt)*] @struct_name[$struct_name:ident]
 			@privacy$privacy:tt
 		]
 	}=>{
 		// Impl the constraint traits
-		impl$(<$V1,$W1>)* $first_con_trait for $struct_name$(<$V1,$W1>)*
+		impl$($struct_generics)* $first_con_trait for $struct_name$($struct_generics)*
 			where $($($where_clause)* ,)*
 		{}
 		custom_graph!{@impl_constraint_traits
 			[	@where_clause[$([$($where_clause)*])*]
 				@constraints[$($constraints)*]
-				@constraint_wrappers[$($constraint_wrappers:tt)*]
-				@generics[<$T1,$T2>] @base_graph_name[$base_graph_name]
-				@generics[$(<$V1,$W1>)*] @struct_name[$struct_name]
+				@constraint_wrappers[$($constraint_wrappers)*]
+				@generics[$($struct_generics)*] @base_graph_name[$base_graph_name]
+				@generics[$($struct_generics)*] @struct_name[$struct_name]
 				@privacy $privacy
 			]
 		}
@@ -506,18 +506,6 @@ macro_rules! custom_graph{
 	};
 	{
 		@in_struct
-		$base_graph_name:ident<$V:ident, $W:ident>
-	}=>{
-		$base_graph_name<$V,$W>
-	};
-	{
-		@in_struct
-		$base_graph_name:ident<$T1:ty,$T2:ty>
-	}=>{
-		$base_graph_name<$T1,$T2>
-	};
-	{
-		@in_struct
 		$con_graph:ident,$base_graph_name:ident >>
 		$($rest:tt)*
 	} => {
@@ -527,6 +515,12 @@ macro_rules! custom_graph{
 				$($rest)*
 			}
 		>
+	};
+	{
+		@in_struct
+		$base_graph_name:ident $($base_generics:tt)*
+	}=>{
+		$base_graph_name$($base_generics)*
 	};
 }
 
