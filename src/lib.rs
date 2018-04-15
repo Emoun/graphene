@@ -74,7 +74,8 @@
 //! 	use UniqueGraph,UndirectedGraph
 //! 	// The constraint traits the new graph implements
 //! 	impl Unique,Undirected
-//!
+//! 	// The generic bounds
+//! 	where V: Vertex, W: Weight
 //! }
 //!
 //!	fn main(){

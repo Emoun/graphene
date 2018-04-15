@@ -4,42 +4,60 @@ use super::*;
 // Private unconstrained unwrapped
 custom_graph!{
 	struct G1<V,W> as AdjListGraph<V,W>
+	where V: Vertex, W: Weight
 }
 // Public unconstrained unwrapped
 custom_graph!{
 	pub struct G2<S,P> as AdjListGraph<S,P>
+	where S: Vertex, P: Weight
 }
 // Private single-constrained unwrapped
 custom_graph!{
-	struct G3<V,W> as AdjListGraph<V,W> impl Undirected
+	struct G3<V,W> as AdjListGraph<V,W>
+	impl Undirected
+	where V: Vertex, W: Weight
 }
 // Public single-constrained unwrapped
 custom_graph!{
-	pub struct G4<S,P> as AdjListGraph<S,P> impl Undirected
+	pub struct G4<S,P> as AdjListGraph<S,P>
+	impl Undirected
+	where S: Vertex, P: Weight
 }
 // Private doubly-constrained unwrapped
 custom_graph!{
-	struct G5<V,W> as AdjListGraph<V,W> impl Undirected, Unique
+	struct G5<V,W> as AdjListGraph<V,W>
+	impl Undirected, Unique
+	where V: Vertex, W: Weight
 }
 // Public doubly-constrained unwrapped
 custom_graph!{
-	pub struct G6<S,P> as AdjListGraph<S,P> impl Undirected, Unique
+	pub struct G6<S,P> as AdjListGraph<S,P>
+	impl Undirected, Unique
+	where S: Vertex, P: Weight
 }
 // Private doubly-constrained single-wrapped
 custom_graph!{
-	struct G7<V,W> as AdjListGraph<V,W> use UndirectedGraph impl Undirected, Unique
+	struct G7<V,W> as AdjListGraph<V,W>
+	use UndirectedGraph impl Undirected, Unique
+	where V: Vertex, W: Weight
 }
 // Public doubly-constrained single-wrapped
 custom_graph!{
-	pub struct G8<S,P> as AdjListGraph<S,P> use UndirectedGraph impl Undirected, Unique
+	pub struct G8<S,P> as AdjListGraph<S,P>
+	use UndirectedGraph impl Undirected, Unique
+	where S: Vertex, P: Weight
 }
 // Private doubly-constrained doubly-wrapped
 custom_graph!{
-	struct G9<S,P> as AdjListGraph<S,P> use UndirectedGraph, UniqueGraph impl Undirected, Unique
+	struct G9<S,P> as AdjListGraph<S,P>
+	use UndirectedGraph, UniqueGraph impl Undirected, Unique
+	where S: Vertex, P: Weight
 }
 // Public doubly-constrained doubly-wrapped
 custom_graph!{
-	pub struct G10<V,W> as AdjListGraph<V,W>use UndirectedGraph, UniqueGraph impl Undirected, Unique
+	pub struct G10<V,W> as AdjListGraph<V,W>
+	use UndirectedGraph, UniqueGraph impl Undirected, Unique
+	where V: Vertex, W: Weight
 }
 // Private unconstrained unwrapped non-generic
 custom_graph!{
@@ -51,19 +69,24 @@ custom_graph!{
 }
 // Private doubly-constrained unwrapped non-generic
 custom_graph!{
-	struct G13 as AdjListGraph<i32,i32> impl Undirected, Unique
+	struct G13 as AdjListGraph<i32,i32>
+	impl Undirected, Unique
 }
 // Public doubly-constrained unwrapped non-generic
 custom_graph!{
-	pub struct G14 as AdjListGraph<i32,i32> impl Undirected, Unique
+	pub struct G14 as AdjListGraph<i32,i32>
+	impl Undirected, Unique
 }
 // Private doubly-constrained doubly-wrapped non-generic
 custom_graph!{
-	struct G15 as AdjListGraph<i32,u32> use UniqueGraph, UndirectedGraph  impl Undirected, Unique
+	struct G15 as AdjListGraph<i32,u32>
+	use UniqueGraph, UndirectedGraph
+	impl Undirected, Unique
 }
 // Public doubly-constrained doubly-wrapped non-generic
 custom_graph!{
-	pub struct G16 as AdjListGraph<i32,u32> use UndirectedGraph, UniqueGraph impl Undirected, Unique
+	pub struct G16 as AdjListGraph<i32,u32>
+	use UndirectedGraph, UniqueGraph impl Undirected, Unique
 }
 
 // The following tests show that the structs have been implemented correctly

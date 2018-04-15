@@ -32,4 +32,5 @@ pub mod constraints;
 custom_graph!{
 	pub struct GraphMock<V,W>
 	as AdjListGraph<V,W>
+	where V:Vertex, W:Weight
 }

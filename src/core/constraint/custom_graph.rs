@@ -19,6 +19,8 @@
 ///
 #[macro_export]
 macro_rules! custom_graph{
+
+// Decode struct
 	{
 		pub $($rest:tt)*
 	} => {
@@ -35,8 +37,6 @@ macro_rules! custom_graph{
 			struct $($rest)*
 		}
 	};
-	
-// Stack builders
 	{
 		[ @privacy $($stack:tt)* ]
 		struct $struct_name:ident
@@ -46,6 +46,8 @@ macro_rules! custom_graph{
 			[@struct_name[$struct_name] @privacy $($stack)*] $($rest)*
 		}
 	};
+	
+// Decode Base Graph
 	{	// There might not be any generics for the structs so accept
 		// backing graph immediately and put empty generics on the stack
 		[ @struct_name $($stack:tt)* ]
@@ -63,52 +65,8 @@ macro_rules! custom_graph{
 			[ @base_graph_name[$base_graph_name] @generics $($stack)* ] $($rest)*
 		}
 	};
-//------------------------------------------------------- Generic handling
-	/*{ //Start generics
-		@generics
-		[$($stack:tt)*]
-		< $($rest:tt)*
-	}=>{
-		custom_graph!{
-			@generics [[<]$($stack)* ] $($rest)*
-		}
-	};
-	{ //Stop generics after struct name
-		@generics
-		[[$($generics:tt)*] @struct_name $($stack:tt)*]
-		> $($rest:tt)*
-	}=>{
-		custom_graph!{
-			[@generics[$($generics)* >] @struct_name  $($stack)* ] $($rest)*
-		}
-	};
-	{ //Stop generics after base graph definition
-		@generics
-		[[$($generics:tt)*] @base_graph_name $($stack:tt)*]
-		> $($rest:tt)*
-	}=>{
-		custom_graph!{
-			[@generics[$($generics)* >] @@base_graph_name  $($stack)* ] $($rest)*
-		}
-	};
-	{ //Continue generics
-		@generics
-		[[$($generics:tt)*] $($stack:tt)*]
-		$next:tt $($rest:tt)*
-	}=>{
-		custom_graph!{
-			@generics [[$($generics)* $next] $($stack)* ] $($rest)*
-		}
-	};*/
-	{
-		[ $($stack:tt)* ]
-		<$V:tt,$W:tt> $($rest:tt)*
-	} => {
-		custom_graph!{
-			[@generics[<$V,$W>] $($stack)* ] $($rest)*
-		}
-	};
-//--------------------------------------------------------
+
+// Decode constraint wrappers
 	{
 		//Can only specify wrappers to use after the definition of the backing struct
 		//the '@generics' ensures that the last thing to parse is a generic group
@@ -116,15 +74,17 @@ macro_rules! custom_graph{
 		use $($rest:tt)*
 	} => {
 		custom_graph!{
-			[[] @generics $($stack)* ] $($rest)*
+			[@constraint_wrappers[] @generics $($stack)* ] $($rest)*
 		}
 	};
+
+// Decode constraints
 	{	//Can specify constraints after the wrappers are done
-		[ [$($wraps:tt)*] $($stack:tt)* ]
+		[ @constraint_wrappers[$($wraps:tt)*] $($stack:tt)* ]
 		impl $($rest:tt)*
 	} => {
 		custom_graph!{
-			[[] @constraint_wrappers[$($wraps)*] $($stack)* ] $($rest)*
+			[@constraints[] @constraint_wrappers[$($wraps)*] $($stack)* ] $($rest)*
 		}
 	};
 	{	//Can specify constraints after the generics of the base graph
@@ -132,55 +92,200 @@ macro_rules! custom_graph{
 		impl $($rest:tt)*
 	} => {
 		custom_graph!{
-			[[] @constraint_wrappers[] @generics $base_graph_generics @base_graph_name $($stack)* ] $($rest)*
+			[@constraints[] @constraint_wrappers[] @generics $base_graph_generics @base_graph_name $($stack)* ] $($rest)*
 		}
 	};
+	
+//Decode 'where' clause
+	{	//If the last thing to be decoded is the base graphs generics
+		// Add empty blocks for wrappers
+		[ @generics $base_g:tt @base_graph_name $($stack:tt)*] where $($rest:tt)*
+	}=>{
+		custom_graph!{
+			[ 	@constraint_wrappers[]
+				@generics $base_g
+				@base_graph_name
+				$($stack)*
+			]
+			where
+			$($rest)*
+		}
+	};
+	{	//If the last thing to be decoded is the constaint wrappers
+		// Add empty blocks for wrappers
+		[ @constraint_wrappers $($stack:tt)*] where $($rest:tt)*
+	}=>{
+		custom_graph!{
+			[ 	@constraints[]
+				@constraint_wrappers
+				$($stack)*
+			]
+			where
+			$($rest)*
+		}
+	};
+	{	//If the last thing to be decoded is the constraints
+		// then we are ready to decode the rest of the input
+		// as being in the 'where clause'
+		[ @constraints $($stack:tt)*] where $($rest:tt)*
+	}=>{
+		custom_graph!{
+			[ 	@where_clause[[]]
+				@constraints
+				$($stack)*
+			]
+			$($rest)*
+		}
+	};
+	{	// While grouping 'where' groups if you encounter a ',' but there is more
+		// input, it means the group is done, and there is a new one.
+		// so ready a new group.
+		[ @where_clause[[$($current_group:tt)*] $($rest_groups:tt)*] $($stack:tt)*]
+		$next:tt , $($rest:tt)+
+	}=>{
+		custom_graph!{
+			[ 	@where_clause[[][$($current_group)* $next] $($rest_groups)*]
+				$($stack)*
+			]
+			$($rest)+
+		}
+	};
+	{	// While grouping 'where' groups if you encounter a ',' and there is no more
+		// input, the where clause is done.
+		[ @where_clause[[$($current_group:tt)*] $($rest_groups:tt)*] $($stack:tt)*]
+		$next:tt ,
+	}=>{
+		custom_graph!{
+			[ 	@where_clause[[$($current_group)* $next] $($rest_groups)*]
+				$($stack)*
+			]
+		}
+	};
+	{	// While grouping 'where' groups if you dont encounter a ','
+		// you add the token to the current group
+		[ @where_clause[[$($current_group:tt)*] $($rest_groups:tt)*] $($stack:tt)*]
+		$next:tt $($rest:tt)*
+	}=>{
+		custom_graph!{
+			[ 	@where_clause[[$($current_group)* $next] $($rest_groups)*]
+				$($stack)*
+			]
+			$($rest)*
+		}
+	};
+//Decode generics
+	{ //Start generics after struct declaration
+		[ @struct_name $($stack:tt)*]
+		< $($rest:tt)*
+	}=>{
+		custom_graph!{
+			 [@generics[<] @struct_name $($stack)* ] $($rest)*
+		}
+	};
+	{ //Start generics after base graph declaration
+		[ @base_graph_name $($stack:tt)*]
+		< $($rest:tt)*
+	}=>{
+		custom_graph!{
+			 [@generics[<] @base_graph_name $($stack)* ] $($rest)*
+		}
+	};
+	{ //Stop generics
+		[@generics[$($generics:tt)*] $($stack:tt)*]
+		> $($rest:tt)*
+	}=>{
+		custom_graph!{
+			[@generics[$($generics)* >]  $($stack)* ] $($rest)*
+		}
+	};
+	{ //Continue generics
+		[@generics[$($generics:tt)*] $($stack:tt)*]
+		$next:tt $($rest:tt)*
+	}=>{
+		custom_graph!{
+			 [@generics[$($generics)* $next] $($stack)* ] $($rest)*
+		}
+	};
+// Decode list if wrappers
 	{
 		// If the previous token was an identifier, require a ','
-		[ [$w:ident $($prev:tt)*] $($stack:tt)* ]
+		[ @constraint_wrappers[$w:ident $($prev:tt)*] $($stack:tt)* ]
 		, $v:ident $($rest:tt)*
 	} => {
 		custom_graph!{
-			[[$v $w $($prev)*] $($stack)* ] $($rest)*
+			[@constraint_wrappers[$v $w $($prev)*] $($stack)* ] $($rest)*
 		}
 	};
 	{
 		// Previous token wasn't an identifier, no ','
-		[[$($prev:tt)*] $($stack:tt)* ]
+		[@constraint_wrappers[$($prev:tt)*] $($stack:tt)* ]
 		$v:ident $($rest:tt)*
 	} => {
 		custom_graph!{
-			[[$v $($prev)*] $($stack)* ] $($rest)*
+			[@constraint_wrappers[$v $($prev)*] $($stack)* ] $($rest)*
 		}
 	};
+	
+// Decode list if constraints
+	{
+		// If the previous token was an identifier, require a ','
+		[ @constraints[$w:ident $($prev:tt)*] $($stack:tt)* ]
+		, $v:ident $($rest:tt)*
+	} => {
+		custom_graph!{
+			[@constraints[$v $w $($prev)*] $($stack)* ] $($rest)*
+		}
+	};
+	{
+		// Previous token wasn't an identifier, no ','
+		[@constraints[$($prev:tt)*] $($stack:tt)* ]
+		$v:ident $($rest:tt)*
+	} => {
+		custom_graph!{
+			[@constraints[$v $($prev)*] $($stack)* ] $($rest)*
+		}
+	};
+	
+// Utility decoders
+	{
+		@add_until
+		[[$($into:tt)*] $($stack:tt)*]
+		[$next:tt > $($rest:tt)*]
+		>
+	}=>{
+	
+	};
+	
+// No more input to decode
 	{	//If the last thing to be decoded is generics, there must not be any
-		// wrappers or constraints defined.
+		// wrappers, constraints or 'where' defined.
 		// Therefore, define empty wrappers
 		[ @generics $($stack:tt)*]
 	} => {
 		custom_graph!{ [@constraint_wrappers[] @generics $($stack)*]}
 	};
 	{	//If the last thing to be decoded are wrappers,
-		// there must not be constraints defined.
+		// there must not be constraints or 'where' defined.
 		// Therefore, define empty constraints
 		[ @constraint_wrappers $($stack:tt)*]
 	} => {
 		custom_graph!{ [@constraints[] @constraint_wrappers $($stack)*]}
 	};
-	{	//If the last block does not have a name, it must be the constraints block.
-		// Therefore, flag it.
-		[ [$($constraints:tt)*] $($stack:tt)*]
+	{	//If the last thing to be decoded are constraints,
+		// there must not be a 'where' defined.
+		// Therefore, define an empty 'where' block
+		[ @constraints $($stack:tt)*]
 	} => {
-		custom_graph!{ [@constraints[$($constraints)*] $($stack)*]}
+		custom_graph!{ [@where_clause[] @constraints $($stack)*]}
+	};
+	{	// If the last block is 'where' we are done decoding
+		[ @where_clause $($stack:tt)*]
+	} => {
+		custom_graph!{@declare_struct_and_impl_minimum [@where_clause $($stack)*]}
+		custom_graph!{@impl_constraint_traits [@where_clause $($stack)*]}
 	};
 	
 //expand functions
-	{	//If the last thing to be decoded is constraints, we are done
-		[ @constraints $($stack:tt)*]
-	} => {
-		custom_graph!{@declare_struct_and_impl_minimum [@constraints $($stack)*]}
-		custom_graph!{@impl_constraint_traits [@constraints $($stack)*]}
-	};
 	{
 		@declare_struct_and_impl_minimum
 		[$($stack:tt)*]
@@ -194,7 +299,8 @@ macro_rules! custom_graph{
 	};
 	{
 		@declare_struct
-		[	@constraints[$($constraints:tt)*] @constraint_wrappers[$($constraint_wrappers:tt)*]
+		[	@where_clause[$([$($where_clause:tt)*])*]
+			@constraints[$($constraints:tt)*] @constraint_wrappers[$($constraint_wrappers:tt)*]
 			@generics[<$T1:ty,$T2:ty>] @base_graph_name[$base_graph_name:ident]
 			@generics[$(<$V1:ident,$W1:ident>)*] @struct_name[$struct_name:ident]
 			@privacy[]
@@ -202,7 +308,7 @@ macro_rules! custom_graph{
 	}=>{
 		// Define graph struct
 		struct $struct_name $(<$V1,$W1>)*
-			where $($V1: Vertex,$W1: Weight)*
+			where $($($where_clause)* ,)*
 		{
 			wraps:
 			custom_graph!{
@@ -214,7 +320,8 @@ macro_rules! custom_graph{
 	};
 	{
 		@declare_struct
-		[	@constraints[$($constraints:tt)*] @constraint_wrappers[$($constraint_wrappers:tt)*]
+		[	@where_clause[$([$($where_clause:tt)*])*]
+			@constraints[$($constraints:tt)*] @constraint_wrappers[$($constraint_wrappers:tt)*]
 			@generics[<$T1:ty,$T2:ty>] @base_graph_name[$base_graph_name:ident]
 			@generics[$(<$V1:ident,$W1:ident>)*] @struct_name[$struct_name:ident]
 			@privacy[pub]
@@ -222,7 +329,7 @@ macro_rules! custom_graph{
 	}=>{
 		// Define graph struct
 		pub struct $struct_name $(<$V1,$W1>)*
-			where $($V1: Vertex,$W1: Weight)*
+			where $($($where_clause)* ,)*
 		{
 			wraps:
 			custom_graph!{
@@ -234,15 +341,16 @@ macro_rules! custom_graph{
 	};
 	{
 		@impl_graph_wrapper
-		[	@constraints[$($constraints:tt)*] @constraint_wrappers[$($constraint_wrappers:tt)*]
+		[	@where_clause[$([$($where_clause:tt)*])*]
+			@constraints[$($constraints:tt)*] @constraint_wrappers[$($constraint_wrappers:tt)*]
 			@generics[<$T1:ty,$T2:ty>] @base_graph_name[$base_graph_name:ident]
 			@generics[$(<$V1:ident,$W1:ident>)*] @struct_name[$struct_name:ident]
-			@privacy $privacy:tt
+			@privacy$privacy:tt
 		]
 	}=>{
 		// Impl GraphWrapper
 		impl$(<$V1,$W1>)* GraphWrapper for $struct_name$(<$V1,$W1>)*
-			where $($V1: Vertex,$W1: Weight,)*
+			where $($($where_clause)* ,)*
 		{
 			custom_graph!{
 				@as_associated
@@ -272,15 +380,16 @@ macro_rules! custom_graph{
 	};
 	{
 		@impl_base_graph
-		[	@constraints[$($constraints:tt)*] @constraint_wrappers[$($constraint_wrappers:tt)*]
+		[	@where_clause[$([$($where_clause:tt)*])*]
+			@constraints[$($constraints:tt)*] @constraint_wrappers[$($constraint_wrappers:tt)*]
 			@generics[<$T1:ty,$T2:ty>] @base_graph_name[$base_graph_name:ident]
 			@generics[$(<$V1:ident,$W1:ident>)*] @struct_name[$struct_name:ident]
-			@privacy $privacy:tt
+			@privacy$privacy:tt
 		]
 	}=>{
 		// Impl BaseGraph
 		impl$(<$V1,$W1>)* BaseGraph for $struct_name$(<$V1,$W1>)*
-			where $($V1: Vertex,$W1: Weight,)*
+			where $($($where_clause)* ,)*
 		{
 			type Vertex = $T1;
 			type Weight = $T2;
@@ -307,15 +416,16 @@ macro_rules! custom_graph{
 	};
 	{
 		@impl_contained_graph
-		[	@constraints[$($constraints:tt)*] @constraint_wrappers[$($constraint_wrappers:tt)*]
+		[	@where_clause[$([$($where_clause:tt)*])*]
+			@constraints[$($constraints:tt)*] @constraint_wrappers[$($constraint_wrappers:tt)*]
 			@generics[<$T1:ty,$T2:ty>] @base_graph_name[$base_graph_name:ident]
 			@generics[$(<$V1:ident,$W1:ident>)*] @struct_name[$struct_name:ident]
-			@privacy $privacy:tt
+			@privacy$privacy:tt
 		]
 	}=>{
 		//Impl ConstrainedGraph
 		impl$(<$V1,$W1>)* ConstrainedGraph for $struct_name$(<$V1,$W1>)*
-			where $($V1: Vertex,$W1: Weight,)*
+			where $($($where_clause)* ,)*
 		{
 			wrapped_method!{invariant_holds(&self) -> bool}
 			
@@ -324,19 +434,16 @@ macro_rules! custom_graph{
 	};
 	{
 		@derive_debug
-		[	@constraints[$($constraints:tt)*] @constraint_wrappers[$($constraint_wrappers:tt)*]
+		[	@where_clause[$([$($where_clause:tt)*])*]
+			@constraints[$($constraints:tt)*] @constraint_wrappers[$($constraint_wrappers:tt)*]
 			@generics[<$T1:ty,$T2:ty>] @base_graph_name[$base_graph_name:ident]
 			@generics[$(<$V1:ident,$W1:ident>)*] @struct_name[$struct_name:ident]
-			@privacy $privacy:tt
+			@privacy$privacy:tt
 		]
 	}=>{
 		// Derive Debug
 		impl$(<$V1,$W1>)* std::fmt::Debug for $struct_name$(<$V1,$W1>)*
-			where
-				$(
-					$V1: Vertex + std::fmt::Debug,
-					$W1: Weight + std::fmt::Debug,
-				)*
+			where $($($where_clause)* + std::fmt::Debug,)*
 		{
 			fn fmt(&self, f:&mut std::fmt::Formatter) -> std::fmt::Result{
 				write!(f, "{} {{ wraps: {:?} }}", stringify!($struct_name$(<$V1,$W1>)*), self.wraps)
@@ -345,15 +452,16 @@ macro_rules! custom_graph{
 	};
 	{
 		@derive_clone
-		[	@constraints[$($constraints:tt)*] @constraint_wrappers[$($constraint_wrappers:tt)*]
+		[	@where_clause[$([$($where_clause:tt)*])*]
+			@constraints[$($constraints:tt)*] @constraint_wrappers[$($constraint_wrappers:tt)*]
 			@generics[<$T1:ty,$T2:ty>] @base_graph_name[$base_graph_name:ident]
 			@generics[$(<$V1:ident,$W1:ident>)*] @struct_name[$struct_name:ident]
-			@privacy $privacy:tt
+			@privacy$privacy:tt
 		]
 	}=>{
 		//Derive Clone
 		impl$(<$V1,$W1>)* Clone for $struct_name$(<$V1,$W1>)*
-			where $($V1: Vertex,$W1: Weight,)*
+			where $($($where_clause)* ,)*
 		{
 			fn clone(&self) -> $struct_name$(<$V1,$W1>)*{
 				$struct_name::wrap(self.wraps.clone())
@@ -362,19 +470,20 @@ macro_rules! custom_graph{
 	};
 	{
 		@impl_constraint_traits
-		[	@constraints[$first_con_trait:ident $($constraints:tt)*]
+		[	@where_clause[$([$($where_clause:tt)*])*]
+			@constraints[$first_con_trait:ident $($constraints:tt)*]
 			@constraint_wrappers[$($constraint_wrappers:tt)*]
 			@generics[<$T1:ty,$T2:ty>] @base_graph_name[$base_graph_name:ident]
 			@generics[$(<$V1:ident,$W1:ident>)*] @struct_name[$struct_name:ident]
-			@privacy $privacy:tt
+			@privacy$privacy:tt
 		]
 	}=>{
 		// Impl the constraint traits
 		impl$(<$V1,$W1>)* $first_con_trait for $struct_name$(<$V1,$W1>)*
-			where $($V1: Vertex,$W1: Weight,)*
+			where $($($where_clause)* ,)*
 		{}
 		custom_graph!{@impl_constraint_traits
-			[
+			[	@where_clause[$([$($where_clause)*])*]
 				@constraints[$($constraints)*]
 				@constraint_wrappers[$($constraint_wrappers:tt)*]
 				@generics[<$T1,$T2>] @base_graph_name[$base_graph_name]
@@ -387,7 +496,7 @@ macro_rules! custom_graph{
 		@impl_constraint_traits
 		// When all constraints have been implemented, accept the empty constraints
 		// but do nothing, as we are done.
-		[ @constraints[] $($rest:tt)*]
+		[ @where_clause[$($where_clause:tt)*] @constraints[] $($rest:tt)*]
 	}=>{};
 	{
 		@as_associated
@@ -420,8 +529,6 @@ macro_rules! custom_graph{
 		>
 	};
 }
-
-
 
 
 
