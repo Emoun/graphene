@@ -81,7 +81,7 @@ macro_rules! custom_graph{
 // Decode constraints
 	{	//Can specify constraints after the wrappers are done
 		[ @constraint_wrappers[$($wraps:tt)*] $($stack:tt)* ]
-		impl $($rest:tt)*
+		$(,)*impl $($rest:tt)*
 	} => {
 		custom_graph!{
 			[@constraints[] @constraint_wrappers[$($wraps)*] $($stack)* ] $($rest)*
@@ -113,7 +113,7 @@ macro_rules! custom_graph{
 	};
 	{	//If the last thing to be decoded is the constaint wrappers
 		// Add empty blocks for wrappers
-		[ @constraint_wrappers $($stack:tt)*] where $($rest:tt)*
+		[ @constraint_wrappers $($stack:tt)*] $(,)*where $($rest:tt)*
 	}=>{
 		custom_graph!{
 			[ 	@constraints[]
@@ -127,7 +127,7 @@ macro_rules! custom_graph{
 	{	//If the last thing to be decoded is the constraints
 		// then we are ready to decode the rest of the input
 		// as being in the 'where clause'
-		[ @constraints $($stack:tt)*] where $($rest:tt)*
+		[ @constraints $($stack:tt)*] $(,)* where $($rest:tt)*
 	}=>{
 		custom_graph!{
 			[ 	@where_clause[[]]
@@ -226,26 +226,25 @@ macro_rules! custom_graph{
 		}
 	};
 	
-// Decode list if constraints
+// Decode list of constraints
 	{
-		// If the previous token was an identifier, require a ','
-		[ @constraints[$w:ident $($prev:tt)*] $($stack:tt)* ]
-		, $v:ident $($rest:tt)*
-	} => {
-		custom_graph!{
-			[@constraints[$v $w $($prev)*] $($stack)* ] $($rest)*
-		}
-	};
-	{
-		// Previous token wasn't an identifier, no ','
-		[@constraints[$($prev:tt)*] $($stack:tt)* ]
+		// The first contraint does have to have ',' before it
+		[ @constraints[] $($stack:tt)* ]
 		$v:ident $($rest:tt)*
 	} => {
 		custom_graph!{
-			[@constraints[$v $($prev)*] $($stack)* ] $($rest)*
+			[@constraints[[$v]] $($stack)* ] $($rest)*
 		}
 	};
-	
+	{
+		// next constraint needs a comma
+		[@constraints[ $($other_constraints:tt)+ ] $($stack:tt)* ]
+		, $next:ident $($rest:tt)*
+	} => {
+		custom_graph!{
+			[@constraints[[$next]$($other_constraints)+] $($stack)* ] $($rest)*
+		}
+	};
 // Utility decoders
 	{
 		@add_until
@@ -267,14 +266,14 @@ macro_rules! custom_graph{
 	{	//If the last thing to be decoded are wrappers,
 		// there must not be constraints or 'where' defined.
 		// Therefore, define empty constraints
-		[ @constraint_wrappers $($stack:tt)*]
+		[ @constraint_wrappers $($stack:tt)*] $(,)*
 	} => {
 		custom_graph!{ [@constraints[] @constraint_wrappers $($stack)*]}
 	};
 	{	//If the last thing to be decoded are constraints,
 		// there must not be a 'where' defined.
 		// Therefore, define an empty 'where' block
-		[ @constraints $($stack:tt)*]
+		[ @constraints $($stack:tt)*] $(,)*
 	} => {
 		custom_graph!{ [@where_clause[] @constraints $($stack)*]}
 	};
@@ -471,7 +470,7 @@ macro_rules! custom_graph{
 	{
 		@impl_constraint_traits
 		[	@where_clause[$([$($where_clause:tt)*])*]
-			@constraints[$first_con_trait:ident $($constraints:tt)*]
+			@constraints[[$first_con_trait:ident] $($constraints:tt)*]
 			@constraint_wrappers[$($constraint_wrappers:tt)*]
 			@generics[$($base_generics:tt)*] @base_graph_name[$base_graph_name:ident]
 			@generics[$($struct_generics:tt)*] @struct_name[$struct_name:ident]
@@ -494,9 +493,9 @@ macro_rules! custom_graph{
 	};
 	{
 		@impl_constraint_traits
-		// When all constraints have been implemented, accept the empty constraints
-		// but do nothing, as we are done.
-		[ @where_clause[$($where_clause:tt)*] @constraints[] $($rest:tt)*]
+		// When all but all constraints have been implemented, as we are done.
+		[	@where_clause $where_clause:tt
+			@constraints[] $($rest_stack:tt)*]
 	}=>{};
 	{
 		@as_associated
@@ -523,10 +522,4 @@ macro_rules! custom_graph{
 		$base_graph_name$($base_generics)*
 	};
 }
-
-
-
-
-
-
 

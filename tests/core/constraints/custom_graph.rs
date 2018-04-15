@@ -4,7 +4,7 @@ use super::*;
 // Private unconstrained unwrapped
 custom_graph!{
 	struct G1<V,W> as AdjListGraph<V,W>
-	where V: Vertex, W: Weight
+	where V: Vertex, W: Weight,
 }
 // Public unconstrained unwrapped
 custom_graph!{
@@ -14,7 +14,7 @@ custom_graph!{
 // Private single-constrained unwrapped
 custom_graph!{
 	struct G3<V,W> as AdjListGraph<V,W>
-	impl Undirected
+	impl Undirected,
 	where V: Vertex, W: Weight
 }
 // Public single-constrained unwrapped
@@ -32,31 +32,31 @@ custom_graph!{
 // Public doubly-constrained unwrapped
 custom_graph!{
 	pub struct G6<S,P> as AdjListGraph<S,P>
-	impl Undirected, Unique
+	impl Undirected, Unique,
 	where S: Vertex, P: Weight
 }
 // Private doubly-constrained single-wrapped
 custom_graph!{
 	struct G7<V,W> as AdjListGraph<V,W>
-	use UndirectedGraph impl Undirected, Unique
+	use UndirectedGraph, impl Undirected, Unique
 	where V: Vertex, W: Weight
 }
 // Public doubly-constrained single-wrapped
 custom_graph!{
 	pub struct G8<S,P> as AdjListGraph<S,P>
-	use UndirectedGraph impl Undirected, Unique
-	where S: Vertex, P: Weight
+	use UndirectedGraph impl Undirected, Unique,
+	where S: Vertex, P: Weight,
 }
 // Private doubly-constrained doubly-wrapped
 custom_graph!{
 	struct G9<S,P> as AdjListGraph<S,P>
-	use UndirectedGraph, UniqueGraph impl Undirected, Unique
+	use UndirectedGraph, UniqueGraph, impl Undirected, Unique
 	where S: Vertex, P: Weight
 }
 // Public doubly-constrained doubly-wrapped
 custom_graph!{
 	pub struct G10<V,W> as AdjListGraph<V,W>
-	use UndirectedGraph, UniqueGraph impl Undirected, Unique
+	use UndirectedGraph, UniqueGraph impl Undirected, Unique,
 	where V: Vertex, W: Weight
 }
 // Private unconstrained unwrapped non-generic
@@ -80,39 +80,49 @@ custom_graph!{
 // Private doubly-constrained doubly-wrapped non-generic
 custom_graph!{
 	struct G15 as AdjListGraph<i32,u32>
-	use UniqueGraph, UndirectedGraph
+	use UniqueGraph, UndirectedGraph,
 	impl Undirected, Unique
 }
 // Public doubly-constrained doubly-wrapped non-generic
 custom_graph!{
 	pub struct G16 as AdjListGraph<i32,u32>
-	use UndirectedGraph, UniqueGraph impl Undirected, Unique
+	use UndirectedGraph, UniqueGraph impl Undirected, Unique,
 }
 // Private doubly-constrained doubly-wrapped weight-generic
 custom_graph!{
 	struct G17<V> as AdjListGraph<V,u32>
 	use UniqueGraph, UndirectedGraph
 	impl Undirected, Unique
-	where V:Vertex
+	where V:Vertex,
 }
 // Public doubly-constrained doubly-wrapped weight-generic
 custom_graph!{
 	pub struct G18<V> as AdjListGraph<V,u32>
-	use UndirectedGraph, UniqueGraph impl Undirected, Unique
+	use UndirectedGraph, UniqueGraph, impl Undirected, Unique
 	where V:Vertex
 }
 // Private doubly-constrained doubly-wrapped vertex-generic
 custom_graph!{
 	struct G19<V> as AdjListGraph<V,u32>
-	use UniqueGraph, UndirectedGraph
-	impl Undirected, Unique
-	where V:Vertex
+	use UniqueGraph, UndirectedGraph,
+	impl Undirected, Unique,
+	where V:Vertex,
 }
 // Public doubly-constrained doubly-wrapped vertex-generic
 custom_graph!{
 	pub struct G20<W> as AdjListGraph<u32,W>
 	use UndirectedGraph, UniqueGraph impl Undirected, Unique
-	where W: Weight
+	where W: Weight,
+}
+// Private doubly-constrained doubly-wrapped lifetime-generic
+custom_graph!{
+	struct G21<'a> as AdjListGraph<u32,&'a i32>
+	use UndirectedGraph, UniqueGraph, impl Unique, Undirected,
+}
+// Public doubly-constrained doubly-wrapped lifetime-generic
+custom_graph!{
+	pub struct G22<'a> as AdjListGraph<u32,&'a i32>
+	use UndirectedGraph, UniqueGraph impl Unique, Undirected,
 }
 
 
@@ -231,6 +241,18 @@ fn g19_test(){
 #[test]
 fn g20_test(){
 	let g = G20::<i32>::empty_graph();
+	type_check_undirected_unique(&g);
+	let _: &UniqueGraph<UndirectedGraph<AdjListGraph<_,_>>> = g.wrapped();
+}
+#[test]
+fn g21_test(){
+	let g = G21::empty_graph();
+	type_check_undirected_unique(&g);
+	let _: &UniqueGraph<UndirectedGraph<AdjListGraph<_,_>>> = g.wrapped();
+}
+#[test]
+fn g22_test(){
+	let g = G22::empty_graph();
 	type_check_undirected_unique(&g);
 	let _: &UniqueGraph<UndirectedGraph<AdjListGraph<_,_>>> = g.wrapped();
 }
