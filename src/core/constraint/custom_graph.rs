@@ -490,10 +490,10 @@ macro_rules! custom_graph{
 		]
 	}=>{
 		// Derive Debug
-		impl$($struct_generics)* std::fmt::Debug for $struct_name$($struct_generics)*
-			where $($($where_clause)* + std::fmt::Debug,)*
+		impl$($struct_generics)* ::std::fmt::Debug for $struct_name$($struct_generics)*
+			where $($($where_clause)* + ::std::fmt::Debug,)*
 		{
-			fn fmt(&self, f:&mut std::fmt::Formatter) -> std::fmt::Result{
+			fn fmt(&self, f:&mut ::std::fmt::Formatter) -> ::std::fmt::Result{
 				write!(f, "{} {{ wraps: {:?} }}", stringify!($struct_name$($struct_generics)*), self.wraps)
 }
 		}
