@@ -133,6 +133,12 @@ impl<V,W> ConstrainedGraph for AdjListGraph<V,W>
 }
 
 
+impl<V,W> ExactGraph for AdjListGraph<V,W>
+	where
+		V: Vertex,
+		W: Weight,
+{}
+
 #[test]
 fn empty_has_no_vertices(){
 	assert_eq!(0, AdjListGraph::<u32,u32>::empty_graph().all_vertices().len());

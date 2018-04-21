@@ -41,6 +41,7 @@ mod graph_wrapper;
 mod base_graph;
 mod base_edge;
 mod constrained_graph;
+mod exact_graph;
 
 #[macro_use]
 pub mod constraint;
@@ -50,3 +51,4 @@ pub use self::base_graph::*;
 pub use self::base_edge::*;
 pub use self::constrained_graph::*;
 pub use self::graph_wrapper::*;
+pub use self::exact_graph::*;

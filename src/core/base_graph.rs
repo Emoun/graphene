@@ -22,13 +22,11 @@ impl<T> Weight for T
 pub trait VertexIter<V>: IntoIterator<Item=V> + FromIterator<V>
 	where
 		V: Vertex,
-		Self::IntoIter : ExactSizeIterator<Item=V>
 		
 {}
 impl<T,V> VertexIter<V> for T
 	where
 		T: IntoIterator<Item=V> + FromIterator<V>,
-		T::IntoIter: ExactSizeIterator<Item=V>,
 		V: Vertex,
 {}
 
@@ -36,12 +34,10 @@ pub trait EdgeIter<V,W>: IntoIterator<Item=BaseEdge<V,W>> + FromIterator<BaseEdg
 	where
 		V: Vertex,
 		W: Weight,
-		Self::IntoIter : ExactSizeIterator<Item=BaseEdge<V,W>>
 {}
 impl<T,V,W> EdgeIter<V,W> for T
 	where
 		T: IntoIterator<Item=BaseEdge<V,W>> + FromIterator<BaseEdge<V,W>>,
-		T::IntoIter: ExactSizeIterator<Item=BaseEdge<V,W>>,
 		V: Vertex,
 		W: Weight,
 {}
@@ -65,9 +61,6 @@ impl<T,V,W> EdgeIter<V,W> for T
 ///
 ///
 pub trait BaseGraph
-	where
-		<Self::VertexIter as IntoIterator>::IntoIter: ExactSizeIterator,
-		<Self::EdgeIter as IntoIterator>::IntoIter: ExactSizeIterator,
 {
 	/// Type of the vertices in the graph.
 	type Vertex: Vertex;
@@ -190,20 +183,6 @@ pub trait BaseGraph
 	/// - The graph is unchanged.
 	///
 	fn remove_edge(&mut self, e: BaseEdge<Self::Vertex,Self::Weight>) -> Result<(),()>;
-	
-	///
-	/// Returns the number of vertices in the graph.
-	///
-	fn vertex_count(&self) -> usize {
-		self.all_vertices().into_iter().len()
-	}
-	
-	///
-	/// Returns the number of edges in the graph.
-	///
-	fn edge_count(&self) -> usize {
-		self.all_edges().into_iter().len()
-	}
 	
 	///
 	/// Creates a graph containing the given vertices and edges. There can be no
