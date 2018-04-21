@@ -445,7 +445,7 @@ macro_rules! custom_graph{
 			type EdgeIter = <<Self as $crate::core::GraphWrapper>::Wrapped as $crate::core::BaseGraph>::EdgeIter;
 		
 			fn empty_graph() -> Self{
-				$struct_name::wrap(
+				<Self as $crate::core::GraphWrapper>::wrap(
 					<Self as $crate::core::GraphWrapper>::Wrapped::empty_graph()
 				)
 			}
@@ -512,7 +512,7 @@ macro_rules! custom_graph{
 			where $($($where_clause)* ,)*
 		{
 			fn clone(&self) -> $struct_name$($struct_generics)*{
-				$struct_name::wrap(self.wraps.clone())
+				<Self as $crate::core::GraphWrapper>::wrap(self.wraps.clone())
 			}
 		}
 	};

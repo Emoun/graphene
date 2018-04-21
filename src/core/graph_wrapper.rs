@@ -24,6 +24,7 @@ macro_rules! wrapped_method {
 			$(, $arg_name:ident : $arg_type:ty)*) -> $ret:ty
 	} => {
 		fn $fn_name(&self, $($arg_name : $arg_type),*) -> $ret {
+			use $crate::core::GraphWrapper;
 			self.wrapped().$fn_name($($arg_name),*)
 		}
 	};
@@ -32,6 +33,7 @@ macro_rules! wrapped_method {
 			$(, $arg_name:ident : $arg_type:ty)*) -> $ret:ty
 	} => {
 		fn $fn_name(& mut self, $($arg_name : $arg_type),*) -> $ret {
+			use $crate::core::GraphWrapper;
 			self.wrapped_mut().$fn_name($($arg_name),*)
 		}
 	};
@@ -40,6 +42,7 @@ macro_rules! wrapped_method {
 			$(, $arg_name:ident : $arg_type:ty)*) -> $ret:ty
 	} => {
 		unsafe fn $fn_name(&self, $($arg_name : $arg_type),*) -> $ret {
+			use $crate::core::GraphWrapper;
 			self.wrapped().$fn_name($($arg_name),*)
 		}
 	};
@@ -48,6 +51,7 @@ macro_rules! wrapped_method {
 			$(, $arg_name:ident : $arg_type:ty)*) -> $ret:ty
 	} => {
 		unsafe fn $fn_name(& mut self, $($arg_name : $arg_type),*) -> $ret {
+			use $crate::core::GraphWrapper;
 			self.wrapped_mut().$fn_name($($arg_name),*)
 		}
 	};
