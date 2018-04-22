@@ -103,11 +103,11 @@ impl<V,W> BaseGraph for AdjListGraph<V,W>
 		Err(())
 	}
 	
-	fn add_edge<E>(&mut self, e: E) -> Result<(),()>
+	fn add_edge_copy<E>(&mut self, e: E) -> Result<(),()>
 		where E: Edge<Self::Vertex, Self::Edge>
 	{
-		self.if_valid_edge( e, |s, source_i, sink_i, weight|{
-			s.edges[source_i].push((sink_i,weight));
+		self.if_valid_edge( e, |s, source_i, sink_i, id|{
+			s.edges[source_i].push((sink_i,id));
 			Ok(())
 		})
 	}
@@ -126,6 +126,32 @@ impl<V,W> BaseGraph for AdjListGraph<V,W>
 		})
 	}
 }
+
+impl<V,W> AutoEdgeGraph for AdjListGraph<V,W>
+	where
+		V: Id,
+		W: Default
+{
+	fn add_edge<E>(&mut self, e: E) -> Result<(),()>
+		where E: Edge<Self::Vertex, ()>
+	{
+		let id = self.edge_weights.len();
+		self.edge_weights.push(W::default());
+		
+		//check whether that results in a valid edge
+		if let Err(()) = self.if_valid_edge((*e.source(), *e.sink(),id),
+			|s, _, _, id|{
+				s.add_edge_copy((*e.source(),*e.sink(),id))
+			}
+		){
+			self.edge_weights.pop();
+			Err(())
+		} else {
+			Ok(())
+		}
+	}
+}
+
 /*
 impl<V,W> ConstrainedGraph for AdjListGraph<V,W>
 	where

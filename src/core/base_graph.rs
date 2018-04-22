@@ -142,7 +142,7 @@ pub trait BaseGraph
 	///
 	/// - The graph is unchanged.
 	///
-	fn add_edge<E>(&mut self, e: E) -> Result<(),()>
+	fn add_edge_copy<E>(&mut self, e: E) -> Result<(),()>
 		where E: Edge<Self::Vertex, Self::Edge>;
 	
 	///
@@ -165,7 +165,7 @@ pub trait BaseGraph
 	///
 	fn remove_edge<E>(&mut self, e: E) -> Result<(),()>
 		where E: Edge<Self::Vertex, Self::Edge>;
-	
+	/*
 	///
 	/// Creates a graph containing the given vertices and edges. There can be no
 	/// duplicate vertices and all edges must connect to the given vertices.
@@ -199,7 +199,7 @@ pub trait BaseGraph
 		
 		Ok(g)
 	}
-	
+	*/
 	///
 	/// Returns all edges that are connect to both the given vertices.
 	///
@@ -238,5 +238,14 @@ pub trait BaseGraph
 	{
 		self.all_edges().into_iter().filter(|e| *e.sink() == v).collect::<Self::EdgeIter>()
 	}
+	
+}
+
+pub trait AutoEdgeGraph: BaseGraph
+{
+	
+	fn add_edge<E>(&mut self, e: E) -> Result<(),()>
+		where E: Edge<Self::Vertex, ()>;
+	
 	
 }

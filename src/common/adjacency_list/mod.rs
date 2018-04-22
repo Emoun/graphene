@@ -1,5 +1,6 @@
 
 mod impl_base_graph;
+mod impl_weights;
 
 pub use self::impl_base_graph::*;
 use core::*;
@@ -61,6 +62,18 @@ impl<V,W> AdjListGraph<V,W>
 		}
 	}
 	
+	fn valid_adjacency<E>(&self, e: &E) -> bool
+		where E: Edge<V, ()>,
+	{
+		if let (Some(_), Some(_))
+			= (self.get_index(*e.source()), self.get_index(*e.sink()))
+		{
+			true
+		}else{
+			false
+		}
+	}
+	
 	fn if_valid_edge<E,F>(&mut self, e: E, cont: F) -> Result<(), ()>
 		where
 			E: Edge<V, usize>,
@@ -69,7 +82,9 @@ impl<V,W> AdjListGraph<V,W>
 		if let (Some(source_i), Some(sink_i))
 		= (self.get_index(*e.source()), self.get_index(*e.sink()))
 			{
-				return cont(self, source_i, sink_i, *e.edge());
+				if *e.edge() < self.edge_weights.len() {
+					return cont(self, source_i, sink_i, *e.edge());
+				}
 			}
 		Err(())
 	}

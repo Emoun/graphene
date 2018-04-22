@@ -13,12 +13,18 @@ pub trait WeightedGraph: BaseGraph
 	///
 	/// Removes a weight, assuming no elements in the graph point to it.
 	///
-	fn remove_weight(&mut self, w: Self::WeightRef) -> Result<Self::WeightRef,()>;
+	fn remove_weight(&mut self, w: Self::WeightRef) -> Result<Self::Weight,()>;
 	
 	///
 	/// Gets the weight referenced
 	///
-	fn weight(&self, r: Self::WeightRef) -> Result<&Self::Weight, ()>;
+	fn weight_ref(&self, r: Self::WeightRef) -> Result<&Self::Weight, ()>;
+	
+	fn weight_of<E>(&self, e: E) -> Result<&Self::Weight, ()>
+		where E: Edge<Self::Vertex, Self::WeightRef>
+	{
+		self.weight_ref(*e.edge())
+	}
 }
 
 pub trait VertexWeightedGraph: BaseGraph
@@ -43,9 +49,9 @@ pub trait EdgeWeightedGraph: BaseGraph
 	///
 	/// Add an edge with a new weight. Returns the created edge
 	///
-	fn add_edge_weighted<E,W>(&mut self, e: E, w: Self::EdgeWeight)
+	fn add_edge_weighted<E>(&mut self, e: E, w: Self::EdgeWeight)
 							-> Result<(Self::Vertex,Self::Vertex,Self::Edge), ()>
-		where E: Edge<Self::Vertex,W>;
+		where E: Edge<Self::Vertex,()>;
 	
 }
 

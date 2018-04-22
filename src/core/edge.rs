@@ -36,3 +36,4 @@ impl<V> Edge<V,()> for (V,V)
 		&()
 	}
 }
+
