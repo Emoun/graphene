@@ -1,45 +1,25 @@
-use super::*;
+
 use std::iter::FromIterator;
+use ::core::Edge;
+
 
 ///
-/// Trait alias that specifies which traits a vertex
-/// value needs to implement
+/// Trait alias
 ///
-pub trait Vertex: Copy + Eq{}
-impl<T> Vertex for T
+pub trait Id: Copy + Eq{}
+impl<T> Id for T
 	where T: Copy + Eq
 {}
 
-///
-/// Trait alias that specifies which traits an edge weight needs
-/// to implement.
-///
-pub trait Weight: Copy + Eq{}
-impl<T> Weight for T
-	where T: Copy + Eq
-{}
-
-pub trait VertexIter<V>: IntoIterator<Item=V> + FromIterator<V>
+pub trait IdIter<I>: IntoIterator<Item=I> + FromIterator<I>
 	where
-		V: Vertex,
+		I: Id,
 		
 {}
-impl<T,V> VertexIter<V> for T
+impl<T, V> IdIter<V> for T
 	where
 		T: IntoIterator<Item=V> + FromIterator<V>,
-		V: Vertex,
-{}
-
-pub trait EdgeIter<V,W>: IntoIterator<Item=BaseEdge<V,W>> + FromIterator<BaseEdge<V,W>>
-	where
-		V: Vertex,
-		W: Weight,
-{}
-impl<T,V,W> EdgeIter<V,W> for T
-	where
-		T: IntoIterator<Item=BaseEdge<V,W>> + FromIterator<BaseEdge<V,W>>,
-		V: Vertex,
-		W: Weight,
+		V: Id,
 {}
 
 ///
@@ -63,13 +43,13 @@ impl<T,V,W> EdgeIter<V,W> for T
 pub trait BaseGraph
 {
 	/// Type of the vertices in the graph.
-	type Vertex: Vertex;
-	/// Type of the weights in the graph.
-	type Weight: Weight;
+	type Vertex: Id;
+	type Edge: Id;
+	
 	/// Type of the collection returned with vertices.
-	type VertexIter: VertexIter<Self::Vertex>;
+	type VertexIter: IdIter<Self::Vertex>;
 	/// Type of the collection returned with edges.
-	type EdgeIter: EdgeIter<Self::Vertex, Self::Weight>;
+	type EdgeIter: IdIter<(Self::Vertex,Self::Vertex,Self::Edge)>;
 	
 	///
 	/// Creates an empty graph. I.e a graph with no vertices and no edges.
@@ -162,7 +142,8 @@ pub trait BaseGraph
 	///
 	/// - The graph is unchanged.
 	///
-	fn add_edge(&mut self, e: BaseEdge<Self::Vertex,Self::Weight>) -> Result<(),()>;
+	fn add_edge<E>(&mut self, e: E) -> Result<(),()>
+		where E: Edge<Self::Vertex, Self::Edge>;
 	
 	///
 	/// Removes the given edge from the graph, assuming it is already present.
@@ -182,7 +163,8 @@ pub trait BaseGraph
 	///
 	/// - The graph is unchanged.
 	///
-	fn remove_edge(&mut self, e: BaseEdge<Self::Vertex,Self::Weight>) -> Result<(),()>;
+	fn remove_edge<E>(&mut self, e: E) -> Result<(),()>
+		where E: Edge<Self::Vertex, Self::Edge>;
 	
 	///
 	/// Creates a graph containing the given vertices and edges. There can be no
@@ -194,7 +176,7 @@ pub trait BaseGraph
 	/// - `Err`: If the given graph description is invalid.
 	///
 	fn graph(	vertices: Vec<Self::Vertex>,
-			 	edges: Vec<(Self::Vertex, Self::Vertex,Self::Weight)>)
+			 	edges: Vec<(Self::Vertex, Self::Vertex,Self::Edge)>)
 		-> Result<Self,()>
 		where
 			Self: Sized,
@@ -212,7 +194,7 @@ pub trait BaseGraph
 		 */
 		for (so,si,w) in edges {
 			// Make sure the edge is added
-			g.add_edge(BaseEdge::new(so,si,w))?;
+			g.add_edge((so,si,w))?;
 		}
 		
 		Ok(g)
@@ -229,8 +211,8 @@ pub trait BaseGraph
 		
 		// Filter out any edge that is not connected to both vertices
 		let relevant = all_edges.filter(|edge|{
-			(edge.source == v1 && edge.sink == v2) ||
-				(edge.source == v2 && edge.sink == v1)
+			(*edge.source() == v1 && *edge.sink() == v2) ||
+				(*edge.source() == v2 && *edge.sink() == v1)
 		});
 		
 		// Return the result
@@ -244,7 +226,7 @@ pub trait BaseGraph
 	///
 	fn edges_sourced_in(&self, v: Self::Vertex) -> Self::EdgeIter
 	{
-		self.all_edges().into_iter().filter(|e| e.source() == v).collect::<Self::EdgeIter>()
+		self.all_edges().into_iter().filter(|e| *e.source() == v).collect::<Self::EdgeIter>()
 	}
 	
 	///
@@ -254,8 +236,7 @@ pub trait BaseGraph
 	///
 	fn edges_sinked_in(&self, v: Self::Vertex) -> Self::EdgeIter
 	{
-		self.all_edges().into_iter().filter(|e| e.sink() == v).collect::<Self::EdgeIter>()
+		self.all_edges().into_iter().filter(|e| *e.sink() == v).collect::<Self::EdgeIter>()
 	}
 	
 }
-

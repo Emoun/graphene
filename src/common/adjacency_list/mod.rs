@@ -6,17 +6,17 @@ use core::*;
 
 #[derive(Clone, Debug)]
 pub struct AdjListGraph<V,W> {
-	edges: Vec<Vec<(usize,W)>>,
+	edges: Vec<Vec<(usize,usize)>>,
 	values:Vec<V>,
+	edge_weights: Vec<W>
 }
 
 impl<V,W> AdjListGraph<V,W>
 	where
-		V: Vertex,
-		W: Weight,
+		V: Id,
 {
 	
-	pub fn new(values: Vec<V>, edges: Vec<(usize, usize,W)>) -> Option<AdjListGraph<V,W>> {
+	pub fn new(values: Vec<V>, edges: Vec<(usize, usize,usize)>) -> Option<AdjListGraph<V,W>> {
 		
 		//Validate no duplicate vertices
 		let mut seen = Vec::new();
@@ -27,7 +27,7 @@ impl<V,W> AdjListGraph<V,W>
 				seen.push(*v);
 			}
 		}
-		let mut g = AdjListGraph{ edges: Vec::new(), values: values };
+		let mut g = AdjListGraph{ edges: Vec::new(), values: values, edge_weights: Vec::new() };
 		
 		//Validate all edges point to vertices
 		for &(source, sink, _) in &edges {
@@ -61,13 +61,15 @@ impl<V,W> AdjListGraph<V,W>
 		}
 	}
 	
-	fn if_valid_edge<F>(&mut self, e:BaseEdge<V,W>, cont: F) -> Result<(), ()>
-		where F: Fn(&mut Self,usize, usize, W)-> Result<(),()>
+	fn if_valid_edge<E,F>(&mut self, e: E, cont: F) -> Result<(), ()>
+		where
+			E: Edge<V, usize>,
+			F: Fn(&mut Self,usize, usize, usize)-> Result<(),()>
 	{
 		if let (Some(source_i), Some(sink_i))
-		= (self.get_index(e.source), self.get_index(e.sink))
+		= (self.get_index(*e.source()), self.get_index(*e.sink()))
 			{
-				return cont(self, source_i, sink_i, e.weight);
+				return cont(self, source_i, sink_i, *e.edge());
 			}
 		Err(())
 	}

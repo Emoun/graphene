@@ -1,4 +1,4 @@
-
+/*
 //!
 //! `graphene` is a general purpose, extensible [Graph Theory](https://en.wikipedia.org/wiki/Graph_theory)
 //! data type and algorithm library.
@@ -193,7 +193,7 @@
 //! an unweighted graph.
 //!
 //!
-
+*/
 #[macro_use]
 pub mod core;
 pub mod common;

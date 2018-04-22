@@ -5,16 +5,15 @@ use core::*;
 
 impl<V,W> BaseGraph for AdjListGraph<V,W>
 	where
-		V: Vertex,
-		W: Weight,
+		V: Id,
 {
 	type Vertex = V;
-	type Weight = W;
+	type Edge = usize;
 	type VertexIter = Vec<V>;
-	type EdgeIter = Vec<BaseEdge<V,W>>;
+	type EdgeIter = Vec<(V,V,Self::Edge)>;
 	
 	fn empty_graph() -> AdjListGraph<V,W>{
-		AdjListGraph{values: Vec::new(), edges: Vec::new()}
+		AdjListGraph{values: Vec::new(), edges: Vec::new(), edge_weights: Vec::new()}
 	}
 	
 	fn all_vertices(&self) -> Vec<V> {
@@ -27,7 +26,7 @@ impl<V,W> BaseGraph for AdjListGraph<V,W>
 		result
 	}
 	
-	fn all_edges(& self) -> Vec<BaseEdge<V,W>> {
+	fn all_edges(& self) -> Vec<(V,V,Self::Edge)> {
 		let mut result = Vec::new();
 		
 		//For each vertex (source)
@@ -37,7 +36,7 @@ impl<V,W> BaseGraph for AdjListGraph<V,W>
 			for &(sink_i, weight ) in out.iter() {
 				let sink_value = self.values[sink_i];
 				//Return the edge
-				result.push(BaseEdge::new(source_value, sink_value, weight));
+				result.push((source_value, sink_value, weight));
 			}
 		}
 		result
@@ -104,14 +103,18 @@ impl<V,W> BaseGraph for AdjListGraph<V,W>
 		Err(())
 	}
 	
-	fn add_edge(&mut self, e: BaseEdge<V,W>) -> Result<(), ()>{
+	fn add_edge<E>(&mut self, e: E) -> Result<(),()>
+		where E: Edge<Self::Vertex, Self::Edge>
+	{
 		self.if_valid_edge( e, |s, source_i, sink_i, weight|{
 			s.edges[source_i].push((sink_i,weight));
 			Ok(())
 		})
 	}
 	
-	fn remove_edge(&mut self, e: BaseEdge<V,W>)-> Result<(), ()>{
+	fn remove_edge<E>(&mut self, e: E) -> Result<(),()>
+		where E: Edge<Self::Vertex, Self::Edge>
+	{
 		self.if_valid_edge(e, |s, source_i, sink_i, weight|{
 			if let Some(i) = s.edges[source_i].iter().position(|&(sink_cand, w )| {
 				sink_cand == sink_i && w == weight
@@ -123,7 +126,7 @@ impl<V,W> BaseGraph for AdjListGraph<V,W>
 		})
 	}
 }
-
+/*
 impl<V,W> ConstrainedGraph for AdjListGraph<V,W>
 	where
 		V: Vertex,
@@ -150,7 +153,7 @@ fn empty_has_no_edges(){
 }
 
 
-
+*/
 
 
 
