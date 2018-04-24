@@ -2,20 +2,18 @@
 use core::{WeightedGraph, EdgeWeightedGraph, Id, Edge, BaseGraph};
 use common::AdjListGraph;
 
-impl<V,W> WeightedGraph for AdjListGraph<V,W>
+impl<V,W> WeightedGraph<W,<Self as BaseGraph>::Edge> for AdjListGraph<V,W>
 	where
 		V: Id
 {
-	type Weight = W;
-	type WeightRef = Self::Edge;
 	
-	fn add_weight(&mut self, w: Self::Weight) -> Result<Self::WeightRef,()>
+	fn add_weight(&mut self, w: W) -> Result<Self::Edge,()>
 	{
 		self.edge_weights.push(w);
 		Ok(self.edge_weights.len() - 1)
 	}
 	
-	fn remove_weight(&mut self, w: Self::WeightRef) -> Result<Self::Weight,()>
+	fn remove_weight(&mut self, w: Self::Edge) -> Result<W,()>
 	{
 		//Check that nothing references the weight
 		for source in &self.edges{
@@ -39,7 +37,7 @@ impl<V,W> WeightedGraph for AdjListGraph<V,W>
 		Ok(result)
 	}
 	
-	fn weight_ref(&self, r: Self::WeightRef) -> Result<&Self::Weight, ()>
+	fn weight_ref(&self, r: Self::Edge) -> Result<&W, ()>
 	{
 		if r < self.edge_weights.len() {
 			Ok(&self.edge_weights[r])

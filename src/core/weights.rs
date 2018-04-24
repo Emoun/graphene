@@ -1,33 +1,36 @@
 use core::{BaseGraph,Id,Edge};
 
-pub trait WeightedGraph: BaseGraph
+pub trait WeightedGraph<W,R>: BaseGraph
+	where R: Id
 {
-	type Weight;
-	type WeightRef: Id;
 	
 	///
 	/// Adds a weight, returning the reference to it.
 	///
-	fn add_weight(&mut self, w: Self::Weight) -> Result<Self::WeightRef,()>;
+	fn add_weight(&mut self, w: W) -> Result<R,()>;
 	
 	///
 	/// Removes a weight, assuming no elements in the graph point to it.
 	///
-	fn remove_weight(&mut self, w: Self::WeightRef) -> Result<Self::Weight,()>;
+	fn remove_weight(&mut self, w: R) -> Result<W,()>;
 	
 	///
 	/// Gets the weight referenced
 	///
-	fn weight_ref(&self, r: Self::WeightRef) -> Result<&Self::Weight, ()>;
+	fn weight_ref(&self, r: R) -> Result<&W, ()>;
 	
-	fn weight_of<E>(&self, e: E) -> Result<&Self::Weight, ()>
-		where E: Edge<Self::Vertex, Self::WeightRef>
+	fn weight_of<E>(&self, e: E) -> Result<&W, ()>
+		where E: Edge<Self::Vertex, R>
 	{
 		self.weight_ref(*e.edge())
 	}
 }
 
-pub trait VertexWeightedGraph: BaseGraph
+pub trait VertexWeightedGraph:
+	WeightedGraph<
+		<Self as VertexWeightedGraph>::VertexWeight,
+		<Self as VertexWeightedGraph>::VertexWeightRef
+	>
 {
 	type VertexWeight;
 	/// Have to have a specific type for the reference
@@ -42,7 +45,11 @@ pub trait VertexWeightedGraph: BaseGraph
 	
 }
 
-pub trait EdgeWeightedGraph: BaseGraph
+pub trait EdgeWeightedGraph:
+	WeightedGraph<
+		<Self as EdgeWeightedGraph>::EdgeWeight,
+		<Self as BaseGraph>::Edge
+	>
 {
 	type EdgeWeight;
 	
@@ -55,30 +62,3 @@ pub trait EdgeWeightedGraph: BaseGraph
 	
 }
 
-#[derive(Copy, Clone, Eq, PartialEq)]
-pub enum BiWeightRef<V,E>
-	where V: Id, E:Id
-{
-	Vertex(V),
-	Edge(E)
-}
-pub enum BiWeight<V,E>
-{
-	Vertex(V),
-	Edge(E)
-}
-
-
-pub trait BiWeightedGraph: VertexWeightedGraph + EdgeWeightedGraph +
-	WeightedGraph<
-		Weight=BiWeight<<Self as VertexWeightedGraph>::VertexWeight, <Self as EdgeWeightedGraph>::EdgeWeight>,
-		WeightRef=BiWeightRef<<Self as VertexWeightedGraph>::VertexWeightRef, <Self as BaseGraph>::Edge>
-	>
-{
-	fn add_weight_vertex(&mut self, w: Self::VertexWeight) -> Result<Self::VertexWeightRef, ()>;
-	
-	fn add_weight_edge(&mut self, w: Self::EdgeWeight) -> Result<Self::Edge, ()>;
-	
-	
-	
-}
