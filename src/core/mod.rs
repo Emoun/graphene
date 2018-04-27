@@ -41,6 +41,8 @@ macro_rules! impl_base_constraint{
 mod base_graph;
 mod edge;
 mod weights;
+pub mod trait_aliases;
+mod auto_graphs;
 //mod constrained_graph;
 //mod exact_graph;
 
@@ -48,7 +50,7 @@ mod weights;
 //pub mod constraint;
 
 
-pub use self::{base_graph::*, edge::*, weights::*};
+pub use self::{base_graph::*, edge::*, weights::*, auto_graphs::*};
 /*
 pub use self::constrained_graph::*;
 pub use self::graph_wrapper::*;

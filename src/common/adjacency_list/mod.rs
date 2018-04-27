@@ -3,7 +3,12 @@ mod impl_base_graph;
 mod impl_weights;
 
 pub use self::impl_base_graph::*;
-use core::*;
+use core::{
+	Edge,
+	trait_aliases::{
+		Id,
+	}
+};
 
 #[derive(Clone, Debug)]
 pub struct AdjListGraph<V,W> {

@@ -1,55 +1,37 @@
 
-use std::iter::FromIterator;
-use ::core::Edge;
-
-
-///
-/// Trait alias
-///
-pub trait Id: Copy + Eq{}
-impl<T> Id for T
-	where T: Copy + Eq
-{}
-
-pub trait IdIter<I>: IntoIterator<Item=I> + FromIterator<I>
-	where
-		I: Id,
-		
-{}
-impl<T, V> IdIter<V> for T
-	where
-		T: IntoIterator<Item=V> + FromIterator<V>,
-		V: Id,
-{}
+use core::{
+	Edge,
+	trait_aliases::{
+		Id, IntoFromIter
+	}
+};
 
 ///
-/// The basic graph interface.
+/// The basic graph interface. This is the main trait for all types of graphs.
 ///
-/// This is the main trait for all types of graphs.
-///
-/// The vertices in a graph are identified by their value, and must therefore be unique
-/// in the graph.
-///
-/// The edges in a graph are identified by the vertices they are incident on and their weight.
-/// Edges do not have to be unique, but if there are duplicates (i.e. two or more edges incident on
-/// the same vertices with the same weights) then any operation intended for one of the edges
-/// may happen on any one of them. E.g. If one of the edges is to be removed, then any
-/// one of them will be so.
-///
-///
-///
-///
+/// For all graphs, vertices are identified by their [value](#associatedType.Vertex), and must be unique
+/// in the graph. Edges are identified by the two vertices they are incident on, the direction,
+/// and their [Id](#associatedType.EdgeId); I.e. the triple `(v1,v2,e)` is an edge from `v1` to `v2`
+/// with an edge id `e`. All edges are directed but need not be unique. Therefore, multiple edges with
+/// the same source (`v1`), sink (`v2`), and id (`e`) may be present in a graph at the same time.
+/// Edges with the same source, sink, and id are identical and must be interchangeable. E.g. if any
+/// one of two or more identical edges is to be removed, then any one of them may be removed.
 ///
 pub trait BaseGraph
 {
-	/// Type of the vertices in the graph.
+	///
+	/// Type of the graph's vertex value.
+	///
 	type Vertex: Id;
-	type Edge: Id;
+	///
+	/// Type of the graph's edge id.
+	///
+	type EdgeId: Id;
 	
 	/// Type of the collection returned with vertices.
-	type VertexIter: IdIter<Self::Vertex>;
+	type VertexIter: IntoFromIter<Self::Vertex>;
 	/// Type of the collection returned with edges.
-	type EdgeIter: IdIter<(Self::Vertex,Self::Vertex,Self::Edge)>;
+	type EdgeIter: IntoFromIter<(Self::Vertex, Self::Vertex, Self::EdgeId)>;
 	
 	///
 	/// Creates an empty graph. I.e a graph with no vertices and no edges.
@@ -66,7 +48,7 @@ pub trait BaseGraph
 	fn empty_graph() -> Self;
 	
 	///
-	/// Returns copies of all current vertices in the graph.
+	/// Returns copies of all current vertex values in the graph.
 	///
 	fn all_vertices(&self) -> Self::VertexIter;
 	
@@ -76,20 +58,20 @@ pub trait BaseGraph
 	fn all_edges(&self) -> Self::EdgeIter;
 	
 	///
-	/// Adds the given vertex to graph as long as no equal vertex is already
+	/// Adds the given vertex to graph as long as no identical vertex is already
 	/// present i the graph and the graph is capable of storing it.
 	///
 	/// ###Returns:
 	///
 	/// - `Ok` if the vertex is valid and has been added.
 	/// - `Err` if the vertex is already present in the graph or
-	/// the graph doesn't have capacity for it.
+	/// it is otherwise unable to store it.
 	///
 	/// ###`Ok` properties :
 	///
 	/// - All vertices present before the call are also present after it.
 	/// - All edges present before the call are also present after it.
-	/// - No edge weights are changed.
+	/// - No edges are changed.
 	/// - No new edges are introduced.
 	/// - Only the given vertex is added to the graph.
 	///
@@ -101,21 +83,21 @@ pub trait BaseGraph
 	fn add_vertex(&mut self, v: Self::Vertex) -> Result<(),()>;
 	
 	///
-	/// Removes the given vertex from the graph, assuming it is present.
+	/// Removes the given vertex from the graph along with any incident edges.
 	///
 	/// ###Returns:
 	///
 	/// - `Ok` if the vertex was removed.
-	/// - `Err` if the vertex was not present in the graph.
+	/// - `Err` if the vertex was not present in the graph or it was otherwise unable to remove it.
 	///
 	/// ###`Ok` properties:
 	///
 	/// - Only the given vertex is removed from the graph.
-	/// - Any edge connecting to the removed vertex is also removed.
+	/// - Any edge incident on the vertex is also removed.
 	/// - All other edges are unchanged.
 	/// - No new vertices are introduced.
 	/// - No new edges are introduced.
-	/// - No edge weights are changed.
+	/// - No edges are changed.
 	///
 	/// ###`Err` properties:
 	///
@@ -126,11 +108,13 @@ pub trait BaseGraph
 	fn remove_vertex(&mut self, v: Self::Vertex) -> Result<(),()>;
 	
 	///
-	/// Adds the given edge to the graph assuming it connects to valid vertices.
+	/// Adds a copy of the given edge to the graph, regardless of whether there are existing
+	/// identical edges in the graph.
+	/// The vertices the new edge is incident on must exist in the graph and the id must be valid.
 	///
 	/// ###Returns
-	/// - `Ok` if the edge connects to valid vertices and the edge was added successfully.
-	/// - `Err` if the edge connects to invalid vertices or was not added.
+	/// - `Ok` if the edge is valid and was added to the graph.
+	/// - `Err` if the edge is invalid or the graph was otherwise unable to store it.
 	///
 	/// ###`Ok` properties:
 	///
@@ -143,20 +127,20 @@ pub trait BaseGraph
 	/// - The graph is unchanged.
 	///
 	fn add_edge_copy<E>(&mut self, e: E) -> Result<(),()>
-		where E: Edge<Self::Vertex, Self::Edge>;
+		where E: Edge<Self::Vertex, Self::EdgeId>;
 	
 	///
-	/// Removes the given edge from the graph, assuming it is already present.
+	/// Removes the given edge from the graph if it exists.
 	///
 	/// ###Returns
-	/// - `Ok` if the edge was present before the call and was removed successfully.
-	/// - `Err` if the edge was not found in the graph.
+	/// - `Ok` if the edge was present before the call and was removed.
+	/// - `Err` if the edge was not found in the graph or it was otherwise unable to remove it.
 	///
 	/// ###`Ok` properties:
 	///
-	/// - Only the given edge is removed.
+	/// - One edge identical to the given edge is removed.
 	/// - No new edges are introduced.
-	/// - No edge weights are changed.
+	/// - No edges are changed.
 	/// - No new vertices are introduced or removed.
 	///
 	/// ###`Err` properties:
@@ -164,44 +148,10 @@ pub trait BaseGraph
 	/// - The graph is unchanged.
 	///
 	fn remove_edge<E>(&mut self, e: E) -> Result<(),()>
-		where E: Edge<Self::Vertex, Self::Edge>;
-	/*
+		where E: Edge<Self::Vertex, Self::EdgeId>;
+	
 	///
-	/// Creates a graph containing the given vertices and edges. There can be no
-	/// duplicate vertices and all edges must connect to the given vertices.
-	///
-	/// ###Returns:
-	///
-	/// - `Ok`: If the given graph description is valid, the created graph is returned.
-	/// - `Err`: If the given graph description is invalid.
-	///
-	fn graph(	vertices: Vec<Self::Vertex>,
-			 	edges: Vec<(Self::Vertex, Self::Vertex,Self::Edge)>)
-		-> Result<Self,()>
-		where
-			Self: Sized,
-	{
-		let mut g = Self::empty_graph();
-		
-		/* Add all vertices
-		 */
-		for v in vertices {
-			//Make sure the vertex is added
-			g.add_vertex(v)?;
-		}
-		
-		/* Add all edges
-		 */
-		for (so,si,w) in edges {
-			// Make sure the edge is added
-			g.add_edge((so,si,w))?;
-		}
-		
-		Ok(g)
-	}
-	*/
-	///
-	/// Returns all edges that are connect to both the given vertices.
+	/// Returns all edges that are incident on both the given vertices, regardless of direction.
 	///
 	/// I.e. all edges where e == (v1,v2,_) or e == (v2,v1,_)
 	///
@@ -238,14 +188,5 @@ pub trait BaseGraph
 	{
 		self.all_edges().into_iter().filter(|e| *e.sink() == v).collect::<Self::EdgeIter>()
 	}
-	
-}
-
-pub trait AutoEdgeGraph: BaseGraph
-{
-	
-	fn add_edge<E>(&mut self, e: E) -> Result<(),()>
-		where E: Edge<Self::Vertex, ()>;
-	
 	
 }

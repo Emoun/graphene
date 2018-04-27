@@ -1,5 +1,5 @@
 
-use ::core::Id;
+use core::trait_aliases::Id;
 
 pub trait Edge<V,E>
 	where V: Id

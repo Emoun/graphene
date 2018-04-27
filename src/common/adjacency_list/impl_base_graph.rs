@@ -1,6 +1,11 @@
-use common::adjacency_list::*;
-use core::*;
 
+use core::{
+	BaseGraph, Edge, AutoEdgeGraph,
+	trait_aliases::{
+		Id,
+	}
+};
+use common::AdjListGraph;
 
 
 impl<V,W> BaseGraph for AdjListGraph<V,W>
@@ -8,9 +13,9 @@ impl<V,W> BaseGraph for AdjListGraph<V,W>
 		V: Id,
 {
 	type Vertex = V;
-	type Edge = usize;
+	type EdgeId = usize;
 	type VertexIter = Vec<V>;
-	type EdgeIter = Vec<(V,V,Self::Edge)>;
+	type EdgeIter = Vec<(V,V,Self::EdgeId)>;
 	
 	fn empty_graph() -> AdjListGraph<V,W>{
 		AdjListGraph{values: Vec::new(), edges: Vec::new(), edge_weights: Vec::new()}
@@ -26,7 +31,7 @@ impl<V,W> BaseGraph for AdjListGraph<V,W>
 		result
 	}
 	
-	fn all_edges(& self) -> Vec<(V,V,Self::Edge)> {
+	fn all_edges(& self) -> Vec<(V,V,Self::EdgeId)> {
 		let mut result = Vec::new();
 		
 		//For each vertex (source)
@@ -104,7 +109,7 @@ impl<V,W> BaseGraph for AdjListGraph<V,W>
 	}
 	
 	fn add_edge_copy<E>(&mut self, e: E) -> Result<(),()>
-		where E: Edge<Self::Vertex, Self::Edge>
+		where E: Edge<Self::Vertex, Self::EdgeId>
 	{
 		self.if_valid_edge( e, |s, source_i, sink_i, id|{
 			s.edges[source_i].push((sink_i,id));
@@ -113,7 +118,7 @@ impl<V,W> BaseGraph for AdjListGraph<V,W>
 	}
 	
 	fn remove_edge<E>(&mut self, e: E) -> Result<(),()>
-		where E: Edge<Self::Vertex, Self::Edge>
+		where E: Edge<Self::Vertex, Self::EdgeId>
 	{
 		self.if_valid_edge(e, |s, source_i, sink_i, weight|{
 			if let Some(i) = s.edges[source_i].iter().position(|&(sink_cand, w )| {

@@ -1,4 +1,9 @@
-use core::{BaseGraph,Id,Edge};
+use core::{
+	BaseGraph,Edge,
+	trait_aliases::{
+		Id,
+	}
+};
 
 pub trait WeightedGraph<W,R>: BaseGraph
 	where R: Id
@@ -48,7 +53,7 @@ pub trait VertexWeightedGraph:
 pub trait EdgeWeightedGraph:
 	WeightedGraph<
 		<Self as EdgeWeightedGraph>::EdgeWeight,
-		<Self as BaseGraph>::Edge
+		<Self as BaseGraph>::EdgeId
 	>
 {
 	type EdgeWeight;
@@ -57,7 +62,7 @@ pub trait EdgeWeightedGraph:
 	/// Add an edge with a new weight. Returns the created edge
 	///
 	fn add_edge_weighted<E>(&mut self, e: E, w: Self::EdgeWeight)
-							-> Result<(Self::Vertex,Self::Vertex,Self::Edge), ()>
+							-> Result<(Self::Vertex,Self::Vertex,Self::EdgeId), ()>
 		where E: Edge<Self::Vertex,()>;
 	
 }
