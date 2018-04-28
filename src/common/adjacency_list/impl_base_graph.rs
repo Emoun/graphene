@@ -82,9 +82,12 @@ impl<V,W> BaseGraph for AdjListGraph<V,W>
 				}
 			}
 			
-			/* Re-point all edges pointing to last value (last)
-			 * to point to v
-			 */
+			// For efficiency, instead of just removing v and shifting all
+			// other vertices' indeces, we swap the vertex with the highest
+			// index into the index of v
+			
+			// Start by re-point all edges pointing to last vertex (called 'last' from now on)
+			// to point to the index of v
 			let last_i = self.values.len() - 1;
 			//For each vertex
 			for t_v_i in 0..self.edges.len() {
@@ -98,8 +101,7 @@ impl<V,W> BaseGraph for AdjListGraph<V,W>
 				}
 			}
 			
-			/*Remove v, swapping in the value of last
-			 */
+			// Remove v, swapping in the value of last
 			self.values.swap_remove(v_i);
 			self.edges.swap_remove(v_i);
 			return Ok(());

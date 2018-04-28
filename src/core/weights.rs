@@ -27,7 +27,7 @@ pub trait WeightedGraph<W,R>: BaseGraph
 	fn weight_of<E>(&self, e: E) -> Result<&W, ()>
 		where E: Edge<Self::Vertex, R>
 	{
-		self.weight_ref(*e.edge())
+		self.weight_ref(*e.id())
 	}
 }
 

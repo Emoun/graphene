@@ -2,15 +2,15 @@
 use core::trait_aliases::Id;
 
 pub trait Edge<V,E>
-	where V: Id
+	where V: Id, E:Id
 {
 	fn source(&self) -> &V;
 	fn sink(&self) -> &V;
-	fn edge(&self) -> &E;
+	fn id(&self) -> &E;
 }
 
 impl<V,E> Edge<V,E> for (V,V,E)
-	where V:Id
+	where V: Id, E:Id
 {
 	fn source(&self) -> &V{
 		&self.0
@@ -18,7 +18,7 @@ impl<V,E> Edge<V,E> for (V,V,E)
 	fn sink(&self) -> &V{
 		&self.1
 	}
-	fn edge(&self) -> &E{
+	fn id(&self) -> &E{
 		&self.2
 	}
 }
@@ -32,7 +32,7 @@ impl<V> Edge<V,()> for (V,V)
 	fn sink(&self) -> &V{
 		&self.1
 	}
-	fn edge(&self) -> &(){
+	fn id(&self) -> &(){
 		&()
 	}
 }

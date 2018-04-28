@@ -87,8 +87,8 @@ impl<V,W> AdjListGraph<V,W>
 		if let (Some(source_i), Some(sink_i))
 		= (self.get_index(*e.source()), self.get_index(*e.sink()))
 			{
-				if *e.edge() < self.edge_weights.len() {
-					return cont(self, source_i, sink_i, *e.edge());
+				if *e.id() < self.edge_weights.len() {
+					return cont(self, source_i, sink_i, *e.id());
 				}
 			}
 		Err(())

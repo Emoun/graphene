@@ -6,70 +6,6 @@ use arbitraries::*;
 use std;
 use std::iter::FromIterator;
 
-
-#[macro_export]
-macro_rules! holds_if{
-	{
-		$e:expr
-	}=> {
-		if $e {
-			return true;
-		}
-	}
-}
-
-///
-/// Returns whether the first list in an unordered sublist of the second list.
-///
-/// One list os an unordered sublist of another if all its elements can be found in the
-/// other list, without duplications. Examples ( `<` as operator):
-///
-/// - `[1,2,3] < [3,2,1]`
-/// - `[1,2,3] < [2,3,3,1]`
-/// - `[1,2,2,3] !< [1,2,3]`
-///
-pub fn unordered_sublist<B,P,F>(sublist:&Vec<B>, superlist:&Vec<P>, equal: F) -> bool
-where F: Fn(&B, &P) -> bool,
-{
-	//Track whether each element in the superlist has been used
-	// to match an element of the sublist
-	let mut used = Vec::new();
-	used.resize(superlist.len(),false);
-	
-	//For each sublist element
-	'outer:
-	for sub_e in sublist{
-		//Look through all superelements
-		for (i, super_e) in superlist.iter().enumerate(){
-			//If the element is unused
-			if !used[i] {
-				//if they are equal
-				if equal(&sub_e,super_e) {
-					//Assign the super element as used and move to the nex subelement
-					used[i] = true;
-					continue 'outer;
-				}
-			}
-		}
-		//The subelement was not found
-		return false;
-	}
-	//All subelement were found
-	true
-}
-
-///
-/// Identical to `unordered_sublist()` except for values which are `Eq`.
-///
-pub fn unordered_sublist_equal<T>(sublist:&Vec<T>, superlist:&Vec<T>) -> bool
-	where
-		T: Eq
-{
-	unordered_sublist(sublist, superlist, |v_sub, v_super|{
-		v_sub == v_super
-	})
-}
-
 ///
 /// Initialises a graph ( using its `graph()` function) based on the given description and passes it to
 /// the given function, returning the value the function returns, except
@@ -83,7 +19,7 @@ pub fn graph_init<G,F>(desc: &GraphDescription<
 					   -> bool
 	where
 		G: BaseGraph,
-		<G as BaseGraph>::Vertex: ArbVertex,
+		<G as BaseGraph>::Vertex: ArbId,
 		<G as BaseGraph>::Weight: ArbWeight,
 		<<G as BaseGraph>::VertexIter as IntoIterator>::IntoIter: ExactSizeIterator,
 		<<G as BaseGraph>::EdgeIter as IntoIterator>::IntoIter: ExactSizeIterator,
@@ -113,7 +49,7 @@ pub fn graph_init_and_add_edge<G,F>(
 	-> bool
 	where
 		G: BaseGraph,
-		<G as BaseGraph>::Vertex: ArbVertex,
+		<G as BaseGraph>::Vertex: ArbId,
 		<G as BaseGraph>::Weight: ArbWeight,
 		<<G as BaseGraph>::VertexIter as IntoIterator>::IntoIter: ExactSizeIterator,
 		<<G as BaseGraph>::EdgeIter as IntoIterator>::IntoIter: ExactSizeIterator,
@@ -138,7 +74,7 @@ pub fn graph_init_and_remove_edge<G,F>(
 	-> bool
 	where
 		G: BaseGraph,
-		<G as BaseGraph>::Vertex: ArbVertex,
+		<G as BaseGraph>::Vertex: ArbId,
 		<G as BaseGraph>::Weight: ArbWeight,
 		<<G as BaseGraph>::VertexIter as IntoIterator>::IntoIter: ExactSizeIterator,
 		<<G as BaseGraph>::EdgeIter as IntoIterator>::IntoIter: ExactSizeIterator,
@@ -196,7 +132,7 @@ where
 ///
 pub fn edges_sublistof_graph<V,W,G>(edges: &Vec<(V, V, W)>, g: &G) -> bool
 where
-	V: ArbVertex,
+	V: ArbId,
 	W: ArbWeight,
 	G: BaseGraph<Vertex=V,Weight=W>,
 	<G as BaseGraph>::VertexIter: FromIterator<V>,
@@ -220,7 +156,7 @@ where
 ///
 pub fn graph_sublistof_edges<V,W,G>(g: &G, edges: &Vec<(V, V, W)>) -> bool
 	where
-		V: ArbVertex,
+		V: ArbId,
 		W: ArbWeight,
 		G: BaseGraph<Vertex=V,Weight=W>,
 		<G as BaseGraph>::VertexIter: FromIterator<V>,
@@ -251,7 +187,7 @@ pub fn remove_appropriate_vertex <V,W,G>(
 	index:usize)
 	-> (usize,V)
 	where
-		V: ArbVertex,
+		V: ArbId,
 		W: ArbWeight,
 		G: BaseGraph<Vertex=V,Weight=W>,
 		<G as BaseGraph>::VertexIter: FromIterator<V>,
@@ -275,7 +211,7 @@ pub fn edges_not_incident_on_vertex<V,W>(
 	v: V)
 	-> Vec<(V, V, W)>
 	where
-		V: ArbVertex,
+		V: ArbId,
 		W: ArbWeight,
 {
 	let edges_by_value = desc.edges_by_value();
@@ -284,32 +220,7 @@ pub fn edges_not_incident_on_vertex<V,W>(
 	edges_by_value.into_iter().filter(|&(source,sink,_)| source != v && sink != v).collect()
 }
 
-///
-/// Returns a valid index into the vertex values of the description
-/// base on the given index.
-///
-pub fn appropriate_vertex_index<V,W>(i: usize, desc:&GraphDescription<V,W>) -> usize
-	where
-		V: ArbVertex,
-		W: ArbWeight,
-{
-	i % desc.values.len()
-}
 
-///
-/// Returns a vertex value present in the desc based on the given index.
-///
-/// The given index does not have to be valid in the description, it will be converted to
-/// a valid one. See `appropriate_vertex_index()`.
-///
-pub fn appropriate_vertex_value_from_index<V,W>(desc:&GraphDescription<V,W>, i_cand: usize) -> V
-	where
-		V: ArbVertex,
-		W: ArbWeight,
-{
-	let i = appropriate_vertex_index(i_cand, &desc);
-	desc.values[i]
-}
 
 ///
 /// Adds an appropriate edge (I.e. incident on valid vertices) to the graph returning the
@@ -324,7 +235,7 @@ pub fn add_appropriate_edge<V,W,G>(	desc:&GraphDescription<V,W>, g: &mut G,
 									source_i_cand: usize, sink_i_cand: usize, weight: W)
 	-> BaseEdge<V,W>
 	where
-		V: ArbVertex,
+		V: ArbId,
 		W: ArbWeight,
 		G: BaseGraph<Vertex=V,Weight=W>,
 		<G as BaseGraph>::VertexIter: FromIterator<V>,
@@ -354,7 +265,7 @@ pub fn remove_appropriate_edge<V,W,G>(	desc:&GraphDescription<V,W>,
 										edge_index_cand: usize)
 	-> (usize, BaseEdge<V,W>)
 	where
-		V: ArbVertex,
+		V: ArbId,
 		W: ArbWeight,
 		G: BaseGraph<Vertex=V,Weight=W>,
 		<G as BaseGraph>::VertexIter: FromIterator<V>,
@@ -383,7 +294,7 @@ pub fn original_edges_maintained_sublistof_graph_after<G,F>(
 	-> bool
 	where
 		G: BaseGraph,
-		<G as BaseGraph>::Vertex: ArbVertex,
+		<G as BaseGraph>::Vertex: ArbId,
 		<G as BaseGraph>::Weight: ArbWeight,
 		<<G as BaseGraph>::VertexIter as IntoIterator>::IntoIter: ExactSizeIterator,
 		<<G as BaseGraph>::EdgeIter as IntoIterator>::IntoIter: ExactSizeIterator,
@@ -420,7 +331,7 @@ pub fn equal_description_and_graph_vertices<V,W,G>(
 	desc: &GraphDescription<V,W>, g: &G )
 	-> bool
 	where
-		V: ArbVertex,
+		V: ArbId,
 		W: ArbWeight,
 		G: BaseGraph<Vertex=V,Weight=W>,
 		<G as BaseGraph>::VertexIter: FromIterator<V>,
@@ -442,7 +353,7 @@ pub fn equal_description_and_graph_edges<V,W,G>(
 	desc: &GraphDescription<V,W>, g: &G )
 	-> bool
 	where
-		V: ArbVertex,
+		V: ArbId,
 		W: ArbWeight,
 		G: BaseGraph<Vertex=V,Weight=W>,
 		<G as BaseGraph>::VertexIter: FromIterator<V>,
