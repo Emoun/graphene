@@ -11,11 +11,11 @@ impl<T> Id for T
 
 pub trait IntoFromIter<I>: IntoIterator<Item=I> + FromIterator<I>
 	where
-		I: Id,
+		//I: Id,
 
 {}
 impl<T, I> IntoFromIter<I> for T
 	where
 		T: IntoIterator<Item=I> + FromIterator<I>,
-		I: Id,
+		//I: Id,
 {}

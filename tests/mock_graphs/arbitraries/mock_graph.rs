@@ -1,25 +1,26 @@
 //!
-//! Implements `Arbitrary` for MockBaseGraph
+//! Implements `Arbitrary` for MockGraph
 //!
 
 use mock_graphs::{
-	ArbId, MockBaseGraph, MockVertex, MockEdgeId
+	ArbVertex, ArbT, MockGraph, MockVertex, MockEdgeWeight, MockVertexWeight
 };
 use quickcheck::{
 	Arbitrary, Gen
 };
 use graphene::{
-	core::BaseGraph
+	core::{
+		Graph, ManualGraph
+	},
 };
 
-impl Arbitrary for MockBaseGraph
+impl Arbitrary for MockGraph
 {
 	fn arbitrary<G: Gen>(g: &mut G) -> Self {
 		
 		// Set the maximum amount of vertices and edges
 		let COUNT = 10;
-		let mut vertex_values = Vec::new();
-		let mut edges = Vec::new();
+		let mut vertices:  Vec<(MockVertex, MockVertexWeight, _)> = Vec::new();
 		
 		//Decide the amount of vertices
 		let vertex_count = g.gen_range(0,COUNT);
@@ -37,12 +38,11 @@ impl Arbitrary for MockBaseGraph
 			//For each vertex
 			for _ in 0..vertex_count {
 				// As long as the created value is already used by another vertex
-				while vertex_values.contains(&next_value) {
+				while vertices.iter().any( |&(id,_,_)| id.value == next_value.value) {
 					// Create a new value
 					next_value = MockVertex::arbitrary(g);
 				}
-				vertex_values.push(next_value);
-				edges.push(Vec::new());
+				vertices.push((next_value, MockVertexWeight::arbitrary(g), Vec::new()));
 			}
 			
 			/* Create edges
@@ -53,18 +53,18 @@ impl Arbitrary for MockBaseGraph
 				 */
 				let t_source = usize::arbitrary(g) % vertex_count;
 				let t_sink = usize::arbitrary(g) % vertex_count;
-				let t_id = MockEdgeId::arbitrary(g);
-				edges[t_source].push((t_sink, t_id));
+				let t_weight = MockEdgeWeight::arbitrary(g);
+				vertices[t_source].2.push((t_sink, t_weight));
 			}
 		}
-		Self { values: vertex_values, edges}
+		Self { vertices }
 	}
 	
 	fn shrink(&self) -> Box<Iterator<Item=Self>> {
 		
 		/* Base case
 		 */
-		if self.values.len() == 0 {
+		if self.vertices.len() == 0 {
 			return Box::new(Vec::new().into_iter());
 		}
 		
@@ -74,25 +74,23 @@ impl Arbitrary for MockBaseGraph
 		 */
 		let mut new_values;
 		//For each vertex
-		for (i,&val) in self.values.iter().enumerate(){
+		self.vertices.iter().enumerate()
 			//Get all possible shrinkages
-			let shrunk_values = val.shrink();
-			//For each shrunk value
-			for s in shrunk_values{
-				//If no other vertex has that value
-				if !self.values.contains(&s) {
-					/* Add to the result a desc copy where that vertex
-					 * has been shrunk to the value.
-					 */
-					new_values = self.values.clone();
-					new_values[i] = s;
-					result.push(Self {
-						values: new_values, edges: self.edges.clone()});
-				}
-			}
-		}
+			.flat_map(|(idx,(id,_,_))| id.shrink().map(|s| (idx,s)))
+			//For each shrunk value,
+			//if no other vertex has that value
+			.filter(|(idx,shrunk_id)|
+				self.vertices.iter().any(|(id,_,_)| shrunk_id.value != id.value))
+			/* copy the graph, and change the id to the shrunk id
+			*/
+			.for_each(|(idx, shrunk_id)| {
+				let mut new_id = self.vertices.clone();
+				new_id[idx].0 = shrunk_id;
+				result.push(Self{vertices: new_id});
+			});
 		
-		/* Shrink by shrinking edge ids
+		
+		/* Shrink by shrinking edge weight
 		 */
 		//For each edge
 		for &(so,si, id) in self.all_edges().iter() {

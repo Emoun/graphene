@@ -1,7 +1,7 @@
 
 use graphene::{
 	core::{
-		BaseGraph,
+		Graph,
 		trait_aliases::{
 			Id,IntoFromIter
 		}
@@ -26,11 +26,11 @@ macro_rules! holds_if{
 ///
 pub fn appropriate_vertex_index<G,V>(graph:&G, idx_cand: usize) -> usize
 	where
-		G: BaseGraph<Vertex=V>,
+		G: Graph<Vertex=V>,
 		V: Id,
-		<G as BaseGraph>::EdgeId: Id,
-		<G as BaseGraph>::VertexIter: IntoFromIter<V>,
-		<G as BaseGraph>::EdgeIter: IntoFromIter<(V,V,<G as BaseGraph>::EdgeId)>,
+		<G as Graph>::EdgeId: Id,
+		<G as Graph>::VertexIter: IntoFromIter<V>,
+		<G as Graph>::EdgeIter: IntoFromIter<(V, V, <G as Graph>::EdgeId)>,
 {
 	idx_cand % graph.all_vertices().into_iter().count()
 }
@@ -43,11 +43,11 @@ pub fn appropriate_vertex_index<G,V>(graph:&G, idx_cand: usize) -> usize
 ///
 pub fn appropriate_vertex_value_from_index<G,V>(graph:&G, idx_cand: usize) -> V
 	where
-		G: BaseGraph<Vertex=V>,
+		G: Graph<Vertex=V>,
 		V: Id,
-		<G as BaseGraph>::EdgeId: Id,
-		<G as BaseGraph>::VertexIter: IntoFromIter<V>,
-		<G as BaseGraph>::EdgeIter: IntoFromIter<(V,V,<G as BaseGraph>::EdgeId)>,
+		<G as Graph>::EdgeId: Id,
+		<G as Graph>::VertexIter: IntoFromIter<V>,
+		<G as Graph>::EdgeIter: IntoFromIter<(V, V, <G as Graph>::EdgeId)>,
 {
 	let i = appropriate_vertex_index(graph, idx_cand);
 	graph.all_vertices().into_iter().nth(i).unwrap()

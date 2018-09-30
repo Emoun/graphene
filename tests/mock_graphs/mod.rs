@@ -5,28 +5,34 @@
 //!
 
 #[macro_use]
-pub mod utilities;
-mod arbitraries;
-mod mock_base_graph;
+//pub mod utilities;
+//mod arbitraries;
+mod mock_graph;
 
 
 pub use self::{
-	mock_base_graph::*,
-	arbitraries::*
+	mock_graph::*,
+	//arbitraries::*
 };
 
 #[derive(Copy, Clone, Eq, PartialEq, Debug)]
-pub struct MockId
+pub struct MockVertex
 {
 	pub value: u32
 }
 
-///
-/// Mock vertex value.
-///
-pub type MockVertex = MockId;
+#[derive(Debug, Clone)]
+pub struct MockT
+{
+	pub value: u32
+}
 
-///
-/// Mock edge Id.
-///
-pub type MockEdgeId = MockId;
+impl Default for MockT
+{
+	fn default() -> Self {
+		MockT{value: u32::default()}
+	}
+}
+
+pub type MockEdgeWeight = MockT;
+pub type MockVertexWeight = MockT;

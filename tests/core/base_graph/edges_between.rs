@@ -7,7 +7,7 @@ use mock_graphs::{
 	utilities::*
 };
 use graphene::core::{
-	BaseGraph, Edge
+	Graph, Edge
 };
 
 ///
