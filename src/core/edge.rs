@@ -4,24 +4,37 @@ use core::trait_aliases::Id;
 ///
 /// Edge
 ///
-pub trait Edge<V,W>
+pub trait Edge<V>
 	where V: Id
 {
 	fn source(&self) -> V;
 	fn sink(&self) -> V;
+}
+
+pub trait EdgeWeighted<V,W>: Edge<V>
+	where V: Id
+{
+	fn get_weight(self) -> W;
+}
+
+pub trait WeightRef<V,W>: Edge<V>
+	where V: Id
+{
 	fn weight(&self) -> &W;
 }
 
 ///
 /// Weighted edge, mutable
 ///
-pub trait EdgeMut<V,W>: Edge<V,W>
+pub trait WeightRefMut<V,W>: WeightRef<V,W>
 	where V: Id
 {
 	fn weight_mut(&mut self) -> &mut W;
 }
 
-impl<V> Edge<V,()> for (V,V)
+
+
+impl<V> Edge<V> for (V,V)
 	where V: Id
 {
 	fn source(&self) -> V{
@@ -30,23 +43,22 @@ impl<V> Edge<V,()> for (V,V)
 	fn sink(&self) -> V{
 		self.1
 	}
+}
+impl<V> EdgeWeighted<V,()> for (V,V)
+	where V: Id
+{
+	fn get_weight(self){}
+}
+impl<V> WeightRef<V,()> for (V, V)
+	where V: Id
+{
 	fn weight(&self) -> &()
 	{
 		&()
 	}
 }
-/*
-// For some reason this is not currently possible.
-impl<V> EdgeMut<V,()> for (V,V)
-	where V: Id
-{
-	fn weight_mut<'a>(&mut self) -> &mut ()
-	{
-		&mut ()
-	}
-}
-*/
-impl<'a,V,W> Edge<V,W> for (V,V,&'a W)
+
+impl<V,W> Edge<V> for (V,V,W)
 	where V: Id
 {
 	fn source(&self) -> V{
@@ -55,28 +67,50 @@ impl<'a,V,W> Edge<V,W> for (V,V,&'a W)
 	fn sink(&self) -> V{
 		self.1
 	}
-	fn weight(&self) -> &W
-	{
-		self.2
-	}
 }
-
-impl<'a,V,W> Edge<V,W> for (V,V,&'a mut W)
+impl<V,W> EdgeWeighted<V,W> for (V,V,W)
 	where V: Id
 {
-	fn source(&self) -> V{
-		self.0
+	fn get_weight(self) -> W
+	{
+		self.2
 	}
-	fn sink(&self) -> V{
-		self.1
+}
+impl<'a,V,W> WeightRef<V,W> for (V,V,W)
+	where V: Id
+{
+	fn weight(&self) -> &W
+	{
+		&self.2
 	}
+}
+impl<'a,V,W> WeightRefMut<V,W> for (V,V,W)
+	where V: Id
+{
+	fn weight_mut(&mut self) -> &mut W
+	{
+		&mut self.2
+	}
+}
+
+impl<'a,V,W> WeightRef<V,W> for (V,V,&'a W)
+	where V: Id
+{
 	fn weight(&self) -> &W
 	{
 		self.2
 	}
 }
 
-impl<'a,V,W> EdgeMut<V,W> for (V,V,&'a mut W)
+impl<'a,V,W> WeightRef<V,W> for (V,V,&'a mut W)
+	where V: Id
+{
+	fn weight(&self) -> &W
+	{
+		self.2
+	}
+}
+impl<'a,V,W> WeightRefMut<V,W> for (V,V,&'a mut W)
 	where V: Id
 {
 	fn weight_mut(&mut self) -> &mut W

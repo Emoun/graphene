@@ -1,6 +1,6 @@
 
 use core::{
-	Edge,
+	Edge, EdgeWeighted,
 	trait_aliases::{
 		Id, IntoFromIter
 	}
@@ -112,32 +112,17 @@ pub trait Graph<'a>
 	fn vertex_weight(&self, v: Self::Vertex) -> Option<&Self::VertexWeight>;
 	fn vertex_weight_mut(&mut self, v: Self::Vertex) -> Option<&mut Self::VertexWeight>;
 	
-	///
-	/// Removes the given edge from the graph if it exists.
-	///
-	/// ###Returns
-	/// - `Ok` if the edge was present before the call and was removed.
-	/// - `Err` if the edge was not found in the graph or it was otherwise unable to remove it.
-	///
-	/// ###`Ok` properties:
-	///
-	/// - One edge identical to the given edge is removed.
-	/// - No new edges are introduced.
-	/// - No edges are changed.
-	/// - No new vertices are introduced or removed.
-	///
-	/// ###`Err` properties:
-	///
-	/// - The graph is unchanged.
-	///
-	fn remove_edge<E>(&mut self, e: E) -> Result<Self::EdgeWeight,()>
-		where E: Edge<Self::Vertex,()>;
+	fn remove_edge_where<F>(& mut self, f: F)
+		-> Result<(Self::Vertex, Self::Vertex, Self::EdgeWeight), ()>
+		where
+			F: Fn((Self::Vertex, Self::Vertex, &Self::EdgeWeight)) -> bool
+	;
 	
 	///
 	/// Adds a copy of the given edge to the graph
 	///
-	fn add_edge_weighted<E>(&mut self, e: E, w: Self::EdgeWeight) -> Result<(),()>
-		where E: Edge<Self::Vertex,()>;
+	fn add_edge_weighted<E>(&mut self, e: E) -> Result<(),()>
+		where E: EdgeWeighted<Self::Vertex, Self::EdgeWeight>;
 	
 	///
 	/// Adds the given edge to the graph, regardless of whether there are existing,
@@ -160,10 +145,44 @@ pub trait Graph<'a>
 	///
 	fn add_edge<E>(&mut self, e: E) -> Result<(),()>
 		where
-			E: Edge<Self::Vertex, ()>,
+			E: Edge<Self::Vertex>,
 			Self::EdgeWeight: Default,
 	{
-		self.add_edge_weighted(e, Self::EdgeWeight::default())
+		self.add_edge_weighted((e.source(), e.sink(), Self::EdgeWeight::default()))
+	}
+	
+	///
+	/// Removes the given edge from the graph if it exists.
+	///
+	/// ###Returns
+	/// - `Ok` if the edge was present before the call and was removed.
+	/// - `Err` if the edge was not found in the graph or it was otherwise unable to remove it.
+	///
+	/// ###`Ok` properties:
+	///
+	/// - One edge identical to the given edge is removed.
+	/// - No new edges are introduced.
+	/// - No edges are changed.
+	/// - No new vertices are introduced or removed.
+	///
+	/// ###`Err` properties:
+	///
+	/// - The graph is unchanged.
+	///
+	fn remove_edge<E>(&mut self, e: E) -> Result<Self::EdgeWeight,()>
+		where E: Edge<Self::Vertex>
+	{
+		self.remove_edge_where_weight(e, |_| true)
+	}
+	
+	fn remove_edge_where_weight<E,F>(&mut self, e: E, f: F) -> Result<Self::EdgeWeight,()>
+		where
+			E: Edge<Self::Vertex>,
+			F: Fn(&Self::EdgeWeight) -> bool,
+	{
+		self.remove_edge_where(|(so,si, w)|
+			(so == e.source()) && (si == e.sink()) && f(w))
+			.map(|removed_edge| removed_edge.2)
 	}
 	
 	///

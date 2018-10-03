@@ -4,7 +4,7 @@ use mock_graphs::{
 };
 use graphene::{
 	core::{
-		Graph, Edge, ManualGraph,
+		Graph, Edge, ManualGraph, EdgeWeighted,
 		trait_aliases::Id
 	},
 };
@@ -73,7 +73,7 @@ impl<'a> Graph<'a> for MockGraph
 	
 	fn vertex_weight(&self, v: Self::Vertex) -> Option<&Self::VertexWeight>
 	{
-		if let Some((_,w,_)) = self.vertices.iter().find(|(id,weight,_)| id.value == v.value){
+		if let Some((_,w,_)) = self.vertices.iter().find(|(id,_,_)| id.value == v.value){
 			Some(w)
 		}else{
 			None
@@ -82,7 +82,7 @@ impl<'a> Graph<'a> for MockGraph
 	
 	fn vertex_weight_mut(&mut self, v: Self::Vertex) -> Option<&mut Self::VertexWeight>
 	{
-		if let Some((_,w,_)) = self.vertices.iter_mut().find(|(id,weight,_)| id.value == v.value){
+		if let Some((_,w,_)) = self.vertices.iter_mut().find(|(id,_,_)| id.value == v.value){
 			Some(w)
 		}else{
 			None
@@ -129,9 +129,9 @@ impl<'a> Graph<'a> for MockGraph
 		Err(())
 	}
 	
-	fn add_edge_weighted<E>(&mut self, e: E, w: Self::EdgeWeight) -> Result<(),()>
+	fn add_edge_weighted<E>(&mut self, e: E) -> Result<(),()>
 		where
-			E: Edge<Self::Vertex,()>,
+			E: EdgeWeighted<Self::Vertex, Self::EdgeWeight>,
 	{
 		// Find the indices of the vertices
 		if let (Some(v1_idx), Some(v2_idx)) =
@@ -140,31 +140,35 @@ impl<'a> Graph<'a> for MockGraph
 			)
 		{
 			// Add the edge
-			self.vertices[v1_idx].2.push((v2_idx, w));
+			self.vertices[v1_idx].2.push((v2_idx, e.get_weight()));
 			Ok(())
 		}else{
 			Err(())
 		}
 	}
 	
-	fn remove_edge<E>(&mut self, e: E) -> Result<Self::EdgeWeight,()>
-		where E: Edge<Self::Vertex, ()>
+	fn remove_edge_where<F>(&mut self, f: F)
+		-> Result<(Self::Vertex, Self::Vertex, Self::EdgeWeight), ()>
+		where
+			F: Fn((Self::Vertex, Self::Vertex, &Self::EdgeWeight)) -> bool
 	{
-		// Find the indices of the vertices
-		if let (Some(v1_idx), Some(v2_idx)) =
-			(	self.vertices.iter().position(|(id,_,_)| id.value == e.source().value),
-				self.vertices.iter().position(|(id,_,_)| id.value == e.sink().value)
-			)
-		{
-			// Find the index of the edge
-			if let Some(idx) = self.vertices[v1_idx].2.iter().position(
-				|&(sink_idx, _)| sink_idx == v2_idx)
-			{
-				//remove edge
-				return Ok(self.vertices[v1_idx].2.remove(idx).1);
+		let mut to_delete: Option<(usize, usize, Self::Vertex, Self::Vertex)> = None;
+		'l:
+		for (so_idx, (so_v, _, out)) in self.vertices.iter().enumerate() {
+			for(e_idx, (si_idx, e_weight)) in out.iter().enumerate() {
+				let si_v = self.vertices[*si_idx].0;
+				if f((*so_v, si_v, e_weight)) {
+					to_delete = Some((so_idx, e_idx, *so_v, si_v));
+					break 'l;
+				}
 			}
 		}
-		Err(())
+		if let Some((so_idx, e_idx, so_v, si_v)) = to_delete {
+			let (_, weight) = self.vertices[so_idx].2.remove(e_idx);
+			Ok((so_v, si_v, weight))
+		}else{
+			Err(())
+		}
 	}
 }
 

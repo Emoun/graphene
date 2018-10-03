@@ -72,14 +72,13 @@ impl Arbitrary for MockGraph
 		
 		/* Shrink by shrinking vertices
 		 */
-		let mut new_values;
 		//For each vertex
 		self.vertices.iter().enumerate()
 			//Get all possible shrinkages
-			.flat_map(|(idx,(id,_,_))| id.shrink().map(|s| (idx,s)))
+			.flat_map(|(idx,(id,_,_))| id.shrink().map(move|s| (idx,s)))
 			//For each shrunk value,
 			//if no other vertex has that value
-			.filter(|(idx,shrunk_id)|
+			.filter(|(_,shrunk_id)|
 				self.vertices.iter().any(|(id,_,_)| shrunk_id.value != id.value))
 			/* copy the graph, and change the id to the shrunk id
 			*/
@@ -93,20 +92,18 @@ impl Arbitrary for MockGraph
 		/* Shrink by shrinking edge weight
 		 */
 		//For each edge
-		for &(so,si, id) in self.all_edges().iter() {
-			//Get all possible shrinkages
-			let shrunk_ids = id.shrink();
-			//For each shrunk id
-			for s_id in shrunk_ids {
-				/* Add to the result a desc copy where that
-				 * edge id has been shrunk to the value.
-				 */
+		self.all_edges().into_iter().for_each(|(source,sink,ref weight)|{
+			let shrunk_weights = weight.shrink();
+			
+			shrunk_weights.for_each( |s_w| {
 				let mut shrunk_graph = self.clone();
-				shrunk_graph.remove_edge((so, si, id)).unwrap();
-				shrunk_graph.add_edge_copy((so, si, s_id)).unwrap();
+				shrunk_graph.remove_edge_where_weight((source, sink),
+					|ref w| w.value == weight.value
+				).unwrap();
+				shrunk_graph.add_edge_weighted((source, sink, s_w)).unwrap();
 				result.push(shrunk_graph);
-			}
-		}
+			});
+		});
 		
 		/* Shrink by removing an edge
 		 */
