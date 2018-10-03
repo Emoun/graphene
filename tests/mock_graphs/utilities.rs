@@ -24,13 +24,9 @@ macro_rules! holds_if{
 /// Returns a valid index into the vertex values of the graph
 /// based on the given index.
 ///
-pub fn appropriate_vertex_index<G,V>(graph:&G, idx_cand: usize) -> usize
+pub fn appropriate_vertex_index<'a,G>(graph:&G, idx_cand: usize) -> usize
 	where
-		G: Graph<Vertex=V>,
-		V: Id,
-		<G as Graph>::EdgeId: Id,
-		<G as Graph>::VertexIter: IntoFromIter<V>,
-		<G as Graph>::EdgeIter: IntoFromIter<(V, V, <G as Graph>::EdgeId)>,
+		G: Graph<'a>,
 {
 	idx_cand % graph.all_vertices().into_iter().count()
 }
@@ -41,13 +37,13 @@ pub fn appropriate_vertex_index<G,V>(graph:&G, idx_cand: usize) -> usize
 /// The given index does not have to be valid in the description, it will be converted to
 /// a valid one. See `appropriate_vertex_index()`.
 ///
-pub fn appropriate_vertex_value_from_index<G,V>(graph:&G, idx_cand: usize) -> V
+pub fn appropriate_vertex_value_from_index<'a,G,V>(graph:&G, idx_cand: usize) -> V
 	where
-		G: Graph<Vertex=V>,
+		G: Graph<'a, Vertex=V>,
 		V: Id,
-		<G as Graph>::EdgeId: Id,
-		<G as Graph>::VertexIter: IntoFromIter<V>,
-		<G as Graph>::EdgeIter: IntoFromIter<(V, V, <G as Graph>::EdgeId)>,
+		G::VertexIter : IntoFromIter<V>,
+		G::EdgeIter : IntoFromIter<(V, V, &'a G::EdgeWeight)>,
+		G::EdgeMutIter : IntoFromIter<(V, V, &'a mut G::EdgeWeight)>,
 {
 	let i = appropriate_vertex_index(graph, idx_cand);
 	graph.all_vertices().into_iter().nth(i).unwrap()
@@ -98,7 +94,7 @@ pub fn unordered_sublist<B,P,F>(sublist:&Vec<B>, superlist:&Vec<P>, equal: F) ->
 ///
 pub fn unordered_sublist_equal<T>(sublist:&Vec<T>, superlist:&Vec<T>) -> bool
 	where
-		T: Eq
+		T: PartialEq
 {
 	unordered_sublist(sublist, superlist, |v_sub, v_super|{
 		v_sub == v_super

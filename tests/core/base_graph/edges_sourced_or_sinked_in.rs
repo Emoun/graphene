@@ -2,7 +2,7 @@
 //! Tests the `edges_sourced_in` and `edges_sinked_in` optional methods for `BaseGraph`.
 //!
 use mock_graphs::{
-	MockBaseGraph, MockVertex,
+	MockGraph, MockVertex,
 	utilities::*
 };
 use graphene::core::{
@@ -15,11 +15,11 @@ use graphene::core::{
 /// Ensures that all the returned edges are sourced in the given vertex.
 ///
 fn all_edges_sourced_in_the_vertice(
-	g: MockBaseGraph,
+	g: MockGraph,
 	v_cand: MockVertex)
 	-> bool
 {
-	if g.values.len() == 0 {
+	if g.vertices.len() == 0 {
 		// If the graph has no vertices,
 		// then there can be no edges sourced in the given vertex,
 		// as it is not part of the graph.
@@ -31,7 +31,7 @@ fn all_edges_sourced_in_the_vertice(
 		let sourced_edges_len = sourced_edges.len();
 		
 		let valid_edges = sourced_edges.into_iter().filter(|e|{
-			*e.source() == v
+			e.source() == v
 		}).collect::<Vec<_>>();
 		
 		sourced_edges_len == valid_edges.len()
@@ -44,7 +44,7 @@ fn all_edges_sourced_in_the_vertice(
 /// Ensured that all the returned edges are sinked in the given vertex.
 ///
 fn all_edges_sinked_in_the_vertice(
-	g: MockBaseGraph,
+	g: MockGraph,
 	v_cand: MockVertex)
 	-> bool
 {
@@ -60,7 +60,7 @@ fn all_edges_sinked_in_the_vertice(
 		let sinked_edges_len = sinked_edges.len();
 		
 		let valid_edges = sinked_edges.into_iter().filter(|e|{
-			*e.sink() == v
+			e.sink() == v
 		}).collect::<Vec<_>>();
 		
 		sinked_edges_len == valid_edges.len()
@@ -69,7 +69,7 @@ fn all_edges_sinked_in_the_vertice(
 
 quickcheck!{
 	fn PROP_all_edges_sourced_in_the_vertice(
-		g: MockBaseGraph,
+		g: MockGraph,
 		v_cand: MockVertex)
 		-> bool
 	{
@@ -77,7 +77,7 @@ quickcheck!{
 	}
 	
 	fn PROP_all_edges_sinked_in_the_vertice(
-		g: MockBaseGraph,
+		g: MockGraph,
 		v_cand: MockVertex)
 		-> bool
 	{

@@ -3,7 +3,7 @@
 //!
 
 use mock_graphs::{
-	MockBaseGraph, MockVertex,
+	MockGraph, MockVertex,
 	utilities::*
 };
 use graphene::core::{
@@ -14,11 +14,11 @@ use graphene::core::{
 /// Ensures that all the returned edges are incident on the given vertices.
 ///
 fn all_edges_incident_on_the_vertices(
-	g: MockBaseGraph,
+	g: MockGraph,
 	v1_cand: MockVertex, v2_cand: MockVertex)
 	-> bool
 {
-	if g.values.len() == 0 {
+	if g.vertices.len() == 0 {
 		// If the graph has no vertices,
 		// then there can be no edges between the two given vertices,
 		// since they are not part of the graph.
@@ -32,8 +32,8 @@ fn all_edges_incident_on_the_vertices(
 	let edges_between_len = edges_between.len();
 	
 	let valid_edges = edges_between.into_iter().filter(|e| {
-		(*e.source() == v1 && *e.sink() == v2) ||
-			(*e.source() == v2 && *e.sink() == v1)
+		(e.source() == v1 && e.sink() == v2) ||
+			(e.source() == v2 && e.sink() == v1)
 	}).collect::<Vec<_>>();
 	
 	edges_between_len == valid_edges.len()
@@ -43,11 +43,11 @@ fn all_edges_incident_on_the_vertices(
 /// Ensures that all the edges between the two vertices are returned
 ///
 fn all_edges_returned(
-	g: MockBaseGraph,
+	g: MockGraph,
 	v1_cand: MockVertex, v2_cand: MockVertex)
 	-> bool
 {
-	if g.values.len() == 0 {
+	if g.vertices.len() == 0 {
 		// If the graph has no vertices,
 		// then there can be no edges between the two given vertices,
 		// since they are not part of the graph.
@@ -68,7 +68,7 @@ fn all_edges_returned(
 
 quickcheck!{
 	fn PROP_all_edges_incident_on_the_vertices(
-		g: MockBaseGraph,
+		g: MockGraph,
 		v1_cand: MockVertex, v2_cand: MockVertex)
 		-> bool
 	{
@@ -76,7 +76,7 @@ quickcheck!{
 	}
 	
 	fn PROP_all_edges_returned(
-		g: MockBaseGraph,
+		g: MockGraph,
 		v1_cand: MockVertex, v2_cand: MockVertex)
 		-> bool
 	{

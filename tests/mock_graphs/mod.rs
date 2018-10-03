@@ -5,7 +5,7 @@
 //!
 
 #[macro_use]
-//pub mod utilities;
+pub mod utilities;
 mod arbitraries;
 mod mock_graph;
 
@@ -21,7 +21,7 @@ pub struct MockVertex
 	pub value: u32
 }
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, PartialEq)]
 pub struct MockT
 {
 	pub value: u32
