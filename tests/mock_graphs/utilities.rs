@@ -69,7 +69,7 @@ pub fn unordered_sublist<B,P,F>(sublist:&Vec<B>, superlist:&Vec<P>, equal: F) ->
 	
 	//For each sublist element
 	'outer:
-		for sub_e in sublist{
+	for sub_e in sublist{
 		//Look through all superelements
 		for (i, super_e) in superlist.iter().enumerate(){
 			//If the element is unused

@@ -25,6 +25,15 @@ pub struct MockGraph
 	)>,
 }
 
+impl MockGraph {
+	
+	pub fn new() -> Self
+	{
+		Self{vertices: Vec::new()}
+	}
+	
+}
+
 impl<'a> Graph<'a> for MockGraph
 {
 	type Vertex = MockVertex;
@@ -34,11 +43,8 @@ impl<'a> Graph<'a> for MockGraph
 	type EdgeIter = Vec<(Self::Vertex,Self::Vertex,&'a Self::EdgeWeight)>;
 	type EdgeMutIter = Vec<(Self::Vertex,Self::Vertex,&'a mut Self::EdgeWeight)>;
 	
-	fn empty_graph() -> Self{
-		Self{vertices: Vec::new()}
-	}
-	
-	fn all_vertices(&self) -> Self::VertexIter {
+	fn all_vertices(&self) -> Self::VertexIter
+	{
 		let mut result = Vec::new();
 		
 		//For each value, output a copy
@@ -192,7 +198,7 @@ mod test{
 	fn func(){
 		use mock_graphs::{MockGraph,MockVertex};
 		use graphene::core::{Graph,ManualGraph};
-		let mut g = MockGraph::empty_graph();
+		let mut g = MockGraph::new();
 		let m0 = MockVertex{value: 0};
 		let m1 = MockVertex{value: 1};
 		let m2 = MockVertex{value: 2};

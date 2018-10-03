@@ -1,29 +1,26 @@
-use super::*;
 
-pub fn AdjListGraph_init<V,W,F>(desc: &GraphDescription<V,W>, holds: F) -> bool
-	where
-		V: ArbVertex,
-		W: ArbWeight,
-		F: Fn(AdjListGraph<V,W>) -> bool
+use mock_graphs::*;
+use common::utilities::*;
+use graphene::common::AdjListGraph;
+
+pub fn AdjListGraph_init<F>(mock: &MockGraph, holds: F) -> bool
+	where F: Fn(&mut AdjListGraph<MockVertex, MockVertexWeight, MockEdgeWeight>) -> bool
 {
-	graph_init::<AdjListGraph<_,_>,_>(desc, holds)
+	graph_init(&mut AdjListGraph::new(), mock, holds)
 }
 
-pub fn AdjListGraph_init_and_add_edge<V,W,F>(
-	desc: &GraphDescription<V,W>,
-	source_i_cand: usize,
-	sink_i_cand: usize,
-	weight: W,
+pub fn AdjListGraph_init_and_add_edge<F>(
+	mock: &MockGraph, source_i_cand: usize,
+	sink_i_cand:usize, weight: MockEdgeWeight,
 	holds: F)
 	-> bool
-	where
-		V: ArbVertex,
-		W: ArbWeight,
-		F: Fn(AdjListGraph<V,W>,BaseEdge<V,W>) -> bool,
+	where F: FnOnce(&mut AdjListGraph<MockVertex, MockVertexWeight, MockEdgeWeight>,
+					(MockVertex, MockVertex, MockEdgeWeight))
+				-> bool
 {
-	graph_init_and_add_edge::<AdjListGraph<_,_>,_>(desc, source_i_cand, sink_i_cand, weight, holds)
+	graph_init_and_add_edge(&mut AdjListGraph::new(), mock, source_i_cand, sink_i_cand, weight, holds)
 }
-
+/*
 pub fn AdjListGraph_init_and_remove_edge<V,W,F>(
 	desc: &GraphDescription<V,W>,
 	edge_index: usize, holds: F)
@@ -35,5 +32,5 @@ pub fn AdjListGraph_init_and_remove_edge<V,W,F>(
 {
 	graph_init_and_remove_edge::<AdjListGraph<_,_>,_>(desc, edge_index, holds)
 }
-
+*/
 

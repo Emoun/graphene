@@ -9,7 +9,7 @@ extern crate quickcheck;
 
 #[macro_use]
 pub mod mock_graphs;
-//mod common;
+mod common;
 pub mod core;
 
 

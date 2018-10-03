@@ -1,8 +1,8 @@
 
-mod impl_base_graph;
-mod impl_weights;
+mod impl_graph;
+//mod impl_weights;
 
-pub use self::impl_base_graph::*;
+pub use self::impl_graph::*;
 use core::{
 	Edge,
 	trait_aliases::{
@@ -10,13 +10,42 @@ use core::{
 	}
 };
 
+
+///
+/// A graph using the adjacency list representation.
+///
 #[derive(Clone, Debug)]
-pub struct AdjListGraph<V,W> {
-	edges: Vec<Vec<(usize,usize)>>,
-	values:Vec<V>,
-	edge_weights: Vec<W>
+pub struct AdjListGraph<V,Vw,Ew>
+	where V: Id,
+{
+	///
+	/// Adjacency list representation of the graph.
+	/// Each index in vec is a vertex.
+	///
+	vertices: Vec<(
+		//The ID of the vertex
+		V,
+		//The weight of the vertex
+		Vw,
+		//A list outgoing edges from this vertex
+		Vec<(
+			//The index of the sink vertex
+			usize,
+			//The weight of the edge
+			Ew
+		)>
+	)>
 }
 
+impl<V,Vw,Ew> AdjListGraph<V,Vw,Ew>
+	where V:Id
+{
+	pub fn new() -> Self
+	{
+		Self{vertices: Vec::new()}
+	}
+}
+/*
 impl<V,W> AdjListGraph<V,W>
 	where
 		V: Id,
@@ -94,4 +123,4 @@ impl<V,W> AdjListGraph<V,W>
 		Err(())
 	}
 }
-
+*/

@@ -6,60 +6,9 @@ use arbitraries::*;
 use std;
 use std::iter::FromIterator;
 
-///
-/// Initialises a graph ( using its `graph()` function) based on the given description and passes it to
-/// the given function, returning the value the function returns, except
-/// if the graph initialization fails, in which case false is always returned
-/// (without running the function)
-///
-pub fn graph_init<G,F>(desc: &GraphDescription<
-										<G as BaseGraph>::Vertex,
-										<G as BaseGraph>::Weight>,
-					   holds: F)
-					   -> bool
-	where
-		G: BaseGraph,
-		<G as BaseGraph>::Vertex: ArbId,
-		<G as BaseGraph>::Weight: ArbWeight,
-		<<G as BaseGraph>::VertexIter as IntoIterator>::IntoIter: ExactSizeIterator,
-		<<G as BaseGraph>::EdgeIter as IntoIterator>::IntoIter: ExactSizeIterator,
-		F: Fn(G) -> bool
-{
-	if let Ok(g) = G::graph(
-		desc.values.clone(), desc.edges_by_value())
-	{
-		return holds(g);
-	}
-	false
-}
 
-///
-/// Initialises a graph based on the given description (see `graph_init()`),
-/// an appropriate edge is added to it (see `add_appropriate_edge()`),
-/// after which the graph and the added edge are passed to the given function
-/// who's return value is then returned by this function, except if the graph
-/// initialization or the edge addition fails, in which case either false is returned or it panics.
-///
-pub fn graph_init_and_add_edge<G,F>(
-	desc: &GraphDescription<<G as BaseGraph>::Vertex,<G as BaseGraph>::Weight>,
-	source_i_cand: usize,
-	sink_i_cand:usize,
-	weight: <G as BaseGraph>::Weight,
-	holds: F)
-	-> bool
-	where
-		G: BaseGraph,
-		<G as BaseGraph>::Vertex: ArbId,
-		<G as BaseGraph>::Weight: ArbWeight,
-		<<G as BaseGraph>::VertexIter as IntoIterator>::IntoIter: ExactSizeIterator,
-		<<G as BaseGraph>::EdgeIter as IntoIterator>::IntoIter: ExactSizeIterator,
-		F: Fn(G, BaseEdge<<G as BaseGraph>::Vertex,<G as BaseGraph>::Weight>) -> bool,
-{
-	graph_init(desc, |mut g| {
-		let edge = add_appropriate_edge(desc, &mut g, source_i_cand, sink_i_cand, weight);
-		holds(g, edge)
-	})
-}
+
+
 
 ///
 /// Initialises a graph based on the given description (see `graph_init()`),
@@ -222,33 +171,7 @@ pub fn edges_not_incident_on_vertex<V,W>(
 
 
 
-///
-/// Adds an appropriate edge (I.e. incident on valid vertices) to the graph returning the
-/// edge added.
-///
-/// Assumes the graph is equals to the given description.
-///
-/// #Panics:
-/// If the graph and description are not equal causing the addition of an invalid edge.
-///
-pub fn add_appropriate_edge<V,W,G>(	desc:&GraphDescription<V,W>, g: &mut G,
-									source_i_cand: usize, sink_i_cand: usize, weight: W)
-	-> BaseEdge<V,W>
-	where
-		V: ArbId,
-		W: ArbWeight,
-		G: BaseGraph<Vertex=V,Weight=W>,
-		<G as BaseGraph>::VertexIter: FromIterator<V>,
-		<G as BaseGraph>::EdgeIter: FromIterator<BaseEdge<V,W>>,
-		<<G as BaseGraph>::VertexIter as IntoIterator>::IntoIter: ExactSizeIterator,
-		<<G as BaseGraph>::EdgeIter as IntoIterator>::IntoIter: ExactSizeIterator,
-{
-	let source_v = appropriate_vertex_value_from_index(desc, source_i_cand);
-	let sink_v = appropriate_vertex_value_from_index(desc,sink_i_cand);
-	let added_edge = BaseEdge::new(source_v, sink_v, weight);
-	g.add_edge(added_edge).unwrap();
-	added_edge
-}
+
 
 ///
 /// Removes an edge from the graph, returning the edge removed and its index in the description.

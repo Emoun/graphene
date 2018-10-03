@@ -60,20 +60,6 @@ pub trait Graph<'a>
 	type EdgeMutIter: IntoFromIter<(Self::Vertex, Self::Vertex, &'a mut Self::EdgeWeight)>;
 	
 	///
-	/// Creates an empty graph. I.e a graph with no vertices and no edges.
-	///
-	/// Properties:
-	///
-	/// - `empty().all_vertices().into_iter().next() == None`
-	/// - `empty().all_edges().into_iter().next() == None`
-	/// - `empty().add_vertex(v) == Ok(())`
-	/// - `empty().add_edge(e) == Err(())`
-	/// - `empty().remove_vertex(v) == Err(())`
-	/// - `empty().remove_edge(e) == Err(())`
-	///
-	fn empty_graph() -> Self;
-	
-	///
 	/// Returns copies of all current vertex values in the graph.
 	///
 	fn all_vertices(&self) -> Self::VertexIter;
