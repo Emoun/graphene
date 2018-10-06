@@ -88,6 +88,18 @@ impl Arbitrary for MockGraph
 				result.push(Self{vertices: new_id});
 			});
 		
+		/* Shrink by shrinking vertex weight
+		 */
+		self.vertices.iter().enumerate()
+			//Get all possible shrinkages
+			.flat_map(|(idx, (_,weight,_))| weight.shrink().map(move|s| (idx,s)))
+			//For each shrunk weight,
+			//create a new graph where the vertex has that weight
+			.for_each(|(idx, shrunk_weight)|{
+				let mut new_graph = self.clone();
+				new_graph.vertices[idx].1 = shrunk_weight;
+				result.push(new_graph);
+			});
 		
 		/* Shrink by shrinking edge weight
 		 */
