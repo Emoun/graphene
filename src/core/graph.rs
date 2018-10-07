@@ -29,6 +29,9 @@ mod macros {
 	macro_rules! edges_incident_on {
 		($e:expr, $v:expr, $i:ident) => {
 			$e.into_iter().filter(|e| e.$i() == $v).collect()
+		};
+		($e:expr, $v:expr) => {
+			$e.into_iter().filter(|(so,si,_)| (*so == $v) || (*si == $v)).collect()
 		}
 	}
 }
@@ -71,34 +74,15 @@ pub trait Graph<'a>
 	fn all_edges_mut(&'a mut self) -> Self::EdgeMutIter;
 	
 	///
-	/// Removes the given vertex from the graph along with any incident edges.
-	///
-	/// ###Returns:
-	///
-	/// - `Ok` if the vertex was removed.
-	/// - `Err` if the vertex was not present in the graph or it was otherwise unable to remove it.
-	///
-	/// ###`Ok` properties:
-	///
-	/// - Only the given vertex is removed from the graph.
-	/// - Any edge incident on the vertex is also removed.
-	/// - All other edges are unchanged.
-	/// - No new vertices are introduced.
-	/// - No new edges are introduced.
-	/// - No edges are changed.
-	///
-	/// ###`Err` properties:
-	///
-	/// - The graph is unchanged.
-	///
-	///
+	/// Removes the given vertex from the graph.
+	/// If the vertex still has edges incident on it, no changes are made and an error is returned.
 	///
 	fn remove_vertex(&mut self, v: Self::Vertex) -> Result<Self::VertexWeight,()>;
 	
 	fn vertex_weight(&self, v: Self::Vertex) -> Option<&Self::VertexWeight>;
 	fn vertex_weight_mut(&mut self, v: Self::Vertex) -> Option<&mut Self::VertexWeight>;
 	
-	fn remove_edge_where<F>(& mut self, f: F)
+	fn remove_edge_where<F>(&mut self, f: F)
 		-> Result<(Self::Vertex, Self::Vertex, Self::EdgeWeight), ()>
 		where
 			F: Fn((Self::Vertex, Self::Vertex, &Self::EdgeWeight)) -> bool
@@ -213,6 +197,47 @@ pub trait Graph<'a>
 		edges_incident_on!(self.all_edges_mut(), v, sink)
 	}
 	
+	fn edges_incident_on(&'a self, v: Self::Vertex) -> Self::EdgeIter
+	{
+		edges_incident_on!(self.all_edges(),v)
+	}
+	fn edges_incident_on_mut(&'a mut self, v: Self::Vertex) -> Self::EdgeMutIter
+	{
+		edges_incident_on!(self.all_edges_mut(),v)
+	}
+	
+	/* Currently not implementable.
+		Explanation: https://stackoverflow.com/questions/38713228/cannot-borrow-variable-when-borrower-scope-ends
+		When generic associated types are introduced to Rust, the 'a lifetime can be removed
+		as generic to Graph (i.e. Graph<'a>) and instead be generic on EdgeIter and EdgeIterMut.
+		Luckily, until then, this can be implemented by the user as:
+		let mut to_remove = Vec::new();
+		g.edges_sourced_in(m0).into_iter().for_each(|(so,si,_)| to_remove.push((so,si)));
+		g.edges_sinked_in(m0).into_iter().for_each(|(so,si,_)| to_remove.push((so,si)));
+		to_remove.iter().for_each(|&e| {g.remove_edge(e).unwrap();});
+		g.remove_vertex(m0).unwrap();
+	///
+	/// Removes the given vertex. If there are edges incident on it, they are removed too.
+	/// Returns the weight of the removed vertex.
+	///
+	fn remove_vertex_forced(&mut self, v: Self::Vertex) -> Result<Self::VertexWeight,()>
+	{
+		let mut edges_to_remove: Vec<(Self::Vertex, Self::Vertex)> = Vec::new();
+		{
+			let sourced = self.edges_sourced_in(v).into_iter();
+			for (so,si,_) in sourced {
+				edges_to_remove.push((so.clone(),si.clone()));
+			}
+		}
+		self.edges_sinked_in(v).into_iter().for_each(|(so, si, _)| edges_to_remove.push((so, si)));
+		edges_to_remove.iter().for_each(|e| { self.remove_edge(*e).unwrap(); });
+		
+		for &e in edges_to_remove.iter() {
+			self.remove_edge(e).unwrap();
+		}
+		
+		self.remove_vertex(v)
+	}*/
 }
 
 ///

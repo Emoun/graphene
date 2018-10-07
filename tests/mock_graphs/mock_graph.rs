@@ -98,20 +98,8 @@ impl<'a> Graph<'a> for MockGraph
 	fn remove_vertex(&mut self, v: Self::Vertex) -> Result<Self::VertexWeight,()>{
 		//Get index of vertex
 		if let Some(v_idx) = self.vertices.iter().position(|(id,_,_)| id.value == v.value){
-			/* Remove all incoming edges to v
-			 */
-			//Go through all vertices
-			for temp_v2_idx in 0..self.vertices.len(){
-				let mut to_remove = Vec::new();
-				//Go through all outgoing edges
-				//If an edge points to v, collect its index
-				let ref mut temp_v2_out = self.vertices[temp_v2_idx].2;
-				temp_v2_out.iter().filter(|(sink,_)| *sink == v_idx).enumerate().for_each(
-					|(i, _)| to_remove.push(i));
-				//Delete all collected edges
-				to_remove.into_iter().rev().for_each(
-					|i| {temp_v2_out.remove(i);}
-				);
+			if self.vertices[v_idx].2.len() != 0 {
+				return Err(());
 			}
 			
 			// For efficiency, instead of just removing v and shifting all
@@ -189,7 +177,6 @@ impl<'a> ManualGraph<'a> for MockGraph
 			Ok(())
 		}
 	}
-	
 }
 
 
@@ -231,12 +218,27 @@ mod test{
 		assert!(!g.all_edges_mut().into_iter().any(|(v1,v2,_)|
 			(v1.value == m2.value) && (v2.value == m1.value)));
 		
+		assert!(g.remove_vertex(m0).is_err());
+		assert_eq!(g.all_vertices().len(), 3);
+		assert_eq!(g.all_edges().len(), 3);
+		assert_eq!(g.edges_incident_on(m0).len(), 2);
+		assert_eq!(g.edges_incident_on(m1).len(), 2);
+		assert_eq!(g.edges_incident_on(m2).len(), 2);
+		
+		let mut to_remove = Vec::new();
+		g.edges_sourced_in(m0).into_iter().for_each(|(so,si,_)| to_remove.push((so,si)));
+		g.edges_sinked_in(m0).into_iter().for_each(|(so,si,_)| to_remove.push((so,si)));
+		to_remove.iter().for_each(|&e| {g.remove_edge(e).unwrap();});
 		g.remove_vertex(m0).unwrap();
 		assert_eq!(g.all_vertices().len(), 2);
 		assert_eq!(g.all_edges().len(), 1);
 		assert!(g.all_edges().into_iter().any(|(v1,v2,_)|
 			(v1.value == m1.value) && (v2.value == m2.value)));
 		
+		let mut to_remove = Vec::new();
+		g.edges_sourced_in(m1).into_iter().for_each(|(so,si,_)| to_remove.push((so,si)));
+		g.edges_sinked_in(m1).into_iter().for_each(|(so,si,_)| to_remove.push((so,si)));
+		to_remove.iter().for_each(|&e| {g.remove_edge(e).unwrap();});
 		g.remove_vertex(m1).unwrap();
 		assert_eq!(g.all_vertices().len(), 1);
 		assert_eq!(g.all_edges().len(), 0);

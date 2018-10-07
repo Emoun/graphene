@@ -4,7 +4,6 @@ mod impl_graph;
 
 pub use self::impl_graph::*;
 use core::{
-	Edge,
 	trait_aliases::{
 		Id,
 	}

@@ -1,6 +1,6 @@
 
 use core::{
-	Graph, Edge, EdgeWeighted, ManualGraph,
+	Graph, EdgeWeighted, ManualGraph,
 	trait_aliases::{
 		Id,
 	}
@@ -21,38 +21,87 @@ impl<'a,V,Vw,Ew> Graph<'a> for AdjListGraph<V,Vw,Ew>
 	
 	fn all_vertices(&self) -> Self::VertexIter
 	{
-		unimplemented!()
+		self.vertices.iter().map(|(id,_,_)| *id).collect()
 	}
 	
 	fn all_edges(&'a self) -> Self::EdgeIter
 	{
-		unimplemented!()
+		self.vertices.iter().flat_map(
+			|(source_id, _, out)| {
+				out.iter().map( move|(sink_idx, e_weight)| {
+					(*source_id, self.vertices[*sink_idx].0, e_weight)
+				})
+			}
+		).collect()
 	}
 	fn all_edges_mut(&'a mut self) -> Self::EdgeMutIter
 	{
-		unimplemented!()
+		let map: Vec<Self::Vertex> = self.vertices.iter().map(|(id,_,_)| id).cloned().collect();
+		self.vertices.iter_mut().flat_map(
+			|(source_id, _, out)| {
+				let map = &map;
+				out.iter_mut().map( move|(sink_idx, e_weight)| {
+					(*source_id, map[*sink_idx], e_weight)
+				})
+			}
+		).collect()
 	}
 	
 	fn vertex_weight(&self, v: Self::Vertex) -> Option<&Self::VertexWeight>
 	{
-		unimplemented!()
+		self.vertices.iter().find(|(id,_,_)| *id == v).map(|(_,w,_)| w)
 	}
 	
 	fn vertex_weight_mut(&mut self, v: Self::Vertex) -> Option<&mut Self::VertexWeight>
 	{
-		unimplemented!()
+		self.vertices.iter_mut().find(|(id,_,_)| *id == v).map(|(_,w,_)| w)
 	}
 	
 	fn remove_vertex(&mut self, v: Self::Vertex) -> Result<Self::VertexWeight,()>
 	{
-		unimplemented!()
+		//Get index of vertex
+		if let Some(v_idx) = self.vertices.iter().position(|(id,_,_)| *id == v){
+			if self.vertices[v_idx].2.len() != 0 {
+				return Err(());
+			}
+			
+			// For efficiency, instead of just removing v and shifting all
+			// other vertices' indices, we swap the vertex with the highest
+			// index into the index of v
+			
+			// Start by re-point all edges pointing to last vertex (called 'last' from now on)
+			// to point to the index of v
+			let last_idx = self.vertices.len() - 1;
+			//For each vertex
+			//any edge pointing to the last value
+			//should now point to v
+			self.vertices.iter_mut().flat_map(|(_,_,out)| out.iter_mut())
+				.filter(|(sink_idx, _)| *sink_idx == last_idx)
+				.for_each(|(sink_idx, _)| *sink_idx = v_idx);
+			
+			// Remove v, swapping in the value of last
+			return Ok(self.vertices.swap_remove(v_idx).1);
+		}
+		//Vertex not part of the core
+		Err(())
 	}
 	
 	fn add_edge_weighted<E>(&mut self, e: E) -> Result<(),()>
 		where
 			E: EdgeWeighted<Self::Vertex, Self::EdgeWeight>,
 	{
-		unimplemented!()
+		// Find the indices of the vertices
+		if let (Some(v1_idx), Some(v2_idx)) =
+		(	self.vertices.iter().position(|(id,_,_)| *id == e.source()),
+			 self.vertices.iter().position(|(id,_,_)| *id == e.sink())
+		)
+			{
+				// Add the edge
+				self.vertices[v1_idx].2.push((v2_idx, e.get_weight()));
+				Ok(())
+			}else{
+			Err(())
+		}
 	}
 	
 	fn remove_edge_where<F>(&mut self, f: F)
@@ -60,7 +109,23 @@ impl<'a,V,Vw,Ew> Graph<'a> for AdjListGraph<V,Vw,Ew>
 		where
 			F: Fn((Self::Vertex, Self::Vertex, &Self::EdgeWeight)) -> bool
 	{
-		unimplemented!()
+		let mut to_delete: Option<(usize, usize, Self::Vertex, Self::Vertex)> = None;
+		'l:
+			for (so_idx, (so_v, _, out)) in self.vertices.iter().enumerate() {
+			for(e_idx, (si_idx, e_weight)) in out.iter().enumerate() {
+				let si_v = self.vertices[*si_idx].0;
+				if f((*so_v, si_v, e_weight)) {
+					to_delete = Some((so_idx, e_idx, *so_v, si_v));
+					break 'l;
+				}
+			}
+		}
+		if let Some((so_idx, e_idx, so_v, si_v)) = to_delete {
+			let (_, weight) = self.vertices[so_idx].2.remove(e_idx);
+			Ok((so_v, si_v, weight))
+		}else{
+			Err(())
+		}
 	}
 }
 
@@ -70,7 +135,12 @@ impl<'a,V,Vw,Ew> ManualGraph<'a> for AdjListGraph<V,Vw,Ew>
 {
 	fn add_vertex_weighted(&mut self, v: Self::Vertex, w: Self::VertexWeight) -> Result<(),()>
 	{
-		unimplemented!()
+		if self.vertices.iter().any(|(id,_,_)| *id == v ){
+			Err(())
+		}else{
+			self.vertices.push((v,w,Vec::new()));
+			Ok(())
+		}
 	}
 }
 

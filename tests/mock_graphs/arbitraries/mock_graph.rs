@@ -129,12 +129,20 @@ impl Arbitrary for MockGraph
 			result.push(shrunk_graph);
 		}
 		
-		/* Shrink by removing a vertex
+		/* Shrink by removing a vertex that has no edges.
+		 * We don't remove any edges in this step (to be able to remove a vertex)
+		 * because we are already shrinking by removing edges, which means, there
+		 * should be a set of edge shrinkages that result in a removable vertex.
 		 */
 		for v in self.all_vertices(){
-			let mut shrunk_graph = self.clone();
-			shrunk_graph.remove_vertex(v).unwrap();
-			result.push(shrunk_graph);
+			let sourced_in = self.edges_sourced_in(v);
+			let sinked_in = self.edges_sinked_in(v);
+			let number_of_edges = sourced_in.len() + sinked_in.len();
+			if number_of_edges == 0 {
+				let mut shrunk_graph = self.clone();
+				shrunk_graph.remove_vertex(v).unwrap();
+				result.push(shrunk_graph);
+			}
 		}
 		
 		Box::new(result.into_iter())
