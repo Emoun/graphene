@@ -306,3 +306,30 @@ pub trait AutoGraph<'a>: Graph<'a>
 	}
 	
 }
+
+///
+/// Graph that at all times has a finite set of vertices and edges that
+/// can be counted.
+///
+pub trait ExactGraph<'a>: Graph<'a>
+	where
+		<Self::VertexIter as IntoIterator>::IntoIter: ExactSizeIterator,
+		<Self::EdgeIter as IntoIterator>::IntoIter: ExactSizeIterator,
+		<Self::EdgeMutIter as IntoIterator>::IntoIter: ExactSizeIterator,
+{
+	
+	///
+	/// Returns the number of vertices in the graph.
+	///
+	fn vertex_count(&'a self) -> usize {
+		self.all_vertices().into_iter().len()
+	}
+	
+	///
+	/// Returns the number of edges in the graph.
+	///
+	fn edge_count(&'a self) -> usize {
+		self.all_edges().into_iter().len()
+	}
+	
+}

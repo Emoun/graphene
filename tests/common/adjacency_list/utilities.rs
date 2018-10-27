@@ -3,11 +3,11 @@ use mock_graphs::*;
 use common::utilities::*;
 use graphene::common::AdjListGraph;
 
-pub fn AdjListGraph_init<F>(mock: &MockGraph, holds: F) -> bool
+/*pub fn AdjListGraph_init<F>(mock: &MockGraph, holds: F) -> bool
 	where F: Fn(&mut AdjListGraph<MockVertex, MockVertexWeight, MockEdgeWeight>) -> bool
 {
 	graph_init(&mut AdjListGraph::new(), mock, holds)
-}
+}*/
 
 pub fn AdjListGraph_init_and_add_edge<F>(
 	mock: &MockGraph, source_i_cand: usize,
