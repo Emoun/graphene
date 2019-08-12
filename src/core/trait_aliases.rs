@@ -19,3 +19,19 @@ impl<T, I> IntoFromIter<I> for T
 		T: IntoIterator<Item=I> + FromIterator<I>,
 		//I: Id,
 {}
+
+pub trait EdgeIntoFromIter<'a, V, W:'a>: IntoFromIter<(V, V, &'a W)>
+{}
+impl<'a,T,V,W:'a> EdgeIntoFromIter<'a, V, W> for T
+	where
+		T: IntoFromIter<(V, V, &'a W)>,
+{}
+
+pub trait EdgeIntoFromIterMut<'a, V, W:'a>: IntoFromIter<(V, V, &'a mut W)>
+{}
+impl<'a,T,V,W:'a> EdgeIntoFromIterMut<'a, V, W> for T
+	where
+		T: IntoFromIter<(V, V, &'a mut W)>,
+{}
+
+

@@ -61,7 +61,7 @@ use core::{
 ///
 ///
 */
-pub trait UnconstrainedGraph<'a>: Graph<'a>
+pub trait UnconstrainedGraph: Graph
 {
 	///
 	/// Checks whether the current state of the graph upholds the constraint invariant.
@@ -77,13 +77,13 @@ pub trait UnconstrainedGraph<'a>: Graph<'a>
 	;
 }
 
-pub trait UnconstrainedManualGraph<'a>: UnconstrainedGraph<'a> + ManualGraph<'a>
+pub trait UnconstrainedManualGraph: UnconstrainedGraph + ManualGraph
 {
 	
 	fn unconstrained_add_vertex_weighted(&mut self, v: Self::Vertex, w: Self::VertexWeight) -> Result<(),()>;
 }
 
-pub trait UnconstrainedAutoGraph<'a>: UnconstrainedGraph<'a> + AutoGraph<'a>
+pub trait UnconstrainedAutoGraph: UnconstrainedGraph + AutoGraph
 {
 	
 	fn unconstrained_new_vertex_weighted(&mut self, w: Self::VertexWeight) -> Result<Self::Vertex,()>;

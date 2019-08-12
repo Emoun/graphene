@@ -2,29 +2,27 @@
 use core::{
 	Graph, EdgeWeighted, ManualGraph,
 	trait_aliases::{
-		Id,
+		Id, IntoFromIter, EdgeIntoFromIter, EdgeIntoFromIterMut
 	}
 };
 use common::AdjListGraph;
 
 
-impl<'a,V,Vw,Ew> Graph<'a> for AdjListGraph<V,Vw,Ew>
+impl<V,Vw,Ew> Graph for AdjListGraph<V,Vw,Ew>
 	where
-		V: Id, Ew:'a,
+		V: Id,
 {
 	type Vertex = V;
 	type VertexWeight = Vw;
 	type EdgeWeight = Ew;
-	type VertexIter = Vec<Self::Vertex>;
-	type EdgeIter = Vec<(Self::Vertex,Self::Vertex,&'a Self::EdgeWeight)>;
-	type EdgeMutIter = Vec<(Self::Vertex,Self::Vertex,&'a mut Self::EdgeWeight)>;
 	
-	fn all_vertices(&self) -> Self::VertexIter
+	fn all_vertices<I: IntoFromIter<Self::Vertex>>(&self) -> I
 	{
 		self.vertices.iter().map(|(id,_,_)| *id).collect()
 	}
 	
-	fn all_edges(&'a self) -> Self::EdgeIter
+	fn all_edges<'a, I>(&'a self) -> I
+		where I: EdgeIntoFromIter<'a, Self::Vertex, Self::EdgeWeight>
 	{
 		self.vertices.iter().flat_map(
 			|(source_id, _, out)| {
@@ -34,7 +32,8 @@ impl<'a,V,Vw,Ew> Graph<'a> for AdjListGraph<V,Vw,Ew>
 			}
 		).collect()
 	}
-	fn all_edges_mut(&'a mut self) -> Self::EdgeMutIter
+	fn all_edges_mut<'a, I>(&'a mut self) -> I
+		where I: EdgeIntoFromIterMut<'a, Self::Vertex, Self::EdgeWeight>
 	{
 		let map: Vec<Self::Vertex> = self.vertices.iter().map(|(id,_,_)| id).cloned().collect();
 		self.vertices.iter_mut().flat_map(
@@ -129,9 +128,9 @@ impl<'a,V,Vw,Ew> Graph<'a> for AdjListGraph<V,Vw,Ew>
 	}
 }
 
-impl<'a,V,Vw,Ew> ManualGraph<'a> for AdjListGraph<V,Vw,Ew>
+impl<V,Vw,Ew> ManualGraph for AdjListGraph<V,Vw,Ew>
 	where
-		V: Id, Ew:'a,
+		V: Id,
 {
 	fn add_vertex_weighted(&mut self, v: Self::Vertex, w: Self::VertexWeight) -> Result<(),()>
 	{

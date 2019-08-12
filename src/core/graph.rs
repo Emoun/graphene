@@ -2,9 +2,11 @@
 use core::{
 	Edge, EdgeWeighted,
 	trait_aliases::{
-		Id, IntoFromIter
+		Id, IntoFromIter, EdgeIntoFromIter, EdgeIntoFromIterMut
 	}
 };
+
+use std::iter::Iterator;
 
 #[macro_use]
 mod macros {
@@ -31,7 +33,7 @@ mod macros {
 			$e.into_iter().filter(|e| e.$i() == $v).collect()
 		};
 		($e:expr, $v:expr) => {
-			$e.into_iter().filter(|(so,si,_)| (*so == $v) || (*si == $v)).collect()
+			$e.into_iter().filter(|edge| (edge.source() == $v) || (edge.sink() == $v)).collect()
 		}
 	}
 }
@@ -48,52 +50,56 @@ mod macros {
 /// Edges with the same source, sink, and id are identical and must be interchangeable. E.g. if any
 /// one of two or more identical edges is to be removed, then any one of them may be removed.
 ///
-pub trait Graph<'a>
+pub trait Graph
 {
 	///
 	/// Type of the graph's vertex value.
 	///
 	type Vertex: Id;
 	type VertexWeight;
-	type EdgeWeight:'a;
-	/// Type of the collection returned with vertices.
-	type VertexIter: IntoFromIter<Self::Vertex>;
-	/// Type of the collection returned with edges.
-	type EdgeIter: IntoFromIter<(Self::Vertex, Self::Vertex, &'a Self::EdgeWeight)>;
-	type EdgeMutIter: IntoFromIter<(Self::Vertex, Self::Vertex, &'a mut Self::EdgeWeight)>;
+	type EdgeWeight;
+	
+	// Vertex Methods
 	
 	///
 	/// Returns copies of all current vertex values in the graph.
 	///
-	fn all_vertices(&self) -> Self::VertexIter;
-	
-	///
-	/// Returns copies of all current edges in the graph.
-	///
-	fn all_edges(&'a self) -> Self::EdgeIter;
-	fn all_edges_mut(&'a mut self) -> Self::EdgeMutIter;
-	
+	fn all_vertices<I: IntoFromIter<Self::Vertex>>(&self) -> I;
+	fn vertex_weight(&self, v: Self::Vertex) -> Option<&Self::VertexWeight>;
+	fn vertex_weight_mut(&mut self, v: Self::Vertex) -> Option<&mut Self::VertexWeight>;
 	///
 	/// Removes the given vertex from the graph.
 	/// If the vertex still has edges incident on it, no changes are made and an error is returned.
 	///
 	fn remove_vertex(&mut self, v: Self::Vertex) -> Result<Self::VertexWeight,()>;
+	///
+	/// Removes the given vertex. If there are edges incident on it, they are removed too.
+	/// Returns the weight of the removed vertex.
+	///
+	fn remove_vertex_forced(&mut self, v: Self::Vertex) -> Result<Self::VertexWeight,()>
+	{
+		let mut to_remove = Vec::new();
+		self.edges_sourced_in::<Vec<_>>(v).into_iter().for_each(|(so,si,_)| to_remove.push((so,si)));
+		self.edges_sinked_in::<Vec<_>>(v).into_iter().for_each(|(so,si,_)| to_remove.push((so,si)));
+		to_remove.iter().for_each(|&e| {self.remove_edge(e).unwrap();});
+		self.remove_vertex(v)
+	}
 	
-	fn vertex_weight(&self, v: Self::Vertex) -> Option<&Self::VertexWeight>;
-	fn vertex_weight_mut(&mut self, v: Self::Vertex) -> Option<&mut Self::VertexWeight>;
-	
+	///
+	/// Returns copies of all current edges in the graph.
+	///
+	fn all_edges<'a, I>(&'a self) -> I
+		where I: EdgeIntoFromIter<'a, Self::Vertex, Self::EdgeWeight>;
+	fn all_edges_mut<'a, I>(&'a mut self) -> I
+		where I: EdgeIntoFromIterMut<'a, Self::Vertex, Self::EdgeWeight>;
 	fn remove_edge_where<F>(&mut self, f: F)
 		-> Result<(Self::Vertex, Self::Vertex, Self::EdgeWeight), ()>
-		where
-			F: Fn((Self::Vertex, Self::Vertex, &Self::EdgeWeight)) -> bool
-	;
-	
+		where F: Fn((Self::Vertex, Self::Vertex, &Self::EdgeWeight)) -> bool;
 	///
 	/// Adds a copy of the given edge to the graph
 	///
 	fn add_edge_weighted<E>(&mut self, e: E) -> Result<(),()>
 		where E: EdgeWeighted<Self::Vertex, Self::EdgeWeight>;
-	
 	///
 	/// Adds the given edge to the graph, regardless of whether there are existing,
 	/// identical edges in the graph.
@@ -120,7 +126,6 @@ pub trait Graph<'a>
 	{
 		self.add_edge_weighted((e.source(), e.sink(), Self::EdgeWeight::default()))
 	}
-	
 	///
 	/// Removes the given edge from the graph if it exists.
 	///
@@ -144,7 +149,6 @@ pub trait Graph<'a>
 	{
 		self.remove_edge_where_weight(e, |_| true)
 	}
-	
 	fn remove_edge_where_weight<E,F>(&mut self, e: E, f: F) -> Result<Self::EdgeWeight,()>
 		where
 			E: Edge<Self::Vertex>,
@@ -154,97 +158,68 @@ pub trait Graph<'a>
 			(so == e.source()) && (si == e.sink()) && f(w))
 			.map(|removed_edge| removed_edge.2)
 	}
-	
 	///
 	/// Returns all edges that are incident on both the given vertices, regardless of direction.
 	///
 	/// I.e. all edges where e == (v1,v2,_) or e == (v2,v1,_)
 	///
-	fn edges_between(&'a self, v1: Self::Vertex, v2: Self::Vertex) -> Self::EdgeIter
+	fn edges_between<'a, I>(&'a self, v1: Self::Vertex, v2: Self::Vertex) -> I
+		where I: EdgeIntoFromIter<'a, Self::Vertex, Self::EdgeWeight>
 	{
-		edges_between!(self.all_edges(), v1, v2)
+		edges_between!(self.all_edges::<I>(), v1, v2)
 	}
-	fn edges_between_mut(&'a mut self, v1: Self::Vertex, v2: Self::Vertex) -> Self::EdgeMutIter
+	fn edges_between_mut<'a, I>(&'a mut self, v1: Self::Vertex, v2: Self::Vertex) -> I
+		where I: EdgeIntoFromIterMut<'a, Self::Vertex, Self::EdgeWeight>
 	{
-		edges_between!(self.all_edges_mut(), v1, v2)
+		edges_between!(self.all_edges_mut::<I>(), v1, v2)
 	}
-	
 	///
 	/// Returns all edges that are sourced in the given vertex.
 	///
 	/// I.e. all edges where `e == (v,_,_)`
 	///
-	fn edges_sourced_in(&'a self, v: Self::Vertex) -> Self::EdgeIter
+	fn edges_sourced_in<'a, I>(&'a self, v: Self::Vertex) -> I
+		where I: EdgeIntoFromIter<'a, Self::Vertex, Self::EdgeWeight>
 	{
-		edges_incident_on!(self.all_edges(), v, source)
+		edges_incident_on!(self.all_edges::<I>(), v, source)
 	}
-	fn edges_sourced_in_mut(&'a mut self, v: Self::Vertex) -> Self::EdgeMutIter
+	fn edges_sourced_in_mut<'a, I>(&'a mut self, v: Self::Vertex) -> I
+		where I: EdgeIntoFromIterMut<'a, Self::Vertex, Self::EdgeWeight>
 	{
-		edges_incident_on!(self.all_edges_mut(), v, source)
+		edges_incident_on!(self.all_edges_mut::<I>(), v, source)
 	}
-	
 	///
 	/// Returns all edges that are sinked in the given vertex.
 	///
 	/// I.e. all edges where `e == (_,v,_)`
 	///
-	fn edges_sinked_in(&'a self, v: Self::Vertex) -> Self::EdgeIter
+	fn edges_sinked_in<'a, I>(&'a self, v: Self::Vertex) ->  I
+		where I: EdgeIntoFromIter<'a, Self::Vertex, Self::EdgeWeight>
 	{
-		edges_incident_on!(self.all_edges(), v, sink)
+		edges_incident_on!(self.all_edges::<I>(), v, sink)
 	}
-	fn edges_sinked_in_mut(&'a mut self, v: Self::Vertex) -> Self::EdgeMutIter
+	fn edges_sinked_in_mut<'a, I>(&'a mut self, v: Self::Vertex) -> I
+		where I: EdgeIntoFromIterMut<'a, Self::Vertex, Self::EdgeWeight>
 	{
-		edges_incident_on!(self.all_edges_mut(), v, sink)
+		edges_incident_on!(self.all_edges_mut::<I>(), v, sink)
 	}
-	
-	fn edges_incident_on(&'a self, v: Self::Vertex) -> Self::EdgeIter
+	fn edges_incident_on<'a, I>(&'a self, v: Self::Vertex) -> I
+		where I: EdgeIntoFromIter<'a, Self::Vertex, Self::EdgeWeight>
 	{
-		edges_incident_on!(self.all_edges(),v)
+		edges_incident_on!(self.all_edges::<I>(),v)
 	}
-	fn edges_incident_on_mut(&'a mut self, v: Self::Vertex) -> Self::EdgeMutIter
+	fn edges_incident_on_mut<'a, I>(&'a mut self, v: Self::Vertex) -> I
+		where I: EdgeIntoFromIterMut<'a, Self::Vertex, Self::EdgeWeight>
 	{
-		edges_incident_on!(self.all_edges_mut(),v)
+		edges_incident_on!(self.all_edges_mut::<I>(),v)
 	}
-	
-	/* Currently not implementable.
-		Explanation: https://stackoverflow.com/questions/38713228/cannot-borrow-variable-when-borrower-scope-ends
-		When generic associated types are introduced to Rust, the 'a lifetime can be removed
-		as generic to Graph (i.e. Graph<'a>) and instead be generic on EdgeIter and EdgeIterMut.
-		Luckily, until then, this can be implemented by the user as:
-		let mut to_remove = Vec::new();
-		g.edges_sourced_in(m0).into_iter().for_each(|(so,si,_)| to_remove.push((so,si)));
-		g.edges_sinked_in(m0).into_iter().for_each(|(so,si,_)| to_remove.push((so,si)));
-		to_remove.iter().for_each(|&e| {g.remove_edge(e).unwrap();});
-		g.remove_vertex(m0).unwrap();
-	///
-	/// Removes the given vertex. If there are edges incident on it, they are removed too.
-	/// Returns the weight of the removed vertex.
-	///
-	fn remove_vertex_forced(&mut self, v: Self::Vertex) -> Result<Self::VertexWeight,()>
-	{
-		let mut edges_to_remove: Vec<(Self::Vertex, Self::Vertex)> = Vec::new();
-		{
-			let sourced = self.edges_sourced_in(v).into_iter();
-			for (so,si,_) in sourced {
-				edges_to_remove.push((so.clone(),si.clone()));
-			}
-		}
-		self.edges_sinked_in(v).into_iter().for_each(|(so, si, _)| edges_to_remove.push((so, si)));
-		edges_to_remove.iter().for_each(|e| { self.remove_edge(*e).unwrap(); });
-		
-		for &e in edges_to_remove.iter() {
-			self.remove_edge(e).unwrap();
-		}
-		
-		self.remove_vertex(v)
-	}*/
 }
 
 ///
 /// A graph where the vertex ids can be provided by the user.
 ///
 ///
-pub trait ManualGraph<'a>: Graph<'a>
+pub trait ManualGraph: Graph
 {
 	
 	///
@@ -286,7 +261,7 @@ pub trait ManualGraph<'a>: Graph<'a>
 ///
 /// A graph where the vertex ids are assigned automatically.
 ///
-pub trait AutoGraph<'a>: Graph<'a>
+pub trait AutoGraph: Graph
 {
 	///
 	/// Adds a new vertex with the given weight to the graph.
@@ -311,25 +286,20 @@ pub trait AutoGraph<'a>: Graph<'a>
 /// Graph that at all times has a finite set of vertices and edges that
 /// can be counted.
 ///
-pub trait ExactGraph<'a>: Graph<'a>
-	where
-		<Self::VertexIter as IntoIterator>::IntoIter: ExactSizeIterator,
-		<Self::EdgeIter as IntoIterator>::IntoIter: ExactSizeIterator,
-		<Self::EdgeMutIter as IntoIterator>::IntoIter: ExactSizeIterator,
+pub trait ExactGraph: Graph
 {
 	
 	///
 	/// Returns the number of vertices in the graph.
 	///
-	fn vertex_count(&'a self) -> usize {
-		self.all_vertices().into_iter().len()
+	fn vertex_count(&self) -> usize {
+		self.all_vertices::<Vec<_>>().into_iter().len()
 	}
 	
 	///
 	/// Returns the number of edges in the graph.
 	///
-	fn edge_count(&'a self) -> usize {
-		self.all_edges().into_iter().len()
+	fn edge_count(&self) -> usize {
+		self.all_edges::<Vec<_>>().into_iter().len()
 	}
-	
 }

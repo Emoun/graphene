@@ -11,23 +11,20 @@ use graphene::core::{
 /// if the graph initialization fails, in which case false is always returned
 /// (without running the function)
 ///
-pub fn graph_init<'a,G,F>(g: &mut G, mock: &MockGraph, holds: F) -> bool
+pub fn graph_init<G,F>(g: &mut G, mock: &MockGraph, holds: F) -> bool
 	where
-		G: ManualGraph<'a> + Graph<'a,
+		G: ManualGraph + Graph<
 			Vertex=MockVertex,
 			VertexWeight=MockVertexWeight,
 			EdgeWeight=MockEdgeWeight,
 		>,
-		<G as Graph<'a>>::VertexIter: IntoFromIter<MockVertex>,
-		<G as Graph<'a>>::EdgeIter: IntoFromIter<(MockVertex, MockVertex, &'a MockEdgeWeight)>,
-		<G as Graph<'a>>::EdgeMutIter: IntoFromIter<(MockVertex, MockVertex, &'a mut MockEdgeWeight)>,
 		F: FnOnce(&mut G) -> bool
 {
-	mock.all_vertices().into_iter().for_each( |v|
+	mock.all_vertices::<Vec<_>>().into_iter().for_each( |v|
 		g.add_vertex_weighted(v, mock.vertex_weight(v).unwrap().clone()).unwrap()
 	);
 	
-	mock.all_edges().into_iter().for_each(|(so,si,w)|
+	mock.all_edges::<Vec<_>>().into_iter().for_each(|(so,si,w)|
 		g.add_edge_weighted((so,si,w.clone())).unwrap()
 	);
 	
@@ -41,20 +38,16 @@ pub fn graph_init<'a,G,F>(g: &mut G, mock: &MockGraph, holds: F) -> bool
 /// who's return value is then returned by this function, except if the graph
 /// initialization or the edge addition fails, in which case either false is returned or it panics.
 ///
-pub fn graph_init_and_add_edge<'a,G,F>(g: &mut G, mock: &MockGraph, source_i_cand: usize,
+pub fn graph_init_and_add_edge<G,F>(g: &mut G, mock: &MockGraph, source_i_cand: usize,
 									   sink_i_cand:usize, weight: MockEdgeWeight,
 									 holds: F)
 	-> bool
 	where
-		G: ManualGraph<'a> + Graph<'a,
+		G: ManualGraph + Graph<
 			Vertex=MockVertex,
 			VertexWeight=MockVertexWeight,
 			EdgeWeight=MockEdgeWeight,
-		>,
-		<G as Graph<'a>>::VertexIter: IntoFromIter<MockVertex>,
-		<G as Graph<'a>>::EdgeIter: IntoFromIter<(MockVertex, MockVertex, &'a MockEdgeWeight)>,
-		<G as Graph<'a>>::EdgeMutIter: IntoFromIter<(MockVertex, MockVertex, &'a mut MockEdgeWeight)>,
-		F: FnOnce(&mut G, (MockVertex, MockVertex, MockEdgeWeight)) -> bool
+		>,F: FnOnce(&mut G, (MockVertex, MockVertex, MockEdgeWeight)) -> bool
 {
 	graph_init(g, mock , |g| {
 		let edge = add_appropriate_edge(g, mock, source_i_cand, sink_i_cand, weight);
@@ -71,18 +64,15 @@ pub fn graph_init_and_add_edge<'a,G,F>(g: &mut G, mock: &MockGraph, source_i_can
 /// #Panics:
 /// If the graph and description are not equal causing the addition of an invalid edge.
 ///
-pub fn add_appropriate_edge<'a,G>(g: &mut G, mock: &MockGraph, source_i_cand: usize,
+pub fn add_appropriate_edge<G>(g: &mut G, mock: &MockGraph, source_i_cand: usize,
 								  sink_i_cand:usize, weight: MockEdgeWeight,)
    -> (MockVertex,MockVertex,MockEdgeWeight)
 	where
-		G: ManualGraph<'a> + Graph<'a,
+		G: ManualGraph + Graph<
 			Vertex=MockVertex,
 			VertexWeight=MockVertexWeight,
 			EdgeWeight=MockEdgeWeight,
 		>,
-		<G as Graph<'a>>::VertexIter: IntoFromIter<MockVertex>,
-		<G as Graph<'a>>::EdgeIter: IntoFromIter<(MockVertex, MockVertex, &'a MockEdgeWeight)>,
-		<G as Graph<'a>>::EdgeMutIter: IntoFromIter<(MockVertex, MockVertex, &'a mut MockEdgeWeight)>,
 {
 	let source_v = utilities::appropriate_vertex_value_from_index(mock, source_i_cand);
 	let sink_v = utilities::appropriate_vertex_value_from_index(mock,sink_i_cand);

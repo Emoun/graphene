@@ -104,7 +104,7 @@ impl Arbitrary for MockGraph
 		/* Shrink by shrinking edge weight
 		 */
 		//For each edge
-		self.all_edges().into_iter().for_each(|(source,sink,ref weight)|{
+		self.all_edges::<Vec<_>>().into_iter().for_each(|(source,sink,ref weight)|{
 			let shrunk_weights = weight.shrink();
 			
 			shrunk_weights.for_each( |s_w| {
@@ -120,7 +120,7 @@ impl Arbitrary for MockGraph
 		/* Shrink by removing an edge
 		 */
 		//For each edge
-		for e in self.all_edges(){
+		for e in self.all_edges::<Vec<_>>(){
 			/* Add to the result a copy of the graph
 			 * without the edge
 			 */
@@ -134,9 +134,9 @@ impl Arbitrary for MockGraph
 		 * because we are already shrinking by removing edges, which means, there
 		 * should be a set of edge shrinkages that result in a removable vertex.
 		 */
-		for v in self.all_vertices(){
-			let sourced_in = self.edges_sourced_in(v);
-			let sinked_in = self.edges_sinked_in(v);
+		for v in self.all_vertices::<Vec<_>>(){
+			let sourced_in: Vec<_> = self.edges_sourced_in(v);
+			let sinked_in: Vec<_> = self.edges_sinked_in(v);
 			let number_of_edges = sourced_in.len() + sinked_in.len();
 			if number_of_edges == 0 {
 				let mut shrunk_graph = self.clone();

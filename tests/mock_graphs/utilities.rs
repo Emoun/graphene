@@ -24,11 +24,11 @@ macro_rules! holds_if{
 /// Returns a valid index into the vertex values of the graph
 /// based on the given index.
 ///
-pub fn appropriate_vertex_index<'a,G>(graph:&G, idx_cand: usize) -> usize
+pub fn appropriate_vertex_index<G>(graph:&G, idx_cand: usize) -> usize
 	where
-		G: Graph<'a>,
+		G: Graph,
 {
-	idx_cand % graph.all_vertices().into_iter().count()
+	idx_cand % graph.all_vertices::<Vec<_>>().into_iter().count()
 }
 
 ///
@@ -37,16 +37,13 @@ pub fn appropriate_vertex_index<'a,G>(graph:&G, idx_cand: usize) -> usize
 /// The given index does not have to be valid in the description, it will be converted to
 /// a valid one. See `appropriate_vertex_index()`.
 ///
-pub fn appropriate_vertex_value_from_index<'a,G,V>(graph:&G, idx_cand: usize) -> V
+pub fn appropriate_vertex_value_from_index<G,V>(graph:&G, idx_cand: usize) -> V
 	where
-		G: Graph<'a, Vertex=V>,
+		G: Graph<Vertex=V>,
 		V: Id,
-		G::VertexIter : IntoFromIter<V>,
-		G::EdgeIter : IntoFromIter<(V, V, &'a G::EdgeWeight)>,
-		G::EdgeMutIter : IntoFromIter<(V, V, &'a mut G::EdgeWeight)>,
 {
 	let i = appropriate_vertex_index(graph, idx_cand);
-	graph.all_vertices().into_iter().nth(i).unwrap()
+	graph.all_vertices::<Vec<_>>().into_iter().nth(i).unwrap()
 }
 
 ///

@@ -22,13 +22,13 @@ fn all_edges_incident_on_the_vertices(
 		// If the graph has no vertices,
 		// then there can be no edges between the two given vertices,
 		// since they are not part of the graph.
-		return g.edges_between(v1_cand,v2_cand).len() == 0;
+		return g.edges_between::<Vec<_>>(v1_cand,v2_cand).len() == 0;
 	}
 	
 	let v1 = appropriate_vertex_value_from_index(&g, v1_cand.value as usize);
 	let v2 = appropriate_vertex_value_from_index(&g, v2_cand.value as usize);
 	
-	let edges_between = g.edges_between(v1,v2);
+	let edges_between = g.edges_between::<Vec<_>>(v1,v2);
 	let edges_between_len = edges_between.len();
 	
 	let valid_edges = edges_between.into_iter().filter(|e| {
@@ -51,14 +51,14 @@ fn all_edges_returned(
 		// If the graph has no vertices,
 		// then there can be no edges between the two given vertices,
 		// since they are not part of the graph.
-		return g.edges_between(v1_cand,v2_cand).len() == 0;
+		return g.edges_between::<Vec<_>>(v1_cand,v2_cand).len() == 0;
 	}
 	
 	let v1 = appropriate_vertex_value_from_index(&g, v1_cand.value as usize);
 	let v2 = appropriate_vertex_value_from_index(&g, v2_cand.value as usize);
 	
-	let edges_between = g.edges_between(v1,v2);
-	let expected = g.all_edges().into_iter().filter(
+	let edges_between = g.edges_between::<Vec<_>>(v1,v2);
+	let expected = g.all_edges::<Vec<_>>().into_iter().filter(
 		|&(so,si,_)| (so == v1 && si == v2) || (so == v2 && si == v1)
 	).collect();
 	

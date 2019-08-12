@@ -11,7 +11,7 @@ fn increases_edge_count(mock: MockGraph, source_i_cand: usize,
 	holds_if!(mock.vertices.len() == 0);
 	
 	AdjListGraph_init_and_add_edge(&mock, source_i_cand, sink_i_cand, weight, |g, _|{
-		g.all_edges().len() == (mock.all_edges().len() + 1)
+		g.all_edges::<Vec<_>>().len() == (mock.all_edges::<Vec<_>>().len() + 1)
 	})
 }
 /*

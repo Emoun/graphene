@@ -5,10 +5,12 @@ use mock_graphs::{
 use graphene::{
 	core::{
 		Graph, Edge, ManualGraph, EdgeWeighted,
-		trait_aliases::Id
+		trait_aliases::{
+			Id, IntoFromIter
+		}
 	},
 };
-
+use std::marker::PhantomData;
 #[derive(Clone, Debug)]
 pub struct MockGraph
 {
@@ -22,7 +24,7 @@ pub struct MockGraph
 		MockVertex,
 		MockVertexWeight,
 		Vec<(usize,MockEdgeWeight)>
-	)>,
+	)>
 }
 
 impl MockGraph {
@@ -34,27 +36,26 @@ impl MockGraph {
 	
 }
 
-impl<'a> Graph<'a> for MockGraph
+impl Graph for MockGraph
 {
 	type Vertex = MockVertex;
 	type VertexWeight = MockVertexWeight;
 	type EdgeWeight = MockEdgeWeight;
-	type VertexIter = Vec<Self::Vertex>;
-	type EdgeIter = Vec<(Self::Vertex,Self::Vertex,&'a Self::EdgeWeight)>;
-	type EdgeMutIter = Vec<(Self::Vertex,Self::Vertex,&'a mut Self::EdgeWeight)>;
 	
-	fn all_vertices(&self) -> Self::VertexIter
+	fn all_vertices<I: IntoFromIter<Self::Vertex>>(&self) -> I
 	{
-		let mut result = Vec::new();
+		I::from_iter(self.vertices.iter().map(|(v,_,_)| *v))
+		/*let mut result = Vec::new();
 		
 		//For each value, output a copy
 		for i in 0..self.vertices.len() {
 			result.push(self.vertices[i].0);
 		}
-		result
+		result*/
 	}
 	
-	fn all_edges(&'a self) -> Self::EdgeIter
+	fn all_edges<'a, I>(&'a self) -> I
+		where I: IntoFromIter<(Self::Vertex, Self::Vertex, &'a Self::EdgeWeight)>
 	{
 		self.vertices.iter().flat_map(
 			|(source_id, _, out)| {
@@ -64,7 +65,8 @@ impl<'a> Graph<'a> for MockGraph
 			}
 		).collect()
 	}
-	fn all_edges_mut(&'a mut self) -> Self::EdgeMutIter
+	fn all_edges_mut<'a, I>(&'a mut self) -> I
+		where I: IntoFromIter<(Self::Vertex, Self::Vertex, &'a mut Self::EdgeWeight)>
 	{
 		let map: Vec<MockVertex> = self.vertices.iter().map(|(id,_,_)| id).cloned().collect();
 		self.vertices.iter_mut().flat_map(
@@ -166,7 +168,7 @@ impl<'a> Graph<'a> for MockGraph
 	}
 }
 
-impl<'a> ManualGraph<'a> for MockGraph
+impl ManualGraph for MockGraph
 {
 	fn add_vertex_weighted(&mut self, v: Self::Vertex, w: Self::VertexWeight) -> Result<(),()>
 	{
@@ -178,7 +180,6 @@ impl<'a> ManualGraph<'a> for MockGraph
 		}
 	}
 }
-
 
 mod test{
 	#[test]
@@ -192,74 +193,67 @@ mod test{
 		g.add_vertex(m0).unwrap();
 		g.add_vertex(m1).unwrap();
 		g.add_vertex(m2).unwrap();
-		assert_eq!(g.all_edges().len(), 0);
+		assert_eq!(g.all_edges::<Vec<_>>().len(), 0);
 		g.add_edge((m0, m1)).unwrap();
-		assert_eq!(g.all_edges().len(), 1);
+		assert_eq!(g.all_edges::<Vec<_>>().len(), 1);
 		g.add_edge((m1, m2)).unwrap();
 		g.add_edge((m2, m0)).unwrap();
-		assert_eq!(g.all_edges().len(), 3);
+		assert_eq!(g.all_edges::<Vec<_>>().len(), 3);
 		let mut g2 = g.clone();
 		
-		assert!(g.all_edges().into_iter().any(|(v1,v2,_)|
+		assert!(g.all_edges::<Vec<_>>().into_iter().any(|(v1,v2,_)|
 			(v1.value == m0.value) && (v2.value == m1.value)));
-		assert!(g.all_edges().into_iter().any(|(v1,v2,_)|
+		assert!(g.all_edges::<Vec<_>>().into_iter().any(|(v1,v2,_)|
 			(v1.value == m1.value) && (v2.value == m2.value)));
-		assert!(g.all_edges().into_iter().any(|(v1,v2,_)|
+		assert!(g.all_edges::<Vec<_>>().into_iter().any(|(v1,v2,_)|
 			(v1.value == m2.value) && (v2.value == m0.value)));
-		assert!(!g.all_edges().into_iter().any(|(v1,v2,_)|
+		assert!(!g.all_edges::<Vec<_>>().into_iter().any(|(v1,v2,_)|
 			(v1.value == m2.value) && (v2.value == m1.value)));
 		
-		assert!(g.all_edges_mut().into_iter().any(|(v1,v2,_)|
+		assert!(g.all_edges_mut::<Vec<_>>().into_iter().any(|(v1,v2,_)|
 			(v1.value == m0.value) && (v2.value == m1.value)));
-		assert!(g.all_edges_mut().into_iter().any(|(v1,v2,_)|
+		assert!(g.all_edges_mut::<Vec<_>>().into_iter().any(|(v1,v2,_)|
 			(v1.value == m1.value) && (v2.value == m2.value)));
-		assert!(g.all_edges_mut().into_iter().any(|(v1,v2,_)|
+		assert!(g.all_edges_mut::<Vec<_>>().into_iter().any(|(v1,v2,_)|
 			(v1.value == m2.value) && (v2.value == m0.value)));
-		assert!(!g.all_edges_mut().into_iter().any(|(v1,v2,_)|
+		assert!(!g.all_edges_mut::<Vec<_>>().into_iter().any(|(v1,v2,_)|
 			(v1.value == m2.value) && (v2.value == m1.value)));
 		
 		assert!(g.remove_vertex(m0).is_err());
-		assert_eq!(g.all_vertices().len(), 3);
-		assert_eq!(g.all_edges().len(), 3);
-		assert_eq!(g.edges_incident_on(m0).len(), 2);
-		assert_eq!(g.edges_incident_on(m1).len(), 2);
-		assert_eq!(g.edges_incident_on(m2).len(), 2);
+		assert_eq!(g.all_vertices::<Vec<_>>().len(), 3);
+		assert_eq!(g.all_edges::<Vec<_>>().len(), 3);
+		assert_eq!(g.edges_incident_on::<Vec<_>>(m0).len(), 2);
+		assert_eq!(g.edges_incident_on::<Vec<_>>(m1).len(), 2);
+		assert_eq!(g.edges_incident_on::<Vec<_>>(m2).len(), 2);
 		
-		let mut to_remove = Vec::new();
-		g.edges_sourced_in(m0).into_iter().for_each(|(so,si,_)| to_remove.push((so,si)));
-		g.edges_sinked_in(m0).into_iter().for_each(|(so,si,_)| to_remove.push((so,si)));
-		to_remove.iter().for_each(|&e| {g.remove_edge(e).unwrap();});
-		g.remove_vertex(m0).unwrap();
-		assert_eq!(g.all_vertices().len(), 2);
-		assert_eq!(g.all_edges().len(), 1);
-		assert!(g.all_edges().into_iter().any(|(v1,v2,_)|
+		g.remove_vertex_forced(m0).unwrap();
+		assert_eq!(g.all_vertices::<Vec<_>>().len(), 2);
+		assert_eq!(g.all_edges::<Vec<_>>().len(), 1);
+		assert!(g.all_edges::<Vec<_>>().into_iter().any(|(v1,v2,_)|
 			(v1.value == m1.value) && (v2.value == m2.value)));
 		
-		let mut to_remove = Vec::new();
-		g.edges_sourced_in(m1).into_iter().for_each(|(so,si,_)| to_remove.push((so,si)));
-		g.edges_sinked_in(m1).into_iter().for_each(|(so,si,_)| to_remove.push((so,si)));
-		to_remove.iter().for_each(|&e| {g.remove_edge(e).unwrap();});
-		g.remove_vertex(m1).unwrap();
-		assert_eq!(g.all_vertices().len(), 1);
-		assert_eq!(g.all_edges().len(), 0);
+		g.remove_vertex_forced(m1).unwrap();
+		assert_eq!(g.all_vertices::<Vec<_>>().len(), 1);
+		assert_eq!(g.all_edges::<Vec<_>>().len(), 0);
 		
 		g2.remove_edge((m0,m1)).unwrap();
-		assert_eq!(g2.all_vertices().len(), 3);
-		assert_eq!(g2.all_edges().len(), 2);
-		assert!(g2.all_edges_mut().into_iter().any(|(v1,v2,_)|
+		assert_eq!(g2.all_vertices::<Vec<_>>().len(), 3);
+		assert_eq!(g2.all_edges::<Vec<_>>().len(), 2);
+		assert!(g2.all_edges_mut::<Vec<_>>().into_iter().any(|(v1,v2,_)|
 			(v1.value == m1.value) && (v2.value == m2.value)));
-		assert!(g2.all_edges_mut().into_iter().any(|(v1,v2,_)|
+		assert!(g2.all_edges_mut::<Vec<_>>().into_iter().any(|(v1,v2,_)|
 			(v1.value == m2.value) && (v2.value == m0.value)));
 		
 		g2.remove_edge((m1,m2)).unwrap();
-		assert_eq!(g2.all_vertices().len(), 3);
-		assert_eq!(g2.all_edges().len(), 1);
-		assert!(g2.all_edges_mut().into_iter().any(|(v1,v2,_)|
+		assert_eq!(g2.all_vertices::<Vec<_>>().len(), 3);
+		assert_eq!(g2.all_edges::<Vec<_>>().len(), 1);
+		assert!(g2.all_edges_mut::<Vec<_>>().into_iter().any(|(v1,v2,_)|
 			(v1.value == m2.value) && (v2.value == m0.value)));
 		
 		g2.remove_edge((m2,m0)).unwrap();
-		assert_eq!(g2.all_vertices().len(), 3);
-		assert_eq!(g2.all_edges().len(), 0);
+		assert_eq!(g2.all_vertices::<Vec<_>>().len(), 3);
+		assert_eq!(g2.all_edges::<Vec<_>>().len(), 0);
+		
 	}
 }
 
