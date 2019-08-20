@@ -103,7 +103,7 @@
 //!
 //! In `graphene` vertices have a value, which is use to identify each vertex. Therefore, these
 //! values must be unique for every vertex in the graph. Internally, a graph implementation may
-//! manage its vertices as it wishes, but it must comminicate with  the outside world using the vertices'
+//! manage its vertices as it wishes, but it must communicate with  the outside world using the vertices'
 //! values.
 //!
 //! Edges are identified by the tuple `(source,sink,weight)`. Edges do not have to be unique in the

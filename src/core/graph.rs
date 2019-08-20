@@ -68,12 +68,12 @@ pub trait Graph
 	fn vertex_weight(&self, v: Self::Vertex) -> Option<&Self::VertexWeight>;
 	fn vertex_weight_mut(&mut self, v: Self::Vertex) -> Option<&mut Self::VertexWeight>;
 	///
-	/// Removes the given vertex from the graph.
+	/// Removes the given vertex from the graph, returning its weight.
 	/// If the vertex still has edges incident on it, no changes are made and an error is returned.
 	///
 	fn remove_vertex(&mut self, v: Self::Vertex) -> Result<Self::VertexWeight,()>;
 	///
-	/// Removes the given vertex. If there are edges incident on it, they are removed too.
+	/// Removes the given vertex and any edge incident on it.
 	/// Returns the weight of the removed vertex.
 	///
 	fn remove_vertex_forced(&mut self, v: Self::Vertex) -> Result<Self::VertexWeight,()>
@@ -81,7 +81,7 @@ pub trait Graph
 		let mut to_remove = Vec::new();
 		self.edges_sourced_in::<Vec<_>>(v).into_iter().for_each(|(so,si,_)| to_remove.push((so,si)));
 		self.edges_sinked_in::<Vec<_>>(v).into_iter().for_each(|(so,si,_)| to_remove.push((so,si)));
-		to_remove.iter().for_each(|&e| {self.remove_edge(e).unwrap();});
+		to_remove.iter().try_for_each(|&e| self.remove_edge(e).map(|_|()))?;
 		self.remove_vertex(v)
 	}
 	
@@ -159,7 +159,7 @@ pub trait Graph
 			.map(|removed_edge| removed_edge.2)
 	}
 	///
-	/// Returns all edges that are incident on both the given vertices, regardless of direction.
+	/// Returns all edges that are incident on both of the given vertices, regardless of direction.
 	///
 	/// I.e. all edges where e == (v1,v2,_) or e == (v2,v1,_)
 	///

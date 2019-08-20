@@ -13,6 +13,7 @@ use graphene::{
 		Graph, ManualGraph
 	},
 };
+use rand::Rng;
 
 impl Arbitrary for MockGraph
 {
@@ -65,7 +66,7 @@ impl Arbitrary for MockGraph
 		/* Base case
 		 */
 		if self.vertices.len() == 0 {
-			return Box::new(Vec::new().into_iter());
+			return Box::new(std::iter::empty());
 		}
 		
 		let mut result = Vec::new();
@@ -76,12 +77,10 @@ impl Arbitrary for MockGraph
 		self.vertices.iter().enumerate()
 			//Get all possible shrinkages
 			.flat_map(|(idx,(id,_,_))| id.shrink().map(move|s| (idx,s)))
-			//For each shrunk value,
-			//if no other vertex has that value
+			//Remove any that are equal to existing vertices
 			.filter(|(_,shrunk_id)|
-				self.vertices.iter().any(|(id,_,_)| shrunk_id.value != id.value))
-			/* copy the graph, and change the id to the shrunk id
-			*/
+				self.vertices.iter().all(|(id,_,_)| shrunk_id.value != id.value))
+			//copy the graph, and change the id to the shrunk id
 			.for_each(|(idx, shrunk_id)| {
 				let mut new_id = self.vertices.clone();
 				new_id[idx].0 = shrunk_id;

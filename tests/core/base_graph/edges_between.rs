@@ -1,11 +1,8 @@
 //!
-//! Tests the `edges_between` optional method for `BaseGraph`.
+//! Tests the `edges_between` optional method for 'Graph`.
 //!
 
-use mock_graphs::{
-	MockGraph, MockVertex,
-	utilities::*
-};
+use mock_graphs::{MockGraph, MockVertex, utilities::*, ArbGraphAndTwoVertices};
 use graphene::core::{
 	Graph, Edge
 };
@@ -13,21 +10,9 @@ use graphene::core::{
 ///
 /// Ensures that all the returned edges are incident on the given vertices.
 ///
-fn all_edges_incident_on_the_vertices(
-	g: MockGraph,
-	v1_cand: MockVertex, v2_cand: MockVertex)
-	-> bool
+#[quickcheck]
+fn returns_valid_edges(ArbGraphAndTwoVertices(g, v1, v2): ArbGraphAndTwoVertices) -> bool
 {
-	if g.vertices.len() == 0 {
-		// If the graph has no vertices,
-		// then there can be no edges between the two given vertices,
-		// since they are not part of the graph.
-		return g.edges_between::<Vec<_>>(v1_cand,v2_cand).len() == 0;
-	}
-	
-	let v1 = appropriate_vertex_value_from_index(&g, v1_cand.value as usize);
-	let v2 = appropriate_vertex_value_from_index(&g, v2_cand.value as usize);
-	
 	let edges_between = g.edges_between::<Vec<_>>(v1,v2);
 	let edges_between_len = edges_between.len();
 	
@@ -42,21 +27,10 @@ fn all_edges_incident_on_the_vertices(
 ///
 /// Ensures that all the edges between the two vertices are returned
 ///
-fn all_edges_returned(
-	g: MockGraph,
-	v1_cand: MockVertex, v2_cand: MockVertex)
+#[quickcheck]
+fn all_edges_returned(ArbGraphAndTwoVertices(g, v1, v2): ArbGraphAndTwoVertices)
 	-> bool
 {
-	if g.vertices.len() == 0 {
-		// If the graph has no vertices,
-		// then there can be no edges between the two given vertices,
-		// since they are not part of the graph.
-		return g.edges_between::<Vec<_>>(v1_cand,v2_cand).len() == 0;
-	}
-	
-	let v1 = appropriate_vertex_value_from_index(&g, v1_cand.value as usize);
-	let v2 = appropriate_vertex_value_from_index(&g, v2_cand.value as usize);
-	
 	let edges_between = g.edges_between::<Vec<_>>(v1,v2);
 	let expected = g.all_edges::<Vec<_>>().into_iter().filter(
 		|&(so,si,_)| (so == v1 && si == v2) || (so == v2 && si == v1)
@@ -66,23 +40,6 @@ fn all_edges_returned(
 		unordered_sublist_equal(&expected, &edges_between)
 }
 
-quickcheck!{
-	fn PROP_all_edges_incident_on_the_vertices(
-		g: MockGraph,
-		v1_cand: MockVertex, v2_cand: MockVertex)
-		-> bool
-	{
-		all_edges_incident_on_the_vertices(g,v1_cand, v2_cand)
-	}
-	
-	fn PROP_all_edges_returned(
-		g: MockGraph,
-		v1_cand: MockVertex, v2_cand: MockVertex)
-		-> bool
-	{
-		all_edges_returned(g,v1_cand, v2_cand)
-	}
-}
 
 
 

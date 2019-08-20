@@ -14,6 +14,7 @@ use graphene::core::{
 ///
 /// Ensures that all the returned edges are sourced in the given vertex.
 ///
+#[quickcheck]
 fn all_edges_sourced_in_the_vertice(
 	g: MockGraph,
 	v_cand: MockVertex)
@@ -43,6 +44,7 @@ fn all_edges_sourced_in_the_vertice(
 ///
 /// Ensured that all the returned edges are sinked in the given vertex.
 ///
+#[quickcheck]
 fn all_edges_sinked_in_the_vertice(
 	g: MockGraph,
 	v_cand: MockVertex)
@@ -64,23 +66,5 @@ fn all_edges_sinked_in_the_vertice(
 		}).collect::<Vec<_>>();
 		
 		sinked_edges_len == valid_edges.len()
-	}
-}
-
-quickcheck!{
-	fn PROP_all_edges_sourced_in_the_vertice(
-		g: MockGraph,
-		v_cand: MockVertex)
-		-> bool
-	{
-		all_edges_sourced_in_the_vertice(g, v_cand)
-	}
-	
-	fn PROP_all_edges_sinked_in_the_vertice(
-		g: MockGraph,
-		v_cand: MockVertex)
-		-> bool
-	{
-		all_edges_sinked_in_the_vertice(g, v_cand)
 	}
 }

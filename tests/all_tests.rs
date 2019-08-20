@@ -7,6 +7,9 @@ extern crate graphene;
 #[cfg(test)]
 #[macro_use]
 extern crate quickcheck;
+extern crate rand;
+#[macro_use]
+extern crate quickcheck_macros;
 
 #[macro_use]
 pub mod mock_graphs;

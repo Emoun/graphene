@@ -11,7 +11,9 @@ use graphene::{
 	},
 };
 use std::marker::PhantomData;
-#[derive(Clone, Debug)]
+use std::fmt::{Debug, Formatter, Error};
+
+#[derive(Clone)]
 pub struct MockGraph
 {
 	///
@@ -25,6 +27,24 @@ pub struct MockGraph
 		MockVertexWeight,
 		Vec<(usize,MockEdgeWeight)>
 	)>
+}
+
+impl Debug for MockGraph {
+	fn fmt(&self, f: &mut Formatter) -> Result<(), Error> {
+		f.write_str("MockGraph { vertices: [ ")?;
+		for (v,w,_) in &self.vertices {
+			f.write_fmt(format_args!("({:?}, {:?}), ", v.value, w.value))?;
+		}
+		f.write_str("], edges: [ ")?;
+		for (v,_,edges) in &self.vertices {
+			for (idx, w) in edges {
+				f.write_fmt(format_args!("({:?}, {:?}, {:?}), ",
+										 v.value, self.vertices[*idx].0.value, w.value))?;
+			}
+		}
+		f.write_str("] }")?;
+		Ok(())
+	}
 }
 
 impl MockGraph {
@@ -45,13 +65,6 @@ impl Graph for MockGraph
 	fn all_vertices<I: IntoFromIter<Self::Vertex>>(&self) -> I
 	{
 		I::from_iter(self.vertices.iter().map(|(v,_,_)| *v))
-		/*let mut result = Vec::new();
-		
-		//For each value, output a copy
-		for i in 0..self.vertices.len() {
-			result.push(self.vertices[i].0);
-		}
-		result*/
 	}
 	
 	fn all_edges<'a, I>(&'a self) -> I
@@ -182,6 +195,10 @@ impl ManualGraph for MockGraph
 }
 
 mod test{
+	use mock_graphs::{MockGraph, MockVertex, ArbGraphAndTwoVertices};
+	use graphene::core::{ManualGraph, Graph, Edge};
+	use quickcheck::Arbitrary;
+	
 	#[test]
 	fn func(){
 		use mock_graphs::{MockGraph,MockVertex};

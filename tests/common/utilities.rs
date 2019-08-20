@@ -47,7 +47,8 @@ pub fn graph_init_and_add_edge<G,F>(g: &mut G, mock: &MockGraph, source_i_cand: 
 			Vertex=MockVertex,
 			VertexWeight=MockVertexWeight,
 			EdgeWeight=MockEdgeWeight,
-		>,F: FnOnce(&mut G, (MockVertex, MockVertex, MockEdgeWeight)) -> bool
+		>,
+		F: FnOnce(&mut G, (MockVertex, MockVertex, MockEdgeWeight)) -> bool
 {
 	graph_init(g, mock , |g| {
 		let edge = add_appropriate_edge(g, mock, source_i_cand, sink_i_cand, weight);

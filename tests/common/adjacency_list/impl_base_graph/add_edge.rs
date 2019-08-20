@@ -4,6 +4,7 @@ use common::adjacency_list::utilities::*;
 use graphene::common::AdjListGraph;
 use graphene::core::*;
 
+#[quickcheck]
 fn increases_edge_count(mock: MockGraph, source_i_cand: usize,
 						sink_i_cand:usize, weight: MockEdgeWeight)
 	-> bool
@@ -70,42 +71,3 @@ fn reject_invalid_sink(mock: MockGraph,
 	})
 }
 */
-
-quickcheck!{
-	fn PROP_increases_edge_count(mock: MockGraph,
-								 source_i_cand: usize, sink_i_cand:usize, weight: MockEdgeWeight)
-	-> bool{
-		increases_edge_count(mock, source_i_cand, sink_i_cand, weight)
-	}
-	/*
-	fn PROP_maintain_original_edges(mock: MockGraph,
-								 source_i_cand: usize, sink_i_cand:usize, weight: MockEdgeWeight)
-	-> bool{
-		maintain_original_edges(mock, source_i_cand, sink_i_cand, weight)
-	}
-	
-	fn PROP_graph_subsetof_original_edges_and_added_edge
-	(mock: MockGraph,source_i_cand: usize, sink_i_cand:usize, weight: MockEdgeWeight)
-	-> bool{
-		graph_subsetof_original_edges_and_added_edge(mock, source_i_cand, sink_i_cand, weight)
-	}
-	
-	fn PROP_maintains_vertices
-	(mock: MockGraph,source_i_cand: usize, sink_i_cand:usize, weight: MockEdgeWeight)
-	-> bool{
-		maintains_vertices(mock, source_i_cand, sink_i_cand, weight)
-	}
-	
-	fn PROP_reject_invalid_source
-	(mock: MockGraph,source: u32, sink:u32, weight: MockEdgeWeight)
-	-> bool{
-		reject_invalid_source(mock, source, sink, weight)
-	}
-	
-	fn PROP_reject_invalid_sink
-	(mock: MockGraph,source: u32, sink:u32, weight: MockEdgeWeight)
-	-> bool{
-		reject_invalid_sink(mock, source, sink, weight)
-	}
-	*/
-}
