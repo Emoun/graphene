@@ -6,12 +6,11 @@
 
 #[macro_use]
 pub mod utilities;
-mod arbitraries;
+pub mod arbitraries;
 mod mock_graph;
 
 pub use self::{
 	mock_graph::*,
-	arbitraries::*
 };
 
 #[derive(Copy, Clone, Eq, PartialEq, Debug)]

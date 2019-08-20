@@ -1,9 +1,13 @@
 //!
 //! Tests the edge lookup methods of `graphene::core::Graph`
 //!
-use crate::mock_graphs::{
-	MockGraph, MockVertex, utilities::*, ArbGraphAndVertex, ArbGraphAndInvalidVertex,
-	ArbGraphAndTwoVertices, ArbGraphAndInvalidEdge
+use crate::mock_graph::{
+	MockGraph, MockVertex,
+	arbitraries::{
+		ArbGraphAndVertex, ArbGraphAndInvalidVertex,
+		ArbGraphAndTwoVertices, ArbGraphAndInvalidEdge
+	},
+	utilities::*,
 };
 use graphene::core::{
 	Graph, Edge

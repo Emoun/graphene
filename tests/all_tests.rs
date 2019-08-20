@@ -6,9 +6,9 @@
 extern crate quickcheck_macros;
 
 #[macro_use]
-pub mod mock_graphs;
+mod mock_graph;
 mod common;
-pub mod core;
+mod core;
 
 
 

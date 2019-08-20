@@ -1,5 +1,5 @@
 
-use crate::mock_graphs::*;
+use crate::mock_graph::*;
 use crate::common::utilities::*;
 use graphene::common::AdjListGraph;
 
