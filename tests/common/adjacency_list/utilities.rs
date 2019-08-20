@@ -1,6 +1,6 @@
 
-use mock_graphs::*;
-use common::utilities::*;
+use crate::mock_graphs::*;
+use crate::common::utilities::*;
 use graphene::common::AdjListGraph;
 
 /*pub fn AdjListGraph_init<F>(mock: &MockGraph, holds: F) -> bool

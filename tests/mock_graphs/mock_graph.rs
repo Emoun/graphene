@@ -1,5 +1,5 @@
 
-use mock_graphs::{
+use crate::mock_graphs::{
 	MockVertex, MockEdgeWeight, MockVertexWeight
 };
 use graphene::{
@@ -195,13 +195,13 @@ impl ManualGraph for MockGraph
 }
 
 mod test{
-	use mock_graphs::{MockGraph, MockVertex, ArbGraphAndTwoVertices};
+	use crate::mock_graphs::{MockGraph, MockVertex, ArbGraphAndTwoVertices};
 	use graphene::core::{ManualGraph, Graph, Edge};
 	use quickcheck::Arbitrary;
 	
 	#[test]
 	fn func(){
-		use mock_graphs::{MockGraph,MockVertex};
+		use crate::mock_graphs::{MockGraph,MockVertex};
 		use graphene::core::{Graph,ManualGraph};
 		let mut g = MockGraph::new();
 		let m0 = MockVertex{value: 0};

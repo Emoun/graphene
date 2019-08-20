@@ -1,5 +1,5 @@
 
-use core::{
+use crate::core::{
 	Graph, ManualGraph, AutoGraph, EdgeWeighted
 };
 /*

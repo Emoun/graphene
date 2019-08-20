@@ -1,11 +1,11 @@
 
-use core::{
+use crate::core::{
 	Graph, EdgeWeighted, ManualGraph,
 	trait_aliases::{
 		Id, IntoFromIter, EdgeIntoFromIter, EdgeIntoFromIterMut
 	}
 };
-use common::AdjListGraph;
+use crate::common::AdjListGraph;
 
 
 impl<V,Vw,Ew> Graph for AdjListGraph<V,Vw,Ew>

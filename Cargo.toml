@@ -2,6 +2,7 @@
 name = "graphene"
 version = "0.1.5"
 authors = ["Emad Jacob Maroun <emoun.open@gmail.com>"]
+edition = "2018"
 
 description = "A general purpose, extensible Graph Theory data type and algorithm library for Rust."
 

@@ -1,7 +1,7 @@
 //!
 //! Tests the `edges_sourced_in` and `edges_sinked_in` optional methods for `BaseGraph`.
 //!
-use mock_graphs::{
+use crate::mock_graphs::{
 	MockGraph, MockVertex,
 	utilities::*
 };

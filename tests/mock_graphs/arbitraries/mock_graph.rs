@@ -2,7 +2,7 @@
 //! Implements `Arbitrary` for MockGraph
 //!
 
-use mock_graphs::{
+use crate::mock_graphs::{
 	ArbVertex, ArbT, MockGraph, MockVertex, MockEdgeWeight, MockVertexWeight
 };
 use quickcheck::{

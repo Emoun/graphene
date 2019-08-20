@@ -1,5 +1,5 @@
 
-use mock_graphs::*;
+use crate::mock_graphs::*;
 use graphene::core::{
 	Graph, ManualGraph,
 	trait_aliases::*,

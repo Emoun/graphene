@@ -7,7 +7,7 @@ pub use self::{
 
 use graphene::core::trait_aliases::Id;
 use quickcheck::{Arbitrary, Gen};
-use mock_graphs::{MockVertex, MockT, MockGraph};
+use crate::mock_graphs::{MockVertex, MockT, MockGraph};
 use graphene::core::Graph;
 use rand::{ Rng };
 

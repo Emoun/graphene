@@ -2,7 +2,7 @@
 //! Tests the `edges_between` optional method for 'Graph`.
 //!
 
-use mock_graphs::{MockGraph, MockVertex, utilities::*, ArbGraphAndTwoVertices};
+use crate::mock_graphs::{MockGraph, MockVertex, utilities::*, ArbGraphAndTwoVertices};
 use graphene::core::{
 	Graph, Edge
 };

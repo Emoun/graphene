@@ -3,7 +3,7 @@ mod impl_graph;
 //mod impl_weights;
 
 pub use self::impl_graph::*;
-use core::{
+use crate::core::{
 	trait_aliases::{
 		Id,
 	}

@@ -1,5 +1,5 @@
 
-use core::{
+use crate::core::{
 	Edge, EdgeWeighted,
 	trait_aliases::{
 		Id, IntoFromIter, EdgeIntoFromIter, EdgeIntoFromIterMut
