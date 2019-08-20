@@ -9,7 +9,6 @@ pub mod utilities;
 mod arbitraries;
 mod mock_graph;
 
-
 pub use self::{
 	mock_graph::*,
 	arbitraries::*

@@ -49,6 +49,8 @@ impl Arbitrary for MockT
 ///
 /// An arbitrary graph and two vertices in it.
 ///
+/// Note: All graphs will have at least 1 vertex, meaning this type never includes
+/// the empty graph.
 ///
 #[derive(Clone, Debug)]
 pub struct ArbGraphAndTwoVertices(pub MockGraph, pub MockVertex, pub MockVertex);
@@ -74,10 +76,6 @@ impl Arbitrary for ArbGraphAndTwoVertices {
 	{
 		let mut result = Vec::new();
 		
-		/*	A Graph with only 1 vertex can't be shrunk (as we cannot use one with no vertices).
-			The vertices also can't be shrunk, since they both refer
-		 	to the single vertex in the graph.
-		*/
 		if self.0.all_vertices::<Vec<_>>().len() > 1 {
 			/*	First we shrink the graph, using only the shrunk graphs where the vertices are valid
 			*/
@@ -100,9 +98,7 @@ impl Arbitrary for ArbGraphAndTwoVertices {
 					// Output the shrunk value by updating it in the graph and the vertex
 					.map(|v| {
 						let mut gClone= self.0.clone();
-						let idx = self.0.vertices.iter().enumerate()
-							.find(|(_,(v,_,_))| v.value == self.1.value).unwrap().0;
-						gClone.vertices[idx].0 = v;
+						gClone.replace_vertex(self.1, v);
 						ArbGraphAndTwoVertices(gClone, v, self.2)
 					})
 			);
@@ -112,9 +108,7 @@ impl Arbitrary for ArbGraphAndTwoVertices {
 					.filter(|v| !self.0.all_vertices::<Vec<_>>().contains(&v))
 					.map(|v| {
 						let mut gClone= self.0.clone();
-						let idx = self.0.vertices.iter().enumerate()
-							.find(|(_,(v,_,_))| v.value == self.2.value).unwrap().0;
-						gClone.vertices[idx].0 = v;
+						gClone.replace_vertex(self.2, v);
 						ArbGraphAndTwoVertices(gClone, self.1, v)
 					})
 			);
@@ -137,4 +131,105 @@ impl Arbitrary for ArbGraphAndTwoVertices {
 		Box::new(result.into_iter())
 	}
 	
+}
+
+///
+/// An arbitrary graph and a vertex in it.
+///
+/// Note: All graphs will have at least 1 vertex, meaning this type never includes
+/// the empty graph.
+///
+#[derive(Clone, Debug)]
+pub struct ArbGraphAndVertex(pub MockGraph, pub MockVertex);
+impl Arbitrary for ArbGraphAndVertex {
+	fn arbitrary<G: Gen>(g: &mut G) -> Self {
+		let arb = ArbGraphAndTwoVertices::arbitrary(g);
+		ArbGraphAndVertex(arb.0, arb.1)
+	}
+	
+	fn shrink(&self) -> Box<Iterator<Item=Self>> {
+		Box::new(ArbGraphAndTwoVertices(self.0.clone(), self.1, self.1).shrink()
+			.map(|ArbGraphAndTwoVertices(g, v, _)| ArbGraphAndVertex(g, v)))
+	}
+}
+
+///
+/// An arbitrary graph and a vertex that is guaranteed to not be in it.
+///
+#[derive(Clone, Debug)]
+pub struct ArbGraphAndInvalidVertex(pub MockGraph, pub MockVertex);
+impl Arbitrary for ArbGraphAndInvalidVertex {
+	fn arbitrary<G: Gen>(g: &mut G) -> Self {
+		let graph = MockGraph::arbitrary(g);
+		let mut v = MockVertex::arbitrary(g);
+		while graph.all_vertices::<Vec<_>>().contains(&v) {
+			v = MockVertex::arbitrary(g)
+		}
+		
+		ArbGraphAndInvalidVertex(graph, v)
+	}
+	
+	fn shrink(&self) -> Box<Iterator<Item=Self>> {
+		let mut result = Vec::new();
+		/*	First shrink the graph, keeping only the shrunk ones where the vertex
+			stays invalid
+		*/
+		result.extend(
+			self.0.shrink().filter(|g| !g.all_vertices::<Vec<_>>().contains(&self.1))
+				.map(|g| ArbGraphAndInvalidVertex(g, self.1))
+		);
+		
+		// We then shrink the vertex, keeping only the shrunk values
+		// that are invalid in the graph
+		let verts: Vec<_> = self.0.all_vertices();
+		result.extend(
+			self.1.shrink().filter(|v| !verts.contains(v))
+				.map(|v| ArbGraphAndInvalidVertex(self.0.clone(), v))
+		);
+		
+		Box::new(result.into_iter())
+	}
+}
+
+///
+/// An arbitrary graph and two vertices where at least one is not in the graph.
+///
+#[derive(Clone, Debug)]
+pub struct ArbGraphAndInvalidEdge(pub MockGraph, pub MockVertex, pub MockVertex);
+impl Arbitrary for ArbGraphAndInvalidEdge{
+	fn arbitrary<G: Gen>(g: &mut G) -> Self {
+		let single_invalid = ArbGraphAndInvalidVertex::arbitrary(g);
+		Self(single_invalid.0, single_invalid.1, MockVertex::arbitrary(g))
+	}
+	
+	fn shrink(&self) -> Box<Iterator<Item=Self>> {
+		let mut result = Vec::new();
+		/*	Shrink the graph, keeping only the shrunk graphs where the edge is still invalid.
+		*/
+		result.extend(
+			self.0.shrink().filter(|g| {
+				let verts = g.all_vertices::<Vec<_>>();
+				!verts.contains(&self.1) || !verts.contains(&self.2)
+			})
+			.map(|g| Self(g, self.1, self.2))
+		);
+		
+		/*	We then shrink the vertices, ensuring that at least one of them stays invalid
+		*/
+		result.extend(
+			self.1.shrink().filter(|v| {
+				let verts = self.0.all_vertices::<Vec<_>>();
+				!verts.contains(&v) || !verts.contains(&self.2)
+			})
+			.map(|v| Self(self.0.clone(), v, self.2))
+		);
+		result.extend(
+			self.2.shrink().filter(|v| {
+				let verts = self.0.all_vertices::<Vec<_>>();
+				!verts.contains(&self.1) || !verts.contains(&v)
+			})
+				.map(|v| Self(self.0.clone(), self.1, v))
+		);
+		Box::new(result.into_iter())
+	}
 }

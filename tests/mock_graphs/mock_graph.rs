@@ -54,6 +54,19 @@ impl MockGraph {
 		Self{vertices: Vec::new()}
 	}
 	
+	///
+	/// Replaces an existing vertex with another, maintaining any edges, weight or other.
+	/// Effectively changes the vertex's ID.
+	///
+	/// Panics if the replacement value already exists in the graph.
+	///
+	pub fn replace_vertex(&mut self, to_replace: MockVertex, replacement: MockVertex)
+	{
+		assert!( !self.vertices.iter().any(|(v,_,_)| v.value == replacement.value) );
+		
+		let pos = self.vertices.iter_mut().find(|(v,_,_)| v.value == to_replace.value).unwrap();
+		pos.0 = replacement;
+	}
 }
 
 impl Graph for MockGraph

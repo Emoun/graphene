@@ -19,6 +19,20 @@ macro_rules! holds_if{
 	}
 }
 
+///
+/// Creates a closure that calculates the equality between two 3-tuples where their
+/// elements implement partial equality.
+///
+pub fn _3_tuple_equality<A1,B1,C1,A2,B2,C2>() -> impl Fn(&(A1, B1, C1), &(A2, B2, C2)) -> bool
+	where
+		A1: PartialEq<A2>,
+		B1: PartialEq<B2>,
+		C1: PartialEq<C2>,
+{
+	|v1: &(A1,B1,C1), v2: &(A2,B2,C2)|{
+		v1.0 == v2.0 && v1.1 == v2.1 && v1.2 == v2.2
+	}
+}
 
 ///
 /// Returns a valid index into the vertex values of the graph
@@ -89,11 +103,27 @@ pub fn unordered_sublist<B,P,F>(sublist:&Vec<B>, superlist:&Vec<P>, equal: F) ->
 ///
 /// Identical to `unordered_sublist()` except for values which are `Eq`.
 ///
-pub fn unordered_sublist_equal<T>(sublist:&Vec<T>, superlist:&Vec<T>) -> bool
-	where
-		T: PartialEq
+pub fn unordered_sublist_equal<L: PartialEq<R>,R>(sublist:&Vec<L>, superlist:&Vec<R>) -> bool
 {
 	unordered_sublist(sublist, superlist, |v_sub, v_super|{
 		v_sub == v_super
 	})
+}
+
+///
+/// Returns whether the two lists are equivalent if the order of the elements is ignored.
+///
+pub fn unordered_equivalent_lists<B,P,F1,F2>(l1:&Vec<B>, l2:&Vec<P>, e1: F1, e2: F2) -> bool
+	where F1: Fn(&B, &P) -> bool,
+		  F2: Fn(&P, &B) -> bool,
+{
+	unordered_sublist(l1, l2, e1) && unordered_sublist(l2, l1, e2)
+}
+
+///
+/// Returns whether the two lists are equivalent if the order of the elements is ignored.
+///
+pub fn unordered_equivalent_lists_equal<L: PartialEq<R>,R: PartialEq<L>>(l1:&Vec<L>, l2:&Vec<R>) -> bool
+{
+	unordered_sublist_equal(l1, l2) && unordered_sublist_equal(l2, l1)
 }
