@@ -41,17 +41,17 @@ macro_rules! impl_base_constraint{
 pub mod trait_aliases;
 mod graph;
 mod edge;
-mod constrained_graph;
+//mod constrained_graph;
 mod directedness;
 
 
-//#[macro_use]
-//pub mod constraint;
+#[macro_use]
+pub mod constraint;
 
 
 pub use self::{
 	graph::*,
 	edge::*,
-	constrained_graph::*,
+//	constrained_graph::*,
 	directedness::*,
 };

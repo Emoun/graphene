@@ -194,6 +194,7 @@
 //!
 //!
 */
+#![recursion_limit="256"]
 #[macro_use]
 pub mod core;
 pub mod common;
