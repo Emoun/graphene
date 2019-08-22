@@ -1,7 +1,5 @@
 
-use crate::mock_graph::{
-	MockVertex, MockEdgeWeight, MockVertexWeight
-};
+use crate::mock_graph::{MockVertex, MockEdgeWeight, MockVertexWeight,};
 use graphene::{
 	core::{
 		Graph, Edge, ManualGraph, EdgeWeighted,
@@ -12,9 +10,11 @@ use graphene::{
 };
 use std::marker::PhantomData;
 use std::fmt::{Debug, Formatter, Error};
+use graphene::core::{Directed, Directedness};
 
 #[derive(Clone)]
-pub struct MockGraph
+pub struct MockGraph<D>
+	where D: Directedness + Clone
 {
 	///
 	/// The vertices in the graph.
@@ -26,32 +26,24 @@ pub struct MockGraph
 		MockVertex,
 		MockVertexWeight,
 		Vec<(usize,MockEdgeWeight)>
-	)>
+	)>,
+	phantom: PhantomData<D>
 }
 
-impl Debug for MockGraph {
-	fn fmt(&self, f: &mut Formatter) -> Result<(), Error> {
-		f.write_str("MockGraph { vertices: [ ")?;
-		for (v,w,_) in &self.vertices {
-			f.write_fmt(format_args!("({:?}, {:?}), ", v.value, w.value))?;
-		}
-		f.write_str("], edges: [ ")?;
-		for (v,_,edges) in &self.vertices {
-			for (idx, w) in edges {
-				f.write_fmt(format_args!("({:?}, {:?}, {:?}), ",
-										 v.value, self.vertices[*idx].0.value, w.value))?;
-			}
-		}
-		f.write_str("] }")?;
-		Ok(())
-	}
-}
-
-impl MockGraph {
+impl<D: Directedness + Clone> MockGraph<D> {
 	
-	pub fn new() -> Self
+	pub fn new(vertices: Vec<(
+		MockVertex,
+		MockVertexWeight,
+		Vec<(usize,MockEdgeWeight)>
+	)>) -> Self
 	{
-		Self{vertices: Vec::new()}
+		Self{ vertices, phantom: PhantomData}
+	}
+	
+	pub fn empty() -> Self
+	{
+		Self{vertices: Vec::new(), phantom: PhantomData}
 	}
 	
 	///
@@ -69,11 +61,30 @@ impl MockGraph {
 	}
 }
 
-impl Graph for MockGraph
+impl<D: Directedness + Clone> Debug for MockGraph<D> {
+	fn fmt(&self, f: &mut Formatter) -> Result<(), Error> {
+		f.write_str("MockGraph { vertices: [ ")?;
+		for (v,w,_) in &self.vertices {
+			f.write_fmt(format_args!("({:?}, {:?}), ", v.value, w.value))?;
+		}
+		f.write_str("], edges: [ ")?;
+		for (v,_,edges) in &self.vertices {
+			for (idx, w) in edges {
+				f.write_fmt(format_args!("({:?}, {:?}, {:?}), ",
+										 v.value, self.vertices[*idx].0.value, w.value))?;
+			}
+		}
+		f.write_str("] }")?;
+		Ok(())
+	}
+}
+
+impl<D: Directedness + Clone> Graph for MockGraph<D>
 {
 	type Vertex = MockVertex;
 	type VertexWeight = MockVertexWeight;
 	type EdgeWeight = MockEdgeWeight;
+	type Directedness = D;
 	
 	fn all_vertices<I: IntoFromIter<Self::Vertex>>(&self) -> I
 	{
@@ -194,7 +205,7 @@ impl Graph for MockGraph
 	}
 }
 
-impl ManualGraph for MockGraph
+impl<D: Directedness + Clone> ManualGraph for MockGraph<D>
 {
 	fn add_vertex_weighted(&mut self, v: Self::Vertex, w: Self::VertexWeight) -> Result<(),()>
 	{
@@ -206,85 +217,3 @@ impl ManualGraph for MockGraph
 		}
 	}
 }
-
-mod test{
-	use crate::mock_graph::{MockGraph, MockVertex};
-	use graphene::core::{ManualGraph, Graph, Edge};
-	use quickcheck::Arbitrary;
-	
-	#[test]
-	fn func(){
-		use crate::mock_graph::{MockGraph,MockVertex};
-		use graphene::core::{Graph,ManualGraph};
-		let mut g = MockGraph::new();
-		let m0 = MockVertex{value: 0};
-		let m1 = MockVertex{value: 1};
-		let m2 = MockVertex{value: 2};
-		g.add_vertex(m0).unwrap();
-		g.add_vertex(m1).unwrap();
-		g.add_vertex(m2).unwrap();
-		assert_eq!(g.all_edges::<Vec<_>>().len(), 0);
-		g.add_edge((m0, m1)).unwrap();
-		assert_eq!(g.all_edges::<Vec<_>>().len(), 1);
-		g.add_edge((m1, m2)).unwrap();
-		g.add_edge((m2, m0)).unwrap();
-		assert_eq!(g.all_edges::<Vec<_>>().len(), 3);
-		let mut g2 = g.clone();
-		
-		assert!(g.all_edges::<Vec<_>>().into_iter().any(|(v1,v2,_)|
-			(v1.value == m0.value) && (v2.value == m1.value)));
-		assert!(g.all_edges::<Vec<_>>().into_iter().any(|(v1,v2,_)|
-			(v1.value == m1.value) && (v2.value == m2.value)));
-		assert!(g.all_edges::<Vec<_>>().into_iter().any(|(v1,v2,_)|
-			(v1.value == m2.value) && (v2.value == m0.value)));
-		assert!(!g.all_edges::<Vec<_>>().into_iter().any(|(v1,v2,_)|
-			(v1.value == m2.value) && (v2.value == m1.value)));
-		
-		assert!(g.all_edges_mut::<Vec<_>>().into_iter().any(|(v1,v2,_)|
-			(v1.value == m0.value) && (v2.value == m1.value)));
-		assert!(g.all_edges_mut::<Vec<_>>().into_iter().any(|(v1,v2,_)|
-			(v1.value == m1.value) && (v2.value == m2.value)));
-		assert!(g.all_edges_mut::<Vec<_>>().into_iter().any(|(v1,v2,_)|
-			(v1.value == m2.value) && (v2.value == m0.value)));
-		assert!(!g.all_edges_mut::<Vec<_>>().into_iter().any(|(v1,v2,_)|
-			(v1.value == m2.value) && (v2.value == m1.value)));
-		
-		assert!(g.remove_vertex(m0).is_err());
-		assert_eq!(g.all_vertices::<Vec<_>>().len(), 3);
-		assert_eq!(g.all_edges::<Vec<_>>().len(), 3);
-		assert_eq!(g.edges_incident_on::<Vec<_>>(m0).len(), 2);
-		assert_eq!(g.edges_incident_on::<Vec<_>>(m1).len(), 2);
-		assert_eq!(g.edges_incident_on::<Vec<_>>(m2).len(), 2);
-		
-		g.remove_vertex_forced(m0).unwrap();
-		assert_eq!(g.all_vertices::<Vec<_>>().len(), 2);
-		assert_eq!(g.all_edges::<Vec<_>>().len(), 1);
-		assert!(g.all_edges::<Vec<_>>().into_iter().any(|(v1,v2,_)|
-			(v1.value == m1.value) && (v2.value == m2.value)));
-		
-		g.remove_vertex_forced(m1).unwrap();
-		assert_eq!(g.all_vertices::<Vec<_>>().len(), 1);
-		assert_eq!(g.all_edges::<Vec<_>>().len(), 0);
-		
-		g2.remove_edge((m0,m1)).unwrap();
-		assert_eq!(g2.all_vertices::<Vec<_>>().len(), 3);
-		assert_eq!(g2.all_edges::<Vec<_>>().len(), 2);
-		assert!(g2.all_edges_mut::<Vec<_>>().into_iter().any(|(v1,v2,_)|
-			(v1.value == m1.value) && (v2.value == m2.value)));
-		assert!(g2.all_edges_mut::<Vec<_>>().into_iter().any(|(v1,v2,_)|
-			(v1.value == m2.value) && (v2.value == m0.value)));
-		
-		g2.remove_edge((m1,m2)).unwrap();
-		assert_eq!(g2.all_vertices::<Vec<_>>().len(), 3);
-		assert_eq!(g2.all_edges::<Vec<_>>().len(), 1);
-		assert!(g2.all_edges_mut::<Vec<_>>().into_iter().any(|(v1,v2,_)|
-			(v1.value == m2.value) && (v2.value == m0.value)));
-		
-		g2.remove_edge((m2,m0)).unwrap();
-		assert_eq!(g2.all_vertices::<Vec<_>>().len(), 3);
-		assert_eq!(g2.all_edges::<Vec<_>>().len(), 0);
-		
-	}
-}
-
-

@@ -3,19 +3,20 @@ mod impl_graph;
 //mod impl_weights;
 
 pub use self::impl_graph::*;
-use crate::core::{
-	trait_aliases::{
-		Id,
-	}
-};
+use crate::core::{trait_aliases::{
+	Id,
+}, Directed, Directedness};
+use std::marker::PhantomData;
 
 
 ///
 /// A graph using the adjacency list representation.
 ///
 #[derive(Clone, Debug)]
-pub struct AdjListGraph<V,Vw,Ew>
-	where V: Id,
+pub struct AdjListGraph<V,Vw,Ew,D=Directed>
+	where
+		V: Id,
+		D: Directedness
 {
 	///
 	/// Adjacency list representation of the graph.
@@ -33,15 +34,16 @@ pub struct AdjListGraph<V,Vw,Ew>
 			//The weight of the edge
 			Ew
 		)>
-	)>
+	)>,
+	phantom: PhantomData<D>
 }
 
-impl<V,Vw,Ew> AdjListGraph<V,Vw,Ew>
-	where V:Id
+impl<V,Vw,Ew,D> AdjListGraph<V,Vw,Ew,D>
+	where V:Id, D: Directedness
 {
 	pub fn new() -> Self
 	{
-		Self{vertices: Vec::new()}
+		Self{vertices: Vec::new(), phantom: PhantomData}
 	}
 }
 /*

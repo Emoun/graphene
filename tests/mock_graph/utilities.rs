@@ -35,32 +35,6 @@ pub fn _3_tuple_equality<A1,B1,C1,A2,B2,C2>() -> impl Fn(&(A1, B1, C1), &(A2, B2
 }
 
 ///
-/// Returns a valid index into the vertex values of the graph
-/// based on the given index.
-///
-pub fn appropriate_vertex_index<G>(graph:&G, idx_cand: usize) -> usize
-	where
-		G: Graph,
-{
-	idx_cand % graph.all_vertices::<Vec<_>>().into_iter().count()
-}
-
-///
-/// Returns a vertex value present in the desc based on the given index.
-///
-/// The given index does not have to be valid in the description, it will be converted to
-/// a valid one. See `appropriate_vertex_index()`.
-///
-pub fn appropriate_vertex_value_from_index<G,V>(graph:&G, idx_cand: usize) -> V
-	where
-		G: Graph<Vertex=V>,
-		V: Id,
-{
-	let i = appropriate_vertex_index(graph, idx_cand);
-	graph.all_vertices::<Vec<_>>().into_iter().nth(i).unwrap()
-}
-
-///
 /// Returns whether the first list in an unordered sublist of the second list.
 ///
 /// One list os an unordered sublist of another if all its elements can be found in the

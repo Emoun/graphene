@@ -1,20 +1,19 @@
 
-use crate::core::{
-	Graph, EdgeWeighted, ManualGraph,
-	trait_aliases::{
-		Id, IntoFromIter, EdgeIntoFromIter, EdgeIntoFromIterMut
-	}
-};
+use crate::core::{Graph, EdgeWeighted, ManualGraph, trait_aliases::{
+	Id, IntoFromIter, EdgeIntoFromIter, EdgeIntoFromIterMut
+}, Directedness};
 use crate::common::AdjListGraph;
 
 
-impl<V,Vw,Ew> Graph for AdjListGraph<V,Vw,Ew>
+impl<V,Vw,Ew,D> Graph for AdjListGraph<V,Vw,Ew,D>
 	where
 		V: Id,
+		D: Directedness
 {
 	type Vertex = V;
 	type VertexWeight = Vw;
 	type EdgeWeight = Ew;
+	type Directedness = D;
 	
 	fn all_vertices<I: IntoFromIter<Self::Vertex>>(&self) -> I
 	{
@@ -128,9 +127,9 @@ impl<V,Vw,Ew> Graph for AdjListGraph<V,Vw,Ew>
 	}
 }
 
-impl<V,Vw,Ew> ManualGraph for AdjListGraph<V,Vw,Ew>
+impl<V,Vw,Ew,D> ManualGraph for AdjListGraph<V,Vw,Ew,D>
 	where
-		V: Id,
+		V: Id, D: Directedness,
 {
 	fn add_vertex_weighted(&mut self, v: Self::Vertex, w: Self::VertexWeight) -> Result<(),()>
 	{

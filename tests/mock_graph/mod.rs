@@ -12,6 +12,7 @@ mod mock_graph;
 pub use self::{
 	mock_graph::*,
 };
+use graphene::core::Directedness;
 
 #[derive(Copy, Clone, Eq, PartialEq, Debug)]
 pub struct MockVertex
@@ -34,3 +35,11 @@ impl Default for MockT
 
 pub type MockEdgeWeight = MockT;
 pub type MockVertexWeight = MockT;
+
+#[derive(Clone, Debug)]
+pub struct MockDirectedness(pub bool);
+impl Directedness for MockDirectedness {
+	fn directed() -> bool {
+		panic!("Mock directedness should not be queried.");
+	}
+}

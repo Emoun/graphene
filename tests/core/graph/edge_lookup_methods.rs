@@ -2,7 +2,7 @@
 //! Tests the edge lookup methods of `graphene::core::Graph`
 //!
 use crate::mock_graph::{
-	MockGraph, MockVertex,
+	MockGraph, MockVertex, MockDirectedness,
 	arbitraries::{
 		ArbGraphAndVertex, ArbGraphAndInvalidVertex,
 		ArbGraphAndTwoVertices, ArbGraphAndInvalidEdge
@@ -10,7 +10,7 @@ use crate::mock_graph::{
 	utilities::*,
 };
 use graphene::core::{
-	Graph, Edge
+	Graph, Edge, Directed
 };
 
 ///
@@ -28,39 +28,8 @@ use graphene::core::{
 /// Then it takes a closure that given an edge, checks whether that edge is a correct output
 /// of the method (the names of the vertices given before can be used here).
 ///
+///
 macro_rules! edge_lookup_method_tests {
-	{
-		$func:ident
-		$func_mut:ident
-		$vertex_id:ident
-		{$($correct:tt)*}
-	} => {
-		edge_lookup_method_tests!(
-			$func
-			$func_mut
-			($vertex_id)
-			{$($correct)*}
-			ArbGraphAndVertex
-			ArbGraphAndInvalidVertex
-		);
-	};
-	
-	{
-		$func:ident
-		$func_mut:ident
-		$vertex_id1:ident $vertex_id2:ident
-		{$($correct:tt)*}
-	} => {
-		edge_lookup_method_tests!(
-			$func
-			$func_mut
-			($vertex_id1, $vertex_id2)
-			{$($correct)*}
-			ArbGraphAndTwoVertices
-			ArbGraphAndInvalidEdge
-		);
-	};
-	
 	{
 		$func:ident // The name of the method to test
 		$func_mut:ident	// The name of the mutable version of the method to test
@@ -68,6 +37,7 @@ macro_rules! edge_lookup_method_tests {
 		{$($correct:tt)*} // checks whether an edge returned from the method is correct
 		$arb_graph:ident // The arbitraty graph and vertex struct the test function take
 		$arb_invalid_graph:ident // The arbitraty graph with invalid vertices to use in test
+		$directedness:ident
 	} => {
 		mod $func {
 			use super::*;
@@ -75,7 +45,7 @@ macro_rules! edge_lookup_method_tests {
 			/// Ensures that all the returned edges are correct.
 			///
 			#[quickcheck]
-			fn returns_valid_edges($arb_graph(g, $($vertex_ids),*): $arb_graph) -> bool
+			fn returns_valid_edges($arb_graph(g, $($vertex_ids),*): $arb_graph<$directedness>) -> bool
 			{
 				let edges = g.$func::<Vec<_>>($($vertex_ids),*);
 				let edges_len = edges.len();
@@ -89,7 +59,7 @@ macro_rules! edge_lookup_method_tests {
 			/// Ensures that all edges are returned.
 			///
 			#[quickcheck]
-			fn returns_all_edges($arb_graph(g, $($vertex_ids),*): $arb_graph) -> bool
+			fn returns_all_edges($arb_graph(g, $($vertex_ids),*): $arb_graph<$directedness>) -> bool
 			{
 				let edges= g.$func::<Vec<_>>($($vertex_ids),*);
 				let expected = g.all_edges::<Vec<_>>().into_iter()
@@ -102,7 +72,7 @@ macro_rules! edge_lookup_method_tests {
 			/// Ensures that when the vertex is not in the graph, no edges are returned.
 			///
 			#[quickcheck]
-			fn invalid_vertex($arb_invalid_graph(g, $($vertex_ids),*): $arb_invalid_graph) -> bool
+			fn invalid_vertex($arb_invalid_graph(g, $($vertex_ids),*): $arb_invalid_graph<$directedness>) -> bool
 			{
 				g.$func::<Vec<_>>($($vertex_ids),*).is_empty()
 			}
@@ -111,7 +81,7 @@ macro_rules! edge_lookup_method_tests {
 			/// Ensures that the mutable version returns the same edges as the original.
 			///
 			#[quickcheck]
-			fn mut_equivalent(g: MockGraph, $($vertex_ids: MockVertex),*) -> bool
+			fn mut_equivalent(g: MockGraph<$directedness>, $($vertex_ids: MockVertex),*) -> bool
 			{
 				let mut gClone = g.clone();
 				let edges_mut = gClone.$func_mut::<Vec<_>>($($vertex_ids),*);
@@ -127,24 +97,36 @@ macro_rules! edge_lookup_method_tests {
 edge_lookup_method_tests!(
 	edges_sourced_in
 	edges_sourced_in_mut
-	v
+	(v)
 	{|e| e.source() == v }
+	ArbGraphAndVertex
+	ArbGraphAndInvalidVertex
+	Directed
 );
 edge_lookup_method_tests!(
 	edges_sinked_in
 	edges_sinked_in_mut
-	v
+	(v)
 	{|e| e.sink() == v }
+	ArbGraphAndVertex
+	ArbGraphAndInvalidVertex
+	Directed
 );
 edge_lookup_method_tests!(
 	edges_incident_on
 	edges_incident_on_mut
-	v
+	(v)
 	{|e| e.source() == v || e.sink() == v }
+	ArbGraphAndVertex
+	ArbGraphAndInvalidVertex
+	MockDirectedness
 );
 edge_lookup_method_tests!(
 	edges_between
 	edges_between_mut
-	v1 v2
+	(v1, v2)
 	{|e| (e.source() == v1 && e.sink() == v2) || (e.source() == v2 && e.sink() == v1)}
+	ArbGraphAndTwoVertices
+	ArbGraphAndInvalidEdge
+	MockDirectedness
 );

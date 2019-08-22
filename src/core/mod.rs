@@ -42,6 +42,7 @@ pub mod trait_aliases;
 mod graph;
 mod edge;
 mod constrained_graph;
+mod directedness;
 
 
 //#[macro_use]
@@ -52,4 +53,5 @@ pub use self::{
 	graph::*,
 	edge::*,
 	constrained_graph::*,
+	directedness::*,
 };

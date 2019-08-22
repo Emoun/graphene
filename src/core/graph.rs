@@ -1,10 +1,7 @@
 
-use crate::core::{
-	Edge, EdgeWeighted,
-	trait_aliases::{
-		Id, IntoFromIter, EdgeIntoFromIter, EdgeIntoFromIterMut
-	}
-};
+use crate::core::{Edge, EdgeWeighted, Directedness, trait_aliases::{
+	Id, IntoFromIter, EdgeIntoFromIter, EdgeIntoFromIterMut
+}, Directed};
 
 use std::iter::Iterator;
 
@@ -58,8 +55,7 @@ pub trait Graph
 	type Vertex: Id;
 	type VertexWeight;
 	type EdgeWeight;
-	
-	// Vertex Methods
+	type Directedness: Directedness;
 	
 	///
 	/// Returns copies of all current vertex values in the graph.
@@ -79,9 +75,11 @@ pub trait Graph
 	fn remove_vertex_forced(&mut self, v: Self::Vertex) -> Result<Self::VertexWeight,()>
 	{
 		let mut to_remove = Vec::new();
-		self.edges_sourced_in::<Vec<_>>(v).into_iter().for_each(|(so,si,_)| to_remove.push((so,si)));
-		self.edges_sinked_in::<Vec<_>>(v).into_iter().for_each(|(so,si,_)| to_remove.push((so,si)));
+		
+		// Get all edges incident on the vertex and remove them
+		to_remove.extend(self.edges_incident_on::<Vec<_>>(v).into_iter().map(|(so,si,_)| (so,si)));
 		to_remove.iter().try_for_each(|&e| self.remove_edge(e).map(|_|()))?;
+		
 		self.remove_vertex(v)
 	}
 	
@@ -178,13 +176,17 @@ pub trait Graph
 	///
 	/// I.e. all edges where `e == (v,_,_)`
 	///
+	/// Only available for directed graphs
+	///
 	fn edges_sourced_in<'a, I>(&'a self, v: Self::Vertex) -> I
-		where I: EdgeIntoFromIter<'a, Self::Vertex, Self::EdgeWeight>
+		where I: EdgeIntoFromIter<'a, Self::Vertex, Self::EdgeWeight>,
+			  Self: Graph<Directedness=Directed>
 	{
 		edges_incident_on!(self.all_edges::<I>(), v, source)
 	}
 	fn edges_sourced_in_mut<'a, I>(&'a mut self, v: Self::Vertex) -> I
-		where I: EdgeIntoFromIterMut<'a, Self::Vertex, Self::EdgeWeight>
+		where I: EdgeIntoFromIterMut<'a, Self::Vertex, Self::EdgeWeight>,
+			  Self: Graph<Directedness=Directed>
 	{
 		edges_incident_on!(self.all_edges_mut::<I>(), v, source)
 	}
@@ -194,12 +196,14 @@ pub trait Graph
 	/// I.e. all edges where `e == (_,v,_)`
 	///
 	fn edges_sinked_in<'a, I>(&'a self, v: Self::Vertex) ->  I
-		where I: EdgeIntoFromIter<'a, Self::Vertex, Self::EdgeWeight>
+		where I: EdgeIntoFromIter<'a, Self::Vertex, Self::EdgeWeight>,
+			  Self: Graph<Directedness=Directed>
 	{
 		edges_incident_on!(self.all_edges::<I>(), v, sink)
 	}
 	fn edges_sinked_in_mut<'a, I>(&'a mut self, v: Self::Vertex) -> I
-		where I: EdgeIntoFromIterMut<'a, Self::Vertex, Self::EdgeWeight>
+		where I: EdgeIntoFromIterMut<'a, Self::Vertex, Self::EdgeWeight>,
+			  Self: Graph<Directedness=Directed>
 	{
 		edges_incident_on!(self.all_edges_mut::<I>(), v, sink)
 	}

@@ -4,8 +4,9 @@ use quickcheck::{Arbitrary, Gen};
 use crate::mock_graph::{
 	MockVertex, MockT, MockGraph, MockEdgeWeight, MockVertexWeight
 };
-use graphene::core::Graph;
+use graphene::core::{Graph, Directedness};
 use rand::{ Rng };
+use std::marker::PhantomData;
 
 impl Arbitrary for MockVertex
 {
@@ -14,7 +15,7 @@ impl Arbitrary for MockVertex
 		Self{value: u32::arbitrary(g)}
 	}
 	
-	fn shrink(&self) -> Box<Iterator<Item = Self>>
+	fn shrink(&self) -> Box<dyn Iterator<Item = Self>>
 	{
 		Box::new(self.value.shrink().map(|v| Self{value: v}))
 	}
@@ -27,13 +28,14 @@ impl Arbitrary for MockT
 		Self{value: u32::arbitrary(g)}
 	}
 	
-	fn shrink(&self) -> Box<Iterator<Item = Self>>
+	fn shrink(&self) -> Box<dyn Iterator<Item = Self>>
 	{
 		Box::new(self.value.shrink().map(|v| Self{value: v}))
 	}
 }
 
-impl Arbitrary for MockGraph
+impl<D> Arbitrary for MockGraph<D>
+	where D: Directedness + Clone + Send + 'static
 {
 	fn arbitrary<G: Gen>(g: &mut G) -> Self {
 		
@@ -76,10 +78,10 @@ impl Arbitrary for MockGraph
 				vertices[t_source].2.push((t_sink, t_weight));
 			}
 		}
-		Self { vertices }
+		Self::new(vertices)
 	}
 	
-	fn shrink(&self) -> Box<Iterator<Item=Self>> {
+	fn shrink(&self) -> Box<dyn Iterator<Item=Self>> {
 		
 		/* Base case
 		 */
@@ -102,7 +104,7 @@ impl Arbitrary for MockGraph
 			.for_each(|(idx, shrunk_id)| {
 				let mut new_id = self.vertices.clone();
 				new_id[idx].0 = shrunk_id;
-				result.push(Self{vertices: new_id});
+				result.push(Self::new(new_id));
 			});
 		
 		/* Shrink by shrinking vertex weight
@@ -152,10 +154,8 @@ impl Arbitrary for MockGraph
 		 * should be a set of edge shrinkages that result in a removable vertex.
 		 */
 		for v in self.all_vertices::<Vec<_>>(){
-			let sourced_in: Vec<_> = self.edges_sourced_in(v);
-			let sinked_in: Vec<_> = self.edges_sinked_in(v);
-			let number_of_edges = sourced_in.len() + sinked_in.len();
-			if number_of_edges == 0 {
+			let edges: Vec<_> = self.edges_incident_on(v);
+			if edges.len() == 0 {
 				let mut shrunk_graph = self.clone();
 				shrunk_graph.remove_vertex(v).unwrap();
 				result.push(shrunk_graph);
@@ -173,8 +173,10 @@ impl Arbitrary for MockGraph
 /// the empty graph.
 ///
 #[derive(Clone, Debug)]
-pub struct ArbGraphAndTwoVertices(pub MockGraph, pub MockVertex, pub MockVertex);
-impl Arbitrary for ArbGraphAndTwoVertices {
+pub struct ArbGraphAndTwoVertices<D: Directedness + Clone>(pub MockGraph<D>, pub MockVertex, pub MockVertex);
+impl<D> Arbitrary for ArbGraphAndTwoVertices<D>
+	where D: Directedness + Clone + Send + 'static
+{
 	fn arbitrary<G: Gen>(g: &mut G) -> Self {
 		// Create a graph with at least 1 vertex
 		let graph = {
@@ -192,7 +194,7 @@ impl Arbitrary for ArbGraphAndTwoVertices {
 		ArbGraphAndTwoVertices(graph, v1, v2)
 	}
 	
-	fn shrink(&self) -> Box<Iterator<Item = Self>>
+	fn shrink(&self) -> Box<dyn Iterator<Item = Self>>
 	{
 		let mut result = Vec::new();
 		
@@ -260,14 +262,16 @@ impl Arbitrary for ArbGraphAndTwoVertices {
 /// the empty graph.
 ///
 #[derive(Clone, Debug)]
-pub struct ArbGraphAndVertex(pub MockGraph, pub MockVertex);
-impl Arbitrary for ArbGraphAndVertex {
+pub struct ArbGraphAndVertex<D: Directedness + Clone>(pub MockGraph<D>, pub MockVertex);
+impl<D> Arbitrary for ArbGraphAndVertex<D>
+	where D: Directedness + Clone + Send + 'static
+{
 	fn arbitrary<G: Gen>(g: &mut G) -> Self {
 		let arb = ArbGraphAndTwoVertices::arbitrary(g);
 		ArbGraphAndVertex(arb.0, arb.1)
 	}
 	
-	fn shrink(&self) -> Box<Iterator<Item=Self>> {
+	fn shrink(&self) -> Box<dyn Iterator<Item=Self>> {
 		Box::new(ArbGraphAndTwoVertices(self.0.clone(), self.1, self.1).shrink()
 			.map(|ArbGraphAndTwoVertices(g, v, _)| ArbGraphAndVertex(g, v)))
 	}
@@ -277,8 +281,10 @@ impl Arbitrary for ArbGraphAndVertex {
 /// An arbitrary graph and a vertex that is guaranteed to not be in it.
 ///
 #[derive(Clone, Debug)]
-pub struct ArbGraphAndInvalidVertex(pub MockGraph, pub MockVertex);
-impl Arbitrary for ArbGraphAndInvalidVertex {
+pub struct ArbGraphAndInvalidVertex<D: Directedness + Clone>(pub MockGraph<D>, pub MockVertex);
+impl<D> Arbitrary for ArbGraphAndInvalidVertex<D>
+	where D: Directedness + Clone + Send + 'static
+{
 	fn arbitrary<G: Gen>(g: &mut G) -> Self {
 		let graph = MockGraph::arbitrary(g);
 		let mut v = MockVertex::arbitrary(g);
@@ -289,7 +295,7 @@ impl Arbitrary for ArbGraphAndInvalidVertex {
 		ArbGraphAndInvalidVertex(graph, v)
 	}
 	
-	fn shrink(&self) -> Box<Iterator<Item=Self>> {
+	fn shrink(&self) -> Box<dyn Iterator<Item=Self>> {
 		let mut result = Vec::new();
 		/*	First shrink the graph, keeping only the shrunk ones where the vertex
 			stays invalid
@@ -315,14 +321,16 @@ impl Arbitrary for ArbGraphAndInvalidVertex {
 /// An arbitrary graph and two vertices where at least one is not in the graph.
 ///
 #[derive(Clone, Debug)]
-pub struct ArbGraphAndInvalidEdge(pub MockGraph, pub MockVertex, pub MockVertex);
-impl Arbitrary for ArbGraphAndInvalidEdge{
+pub struct ArbGraphAndInvalidEdge<D: Directedness + Clone>(pub MockGraph<D>, pub MockVertex, pub MockVertex);
+impl<D> Arbitrary for ArbGraphAndInvalidEdge<D>
+	where D: Directedness + Clone + Send + 'static
+{
 	fn arbitrary<G: Gen>(g: &mut G) -> Self {
 		let single_invalid = ArbGraphAndInvalidVertex::arbitrary(g);
 		Self(single_invalid.0, single_invalid.1, MockVertex::arbitrary(g))
 	}
 	
-	fn shrink(&self) -> Box<Iterator<Item=Self>> {
+	fn shrink(&self) -> Box<dyn Iterator<Item=Self>> {
 		let mut result = Vec::new();
 		/*	Shrink the graph, keeping only the shrunk graphs where the edge is still invalid.
 		*/
