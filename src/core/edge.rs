@@ -9,6 +9,11 @@ pub trait Edge<V>
 {
 	fn source(&self) -> V;
 	fn sink(&self) -> V;
+	
+	fn is_loop(&self) -> bool
+	{
+		self.source() == self.sink()
+	}
 }
 
 pub trait EdgeWeighted<V,W>: Edge<V>

@@ -67,6 +67,9 @@ pub trait Graph
 	/// Removes the given vertex from the graph, returning its weight.
 	/// If the vertex still has edges incident on it, no changes are made and an error is returned.
 	///
+	/// TODO: 'Reflexive' needs to be able to dictate that this method also removes the vertex's loop
+	/// without being in violation of this trait.
+	///
 	fn remove_vertex(&mut self, v: Self::Vertex) -> Result<Self::VertexWeight,()>;
 	///
 	/// Removes the given vertex and any edge incident on it.
@@ -90,6 +93,9 @@ pub trait Graph
 		where I: EdgeIntoFromIter<'a, Self::Vertex, Self::EdgeWeight>;
 	fn all_edges_mut<'a, I>(&'a mut self) -> I
 		where I: EdgeIntoFromIterMut<'a, Self::Vertex, Self::EdgeWeight>;
+	///
+	///
+	/// TODO: Remove all edges that match, or just 1?
 	fn remove_edge_where<F>(&mut self, f: F)
 		-> Result<(Self::Vertex, Self::Vertex, Self::EdgeWeight), ()>
 		where F: Fn((Self::Vertex, Self::Vertex, &Self::EdgeWeight)) -> bool;

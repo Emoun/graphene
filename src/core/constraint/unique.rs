@@ -1,5 +1,7 @@
-use crate::core::{Graph, EdgeWeighted, trait_aliases::*, Directedness, Edge};
+use crate::core::{Graph, EdgeWeighted, trait_aliases::*, Directedness, Edge, AutoGraph, ManualGraph};
 use delegate::delegate;
+use crate::core::constraint::{NoLoops, Reflexive};
+
 ///
 /// A marker trait for graphs containing only unique edges.
 ///
@@ -15,7 +17,12 @@ use delegate::delegate;
 ///
 ///
 pub trait Unique: Graph
-{}
+{
+	fn edge_between(&self, v1: Self::Vertex, v2: Self::Vertex) -> Option<&Self::EdgeWeight>
+	{
+		self.edges_between::<Vec<_>>(v1,v2).into_iter().next().map(|(_,_,w)| w)
+	}
+}
 
 pub struct UniqueGraph<G: Graph>(pub G);
 
@@ -43,7 +50,8 @@ impl<G: Graph> Graph for UniqueGraph<G>
 			fn all_edges_mut<'a, I>(&'a mut self) -> I
 				where I: EdgeIntoFromIterMut<'a, Self::Vertex, Self::EdgeWeight>;
 			
-			fn remove_edge_where<F>(&mut self, f: F) -> Result<(Self::Vertex, Self::Vertex, Self::EdgeWeight), ()>
+			fn remove_edge_where<F>(&mut self, f: F)
+				-> Result<(Self::Vertex, Self::Vertex, Self::EdgeWeight), ()>
 				where F: Fn((Self::Vertex, Self::Vertex, &Self::EdgeWeight)) -> bool ;
 		}
 	}
@@ -61,5 +69,40 @@ impl<G: Graph> Graph for UniqueGraph<G>
 			}
 		}
 		self.0.add_edge_weighted(e)
+	}
+}
+
+impl<G: AutoGraph> AutoGraph for UniqueGraph<G>
+{
+	delegate! {
+		target self.0 {
+			fn new_vertex_weighted(&mut self, w: Self::VertexWeight)
+				-> Result<Self::Vertex, ()>;
+		}
+	}
+}
+
+impl<G: ManualGraph> ManualGraph for UniqueGraph<G>
+{
+	delegate! {
+		target self.0 {
+			fn add_vertex_weighted(&mut self, v: Self::Vertex, w: Self::VertexWeight)
+				-> Result<(), ()>;
+		}
+	}
+}
+
+impl<G: Graph> Unique for UniqueGraph<G>{}
+
+impl<G: NoLoops> NoLoops for UniqueGraph<G>{}
+
+impl<G> Reflexive for UniqueGraph<G>
+	where G: Reflexive, G::EdgeWeight: Default
+{
+	delegate!{
+		target self.0{
+			fn remove_vertex_looped(&mut self, v: Self::Vertex)
+				-> Result<(Self::VertexWeight, Self::EdgeWeight), ()>;
+		}
 	}
 }
