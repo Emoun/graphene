@@ -1,6 +1,5 @@
 use crate::core::{Graph, Edge, EdgeWeighted, trait_aliases::*, AutoGraph, ManualGraph};
 use delegate::delegate;
-use crate::core::constraint::{Unique, NoLoops};
 
 ///
 /// A marker trait for a reflexive graph.
@@ -100,14 +99,9 @@ impl<G> Reflexive for ReflexiveGraph<G>
 		let edge_weight = self.0.remove_edge((v, v))?;
 		self.0.remove_vertex(v).map(|vertex_weight| (vertex_weight,edge_weight))
 	}
-	
 }
 
-impl<G> Unique for ReflexiveGraph<G>
-	where G: Unique, G::EdgeWeight: Default
-{}
-
-impl<G> NoLoops for ReflexiveGraph<G>
-	where G: NoLoops, G::EdgeWeight: Default
-{}
-
+impl_constraints!{
+	ReflexiveGraph<G>: Reflexive
+	where G::EdgeWeight: Default
+}

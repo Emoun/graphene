@@ -78,4 +78,6 @@ impl<G: ManualGraph> ManualGraph for NoLoopsGraph<G>
 
 impl<G: Graph> NoLoops for NoLoopsGraph<G>{}
 
-impl<G: Unique> Unique for NoLoopsGraph<G>{}
+impl_constraints!{
+	NoLoopsGraph<G>: NoLoops
+}

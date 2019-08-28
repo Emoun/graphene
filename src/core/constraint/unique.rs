@@ -1,6 +1,5 @@
 use crate::core::{Graph, EdgeWeighted, trait_aliases::*, Directedness, Edge, AutoGraph, ManualGraph};
 use delegate::delegate;
-use crate::core::constraint::{NoLoops, Reflexive};
 
 ///
 /// A marker trait for graphs containing only unique edges.
@@ -94,15 +93,7 @@ impl<G: ManualGraph> ManualGraph for UniqueGraph<G>
 
 impl<G: Graph> Unique for UniqueGraph<G>{}
 
-impl<G: NoLoops> NoLoops for UniqueGraph<G>{}
-
-impl<G> Reflexive for UniqueGraph<G>
-	where G: Reflexive, G::EdgeWeight: Default
-{
-	delegate!{
-		target self.0{
-			fn remove_vertex_looped(&mut self, v: Self::Vertex)
-				-> Result<(Self::VertexWeight, Self::EdgeWeight), ()>;
-		}
-	}
+impl_constraints!{
+	UniqueGraph<G>: Unique
 }
+
