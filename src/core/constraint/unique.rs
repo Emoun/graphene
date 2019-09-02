@@ -1,4 +1,4 @@
-use crate::core::{Graph, EdgeWeighted, trait_aliases::*, Directedness, Edge, AutoGraph, ManualGraph};
+use crate::core::{Graph, EdgeWeighted, trait_aliases::*, Directedness, Edge, AutoGraph, ManualGraph, Constrainer, BaseGraph};
 use delegate::delegate;
 
 ///
@@ -23,7 +23,7 @@ pub trait Unique: Graph
 	}
 }
 
-pub struct UniqueGraph<G: Graph>(pub G);
+pub struct UniqueGraph<G: Graph>(G);
 
 impl<G: Graph> Graph for UniqueGraph<G>
 {
@@ -97,3 +97,30 @@ impl_constraints!{
 	UniqueGraph<G>: Unique
 }
 
+impl<B, C> Constrainer for UniqueGraph<C>
+	where B: BaseGraph, C: Graph + Constrainer<BaseGraph=B>
+{
+	type BaseGraph = B;
+	type Constrained = C;
+	
+	fn constrain_single(g: Self::Constrained) -> Result<Self, ()>{
+		let mut edges = g.all_edges::<Vec<_>>().into_iter();
+
+		while let Some(e) = edges.next() {
+			let edges_rest = edges.clone();
+
+			for e2 in edges_rest {
+				if (e.source() == e2.source() && e.sink() == e2.sink()) ||
+					(e.source() == e2.sink() && e.sink() == e2.source() && !C::directed())
+				{
+					return Err(())
+				}
+			}
+		}
+
+		Ok(UniqueGraph(g))
+	}
+	fn unconstrain_single(self) -> Self::Constrained{
+		self.0
+	}
+}

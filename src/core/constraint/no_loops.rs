@@ -1,6 +1,5 @@
-use crate::core::{Graph, EdgeWeighted, trait_aliases::*, AutoGraph, ManualGraph};
+use crate::core::{Graph, EdgeWeighted, trait_aliases::*, AutoGraph, ManualGraph, Constrainer, BaseGraph};
 use delegate::delegate;
-use crate::core::constraint::{Unique};
 
 ///
 /// A marker trait for graphs containing no graph loops.
@@ -15,7 +14,7 @@ pub trait NoLoops: Graph
 	
 }
 
-pub struct NoLoopsGraph<G: Graph>(pub G);
+pub struct NoLoopsGraph<G: Graph>(G);
 
 impl<G: Graph> Graph for NoLoopsGraph<G>
 {
@@ -80,4 +79,24 @@ impl<G: Graph> NoLoops for NoLoopsGraph<G>{}
 
 impl_constraints!{
 	NoLoopsGraph<G>: NoLoops
+}
+
+impl<B, C>  Constrainer for NoLoopsGraph<C>
+	where B: BaseGraph, C: Graph + Constrainer<BaseGraph=B>
+{
+	type BaseGraph = B;
+	type Constrained = C;
+	
+	fn constrain_single(g: Self::Constrained) -> Result<Self, ()>{
+
+		if g.all_vertices::<Vec<_>>().into_iter()
+			.any(|v| g.edges_between::<Vec<_>>(v,v).into_iter().next().is_some()){
+			Err(())
+		} else {
+			Ok(NoLoopsGraph(g))
+		}
+	}
+	fn unconstrain_single(self) -> Self::Constrained{
+		self.0
+	}
 }

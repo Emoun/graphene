@@ -1,7 +1,7 @@
 
 use crate::core::{Graph, EdgeWeighted, ManualGraph, trait_aliases::{
 	Id, IntoFromIter, EdgeIntoFromIter, EdgeIntoFromIterMut
-}, Directedness};
+}, Directedness, Constrainer, BaseGraph};
 use crate::common::AdjListGraph;
 
 
@@ -142,37 +142,10 @@ impl<V,Vw,Ew,D> ManualGraph for AdjListGraph<V,Vw,Ew,D>
 	}
 }
 
-/*
-impl<V,W> ConstrainedGraph for AdjListGraph<V,W>
+impl<V,Vw,Ew,D> BaseGraph for AdjListGraph<V,Vw,Ew,D>
 	where
-		V: Vertex,
-		W: Weight,
-{
-	impl_base_constraint!{}
-}
-
-
-impl<V,W> ExactGraph for AdjListGraph<V,W>
-	where
-		V: Vertex,
-		W: Weight,
+		V: Id, D: Directedness,
 {}
-
-#[test]
-fn empty_has_no_vertices(){
-	assert_eq!(0, AdjListGraph::<u32,u32>::empty_graph().all_vertices().len());
-}
-
-#[test]
-fn empty_has_no_edges(){
-	assert_eq!(0, AdjListGraph::<u32,u32>::empty_graph().all_edges().len());
-}
-
-
-*/
-
-
-
 
 
 

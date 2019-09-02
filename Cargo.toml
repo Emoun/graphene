@@ -20,7 +20,7 @@ travis-ci = {repository = "Emoun/graphene"}
 
 [dependencies]
 delegate = "0.2"
-tt-equal = { git = "https://github.com/Emoun/tt-equal" }
+tt-equal = "0.1.0"
 tt-call = "1.0"
 
 [dev-dependencies]
