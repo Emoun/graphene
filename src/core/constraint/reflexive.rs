@@ -50,16 +50,6 @@ impl<G> Graph for ReflexiveGraph<G>
 		self.remove_vertex_looped(v).map(|(v_weight,_)| v_weight)
 	}
 	
-	fn remove_vertex_forced(&mut self, v: Self::Vertex) -> Result<Self::VertexWeight,()>
-	{
-		// Remove v's loop that is guaranteed to be there.
-		// If removing it failed, something else must have gone wrong
-		self.0.remove_edge((v,v))?;
-		
-		// Then we can remove the rest of the edges using the usual method
-		self.0.remove_vertex_forced(v)
-	}
-	
 	fn remove_edge_where<F>(&mut self, f: F)
 							-> Result<(Self::Vertex, Self::Vertex, Self::EdgeWeight), ()>
 		where F: Fn((Self::Vertex, Self::Vertex, &Self::EdgeWeight)) -> bool

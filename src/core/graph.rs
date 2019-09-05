@@ -65,26 +65,10 @@ pub trait Graph
 	fn vertex_weight_mut(&mut self, v: Self::Vertex) -> Option<&mut Self::VertexWeight>;
 	///
 	/// Removes the given vertex from the graph, returning its weight.
-	/// If the vertex still has edges incident on it, no changes are made and an error is returned.
-	///
-	/// TODO: 'Reflexive' needs to be able to dictate that this method also removes the vertex's loop
-	/// without being in violation of this trait.
+	/// If the vertex still has edges incident on it, they are also removed,
+	/// dropping their weights.
 	///
 	fn remove_vertex(&mut self, v: Self::Vertex) -> Result<Self::VertexWeight,()>;
-	///
-	/// Removes the given vertex and any edge incident on it.
-	/// Returns the weight of the removed vertex.
-	///
-	fn remove_vertex_forced(&mut self, v: Self::Vertex) -> Result<Self::VertexWeight,()>
-	{
-		let mut to_remove = Vec::new();
-		
-		// Get all edges incident on the vertex and remove them
-		to_remove.extend(self.edges_incident_on::<Vec<_>>(v).into_iter().map(|(so,si,_)| (so,si)));
-		to_remove.iter().try_for_each(|&e| self.remove_edge(e).map(|_|()))?;
-		
-		self.remove_vertex(v)
-	}
 	
 	///
 	/// Returns copies of all current edges in the graph.

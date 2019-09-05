@@ -1,7 +1,7 @@
 
 use crate::core::{Graph, EdgeWeighted, trait_aliases::{
 	IntoFromIter, EdgeIntoFromIter, EdgeIntoFromIterMut
-}, Directedness, BaseGraph, AutoGraph};
+}, Directedness, BaseGraph, AutoGraph, Edge};
 use crate::common::AdjListGraph;
 
 
@@ -61,8 +61,10 @@ impl<Vw,Ew,D> Graph for AdjListGraph<Vw,Ew,D>
 	
 	fn remove_vertex(&mut self, v: Self::Vertex) -> Result<Self::VertexWeight,()>
 	{
-		if v < self.vertices.len() &&
-			self.edges_incident_on::<Vec<_>>(v).into_iter().next().is_none(){
+		if v < self.vertices.len() {
+			while let Ok(_)  = self.remove_edge_where(|e| e.sink() == v || e.source() == v) {
+				// Drop edge
+			}
 			Ok(self.vertices.remove(v).0)
 		} else {
 			Err(())

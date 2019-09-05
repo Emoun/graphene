@@ -138,7 +138,9 @@ impl<D: Directedness + Clone> Graph for MockGraph<D>
 		//Get index of vertex
 		if let Some(v_idx) = self.vertices.iter().position(|(id,_,_)| id.value == v.value){
 			if self.vertices[v_idx].2.len() != 0 {
-				return Err(());
+				while let Ok(_)  = self.remove_edge_where(|e| e.sink() == v || e.source() == v) {
+					// Drop edge
+				}
 			}
 			
 			// For efficiency, instead of just removing v and shifting all
