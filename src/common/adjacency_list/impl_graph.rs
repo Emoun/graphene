@@ -1,32 +1,30 @@
 
-use crate::core::{Graph, EdgeWeighted, ManualGraph, trait_aliases::{
-	Id, IntoFromIter, EdgeIntoFromIter, EdgeIntoFromIterMut
-}, Directedness, Constrainer, BaseGraph};
+use crate::core::{Graph, EdgeWeighted, trait_aliases::{
+	IntoFromIter, EdgeIntoFromIter, EdgeIntoFromIterMut
+}, Directedness, BaseGraph, AutoGraph};
 use crate::common::AdjListGraph;
 
 
-impl<V,Vw,Ew,D> Graph for AdjListGraph<V,Vw,Ew,D>
-	where
-		V: Id,
-		D: Directedness
+impl<Vw,Ew,D> Graph for AdjListGraph<Vw,Ew,D>
+	where D: Directedness
 {
-	type Vertex = V;
+	type Vertex = usize;
 	type VertexWeight = Vw;
 	type EdgeWeight = Ew;
 	type Directedness = D;
 	
 	fn all_vertices<I: IntoFromIter<Self::Vertex>>(&self) -> I
 	{
-		self.vertices.iter().map(|(id,_,_)| *id).collect()
+		(0..self.vertices.len()).collect()
 	}
 	
 	fn all_edges<'a, I>(&'a self) -> I
 		where I: EdgeIntoFromIter<'a, Self::Vertex, Self::EdgeWeight>
 	{
-		self.vertices.iter().flat_map(
-			|(source_id, _, out)| {
+		self.vertices.iter().enumerate().flat_map(
+			|(source_id,( _, out))| {
 				out.iter().map( move|(sink_idx, e_weight)| {
-					(*source_id, self.vertices[*sink_idx].0, e_weight)
+					(source_id, *sink_idx, e_weight)
 				})
 			}
 		).collect()
@@ -34,12 +32,10 @@ impl<V,Vw,Ew,D> Graph for AdjListGraph<V,Vw,Ew,D>
 	fn all_edges_mut<'a, I>(&'a mut self) -> I
 		where I: EdgeIntoFromIterMut<'a, Self::Vertex, Self::EdgeWeight>
 	{
-		let map: Vec<Self::Vertex> = self.vertices.iter().map(|(id,_,_)| id).cloned().collect();
-		self.vertices.iter_mut().flat_map(
-			|(source_id, _, out)| {
-				let map = &map;
+		self.vertices.iter_mut().enumerate().flat_map(
+			|(source_id,( _, out))| {
 				out.iter_mut().map( move|(sink_idx, e_weight)| {
-					(*source_id, map[*sink_idx], e_weight)
+					(source_id, *sink_idx, e_weight)
 				})
 			}
 		).collect()
@@ -47,104 +43,77 @@ impl<V,Vw,Ew,D> Graph for AdjListGraph<V,Vw,Ew,D>
 	
 	fn vertex_weight(&self, v: Self::Vertex) -> Option<&Self::VertexWeight>
 	{
-		self.vertices.iter().find(|(id,_,_)| *id == v).map(|(_,w,_)| w)
+		if v < self.vertices.len() {
+			Some(&self.vertices[v].0)
+		} else {
+			None
+		}
 	}
 	
 	fn vertex_weight_mut(&mut self, v: Self::Vertex) -> Option<&mut Self::VertexWeight>
 	{
-		self.vertices.iter_mut().find(|(id,_,_)| *id == v).map(|(_,w,_)| w)
+		if v < self.vertices.len() {
+			Some(&mut self.vertices[v].0)
+		} else {
+			None
+		}
 	}
 	
 	fn remove_vertex(&mut self, v: Self::Vertex) -> Result<Self::VertexWeight,()>
 	{
-		//Get index of vertex
-		if let Some(v_idx) = self.vertices.iter().position(|(id,_,_)| *id == v){
-			if self.vertices[v_idx].2.len() != 0 {
-				return Err(());
-			}
-			
-			// For efficiency, instead of just removing v and shifting all
-			// other vertices' indices, we swap the vertex with the highest
-			// index into the index of v
-			
-			// Start by re-point all edges pointing to last vertex (called 'last' from now on)
-			// to point to the index of v
-			let last_idx = self.vertices.len() - 1;
-			//For each vertex
-			//any edge pointing to the last value
-			//should now point to v
-			self.vertices.iter_mut().flat_map(|(_,_,out)| out.iter_mut())
-				.filter(|(sink_idx, _)| *sink_idx == last_idx)
-				.for_each(|(sink_idx, _)| *sink_idx = v_idx);
-			
-			// Remove v, swapping in the value of last
-			return Ok(self.vertices.swap_remove(v_idx).1);
+		if v < self.vertices.len() &&
+			self.edges_incident_on::<Vec<_>>(v).into_iter().next().is_none(){
+			Ok(self.vertices.remove(v).0)
+		} else {
+			Err(())
 		}
-		//Vertex not part of the core
-		Err(())
 	}
 	
 	fn add_edge_weighted<E>(&mut self, e: E) -> Result<(),()>
 		where
 			E: EdgeWeighted<Self::Vertex, Self::EdgeWeight>,
 	{
-		// Find the indices of the vertices
-		if let (Some(v1_idx), Some(v2_idx)) =
-		(	self.vertices.iter().position(|(id,_,_)| *id == e.source()),
-			 self.vertices.iter().position(|(id,_,_)| *id == e.sink())
-		)
-			{
-				// Add the edge
-				self.vertices[v1_idx].2.push((v2_idx, e.get_weight()));
-				Ok(())
-			}else{
+		let len = self.vertices.len();
+		if e.source() < len && e.sink() < len {
+			self.vertices[e.source()].1.push((e.sink(), e.get_weight()));
+			Ok(())
+		} else {
 			Err(())
 		}
 	}
 	
 	fn remove_edge_where<F>(&mut self, f: F)
-							-> Result<(Self::Vertex, Self::Vertex, Self::EdgeWeight), ()>
+		-> Result<(Self::Vertex, Self::Vertex, Self::EdgeWeight), ()>
 		where
 			F: Fn((Self::Vertex, Self::Vertex, &Self::EdgeWeight)) -> bool
 	{
-		let mut to_delete: Option<(usize, usize, Self::Vertex, Self::Vertex)> = None;
-		'l:
-			for (so_idx, (so_v, _, out)) in self.vertices.iter().enumerate() {
-			for(e_idx, (si_idx, e_weight)) in out.iter().enumerate() {
-				let si_v = self.vertices[*si_idx].0;
-				if f((*so_v, si_v, e_weight)) {
-					to_delete = Some((so_idx, e_idx, *so_v, si_v));
-					break 'l;
-				}
-			}
-		}
-		if let Some((so_idx, e_idx, so_v, si_v)) = to_delete {
-			let (_, weight) = self.vertices[so_idx].2.remove(e_idx);
-			Ok((so_v, si_v, weight))
+		let found = self.vertices.iter().enumerate()
+			.flat_map(|(so_i,(_,edges))|
+				edges.iter().enumerate().map(move|(si_i,(si, w))| ((so_i, si_i, si, w)))
+			).find(|(so_i, _, si, w)| f((*so_i, **si, w)));
+		
+		if let Some((so,si_i,_,_)) = found {
+			let (si,w) = self.vertices[so].1.remove(si_i);
+			Ok((so,si,w))
 		}else{
 			Err(())
 		}
 	}
 }
 
-impl<V,Vw,Ew,D> ManualGraph for AdjListGraph<V,Vw,Ew,D>
-	where
-		V: Id, D: Directedness,
+impl<Vw,Ew,D> AutoGraph for AdjListGraph<Vw,Ew,D>
+	where D: Directedness,
 {
-	fn add_vertex_weighted(&mut self, v: Self::Vertex, w: Self::VertexWeight) -> Result<(),()>
+	fn new_vertex_weighted(&mut self, w: Self::VertexWeight) -> Result<Self::Vertex,()>
 	{
-		if self.vertices.iter().any(|(id,_,_)| *id == v ){
-			Err(())
-		}else{
-			self.vertices.push((v,w,Vec::new()));
-			Ok(())
-		}
+		let new_v = self.vertices.len();
+		self.vertices.push((w,Vec::new()));
+		Ok(new_v)
 	}
 }
 
-impl<V,Vw,Ew,D> BaseGraph for AdjListGraph<V,Vw,Ew,D>
-	where
-		V: Id, D: Directedness,
+impl<Vw,Ew,D> BaseGraph for AdjListGraph<Vw,Ew,D>
+	where D: Directedness,
 {}
 
 
