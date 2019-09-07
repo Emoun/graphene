@@ -83,8 +83,8 @@ macro_rules! edge_lookup_method_tests {
 			#[quickcheck]
 			fn mut_equivalent(g: MockGraph<$directedness>, $($vertex_ids: MockVertex),*) -> bool
 			{
-				let mut gClone = g.clone();
-				let edges_mut = gClone.$func_mut::<Vec<_>>($($vertex_ids),*);
+				let mut clone = g.clone();
+				let edges_mut = clone.$func_mut::<Vec<_>>($($vertex_ids),*);
 				let edges= g.$func::<Vec<_>>($($vertex_ids),*);
 				
 				unordered_equivalent_lists(&edges, &edges_mut,

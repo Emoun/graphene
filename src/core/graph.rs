@@ -277,8 +277,7 @@ pub trait AutoGraph: Graph
 }
 
 ///
-/// Graph that at all times has a finite set of vertices and edges that
-/// can be counted.
+/// Graph that at all times has a finite set of vertices and edges.
 ///
 pub trait ExactGraph: Graph
 {
@@ -287,13 +286,13 @@ pub trait ExactGraph: Graph
 	/// Returns the number of vertices in the graph.
 	///
 	fn vertex_count(&self) -> usize {
-		self.all_vertices::<Vec<_>>().into_iter().len()
+		self.all_vertices::<Vec<_>>().into_iter().count()
 	}
 	
 	///
 	/// Returns the number of edges in the graph.
 	///
 	fn edge_count(&self) -> usize {
-		self.all_edges::<Vec<_>>().into_iter().len()
+		self.all_edges::<Vec<_>>().into_iter().count()
 	}
 }

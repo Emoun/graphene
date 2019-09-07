@@ -361,7 +361,7 @@ impl<D> Arbitrary for ArbGraphAndInvalidEdge<D>
 }
 
 ///
-/// An arbitrary graph and two vertices where at least one is not in the graph.
+/// An arbitrary graph with an edge that is guaranteed to be in the graph (the weight is a clone)
 ///
 #[derive(Clone, Debug)]
 pub struct ArbGraphAndEdge<D: Directedness + Clone>(
@@ -374,7 +374,7 @@ impl<D> Arbitrary for ArbGraphAndEdge<D>
 	fn arbitrary<G: Gen>(g: &mut G) -> Self {
 		let ArbGraphAndTwoVertices(mut mock,v1,v2) = ArbGraphAndTwoVertices::arbitrary(g);
 		let weight = MockEdgeWeight::arbitrary(g);
-		mock.add_edge_weighted((v1,v2,weight.clone()));
+		mock.add_edge_weighted((v1,v2,weight.clone())).unwrap();
 		Self(mock, (v1,v2,weight))
 	}
 	

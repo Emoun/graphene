@@ -10,7 +10,7 @@ use graphene::{
 };
 use std::marker::PhantomData;
 use std::fmt::{Debug, Formatter, Error};
-use graphene::core::{Directedness};
+use graphene::core::{Directedness, ExactGraph, BaseGraph};
 
 #[derive(Clone)]
 pub struct MockGraph<D>
@@ -219,3 +219,8 @@ impl<D: Directedness + Clone> ManualGraph for MockGraph<D>
 		}
 	}
 }
+
+impl<D: Directedness + Clone> ExactGraph for MockGraph<D>{}
+
+impl<D: Directedness + Clone> BaseGraph for MockGraph<D>
+{}

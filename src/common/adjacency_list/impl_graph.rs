@@ -1,7 +1,7 @@
 
 use crate::core::{Graph, EdgeWeighted, trait_aliases::{
 	IntoFromIter, EdgeIntoFromIter, EdgeIntoFromIterMut
-}, Directedness, BaseGraph, AutoGraph, Edge};
+}, Directedness, BaseGraph, AutoGraph, Edge, ExactGraph};
 use crate::common::AdjListGraph;
 
 
@@ -113,6 +113,10 @@ impl<Vw,Ew,D> AutoGraph for AdjListGraph<Vw,Ew,D>
 		Ok(new_v)
 	}
 }
+
+impl<Vw,Ew,D> ExactGraph for AdjListGraph<Vw,Ew,D>
+	where D: Directedness,
+{}
 
 impl<Vw,Ew,D> BaseGraph for AdjListGraph<Vw,Ew,D>
 	where D: Directedness,

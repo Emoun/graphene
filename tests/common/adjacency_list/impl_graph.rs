@@ -3,11 +3,10 @@
 //!
 
 use crate::mock_graph::{MockDirectedness, MockGraph};
-use graphene::common::AdjListGraph;
-use graphene::core::{Graph, EdgeWeighted, Edge, WeightRef};
+use graphene::core::{Graph, Edge, WeightRef};
 use crate::mock_graph::utilities::{unordered_equivalent_lists_equal};
 use crate::common::adjacency_list::adj_list_from_mock;
-use crate::mock_graph::arbitraries::{ArbGraphAndVertex, ArbGraphAndTwoVertices, ArbGraphAndEdge};
+use crate::mock_graph::arbitraries::{ArbGraphAndVertex, ArbGraphAndEdge};
 
 ///
 /// Tests that adding vertices to the graph results in the same vertices being
