@@ -399,11 +399,10 @@ impl<D> Arbitrary for ArbGraphAndEdge<D>
 		/* We shrink each vertex in the edge
 		*/
 		let mut without_edge = self.0.clone();
-//		println!("{:?}\n\t{:?}", without_edge, self.1);
 		without_edge.remove_edge_where(|e|
 			e.source() == self.1.source() &&
 				e.sink() == self.1.sink() &&
-				*e.weight() == self.1.weight()
+				e.weight() == self.1.weight()
 		).unwrap();
 		result.extend(
 			ArbGraphAndTwoVertices(without_edge, (self.1).0, (self.1).1).shrink()

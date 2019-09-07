@@ -5,3 +5,4 @@
 
 mod graph;
 mod constrainer;
+mod edge;
