@@ -1,12 +1,10 @@
 
-use graphene::core::trait_aliases::Id;
 use quickcheck::{Arbitrary, Gen};
 use crate::mock_graph::{
 	MockVertex, MockT, MockGraph, MockEdgeWeight, MockVertexWeight
 };
-use graphene::core::{Graph, Directedness};
+use graphene::core::{Graph, Directedness, Edge, WeightRef};
 use rand::{ Rng };
-use std::marker::PhantomData;
 
 impl Arbitrary for MockVertex
 {
@@ -180,11 +178,11 @@ impl<D> Arbitrary for ArbGraphAndTwoVertices<D>
 	fn arbitrary<G: Gen>(g: &mut G) -> Self {
 		// Create a graph with at least 1 vertex
 		let graph = {
-			let mut candGraph = MockGraph::arbitrary(g);
-			while candGraph.all_vertices::<Vec<_>>().len()==0 {
-				candGraph = MockGraph::arbitrary(g);
+			let mut candidate_graph = MockGraph::arbitrary(g);
+			while candidate_graph.all_vertices::<Vec<_>>().len()==0 {
+				candidate_graph = MockGraph::arbitrary(g);
 			}
-			candGraph
+			candidate_graph
 		};
 		
 		let verts: Vec<_> = graph.all_vertices();
@@ -219,9 +217,9 @@ impl<D> Arbitrary for ArbGraphAndTwoVertices<D>
 					.filter(|v| !self.0.all_vertices::<Vec<_>>().contains(&v))
 					// Output the shrunk value by updating it in the graph and the vertex
 					.map(|v| {
-						let mut gClone= self.0.clone();
-						gClone.replace_vertex(self.1, v);
-						ArbGraphAndTwoVertices(gClone, v, self.2)
+						let mut clone = self.0.clone();
+						clone.replace_vertex(self.1, v);
+						ArbGraphAndTwoVertices(clone, v, self.2)
 					})
 			);
 			// Do the same for the second vertex
@@ -229,14 +227,14 @@ impl<D> Arbitrary for ArbGraphAndTwoVertices<D>
 				self.2.shrink()
 					.filter(|v| !self.0.all_vertices::<Vec<_>>().contains(&v))
 					.map(|v| {
-						let mut gClone= self.0.clone();
-						gClone.replace_vertex(self.2, v);
-						ArbGraphAndTwoVertices(gClone, self.1, v)
+						let mut clone = self.0.clone();
+						clone.replace_vertex(self.2, v);
+						ArbGraphAndTwoVertices(clone, self.1, v)
 					})
 			);
 			
-			// Lastly, if the graph has only 2 vertices, remove one and update the corresponding
-			// vertex to the remaining on
+			// Lastly, if the graph has only 2 vertices and no edges, remove one and
+			// update the corresponding vertex to the remaining one
 			if self.0.all_vertices::<Vec<_>>().len() == 2 && self.0.all_edges::<Vec<_>>().len() == 0{
 				let mut clone1 = self.0.clone();
 				clone1.vertices.remove(0);
@@ -358,6 +356,63 @@ impl<D> Arbitrary for ArbGraphAndInvalidEdge<D>
 			})
 				.map(|v| Self(self.0.clone(), self.1, v))
 		);
+		Box::new(result.into_iter())
+	}
+}
+
+///
+/// An arbitrary graph and two vertices where at least one is not in the graph.
+///
+#[derive(Clone, Debug)]
+pub struct ArbGraphAndEdge<D: Directedness + Clone>(
+	pub MockGraph<D>,
+	pub (MockVertex, MockVertex, MockEdgeWeight)
+);
+impl<D> Arbitrary for ArbGraphAndEdge<D>
+	where D: Directedness + Clone + Send + 'static
+{
+	fn arbitrary<G: Gen>(g: &mut G) -> Self {
+		let ArbGraphAndTwoVertices(mut mock,v1,v2) = ArbGraphAndTwoVertices::arbitrary(g);
+		let weight = MockEdgeWeight::arbitrary(g);
+		mock.add_edge_weighted((v1,v2,weight.clone()));
+		Self(mock, (v1,v2,weight))
+	}
+	
+	fn shrink(&self) -> Box<dyn Iterator<Item=Self>> {
+		let mut result = Vec::new();
+		/*	First, we can simply shrink the weight
+		*/
+		result.extend(
+			(self.1).2.shrink().map(|shrunk| {
+				let mut clone = self.0.clone();
+				let edge = clone.all_edges_mut::<Vec<_>>().into_iter()
+					.find(|e|
+						e.source() == self.1.source() &&
+							e.sink() == self.1.sink() &&
+							*e.weight() == self.1.weight()
+					).unwrap().2;
+				*edge = shrunk.clone();
+				Self(clone, ((self.1).0, (self.1).1, shrunk))
+			})
+		);
+		
+		/* We shrink each vertex in the edge
+		*/
+		let mut without_edge = self.0.clone();
+//		println!("{:?}\n\t{:?}", without_edge, self.1);
+		without_edge.remove_edge_where(|e|
+			e.source() == self.1.source() &&
+				e.sink() == self.1.sink() &&
+				*e.weight() == self.1.weight()
+		).unwrap();
+		result.extend(
+			ArbGraphAndTwoVertices(without_edge, (self.1).0, (self.1).1).shrink()
+				.map(|ArbGraphAndTwoVertices(mut g,v1,v2)| {
+					g.add_edge_weighted((v1,v2,(self.1).2.clone())).unwrap();
+					Self(g, (v1,v2,(self.1).2.clone()))
+				})
+		);
+		
 		Box::new(result.into_iter())
 	}
 }

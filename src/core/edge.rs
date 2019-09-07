@@ -97,29 +97,29 @@ impl<'a,V,W> WeightRefMut<V,W> for (V,V,W)
 		&mut self.2
 	}
 }
-
-impl<'a,V,W> WeightRef<V,W> for (V,V,&'a W)
-	where V: Id
-{
-	fn weight(&self) -> &W
-	{
-		self.2
-	}
-}
-
-impl<'a,V,W> WeightRef<V,W> for (V,V,&'a mut W)
-	where V: Id
-{
-	fn weight(&self) -> &W
-	{
-		self.2
-	}
-}
-impl<'a,V,W> WeightRefMut<V,W> for (V,V,&'a mut W)
-	where V: Id
-{
-	fn weight_mut(&mut self) -> &mut W
-	{
-		self.2
-	}
-}
+//
+//impl<'a,V,W> WeightRef<V,W> for (V,V,&'a W)
+//	where V: Id
+//{
+//	fn weight(&self) -> &W
+//	{
+//		self.2
+//	}
+//}
+//
+//impl<'a,V,W> WeightRef<V,W> for (V,V,&'a mut W)
+//	where V: Id
+//{
+//	fn weight(&self) -> &W
+//	{
+//		self.2
+//	}
+//}
+//impl<'a,V,W> WeightRefMut<V,W> for (V,V,&'a mut W)
+//	where V: Id
+//{
+//	fn weight_mut(&mut self) -> &mut W
+//	{
+//		self.2
+//	}
+//}

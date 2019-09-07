@@ -1,0 +1,137 @@
+//!
+//! Tests the `Graph` and `AutoGraph` implementations of `AdjListGraph`
+//!
+
+use crate::mock_graph::{MockDirectedness, MockGraph};
+use graphene::common::AdjListGraph;
+use graphene::core::{Graph, EdgeWeighted, Edge, WeightRef};
+use crate::mock_graph::utilities::{unordered_equivalent_lists_equal};
+use crate::common::adjacency_list::adj_list_from_mock;
+use crate::mock_graph::arbitraries::{ArbGraphAndVertex, ArbGraphAndTwoVertices, ArbGraphAndEdge};
+
+///
+/// Tests that adding vertices to the graph results in the same vertices being
+/// output by `all_vertices`
+///
+#[quickcheck]
+fn same_vertices(mock: MockGraph<MockDirectedness>) -> bool
+{
+	let (g, v_map) = adj_list_from_mock(&mock);
+	
+	unordered_equivalent_lists_equal(
+		&mock.all_vertices::<Vec<_>>().into_iter().map(|v| v_map[&v]).collect(),
+		&g.all_vertices::<Vec<_>>()
+	)
+}
+
+///
+/// Tests that adding edges to the graph results in the same edges being output by `all_edges`
+///
+#[quickcheck]
+fn same_edges(mock: MockGraph<MockDirectedness>) -> bool
+{
+	let (g, v_map) = adj_list_from_mock(&mock);
+	
+	unordered_equivalent_lists_equal(
+		&mock.all_edges::<Vec<_>>().into_iter()
+			.map(|(so,si,w)| (v_map[&so], v_map[&si], w)).collect(),
+		&g.all_edges::<Vec<_>>()
+	)
+}
+
+///
+/// Tests that adding vertices to the graph results in the correct weights for each.
+///
+#[quickcheck]
+fn same_vertex_weight(mock: MockGraph<MockDirectedness>) -> bool
+{
+	let (g, v_map) = adj_list_from_mock(&mock);
+	
+	unordered_equivalent_lists_equal(
+		&mock.all_vertices::<Vec<_>>().into_iter()
+			.map(|v| (v_map[&v], mock.vertex_weight(v))).collect(),
+		&g.all_vertices::<Vec<_>>().into_iter()
+			.map(|v| (v, g.vertex_weight(v))).collect()
+	)
+}
+
+///
+/// Tests that the reference to vertex weights is the same regardless of mutability
+///
+#[quickcheck]
+fn same_vertex_weight_mut(ArbGraphAndVertex(mock, v): ArbGraphAndVertex<MockDirectedness>) -> bool
+{
+	let (mut g, v_map) = adj_list_from_mock(&mock);
+	
+	g.vertex_weight(v_map[&v]).map(|w| w as *const _) ==
+		g.vertex_weight_mut(v_map[&v]).map(|w| w as *const _)
+}
+
+///
+/// Tests that the reference to edge weights is the same regardless of mutability
+///
+#[quickcheck]
+fn same_edge_weight_mut(mut mock: MockGraph<MockDirectedness>) -> bool
+{
+	let (mut g, v_map) = adj_list_from_mock(&mock);
+	
+	unordered_equivalent_lists_equal(
+		&mock.all_edges_mut::<Vec<_>>().into_iter()
+			.map(|(so,si,w)| (v_map[&so], v_map[&si], w)).collect(),
+		&g.all_edges_mut::<Vec<_>>()
+	)
+}
+
+///
+/// Tests that removing a vertex works as expected
+///
+#[quickcheck]
+fn remove_vertex(ArbGraphAndVertex(mock, v_remove): ArbGraphAndVertex<MockDirectedness>) -> bool
+{
+	let (mut g, v_map) = adj_list_from_mock(&mock);
+	
+	if g.remove_vertex(v_map[&v_remove]).is_err() {
+		false
+	} else {
+		// Check that the number of vertices decreased by 1
+		( g.all_vertices::<Vec<_>>().into_iter().count() ==
+			(mock.all_vertices::<Vec<_>>().into_iter().count() -1)
+		) &&
+		
+		// Check that the number of edges decreased by same as the number that was incident
+		// on the vertex
+		( g.all_edges::<Vec<_>>().into_iter().count() ==
+			(mock.all_edges::<Vec<_>>().into_iter().count() -
+				mock.edges_incident_on::<Vec<_>>(v_remove).into_iter().count())
+		) &&
+		
+		// Check that one less vertex has the same weight as the one removed
+		( g.all_vertices::<Vec<_>>().into_iter()
+			.filter(|&v| g.vertex_weight(v) == mock.vertex_weight(v_remove)).count() ==
+		  (mock.all_vertices::<Vec<_>>().into_iter()
+			.filter(|&v| mock.vertex_weight(v) == mock.vertex_weight(v_remove)).count() - 1)
+		)
+		
+		// TODO: Test that the right edges were removed?
+	}
+}
+
+///
+/// Tests removing an edge
+///
+#[quickcheck]
+fn remove_edge(ArbGraphAndEdge(mock, edge): ArbGraphAndEdge<MockDirectedness>) -> bool
+{
+	let (mut g, v_map) = adj_list_from_mock(&mock);
+	
+	let edge_ref = (edge.source(), edge.sink(), edge.weight());
+	let mapped_edge = (v_map[&edge.source()], v_map[&edge.sink()], edge.weight());
+	
+	if 	g.remove_edge_where(|e| e == mapped_edge ).is_ok() {
+		// Ensure that one less edge matches our edge
+		g.all_edges::<Vec<_>>().into_iter().filter(|&e| e == mapped_edge).count() ==
+			(mock.all_edges::<Vec<_>>().into_iter().filter(|&e| e == edge_ref).count() - 1)
+	} else {
+		false
+	}
+}

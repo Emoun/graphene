@@ -1,13 +1,6 @@
-
-use graphene::{
-	core::{
-		Graph,
-		trait_aliases::{
-			Id,IntoFromIter
-		}
-	},
-};
-
+use graphene::core::{Graph, Directedness, AutoGraph, Edge, EdgeWeighted};
+use crate::mock_graph::{MockGraph, MockVertex, MockVertexWeight, MockEdgeWeight};
+use std::collections::HashMap;
 #[macro_export]
 macro_rules! holds_if{
 	{
@@ -101,3 +94,29 @@ pub fn unordered_equivalent_lists_equal<L: PartialEq<R>,R: PartialEq<L>>(l1:&Vec
 {
 	unordered_sublist_equal(l1, l2) && unordered_sublist_equal(l2, l1)
 }
+
+pub fn auto_copy_from<G,D>(g: &mut G, mock: &MockGraph<D>)
+						   -> HashMap<MockVertex, G::Vertex>
+	where
+		G:Graph<
+			Directedness=D,
+			VertexWeight=MockVertexWeight,
+			EdgeWeight=MockEdgeWeight,
+		> + AutoGraph,
+		D: Directedness + Clone
+{
+	// Add all the vertices, remembering which mock vertices match which real vertices
+	let mut vertex_map = HashMap::new();
+	for v in mock.all_vertices::<Vec<_>>().into_iter() {
+		let new_v = g.new_vertex_weighted(mock.vertex_weight(v).unwrap().clone()).unwrap();
+		vertex_map.insert(v,new_v);
+	}
+	// Add all edges
+	for e in mock.all_edges::<Vec<_>>().into_iter() {
+		g.add_edge_weighted((vertex_map[&e.source()], vertex_map[&e.sink()], e.get_weight().clone())).unwrap();
+	}
+	vertex_map
+}
+
+
+

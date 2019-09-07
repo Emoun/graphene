@@ -4,13 +4,13 @@ use graphene::{
 	core::{
 		Graph, Edge, ManualGraph, EdgeWeighted,
 		trait_aliases::{
-			Id, IntoFromIter
+			IntoFromIter
 		}
 	},
 };
 use std::marker::PhantomData;
 use std::fmt::{Debug, Formatter, Error};
-use graphene::core::{Directed, Directedness};
+use graphene::core::{Directedness};
 
 #[derive(Clone)]
 pub struct MockGraph<D>
