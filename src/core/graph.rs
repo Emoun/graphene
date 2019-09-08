@@ -207,6 +207,7 @@ pub trait Graph
 	{
 		edges_incident_on!(self.all_edges_mut::<I>(),v)
 	}
+	
 }
 
 ///

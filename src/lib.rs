@@ -198,5 +198,6 @@
 #[macro_use]
 pub mod core;
 pub mod common;
+pub mod algo;
 
 
