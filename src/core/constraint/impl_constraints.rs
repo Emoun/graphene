@@ -64,5 +64,19 @@ macro_rules! impl_constraints {
 				}
 			}]
 		}
+		
+		// Connected
+		tt_call::tt_if!{
+			condition = [{tt_equal::tt_equal}]
+			input = [{$trait Connected}]
+			true = [{}]
+			false = [{
+				impl<$generic_graph> $crate::core::constraint::Connected for $struct<$generic_graph>
+					where
+						$generic_graph: $crate::core::constraint::Connected,
+						$($($bounds)*)?
+				{}
+			}]
+		}
 	}
 }

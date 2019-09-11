@@ -5,7 +5,7 @@ use crate::core::Graph;
 ///
 /// Multiple levels of constrainers are supported.
 ///
-pub trait Constrainer: Sized
+pub trait Constrainer: Sized + Graph
 {
 	///
 	/// The base graph implementation being constrained

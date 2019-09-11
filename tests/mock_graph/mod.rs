@@ -6,7 +6,7 @@
 
 #[macro_use]
 pub mod utilities;
-pub mod arbitraries;
+pub mod arbitrary;
 mod mock_graph;
 
 pub use self::{

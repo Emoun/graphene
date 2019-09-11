@@ -1,7 +1,7 @@
 
 use crate::core::{Edge, EdgeWeighted, Directedness, trait_aliases::{
 	Id, IntoFromIter, EdgeIntoFromIter, EdgeIntoFromIterMut
-}, Directed};
+}, Directed, Undirected};
 
 use std::iter::Iterator;
 
@@ -78,8 +78,9 @@ pub trait Graph
 	fn all_edges_mut<'a, I>(&'a mut self) -> I
 		where I: EdgeIntoFromIterMut<'a, Self::Vertex, Self::EdgeWeight>;
 	///
+	/// Removes an edge that matches the given predicate closure.
+	/// If no edge is found and removed, returns error.
 	///
-	/// TODO: Remove all edges that match, or just 1?
 	fn remove_edge_where<F>(&mut self, f: F)
 		-> Result<(Self::Vertex, Self::Vertex, Self::EdgeWeight), ()>
 		where F: Fn((Self::Vertex, Self::Vertex, &Self::EdgeWeight)) -> bool;
@@ -146,6 +147,23 @@ pub trait Graph
 			(so == e.source()) && (si == e.sink()) && f(w))
 			.map(|removed_edge| removed_edge.2)
 	}
+	
+	///
+	/// Tries to removes all edges that match the given predicate.
+	/// Stops either when no more edges match, or an edge that matched couldn't be removed.
+	///
+	/// Returns the removed edges regardless.
+	///
+	fn remove_edge_where_all<F>(&mut self, f: F) -> Vec<(Self::Vertex, Self::Vertex, Self::EdgeWeight)>
+		where F: Fn((Self::Vertex, Self::Vertex, &Self::EdgeWeight)) -> bool
+	{
+		let mut result = Vec::new();
+		while let Ok(e) = self.remove_edge_where(|e| f(e)) {
+			result.push(e);
+		}
+		result
+	}
+	
 	///
 	/// Returns all edges that are incident on both of the given vertices, regardless of direction.
 	///
@@ -207,7 +225,6 @@ pub trait Graph
 	{
 		edges_incident_on!(self.all_edges_mut::<I>(),v)
 	}
-	
 }
 
 ///
@@ -251,6 +268,29 @@ pub trait ManualGraph: Graph
 		self.add_vertex_weighted(v, Self::VertexWeight::default())
 	}
 	
+	fn replace_vertex(&mut self, to_replace: Self::Vertex, replacement: Self::Vertex)
+					  -> Result<(),()>
+	{
+		let removed_edges = self.remove_edge_where_all(|e|
+			e.source() == to_replace || e.sink() == to_replace).into_iter();
+		
+		let map_to_replacement = |v| if v == to_replace {replacement} else {v};
+		if self.edges_incident_on::<Vec<_>>(to_replace).len() == 0 {
+			let v_weight = self.remove_vertex(to_replace).unwrap();
+			self.add_vertex_weighted(replacement, v_weight).unwrap();
+			removed_edges.map(|e| (
+				map_to_replacement(e.source()),
+				map_to_replacement(e.sink()), e.get_weight()
+			)).for_each(|e| self.add_edge_weighted(e).unwrap());
+			Ok(())
+		} else {
+			for e in removed_edges {
+				self.add_edge_weighted(e).unwrap();
+			}
+			Err(())
+		}
+	}
+	
 }
 
 ///
@@ -274,11 +314,13 @@ pub trait AutoGraph: Graph
 	{
 		self.new_vertex_weighted(Self::VertexWeight::default())
 	}
-	
 }
 
 ///
 /// Graph that at all times has a finite set of vertices and edges.
+///
+/// TODO: redesign. What about edges? even through there are less than usize::MAX vertices
+/// there can easily be be more than usize::MAX edges. Maybe this should be 2 traits.
 ///
 pub trait ExactGraph: Graph
 {

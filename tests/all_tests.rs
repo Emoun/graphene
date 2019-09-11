@@ -7,3 +7,4 @@ extern crate quickcheck_macros;
 mod mock_graph;
 mod core;
 mod common;
+mod algo;

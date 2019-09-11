@@ -6,7 +6,7 @@ use crate::mock_graph::{MockDirectedness, MockGraph};
 use graphene::core::{Graph, Edge, WeightRef};
 use crate::mock_graph::utilities::{unordered_equivalent_lists_equal};
 use crate::common::adjacency_list::adj_list_from_mock;
-use crate::mock_graph::arbitraries::{ArbGraphAndVertex, ArbGraphAndEdge};
+use crate::mock_graph::arbitrary::{ArbVertexIn, ArbEdgeIn};
 
 ///
 /// Tests that adding vertices to the graph results in the same vertices being
@@ -58,7 +58,8 @@ fn same_vertex_weight(mock: MockGraph<MockDirectedness>) -> bool
 /// Tests that the reference to vertex weights is the same regardless of mutability
 ///
 #[quickcheck]
-fn same_vertex_weight_mut(ArbGraphAndVertex(mock, v): ArbGraphAndVertex<MockDirectedness>) -> bool
+fn same_vertex_weight_mut(ArbVertexIn(mock, v):
+						  ArbVertexIn<MockGraph<MockDirectedness>>) -> bool
 {
 	let (mut g, v_map) = adj_list_from_mock(&mock);
 	
@@ -85,7 +86,8 @@ fn same_edge_weight_mut(mut mock: MockGraph<MockDirectedness>) -> bool
 /// Tests that removing a vertex works as expected
 ///
 #[quickcheck]
-fn remove_vertex(ArbGraphAndVertex(mock, v_remove): ArbGraphAndVertex<MockDirectedness>) -> bool
+fn remove_vertex(ArbVertexIn(mock, v_remove):
+				 ArbVertexIn<MockGraph<MockDirectedness>>) -> bool
 {
 	let (mut g, v_map) = adj_list_from_mock(&mock);
 	
@@ -119,7 +121,7 @@ fn remove_vertex(ArbGraphAndVertex(mock, v_remove): ArbGraphAndVertex<MockDirect
 /// Tests removing an edge
 ///
 #[quickcheck]
-fn remove_edge(ArbGraphAndEdge(mock, edge): ArbGraphAndEdge<MockDirectedness>) -> bool
+fn remove_edge(ArbEdgeIn(mock, edge): ArbEdgeIn<MockGraph<MockDirectedness>>) -> bool
 {
 	let (mut g, v_map) = adj_list_from_mock(&mock);
 	

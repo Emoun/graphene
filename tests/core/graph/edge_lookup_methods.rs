@@ -3,9 +3,9 @@
 //!
 use crate::mock_graph::{
 	MockGraph, MockVertex, MockDirectedness,
-	arbitraries::{
-		ArbGraphAndVertex, ArbGraphAndInvalidVertex,
-		ArbGraphAndTwoVertices, ArbGraphAndInvalidEdge
+	arbitrary::{
+		ArbVertexIn, ArbVertexOutside,
+		ArbTwoVerticesIn, ArbEdgeOutside
 	},
 	utilities::*,
 };
@@ -37,7 +37,7 @@ macro_rules! edge_lookup_method_tests {
 		{$($correct:tt)*} // checks whether an edge returned from the method is correct
 		$arb_graph:ident // The arbitraty graph and vertex struct the test function take
 		$arb_invalid_graph:ident // The arbitraty graph with invalid vertices to use in test
-		$directedness:ident
+		$base_graph:ty
 	} => {
 		mod $func {
 			use super::*;
@@ -45,7 +45,7 @@ macro_rules! edge_lookup_method_tests {
 			/// Ensures that all the returned edges are correct.
 			///
 			#[quickcheck]
-			fn returns_valid_edges($arb_graph(g, $($vertex_ids),*): $arb_graph<$directedness>) -> bool
+			fn returns_valid_edges($arb_graph(g, $($vertex_ids),*): $arb_graph<$base_graph>) -> bool
 			{
 				let edges = g.$func::<Vec<_>>($($vertex_ids),*);
 				let edges_len = edges.len();
@@ -59,7 +59,7 @@ macro_rules! edge_lookup_method_tests {
 			/// Ensures that all edges are returned.
 			///
 			#[quickcheck]
-			fn returns_all_edges($arb_graph(g, $($vertex_ids),*): $arb_graph<$directedness>) -> bool
+			fn returns_all_edges($arb_graph(g, $($vertex_ids),*): $arb_graph<$base_graph>) -> bool
 			{
 				let edges= g.$func::<Vec<_>>($($vertex_ids),*);
 				let expected = g.all_edges::<Vec<_>>().into_iter()
@@ -72,7 +72,7 @@ macro_rules! edge_lookup_method_tests {
 			/// Ensures that when the vertex is not in the graph, no edges are returned.
 			///
 			#[quickcheck]
-			fn invalid_vertex($arb_invalid_graph(g, $($vertex_ids),*): $arb_invalid_graph<$directedness>) -> bool
+			fn invalid_vertex($arb_invalid_graph(g, $($vertex_ids),*): $arb_invalid_graph<$base_graph>) -> bool
 			{
 				g.$func::<Vec<_>>($($vertex_ids),*).is_empty()
 			}
@@ -81,7 +81,7 @@ macro_rules! edge_lookup_method_tests {
 			/// Ensures that the mutable version returns the same edges as the original.
 			///
 			#[quickcheck]
-			fn mut_equivalent(g: MockGraph<$directedness>, $($vertex_ids: MockVertex),*) -> bool
+			fn mut_equivalent(g: $base_graph, $($vertex_ids: MockVertex),*) -> bool
 			{
 				let mut clone = g.clone();
 				let edges_mut = clone.$func_mut::<Vec<_>>($($vertex_ids),*);
@@ -99,34 +99,34 @@ edge_lookup_method_tests!(
 	edges_sourced_in_mut
 	(v)
 	{|e| e.source() == v }
-	ArbGraphAndVertex
-	ArbGraphAndInvalidVertex
-	Directed
+	ArbVertexIn
+	ArbVertexOutside
+	MockGraph<Directed>
 );
 edge_lookup_method_tests!(
 	edges_sinked_in
 	edges_sinked_in_mut
 	(v)
 	{|e| e.sink() == v }
-	ArbGraphAndVertex
-	ArbGraphAndInvalidVertex
-	Directed
+	ArbVertexIn
+	ArbVertexOutside
+	MockGraph<Directed>
 );
 edge_lookup_method_tests!(
 	edges_incident_on
 	edges_incident_on_mut
 	(v)
 	{|e| e.source() == v || e.sink() == v }
-	ArbGraphAndVertex
-	ArbGraphAndInvalidVertex
-	MockDirectedness
+	ArbVertexIn
+	ArbVertexOutside
+	MockGraph<MockDirectedness>
 );
 edge_lookup_method_tests!(
 	edges_between
 	edges_between_mut
 	(v1, v2)
 	{|e| (e.source() == v1 && e.sink() == v2) || (e.source() == v2 && e.sink() == v1)}
-	ArbGraphAndTwoVertices
-	ArbGraphAndInvalidEdge
-	MockDirectedness
+	ArbTwoVerticesIn
+	ArbEdgeOutside
+	MockGraph<MockDirectedness>
 );
