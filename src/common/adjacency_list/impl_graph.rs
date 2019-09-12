@@ -77,7 +77,7 @@ impl<Vw,Ew,D> Graph for AdjListGraph<Vw,Ew,D>
 	{
 		let len = self.vertices.len();
 		if e.source() < len && e.sink() < len {
-			self.vertices[e.source()].1.push((e.sink(), e.get_weight()));
+			self.vertices[e.source()].1.push((e.sink(), e.weight_owned()));
 			Ok(())
 		} else {
 			Err(())

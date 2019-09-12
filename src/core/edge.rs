@@ -1,5 +1,6 @@
 
 use crate::core::trait_aliases::Id;
+use std::ops::{DerefMut, Deref};
 
 ///
 /// Edge
@@ -16,28 +17,32 @@ pub trait Edge<V>
 	}
 }
 
-pub trait EdgeWeighted<V,W>: Edge<V>
+pub trait EdgeWeighted<V,W>: Edge<V> + Sized
 	where V: Id
 {
-	fn get_weight(self) -> W;
+	fn weight_owned(self) -> W;
+	
+	fn weight_ref(&self) -> &W;
+	
+	fn weight_ref_mut(&mut self) -> &mut W;
+	
+	fn split(self) -> ((V,V), W)
+	{
+		((self.source(),self.sink()), self.weight_owned())
+	}
 }
 
-pub trait WeightRef<V,W>: Edge<V>
-	where V: Id
+pub trait EdgeDeref<V,W>: Edge<V> 
+	where W: Deref, V:Id
 {
-	fn weight(&self) -> &W;
+	fn weight(&self) -> &W::Target;
 }
 
-///
-/// Weighted edge, mutable
-///
-pub trait WeightRefMut<V,W>: WeightRef<V,W>
-	where V: Id
+pub trait EdgeDerefMut<V,W>: EdgeDeref<V,W>
+	where W: DerefMut, V:Id
 {
-	fn weight_mut(&mut self) -> &mut W;
+	fn weight_mut(&mut self) -> &mut W::Target;
 }
-
-
 
 impl<V> Edge<V> for (V,V)
 	where V: Id
@@ -52,14 +57,16 @@ impl<V> Edge<V> for (V,V)
 impl<V> EdgeWeighted<V,()> for (V,V)
 	where V: Id
 {
-	fn get_weight(self){}
-}
-impl<V> WeightRef<V,()> for (V, V)
-	where V: Id
-{
-	fn weight(&self) -> &()
+	fn weight_owned(self) {}
+	
+	fn weight_ref(&self) -> &()
 	{
 		&()
+	}
+	
+	fn weight_ref_mut(&mut self)-> &mut ()
+	{
+		unimplemented!() //TODO: what to do about this?
 	}
 }
 
@@ -76,23 +83,34 @@ impl<V,W> Edge<V> for (V,V,W)
 impl<V,W> EdgeWeighted<V,W> for (V,V,W)
 	where V: Id
 {
-	fn get_weight(self) -> W
-	{
+	fn weight_owned(self) -> W {
 		self.2
 	}
+	
+	fn weight_ref(&self) -> &W
+	{
+		&self.2
+	}
+	
+	fn weight_ref_mut(&mut self) -> &mut W
+	{
+		&mut self.2
+	}
 }
-impl<'a,V,W> WeightRef<V,W> for (V,V,W)
-	where V: Id
+
+impl<V,W> EdgeDeref<V,W> for (V,V,W)
+	where W: Deref, V: Id
 {
-	fn weight(&self) -> &W
+	fn weight(&self) -> &W::Target
 	{
 		&self.2
 	}
 }
-impl<'a,V,W> WeightRefMut<V,W> for (V,V,W)
-	where V: Id
+
+impl<V,W> EdgeDerefMut<V,W> for (V,V,W)
+	where W: DerefMut, V: Id
 {
-	fn weight_mut(&mut self) -> &mut W
+	fn weight_mut(&mut self) -> &mut W::Target
 	{
 		&mut self.2
 	}

@@ -33,20 +33,6 @@ impl Default for MockT
 	}
 }
 
-impl PartialEq<MockT> for &MockT
-{
-	fn eq(&self, other: &MockT) -> bool {
-		self.value == other.value
-	}
-}
-
-impl PartialEq<MockT> for &mut MockT
-{
-	fn eq(&self, other: &MockT) -> bool {
-		self.value == other.value
-	}
-}
-
 pub type MockEdgeWeight = MockT;
 pub type MockVertexWeight = MockT;
 

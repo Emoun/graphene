@@ -1,11 +1,8 @@
 
 use quickcheck::{Arbitrary, Gen};
-use crate::mock_graph::{MockVertex, MockT, MockGraph, MockEdgeWeight, MockVertexWeight, MockDirectedness};
-use graphene::core::{Graph, Directedness, Edge, WeightRef, ManualGraph, Constrainer, BaseGraph, ExactGraph};
+use crate::mock_graph::{MockVertex, MockEdgeWeight, MockVertexWeight};
+use graphene::core::{Edge, ManualGraph, EdgeDeref, EdgeWeighted};
 use rand::{ Rng };
-use graphene::core::constraint::ConnectedGraph;
-
-
 
 ///
 /// An arbitrary graph and two vertices in it.
@@ -257,7 +254,7 @@ impl<Gr> Arbitrary for ArbEdgeIn<Gr>
 					.find(|e|
 						e.source() == self.1.source() &&
 							e.sink() == self.1.sink() &&
-							*e.weight() == self.1.weight()
+							e.weight() == self.1.weight_ref()
 					).unwrap().2;
 				*edge = shrunk.clone();
 				Self(clone, ((self.1).0, (self.1).1, shrunk))
@@ -270,7 +267,7 @@ impl<Gr> Arbitrary for ArbEdgeIn<Gr>
 		without_edge.remove_edge_where(|e|
 			e.source() == self.1.source() &&
 				e.sink() == self.1.sink() &&
-				e.weight() == self.1.weight()
+				e.weight() == self.1.weight_ref()
 		).unwrap();
 		result.extend(
 			ArbTwoVerticesIn(without_edge, (self.1).0, (self.1).1).shrink()

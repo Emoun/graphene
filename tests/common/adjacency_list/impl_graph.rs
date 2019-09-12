@@ -3,7 +3,7 @@
 //!
 
 use crate::mock_graph::{MockDirectedness, MockGraph};
-use graphene::core::{Graph, Edge, WeightRef};
+use graphene::core::{Graph, Edge, EdgeWeighted};
 use crate::mock_graph::utilities::{unordered_equivalent_lists_equal};
 use crate::common::adjacency_list::adj_list_from_mock;
 use crate::mock_graph::arbitrary::{ArbVertexIn, ArbEdgeIn};
@@ -125,8 +125,8 @@ fn remove_edge(ArbEdgeIn(mock, edge): ArbEdgeIn<MockGraph<MockDirectedness>>) ->
 {
 	let (mut g, v_map) = adj_list_from_mock(&mock);
 	
-	let edge_ref = (edge.source(), edge.sink(), edge.weight());
-	let mapped_edge = (v_map[&edge.source()], v_map[&edge.sink()], edge.weight());
+	let edge_ref = (edge.source(), edge.sink(), edge.weight_ref());
+	let mapped_edge = (v_map[&edge.source()], v_map[&edge.sink()], edge.weight_ref());
 	
 	if 	g.remove_edge_where(|e| e == mapped_edge ).is_ok() {
 		// Ensure that one less edge matches our edge

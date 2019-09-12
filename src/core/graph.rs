@@ -280,7 +280,7 @@ pub trait ManualGraph: Graph
 			self.add_vertex_weighted(replacement, v_weight).unwrap();
 			removed_edges.map(|e| (
 				map_to_replacement(e.source()),
-				map_to_replacement(e.sink()), e.get_weight()
+				map_to_replacement(e.sink()), e.weight_owned()
 			)).for_each(|e| self.add_edge_weighted(e).unwrap());
 			Ok(())
 		} else {

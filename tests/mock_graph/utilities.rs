@@ -1,4 +1,4 @@
-use graphene::core::{Graph, Directedness, AutoGraph, Edge, EdgeWeighted};
+use graphene::core::{Graph, Directedness, AutoGraph, Edge, EdgeWeighted, EdgeDeref};
 use crate::mock_graph::{MockGraph, MockVertex, MockVertexWeight, MockEdgeWeight};
 use std::collections::HashMap;
 #[macro_export]
@@ -113,7 +113,7 @@ pub fn auto_copy_from<G,D>(g: &mut G, mock: &MockGraph<D>)
 	}
 	// Add all edges
 	for e in mock.all_edges::<Vec<_>>().into_iter() {
-		g.add_edge_weighted((vertex_map[&e.source()], vertex_map[&e.sink()], e.get_weight().clone())).unwrap();
+		g.add_edge_weighted((vertex_map[&e.source()], vertex_map[&e.sink()], e.weight().clone())).unwrap();
 	}
 	vertex_map
 }

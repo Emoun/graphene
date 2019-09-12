@@ -1,4 +1,4 @@
-use graphene::core::{Directedness, EdgeWeighted, ExactGraph, Graph, ManualGraph, Edge, BaseGraph, Directed, Constrainer, trait_aliases::*};
+use graphene::core::{Directedness, EdgeWeighted, ExactGraph, Graph, ManualGraph, Edge, Directed, Constrainer, trait_aliases::*};
 use graphene::core::constraint::ConnectedGraph;
 use quickcheck::{Arbitrary, Gen};
 use crate::mock_graph::{MockGraph, MockVertexWeight, MockVertex, MockEdgeWeight};

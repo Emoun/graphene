@@ -161,7 +161,7 @@ impl<D: Directedness + Clone> Graph for MockGraph<D>
 			)
 		{
 			// Add the edge
-			self.vertices[v1_idx].2.push((v2_idx, e.get_weight()));
+			self.vertices[v1_idx].2.push((v2_idx, e.weight_owned()));
 			Ok(())
 		}else{
 			Err(())
