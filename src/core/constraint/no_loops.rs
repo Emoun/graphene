@@ -1,4 +1,4 @@
-use crate::core::{Graph, EdgeWeighted, trait_aliases::*, AutoGraph, Constrainer, BaseGraph};
+use crate::core::{Graph, EdgeWeighted, AutoGraph, Constrainer, BaseGraph};
 use delegate::delegate;
 
 ///
@@ -26,22 +26,23 @@ impl<G: Graph> Graph for NoLoopsGraph<G>
 	delegate! {
 		target self.0 {
 	
-			fn all_vertices<I: IntoFromIter<Self::Vertex>>(&self) -> I;
-			
-			fn vertex_weight(&self, v: Self::Vertex) -> Option<&Self::VertexWeight> ;
-			
-			fn vertex_weight_mut(&mut self, v: Self::Vertex) -> Option<&mut Self::VertexWeight>;
+			fn all_vertices<'a>(&'a self)
+				-> Box<dyn 'a + Iterator<Item=(Self::Vertex, &'a Self::VertexWeight)>>;
+				
+			fn all_vertices_mut<'a>(&'a mut self)
+				-> Box<dyn 'a + Iterator<Item=(Self::Vertex, &'a mut Self::VertexWeight)>>;
 			
 			fn remove_vertex(&mut self, v: Self::Vertex) -> Result<Self::VertexWeight, ()> ;
 			
-			fn all_edges<'a, I>(&'a self) -> I
-				where I: EdgeIntoFromIter<'a, Self::Vertex, Self::EdgeWeight>;
+			fn all_edges<'a>(&'a self) -> Box<dyn 'a + Iterator<Item=
+				(Self::Vertex, Self::Vertex, &'a Self::EdgeWeight)>>;
 			
-			fn all_edges_mut<'a, I>(&'a mut self) -> I
-				where I: EdgeIntoFromIterMut<'a, Self::Vertex, Self::EdgeWeight>;
+			fn all_edges_mut<'a>(&'a mut self) -> Box<dyn 'a + Iterator<Item=
+				(Self::Vertex, Self::Vertex, &'a mut Self::EdgeWeight)>>;
 			
-			fn remove_edge_where<F>(&mut self, f: F) -> Result<(Self::Vertex, Self::Vertex, Self::EdgeWeight), ()>
-				where F: Fn((Self::Vertex, Self::Vertex, &Self::EdgeWeight)) -> bool ;
+			fn remove_edge_where<F>(&mut self, f: F)
+				-> Result<(Self::Vertex, Self::Vertex, Self::EdgeWeight), ()>
+				where F: Fn((Self::Vertex, Self::Vertex, &Self::EdgeWeight)) -> bool;
 		}
 	}
 	fn add_edge_weighted<E>(&mut self, e: E) -> Result<(), ()>
@@ -79,8 +80,8 @@ impl<B, C>  Constrainer for NoLoopsGraph<C>
 	
 	fn constrain_single(g: Self::Constrained) -> Result<Self, ()>{
 
-		if g.all_vertices::<Vec<_>>().into_iter()
-			.any(|v| g.edges_between::<Vec<_>>(v,v).into_iter().next().is_some()){
+		if g.all_vertices()
+			.any(|(v,_)| g.edges_between(v,v).next().is_some()){
 			Err(())
 		} else {
 			Ok(NoLoopsGraph(g))

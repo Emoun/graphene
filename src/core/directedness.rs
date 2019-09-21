@@ -36,8 +36,8 @@ impl Directedness for Undirected{
 	}
 }
 
-impl<T,D:Directedness> Directedness for T where T: Graph<Directedness=D> {
+impl<T> Directedness for T where T: Graph {
 	fn directed() -> bool {
-		D::directed()
+		<Self as Graph>::Directedness::directed()
 	}
 }

@@ -1,4 +1,4 @@
-use crate::core::{Graph, trait_aliases::*, EdgeWeighted, AutoGraph, Constrainer, BaseGraph};
+use crate::core::{Graph, EdgeWeighted, AutoGraph, Constrainer, BaseGraph};
 use delegate::delegate;
 
 ///
@@ -34,18 +34,18 @@ impl<G: Graph> Graph for ConnectedGraph<G>
 	
 	delegate! {
 		target self.0 {
-	
-			fn all_vertices<I: IntoFromIter<Self::Vertex>>(&self) -> I;
+		
+			fn all_vertices<'a>(&'a self)
+				-> Box<dyn 'a + Iterator<Item=(Self::Vertex, &'a Self::VertexWeight)>>;
+				
+			fn all_vertices_mut<'a>(&'a mut self)
+				-> Box<dyn 'a + Iterator<Item=(Self::Vertex, &'a mut Self::VertexWeight)>>;
 			
-			fn vertex_weight(&self, v: Self::Vertex) -> Option<&Self::VertexWeight> ;
+			fn all_edges<'a>(&'a self) -> Box<dyn 'a + Iterator<Item=
+				(Self::Vertex, Self::Vertex, &'a Self::EdgeWeight)>>;
 			
-			fn vertex_weight_mut(&mut self, v: Self::Vertex) -> Option<&mut Self::VertexWeight>;
-			
-			fn all_edges<'a, I>(&'a self) -> I
-				where I: EdgeIntoFromIter<'a, Self::Vertex, Self::EdgeWeight>;
-			
-			fn all_edges_mut<'a, I>(&'a mut self) -> I
-				where I: EdgeIntoFromIterMut<'a, Self::Vertex, Self::EdgeWeight>;
+			fn all_edges_mut<'a>(&'a mut self) -> Box<dyn 'a + Iterator<Item=
+				(Self::Vertex, Self::Vertex, &'a mut Self::EdgeWeight)>>;
 			
 			fn add_edge_weighted<E>(&mut self, e: E) -> Result<(), ()>
 				where E: EdgeWeighted<Self::Vertex, Self::EdgeWeight>;

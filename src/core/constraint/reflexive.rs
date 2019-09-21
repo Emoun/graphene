@@ -1,4 +1,4 @@
-use crate::core::{Graph, Edge, EdgeWeighted, trait_aliases::*, AutoGraph, Constrainer, BaseGraph};
+use crate::core::{Graph, Edge, EdgeWeighted, AutoGraph, Constrainer, BaseGraph};
 use delegate::delegate;
 
 ///
@@ -29,17 +29,18 @@ impl<G> Graph for ReflexiveGraph<G>
 	
 	delegate! {
 		target self.0 {
-			fn all_vertices<I: IntoFromIter<Self::Vertex>>(&self) -> I;
 			
-			fn vertex_weight(&self, v: Self::Vertex) -> Option<&Self::VertexWeight>;
+			fn all_vertices<'a>(&'a self)
+				-> Box<dyn 'a + Iterator<Item=(Self::Vertex, &'a Self::VertexWeight)>>;
+				
+			fn all_vertices_mut<'a>(&'a mut self)
+				-> Box<dyn 'a + Iterator<Item=(Self::Vertex, &'a mut Self::VertexWeight)>>;
 			
-			fn vertex_weight_mut(&mut self, v: Self::Vertex) -> Option<&mut Self::VertexWeight>;
+			fn all_edges<'a>(&'a self) -> Box<dyn 'a + Iterator<Item=
+				(Self::Vertex, Self::Vertex, &'a Self::EdgeWeight)>>;
 			
-			fn all_edges<'a, I>(&'a self) -> I
-				where I: EdgeIntoFromIter<'a, Self::Vertex, Self::EdgeWeight>;
-			
-			fn all_edges_mut<'a, I>(&'a mut self) -> I
-				where I: EdgeIntoFromIterMut<'a, Self::Vertex, Self::EdgeWeight>;
+			fn all_edges_mut<'a>(&'a mut self) -> Box<dyn 'a + Iterator<Item=
+				(Self::Vertex, Self::Vertex, &'a mut Self::EdgeWeight)>>;
 			
 			fn add_edge_weighted<E>(&mut self, e: E) -> Result<(), ()>
 				where E: EdgeWeighted<Self::Vertex, Self::EdgeWeight>;
@@ -94,9 +95,8 @@ impl<B, C> Constrainer for ReflexiveGraph<C>
 	
 	fn constrain_single(g: Self::Constrained) -> Result<Self, ()>{
 
-		if g.all_vertices::<Vec<_>>().into_iter()
-			.all(|v| {
-				let mut between = g.edges_between::<Vec<_>>(v,v).into_iter();
+		if g.all_vertices().all(|(v,_)| {
+				let mut between = g.edges_between(v,v);
 				if let Some(_) = between.next() {
 					between.next().is_none()
 				} else {

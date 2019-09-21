@@ -49,7 +49,7 @@ impl<D> Arbitrary for MockGraph<D>
 			for _ in 0..vertex_count {
 				graph.new_vertex_weighted(MockVertexWeight::arbitrary(g)).unwrap();
 			}
-			let vertices = graph.all_vertices::<Vec<_>>();
+			let vertices = graph.all_vertices().map(|(v,_)| v).collect::<Vec<_>>();
 			
 			//Decide the amount of edges
 			let edge_count = g.gen_range(0, v_max);
@@ -95,7 +95,7 @@ impl<D> Arbitrary for MockGraph<D>
 		/* Shrink by shrinking edge weight
 		 */
 		//For each edge
-		self.all_edges::<Vec<_>>().into_iter().for_each(|(source,sink,ref weight)|{
+		self.all_edges().for_each(|(source,sink,ref weight)|{
 			let shrunk_weights = weight.shrink();
 			
 			shrunk_weights.for_each( |s_w| {
@@ -111,7 +111,7 @@ impl<D> Arbitrary for MockGraph<D>
 		/* Shrink by removing an edge
 		 */
 		//For each edge
-		for e in self.all_edges::<Vec<_>>(){
+		for e in self.all_edges(){
 			/* Add to the result a copy of the graph
 			 * without the edge
 			 */
@@ -125,9 +125,8 @@ impl<D> Arbitrary for MockGraph<D>
 		 * because we are already shrinking by removing edges, which means, there
 		 * should be a set of edge shrinkages that result in a removable vertex.
 		 */
-		for v in self.all_vertices::<Vec<_>>(){
-			let edges: Vec<_> = self.edges_incident_on(v);
-			if edges.len() == 0 {
+		for (v,_) in self.all_vertices(){
+			if self.edges_incident_on(v).next().is_none(){
 				let mut shrunk_graph = self.clone();
 				shrunk_graph.remove_vertex(v).unwrap();
 				result.push(shrunk_graph);

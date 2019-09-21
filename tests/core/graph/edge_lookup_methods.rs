@@ -47,12 +47,11 @@ macro_rules! edge_lookup_method_tests {
 			#[quickcheck]
 			fn returns_valid_edges($arb_graph(g, $($vertex_ids),*): $arb_graph<$base_graph>) -> bool
 			{
-				let edges = g.$func::<Vec<_>>($($vertex_ids),*);
-				let edges_len = edges.len();
+				let edges_len = g.$func($($vertex_ids),*).count();
 				
-				let valid_edges = edges.into_iter().filter($($correct)*).collect::<Vec<_>>();
+				let valid_edges_len = g.$func($($vertex_ids),*).filter($($correct)*).count();
 				
-				edges_len == valid_edges.len()
+				edges_len == valid_edges_len
 			}
 			
 			///
@@ -61,9 +60,8 @@ macro_rules! edge_lookup_method_tests {
 			#[quickcheck]
 			fn returns_all_edges($arb_graph(g, $($vertex_ids),*): $arb_graph<$base_graph>) -> bool
 			{
-				let edges= g.$func::<Vec<_>>($($vertex_ids),*);
-				let expected = g.all_edges::<Vec<_>>().into_iter()
-					.filter($($correct)*).collect();
+				let edges = g.$func($($vertex_ids),*).collect();
+				let expected = g.all_edges().filter($($correct)*).collect();
 				
 				unordered_equivalent_lists_equal(&edges, &expected)
 			}
@@ -74,7 +72,7 @@ macro_rules! edge_lookup_method_tests {
 			#[quickcheck]
 			fn invalid_vertex($arb_invalid_graph(g, $($vertex_ids),*): $arb_invalid_graph<$base_graph>) -> bool
 			{
-				g.$func::<Vec<_>>($($vertex_ids),*).is_empty()
+				g.$func($($vertex_ids),*).next().is_none()
 			}
 			
 			///
@@ -84,8 +82,8 @@ macro_rules! edge_lookup_method_tests {
 			fn mut_equivalent(g: $base_graph, $($vertex_ids: MockVertex),*) -> bool
 			{
 				let mut clone = g.clone();
-				let edges_mut = clone.$func_mut::<Vec<_>>($($vertex_ids),*);
-				let edges= g.$func::<Vec<_>>($($vertex_ids),*);
+				let edges_mut = clone.$func_mut($($vertex_ids),*).collect();
+				let edges= g.$func($($vertex_ids),*).collect();
 				
 				unordered_equivalent_lists(&edges, &edges_mut,
 					_3_tuple_equality(), _3_tuple_equality())

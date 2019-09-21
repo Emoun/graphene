@@ -3,9 +3,6 @@ use crate::mock_graph::{MockVertex, MockEdgeWeight, MockVertexWeight,};
 use graphene::{
 	core::{
 		Graph, Edge, EdgeWeighted,
-		trait_aliases::{
-			IntoFromIter
-		}
 	},
 };
 use std::marker::PhantomData;
@@ -117,32 +114,29 @@ impl<D: Directedness + Clone> Graph for MockGraph<D>
 	type EdgeWeight = MockEdgeWeight;
 	type Directedness = D;
 	
-	fn all_vertices<I: IntoFromIter<Self::Vertex>>(&self) -> I
+	fn all_vertices<'a>(&'a self)
+		-> Box<dyn 'a + Iterator<Item=(Self::Vertex, &'a Self::VertexWeight)>>
 	{
-		I::from_iter(self.vertices.keys().map(|&v| MockVertex{value: v}))
+		Box::new(self.vertices.iter().map(|(&v,w)| (MockVertex{value: v},w)))
 	}
 	
-	fn all_edges<'a, I>(&'a self) -> I
-		where I: IntoFromIter<(Self::Vertex, Self::Vertex, &'a Self::EdgeWeight)>
+	fn all_vertices_mut<'a>(&'a mut self)
+		-> Box<dyn 'a + Iterator<Item=(Self::Vertex, &'a mut Self::VertexWeight)>>
 	{
-		self.edges.iter().map(|(so, si, w)|
-			(MockVertex{value: *so}, MockVertex{value: *si}, w)).collect()
-	}
-	fn all_edges_mut<'a, I>(&'a mut self) -> I
-		where I: IntoFromIter<(Self::Vertex, Self::Vertex, &'a mut Self::EdgeWeight)>
-	{
-		self.edges.iter_mut().map(|(so, si, w)|
-			(MockVertex{value: *so}, MockVertex{value: *si}, w)).collect()
+		Box::new(self.vertices.iter_mut().map(|(&v,w)| (MockVertex{value: v},w)))
 	}
 	
-	fn vertex_weight(&self, v: Self::Vertex) -> Option<&Self::VertexWeight>
+	fn all_edges<'a>(&'a self) -> Box<dyn 'a + Iterator<Item=
+		(Self::Vertex, Self::Vertex, &'a Self::EdgeWeight)>>
 	{
-		self.vertices.get(&v.value)
+		Box::new(self.edges.iter().map(|(so, si, w)|
+			(MockVertex{value: *so}, MockVertex{value: *si}, w)))
 	}
-	
-	fn vertex_weight_mut(&mut self, v: Self::Vertex) -> Option<&mut Self::VertexWeight>
+	fn all_edges_mut<'a>(&'a mut self) -> Box<dyn 'a + Iterator<Item=
+		(Self::Vertex, Self::Vertex, &'a mut Self::EdgeWeight)>>
 	{
-		self.vertices.get_mut(&v.value)
+		Box::new(self.edges.iter_mut().map(|(so, si, w)|
+			(MockVertex{value: *so}, MockVertex{value: *si}, w)))
 	}
 	
 	fn remove_vertex(&mut self, mock_v: Self::Vertex) -> Result<Self::VertexWeight,()>{

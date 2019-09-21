@@ -1,4 +1,4 @@
-use crate::core::{Graph, EdgeWeighted, trait_aliases::*, Directedness, Edge, AutoGraph, Constrainer, BaseGraph};
+use crate::core::{Graph, EdgeWeighted, Directedness, Edge, AutoGraph, Constrainer, BaseGraph};
 use delegate::delegate;
 
 ///
@@ -19,7 +19,7 @@ pub trait Unique: Graph
 {
 	fn edge_between(&self, v1: Self::Vertex, v2: Self::Vertex) -> Option<&Self::EdgeWeight>
 	{
-		self.edges_between::<Vec<_>>(v1,v2).into_iter().next().map(|(_,_,w)| w)
+		self.edges_between(v1,v2).next().map(|(_,_,w)| w)
 	}
 }
 
@@ -35,35 +35,35 @@ impl<G: Graph> Graph for UniqueGraph<G>
 	delegate! {
 		target self.0 {
 	
-			fn all_vertices<I: IntoFromIter<Self::Vertex>>(&self) -> I;
-			
-			fn vertex_weight(&self, v: Self::Vertex) -> Option<&Self::VertexWeight> ;
-			
-			fn vertex_weight_mut(&mut self, v: Self::Vertex) -> Option<&mut Self::VertexWeight>;
+			fn all_vertices<'a>(&'a self)
+				-> Box<dyn 'a + Iterator<Item=(Self::Vertex, &'a Self::VertexWeight)>>;
+				
+			fn all_vertices_mut<'a>(&'a mut self)
+				-> Box<dyn 'a + Iterator<Item=(Self::Vertex, &'a mut Self::VertexWeight)>>;
 			
 			fn remove_vertex(&mut self, v: Self::Vertex) -> Result<Self::VertexWeight, ()> ;
 			
-			fn all_edges<'a, I>(&'a self) -> I
-				where I: EdgeIntoFromIter<'a, Self::Vertex, Self::EdgeWeight>;
+			fn all_edges<'a>(&'a self) -> Box<dyn 'a + Iterator<Item=
+				(Self::Vertex, Self::Vertex, &'a Self::EdgeWeight)>>;
 			
-			fn all_edges_mut<'a, I>(&'a mut self) -> I
-				where I: EdgeIntoFromIterMut<'a, Self::Vertex, Self::EdgeWeight>;
+			fn all_edges_mut<'a>(&'a mut self) -> Box<dyn 'a + Iterator<Item=
+				(Self::Vertex, Self::Vertex, &'a mut Self::EdgeWeight)>>;
 			
 			fn remove_edge_where<F>(&mut self, f: F)
 				-> Result<(Self::Vertex, Self::Vertex, Self::EdgeWeight), ()>
-				where F: Fn((Self::Vertex, Self::Vertex, &Self::EdgeWeight)) -> bool ;
+				where F: Fn((Self::Vertex, Self::Vertex, &Self::EdgeWeight)) -> bool;
 		}
 	}
 	fn add_edge_weighted<E>(&mut self, e: E) -> Result<(), ()>
 		where E: EdgeWeighted<Self::Vertex, Self::EdgeWeight>
 	{
 		if G::directed() {
-			if self.edges_between::<Vec<_>>(e.source(), e.sink()).into_iter()
+			if self.edges_between(e.source(), e.sink())
 				.any(|edge| e.source() == edge.source() && e.sink() == edge.sink()){
 				return Err(());
 			}
 		} else {
-			if !self.edges_between::<Vec<_>>(e.source(), e.sink()).is_empty() {
+			if self.edges_between(e.source(), e.sink()).next().is_some() {
 				return Err(());
 			}
 		}
@@ -94,12 +94,8 @@ impl<B, C> Constrainer for UniqueGraph<C>
 	type Constrained = C;
 	
 	fn constrain_single(g: Self::Constrained) -> Result<Self, ()>{
-		let mut edges = g.all_edges::<Vec<_>>().into_iter();
-
-		while let Some(e) = edges.next() {
-			let edges_rest = edges.clone();
-
-			for e2 in edges_rest {
+		for e in g.all_edges() {
+			for e2 in g.all_edges() {
 				if (e.source() == e2.source() && e.sink() == e2.sink()) ||
 					(e.source() == e2.sink() && e.sink() == e2.source() && !C::directed())
 				{

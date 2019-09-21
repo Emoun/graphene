@@ -25,13 +25,13 @@ impl<Gr> Arbitrary for ArbTwoVerticesIn<Gr>
 		// Create a graph with at least 1 vertex
 		let graph = {
 			let mut candidate_graph = Gr::arbitrary(g);
-			while candidate_graph.all_vertices::<Vec<_>>().len()==0 {
+			while candidate_graph.all_vertices().collect::<Vec<_>>().len()==0 {
 				candidate_graph = Gr::arbitrary(g);
 			}
 			candidate_graph
 		};
 		
-		let verts: Vec<_> = graph.all_vertices();
+		let verts: Vec<_> = graph.all_vertices().map(|(v,_)| v).collect();
 		let v1 = verts[g.gen_range(0, verts.len())];
 		let v2 = verts[g.gen_range(0, verts.len())];
 		
@@ -42,23 +42,23 @@ impl<Gr> Arbitrary for ArbTwoVerticesIn<Gr>
 	{
 		let mut result = Vec::new();
 		
-		if self.0.all_vertices::<Vec<_>>().len() > 1 {
+		if self.0.all_vertices().collect::<Vec<_>>().len() > 1 {
 			/*	First we shrink the graph, using only the shrunk graphs where the vertices are valid
 			*/
 			result.extend(
 				self.0.shrink()
 					.filter(|g|{
-						let verts: Vec<_> = g.all_vertices();
+						let verts: Vec<_> = g.all_vertices().map(|(v,_)| v).collect();
 						verts.contains(&self.1) && verts.contains(&self.2)
 					})
 					.map(|g| ArbTwoVerticesIn(g, self.1, self.2))
 			);
 			// Lastly, if the graph has only 2 vertices and no edges, remove one and
 			// update the corresponding vertex to the remaining one
-			if self.0.all_vertices::<Vec<_>>().len() == 2 &&
-				self.0.all_edges::<Vec<_>>().len() == 0
+			if self.0.all_vertices().collect::<Vec<_>>().len() == 2 &&
+				self.0.all_edges().next().is_none()
 			{
-				let mut verts = self.0.all_vertices::<Vec<_>>().into_iter();
+				let mut verts = self.0.all_vertices().map(|(v,_)| v);
 				let v1 = verts.next().unwrap();
 				let v2 = verts.next().unwrap();
 				
@@ -120,7 +120,7 @@ impl<Gr> Arbitrary for ArbVertexOutside<Gr>
 	fn arbitrary<G: Gen>(g: &mut G) -> Self {
 		let graph = Gr::arbitrary(g);
 		let mut v = MockVertex::arbitrary(g);
-		while graph.all_vertices::<Vec<_>>().contains(&v) {
+		while graph.all_vertices().any(|(existing,_)| existing == v) {
 			v = MockVertex::arbitrary(g)
 		}
 
@@ -133,13 +133,13 @@ impl<Gr> Arbitrary for ArbVertexOutside<Gr>
 			stays invalid
 		*/
 		result.extend(
-			self.0.shrink().filter(|g| !g.all_vertices::<Vec<_>>().contains(&self.1))
+			self.0.shrink().filter(|g| !g.all_vertices().any(|(v,_)| v == self.1))
 				.map(|g| ArbVertexOutside(g, self.1))
 		);
 
 		// We then shrink the vertex, keeping only the shrunk values
 		// that are invalid in the graph
-		let verts: Vec<_> = self.0.all_vertices();
+		let verts: Vec<_> = self.0.all_vertices().map(|(v,_)| v).collect();
 		result.extend(
 			self.1.shrink().filter(|v| !verts.contains(v))
 				.map(|v| ArbVertexOutside(self.0.clone(), v))
@@ -173,25 +173,23 @@ impl<Gr> Arbitrary for ArbEdgeOutside<Gr>
 		*/
 		result.extend(
 			self.0.shrink().filter(|g| {
-				let verts = g.all_vertices::<Vec<_>>();
-				!verts.contains(&self.1) || !verts.contains(&self.2)
+				!g.contains_vertex(self.1) || !g.contains_vertex(self.2)
 			})
-				.map(|g| Self(g, self.1, self.2))
+			.map(|g| Self(g, self.1, self.2))
 		);
 
 		/*	We then shrink the vertices, ensuring that at least one of them stays invalid
 		*/
 		result.extend(
 			self.1.shrink().filter(|v| {
-				let verts = self.0.all_vertices::<Vec<_>>();
-				!verts.contains(&v) || !verts.contains(&self.2)
+				!self.0.contains_vertex(*v) || !self.0.contains_vertex(self.2)
 			})
 				.map(|v| Self(self.0.clone(), v, self.2))
 		);
 		result.extend(
 			self.2.shrink().filter(|v| {
-				let verts = self.0.all_vertices::<Vec<_>>();
-				!verts.contains(&self.1) || !verts.contains(&v)
+				let verts = self.0.all_vertices().collect::<Vec<_>>();
+				!self.0.contains_vertex(self.1) || !self.0.contains_vertex(*v)
 			})
 				.map(|v| Self(self.0.clone(), self.1, v))
 		);
@@ -226,7 +224,7 @@ impl<Gr> Arbitrary for ArbEdgeIn<Gr>
 		result.extend(
 			(self.1).2.shrink().map(|shrunk| {
 				let mut clone = self.0.clone();
-				let edge = clone.all_edges_mut::<Vec<_>>().into_iter()
+				let edge = clone.all_edges_mut()
 					.find(|e|
 						e.source() == self.1.source() &&
 							e.sink() == self.1.sink() &&

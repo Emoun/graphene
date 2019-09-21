@@ -107,12 +107,12 @@ pub fn auto_copy_from<G,D>(g: &mut G, mock: &MockGraph<D>)
 {
 	// Add all the vertices, remembering which mock vertices match which real vertices
 	let mut vertex_map = HashMap::new();
-	for v in mock.all_vertices::<Vec<_>>().into_iter() {
+	for (v,_) in mock.all_vertices() {
 		let new_v = g.new_vertex_weighted(mock.vertex_weight(v).unwrap().clone()).unwrap();
 		vertex_map.insert(v,new_v);
 	}
 	// Add all edges
-	for e in mock.all_edges::<Vec<_>>().into_iter() {
+	for e in mock.all_edges() {
 		g.add_edge_weighted((vertex_map[&e.source()], vertex_map[&e.sink()], e.weight().clone())).unwrap();
 	}
 	vertex_map

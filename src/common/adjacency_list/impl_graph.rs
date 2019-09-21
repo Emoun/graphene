@@ -1,7 +1,5 @@
 
-use crate::core::{Graph, EdgeWeighted, trait_aliases::{
-	IntoFromIter, EdgeIntoFromIter, EdgeIntoFromIterMut
-}, Directedness, BaseGraph, AutoGraph, Edge, ExactGraph};
+use crate::core::{Graph, EdgeWeighted, Directedness, BaseGraph, AutoGraph, Edge, ExactGraph};
 use crate::common::AdjListGraph;
 
 
@@ -13,50 +11,39 @@ impl<Vw,Ew,D> Graph for AdjListGraph<Vw,Ew,D>
 	type EdgeWeight = Ew;
 	type Directedness = D;
 	
-	fn all_vertices<I: IntoFromIter<Self::Vertex>>(&self) -> I
+	fn all_vertices<'a>(&'a self)
+		-> Box<dyn 'a + Iterator<Item=(Self::Vertex, &'a Self::VertexWeight)>>
 	{
-		(0..self.vertices.len()).collect()
+		Box::new(self.vertices.iter().enumerate().map(|(v,(w,_))| (v, w)))
 	}
 	
-	fn all_edges<'a, I>(&'a self) -> I
-		where I: EdgeIntoFromIter<'a, Self::Vertex, Self::EdgeWeight>
+	fn all_vertices_mut<'a>(&'a mut self)
+		-> Box<dyn 'a + Iterator<Item=(Self::Vertex, &'a mut Self::VertexWeight)>>
 	{
-		self.vertices.iter().enumerate().flat_map(
+		Box::new(self.vertices.iter_mut().enumerate().map(|(v,(w,_))| (v, w)))
+	}
+	
+	fn all_edges<'a>(&'a self) -> Box<dyn 'a + Iterator<Item=
+		(Self::Vertex, Self::Vertex, &'a Self::EdgeWeight)>>
+	{
+		Box::new(self.vertices.iter().enumerate().flat_map(
 			|(source_id,( _, out))| {
 				out.iter().map( move|(sink_idx, e_weight)| {
 					(source_id, *sink_idx, e_weight)
 				})
 			}
-		).collect()
+		))
 	}
-	fn all_edges_mut<'a, I>(&'a mut self) -> I
-		where I: EdgeIntoFromIterMut<'a, Self::Vertex, Self::EdgeWeight>
+	fn all_edges_mut<'a>(&'a mut self) -> Box<dyn 'a + Iterator<Item=
+		(Self::Vertex, Self::Vertex, &'a mut Self::EdgeWeight)>>
 	{
-		self.vertices.iter_mut().enumerate().flat_map(
+		Box::new(self.vertices.iter_mut().enumerate().flat_map(
 			|(source_id,( _, out))| {
 				out.iter_mut().map( move|(sink_idx, e_weight)| {
 					(source_id, *sink_idx, e_weight)
 				})
 			}
-		).collect()
-	}
-	
-	fn vertex_weight(&self, v: Self::Vertex) -> Option<&Self::VertexWeight>
-	{
-		if v < self.vertices.len() {
-			Some(&self.vertices[v].0)
-		} else {
-			None
-		}
-	}
-	
-	fn vertex_weight_mut(&mut self, v: Self::Vertex) -> Option<&mut Self::VertexWeight>
-	{
-		if v < self.vertices.len() {
-			Some(&mut self.vertices[v].0)
-		} else {
-			None
-		}
+		))
 	}
 	
 	fn remove_vertex(&mut self, v: Self::Vertex) -> Result<Self::VertexWeight,()>

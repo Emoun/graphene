@@ -18,8 +18,8 @@ fn same_vertices(mock: MockGraph<MockDirectedness>) -> bool
 	let (g, v_map) = adj_list_from_mock(&mock);
 	
 	unordered_equivalent_lists_equal(
-		&mock.all_vertices::<Vec<_>>().into_iter().map(|v| v_map[&v]).collect(),
-		&g.all_vertices::<Vec<_>>()
+		&mock.all_vertices().map(|(v,_)| v_map[&v]).collect(),
+		&g.all_vertices().map(|(v,_)| v).collect()
 	)
 }
 
@@ -32,9 +32,9 @@ fn same_edges(mock: MockGraph<MockDirectedness>) -> bool
 	let (g, v_map) = adj_list_from_mock(&mock);
 
 	unordered_equivalent_lists_equal(
-		&mock.all_edges::<Vec<_>>().into_iter()
+		&mock.all_edges()
 			.map(|(so,si,w)| (v_map[&so], v_map[&si], w)).collect(),
-		&g.all_edges::<Vec<_>>()
+		&g.all_edges().collect()
 	)
 }
 
@@ -47,10 +47,10 @@ fn same_vertex_weight(mock: MockGraph<MockDirectedness>) -> bool
 	let (g, v_map) = adj_list_from_mock(&mock);
 
 	unordered_equivalent_lists_equal(
-		&mock.all_vertices::<Vec<_>>().into_iter()
-			.map(|v| (v_map[&v], mock.vertex_weight(v))).collect(),
-		&g.all_vertices::<Vec<_>>().into_iter()
-			.map(|v| (v, g.vertex_weight(v))).collect()
+		&mock.all_vertices()
+			.map(|(v,_)| (v_map[&v], mock.vertex_weight(v))).collect(),
+		&g.all_vertices()
+			.map(|(v,_)| (v, g.vertex_weight(v))).collect()
 	)
 }
 
@@ -76,9 +76,9 @@ fn same_edge_weight_mut(mut mock: MockGraph<MockDirectedness>) -> bool
 	let (mut g, v_map) = adj_list_from_mock(&mock);
 
 	unordered_equivalent_lists_equal(
-		&mock.all_edges_mut::<Vec<_>>().into_iter()
+		&mock.all_edges_mut()
 			.map(|(so,si,w)| (v_map[&so], v_map[&si], w)).collect(),
-		&g.all_edges_mut::<Vec<_>>()
+		&g.all_edges_mut().collect()
 	)
 }
 
@@ -95,22 +95,22 @@ fn remove_vertex(ArbVertexIn(mock, v_remove):
 		false
 	} else {
 		// Check that the number of vertices decreased by 1
-		( g.all_vertices::<Vec<_>>().into_iter().count() ==
-			(mock.all_vertices::<Vec<_>>().into_iter().count() -1)
+		( g.all_vertices().count() ==
+			(mock.all_vertices().count() -1)
 		) &&
 
 		// Check that the number of edges decreased by same as the number that was incident
 		// on the vertex
-		( g.all_edges::<Vec<_>>().into_iter().count() ==
-			(mock.all_edges::<Vec<_>>().into_iter().count() -
-				mock.edges_incident_on::<Vec<_>>(v_remove).into_iter().count())
+		( g.all_edges().count() ==
+			(mock.all_edges().count() -
+				mock.edges_incident_on(v_remove).count())
 		) &&
 
 		// Check that one less vertex has the same weight as the one removed
-		( g.all_vertices::<Vec<_>>().into_iter()
-			.filter(|&v| g.vertex_weight(v) == mock.vertex_weight(v_remove)).count() ==
-		  (mock.all_vertices::<Vec<_>>().into_iter()
-			.filter(|&v| mock.vertex_weight(v) == mock.vertex_weight(v_remove)).count() - 1)
+		( g.all_vertices()
+			.filter(|&(v,_)| g.vertex_weight(v) == mock.vertex_weight(v_remove)).count() ==
+		  (mock.all_vertices()
+			.filter(|&(v,_)| mock.vertex_weight(v) == mock.vertex_weight(v_remove)).count() - 1)
 		)
 
 		// TODO: Test that the right edges were removed?
@@ -130,8 +130,8 @@ fn remove_edge(ArbEdgeIn(mock, edge): ArbEdgeIn<MockGraph<MockDirectedness>>) ->
 
 	if 	g.remove_edge_where(|e| e == mapped_edge ).is_ok() {
 		// Ensure that one less edge matches our edge
-		g.all_edges::<Vec<_>>().into_iter().filter(|&e| e == mapped_edge).count() ==
-			(mock.all_edges::<Vec<_>>().into_iter().filter(|&e| e == edge_ref).count() - 1)
+		g.all_edges().filter(|&e| e == mapped_edge).count() ==
+			(mock.all_edges().filter(|&e| e == edge_ref).count() - 1)
 	} else {
 		false
 	}

@@ -1,4 +1,4 @@
-use graphene::core::{Directedness, EdgeWeighted, Graph, Edge, Directed, Constrainer, trait_aliases::*, AutoGraph};
+use graphene::core::{Directedness, EdgeWeighted, Graph, Edge, Directed, Constrainer, AutoGraph};
 use graphene::core::constraint::ConnectedGraph;
 use quickcheck::{Arbitrary, Gen};
 use crate::mock_graph::{MockGraph, MockVertexWeight, MockVertex, MockEdgeWeight};
@@ -21,7 +21,7 @@ fn has_path_to(graph: &MockGraph<Directed>, start: MockVertex, end: MockVertex) 
 			return true
 		}
 		visited.push(start);
-		for e in graph.edges_sourced_in::<Vec<_>>(start).into_iter() {
+		for e in graph.edges_sourced_in(start) {
 			if !visited.contains(&e.sink()) {
 				if dfs_rec(graph, e.sink(), end, visited) {
 					return true
@@ -36,7 +36,7 @@ fn has_path_to(graph: &MockGraph<Directed>, start: MockVertex, end: MockVertex) 
 
 fn is_connected(graph: &MockGraph<Directed>) -> bool
 {
-	let v_all = graph.all_vertices::<Vec<_>>();
+	let v_all = graph.all_vertices().map(|(v,_)| v).collect::<Vec<_>>();
 	v_all.iter().flat_map(|&v| v_all.iter().map(move |&v_other| (v, v_other)))
 		.all(|(v, v_other)| has_path_to(&graph, v, v_other))
 }
@@ -58,26 +58,26 @@ impl<D: Directedness + Clone> Graph for ArbConnectedGraph<D>
 	delegate! {
 		target self.0 {
 	
-			fn all_vertices<I: IntoFromIter<Self::Vertex>>(&self) -> I;
-			
-			fn vertex_weight(&self, v: Self::Vertex) -> Option<&Self::VertexWeight> ;
-			
-			fn vertex_weight_mut(&mut self, v: Self::Vertex) -> Option<&mut Self::VertexWeight>;
-			
-			fn all_edges<'a, I>(&'a self) -> I
-				where I: EdgeIntoFromIter<'a, Self::Vertex, Self::EdgeWeight>;
-			
-			fn all_edges_mut<'a, I>(&'a mut self) -> I
-				where I: EdgeIntoFromIterMut<'a, Self::Vertex, Self::EdgeWeight>;
-			
-			fn add_edge_weighted<E>(&mut self, e: E) -> Result<(), ()>
-				where E: EdgeWeighted<Self::Vertex, Self::EdgeWeight>;
+			fn all_vertices<'a>(&'a self)
+				-> Box<dyn 'a + Iterator<Item=(Self::Vertex, &'a Self::VertexWeight)>>;
+		
+			fn all_vertices_mut<'a>(&'a mut self)
+				-> Box<dyn 'a +Iterator<Item=(Self::Vertex, &'a mut Self::VertexWeight)>>;
 			
 			fn remove_vertex(&mut self, v: Self::Vertex) -> Result<Self::VertexWeight, ()>;
 			
+			fn all_edges<'a>(&'a self)
+				-> Box<dyn 'a + Iterator<Item=(Self::Vertex, Self::Vertex, &'a Self::EdgeWeight)>>;
+			
+			fn all_edges_mut<'a>(&'a mut self) -> Box<dyn 'a + Iterator<Item=
+				(Self::Vertex, Self::Vertex, &'a mut Self::EdgeWeight)>>;
+			
 			fn remove_edge_where<F>(&mut self, f: F)
 				-> Result<(Self::Vertex, Self::Vertex, Self::EdgeWeight), ()>
-				where F: Fn((Self::Vertex, Self::Vertex, &Self::EdgeWeight)) -> bool;
+				where F: Fn((Self::Vertex, Self::Vertex, &Self::EdgeWeight)) -> bool ;
+			
+			fn add_edge_weighted<E>(&mut self, e: E) -> Result<(), ()>
+				where E: EdgeWeighted<Self::Vertex, Self::EdgeWeight>;
 		}
 	}
 }
@@ -101,7 +101,7 @@ impl Arbitrary for ArbConnectedGraph<Directed>
 				graph.new_vertex_weighted(v_weight.clone()).unwrap();
 			}
 			// Create a 'ring' with edges, ensuring the graph is connected
-			let mut verts = graph.all_vertices::<Vec<_>>().into_iter();
+			let mut verts= graph.all_vertices().map(|(v,_)| v).collect::<Vec<_>>().into_iter();
 			if let Some(mut v_prev) = verts.next() {
 				for v_next in verts.chain(vec![v_prev]){
 					graph.add_edge_weighted((v_prev, v_next, MockEdgeWeight::arbitrary(g))).unwrap();
@@ -111,7 +111,7 @@ impl Arbitrary for ArbConnectedGraph<Directed>
 			
 			// We now have a connected graph.
 			// We add a random set of additional edges for good measure.
-			let v_all = graph.all_vertices::<Vec<_>>();
+			let v_all = graph.all_vertices().map(|(v,_)| v).collect::<Vec<_>>();
 			for _ in 0..g.gen_range(0, vertex_count+1) {
 				let source = v_all[g.gen_range(0,v_all.len())];
 				let sink = v_all[g.gen_range(0,v_all.len())];
@@ -148,15 +148,15 @@ impl Arbitrary for ArbConnectedGraph<Directed>
 		);
 		
 		// We also shrink by replacing any vertex with in- and outdegree of 1 with an edge
-		if self.all_vertices::<Vec<_>>().len() > 1 {
+		if self.all_vertices().collect::<Vec<_>>().len() > 1 {
 			result.extend(
-				self.all_vertices::<Vec<_>>().into_iter()
-					.filter(|&v| self.edges_sourced_in::<Vec<_>>(v).len() == 1 &&
-						self.edges_sinked_in::<Vec<_>>(v).len() == 1)
+				self.all_vertices().map(|(v,_)| v)
+					.filter(|&v| self.edges_sourced_in(v).count() == 1 &&
+						self.edges_sinked_in(v).count() == 1)
 					.flat_map(|v| {
 						let mut clone = self.0.clone().unconstrain_single();
-						let e_in = self.edges_sinked_in::<Vec<_>>(v)[0];
-						let e_out = self.edges_sourced_in::<Vec<_>>(v)[0];
+						let e_in = self.edges_sinked_in(v).next().unwrap();
+						let e_out = self.edges_sourced_in(v).next().unwrap();
 						let weight1 = clone.remove_edge(e_in).unwrap();
 						let weight2 = clone.remove_edge(e_out).unwrap();
 						clone.remove_vertex(v).unwrap();

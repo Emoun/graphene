@@ -1,6 +1,6 @@
 
 use crate::core::{Edge, EdgeWeighted, Directedness, trait_aliases::{
-	Id, IntoFromIter, EdgeIntoFromIter, EdgeIntoFromIterMut
+	Id,
 }, Directed};
 
 use std::iter::Iterator;
@@ -11,26 +11,24 @@ mod macros {
 	macro_rules! edges_between {
 		($e:expr, $v1:expr, $v2:expr) => {
 			{
-				let all_edges = $e.into_iter();
-			
 				// Filter out any edge that is not connected to both vertices
-				let relevant = all_edges.filter(|edge|{
+				let relevant = $e.filter(move|edge|{
 					(edge.source() == $v1 && edge.sink() == $v2) ||
 						(edge.source() == $v2 && edge.sink() == $v1)
 				});
 				
 				// Return the result
-				relevant.collect()
+				Box::new(relevant)
 			}
 		}
 	}
 	#[macro_export]
 	macro_rules! edges_incident_on {
 		($e:expr, $v:expr, $i:ident) => {
-			$e.into_iter().filter(|e| e.$i() == $v).collect()
+			Box::new($e.into_iter().filter(move|e| e.$i() == $v))
 		};
 		($e:expr, $v:expr) => {
-			$e.into_iter().filter(|edge| (edge.source() == $v) || (edge.sink() == $v)).collect()
+			Box::new($e.into_iter().filter(move|edge| (edge.source() == $v) || (edge.sink() == $v)))
 		}
 	}
 }
@@ -60,36 +58,50 @@ pub trait Graph
 	///
 	/// Returns copies of all current vertex values in the graph.
 	///
-	fn all_vertices<I: IntoFromIter<Self::Vertex>>(&self) -> I;
-	fn vertex_weight(&self, v: Self::Vertex) -> Option<&Self::VertexWeight>;
-	fn vertex_weight_mut(&mut self, v: Self::Vertex) -> Option<&mut Self::VertexWeight>;
+	fn all_vertices<'a>(&'a self)
+		-> Box<dyn 'a + Iterator<Item=(Self::Vertex, &'a Self::VertexWeight)>>;
+	fn all_vertices_mut<'a>(&'a mut self)
+		-> Box<dyn 'a + Iterator<Item=(Self::Vertex, &'a mut Self::VertexWeight)>>;
 	///
 	/// Removes the given vertex from the graph, returning its weight.
 	/// If the vertex still has edges incident on it, they are also removed,
 	/// dropping their weights.
 	///
 	fn remove_vertex(&mut self, v: Self::Vertex) -> Result<Self::VertexWeight,()>;
-	
 	///
 	/// Returns copies of all current edges in the graph.
 	///
-	fn all_edges<'a, I>(&'a self) -> I
-		where I: EdgeIntoFromIter<'a, Self::Vertex, Self::EdgeWeight>;
-	fn all_edges_mut<'a, I>(&'a mut self) -> I
-		where I: EdgeIntoFromIterMut<'a, Self::Vertex, Self::EdgeWeight>;
+	fn all_edges<'a>(&'a self) -> Box<dyn 'a + Iterator<Item=
+		(Self::Vertex, Self::Vertex, &'a Self::EdgeWeight)>>;
+	fn all_edges_mut<'a>(&'a mut self) -> Box<dyn 'a + Iterator<Item=
+		(Self::Vertex, Self::Vertex, &'a mut Self::EdgeWeight)>>;
 	///
 	/// Removes an edge that matches the given predicate closure.
 	/// If no edge is found to match and successfully removed, returns error
 	/// but otherwise doesn't change the graph.
 	///
-	fn remove_edge_where<F>(&mut self, f: F)
-		-> Result<(Self::Vertex, Self::Vertex, Self::EdgeWeight), ()>
+	fn remove_edge_where<F>(&mut self, f: F) -> Result<(Self::Vertex, Self::Vertex, Self::EdgeWeight), ()>
 		where F: Fn((Self::Vertex, Self::Vertex, &Self::EdgeWeight)) -> bool;
 	///
 	/// Adds a copy of the given edge to the graph
 	///
 	fn add_edge_weighted<E>(&mut self, e: E) -> Result<(),()>
 		where E: EdgeWeighted<Self::Vertex, Self::EdgeWeight>;
+	
+// Optional methods
+	
+	fn vertex_weight(&self, v: Self::Vertex) -> Option<&Self::VertexWeight>
+	{
+		self.all_vertices().find(|&(candidate,_)| candidate == v).map(|(_,w)| w)
+	}
+	fn vertex_weight_mut(&mut self, v: Self::Vertex) -> Option<&mut Self::VertexWeight>
+	{
+		self.all_vertices_mut().find(|&(candidate,_)| candidate == v).map(|(_,w)| w)
+	}
+	fn contains_vertex(&self, v: Self::Vertex) -> bool
+	{
+		self.vertex_weight(v).is_some()
+	}
 	///
 	/// Adds the given edge to the graph, regardless of whether there are existing,
 	/// identical edges in the graph.
@@ -170,15 +182,15 @@ pub trait Graph
 	///
 	/// I.e. all edges where e == (v1,v2,_) or e == (v2,v1,_)
 	///
-	fn edges_between<'a, I>(&'a self, v1: Self::Vertex, v2: Self::Vertex) -> I
-		where I: EdgeIntoFromIter<'a, Self::Vertex, Self::EdgeWeight>
+	fn edges_between<'a>(&'a self, v1: Self::Vertex, v2: Self::Vertex)
+		-> Box<dyn 'a + Iterator<Item=(Self::Vertex, Self::Vertex, &'a Self::EdgeWeight)>>
 	{
-		edges_between!(self.all_edges::<I>(), v1, v2)
+		edges_between!(self.all_edges(), v1, v2)
 	}
-	fn edges_between_mut<'a, I>(&'a mut self, v1: Self::Vertex, v2: Self::Vertex) -> I
-		where I: EdgeIntoFromIterMut<'a, Self::Vertex, Self::EdgeWeight>
+	fn edges_between_mut<'a>(&'a mut self, v1: Self::Vertex, v2: Self::Vertex)
+		-> Box<dyn 'a + Iterator<Item=(Self::Vertex, Self::Vertex, &'a mut Self::EdgeWeight)>>
 	{
-		edges_between!(self.all_edges_mut::<I>(), v1, v2)
+		edges_between!(self.all_edges_mut(), v1, v2)
 	}
 	///
 	/// Returns all edges that are sourced in the given vertex.
@@ -187,44 +199,44 @@ pub trait Graph
 	///
 	/// Only available for directed graphs
 	///
-	fn edges_sourced_in<'a, I>(&'a self, v: Self::Vertex) -> I
-		where I: EdgeIntoFromIter<'a, Self::Vertex, Self::EdgeWeight>,
-			  Self: Graph<Directedness=Directed>
+	fn edges_sourced_in<'a>(&'a self, v: Self::Vertex)
+		-> Box<dyn 'a + Iterator<Item=(Self::Vertex, Self::Vertex, &'a Self::EdgeWeight)>>
+		where Self: Graph<Directedness=Directed>
 	{
-		edges_incident_on!(self.all_edges::<I>(), v, source)
+		edges_incident_on!(self.all_edges(), v, source)
 	}
-	fn edges_sourced_in_mut<'a, I>(&'a mut self, v: Self::Vertex) -> I
-		where I: EdgeIntoFromIterMut<'a, Self::Vertex, Self::EdgeWeight>,
-			  Self: Graph<Directedness=Directed>
+	fn edges_sourced_in_mut<'a>(&'a mut self, v: Self::Vertex)
+		-> Box<dyn 'a + Iterator<Item=(Self::Vertex, Self::Vertex, &'a mut Self::EdgeWeight)>>
+		where Self: Graph<Directedness=Directed>
 	{
-		edges_incident_on!(self.all_edges_mut::<I>(), v, source)
+		edges_incident_on!(self.all_edges_mut(), v, source)
 	}
 	///
 	/// Returns all edges that are sinked in the given vertex.
 	///
 	/// I.e. all edges where `e == (_,v,_)`
 	///
-	fn edges_sinked_in<'a, I>(&'a self, v: Self::Vertex) ->  I
-		where I: EdgeIntoFromIter<'a, Self::Vertex, Self::EdgeWeight>,
-			  Self: Graph<Directedness=Directed>
+	fn edges_sinked_in<'a>(&'a self, v: Self::Vertex)
+		-> Box<dyn 'a + Iterator<Item=(Self::Vertex, Self::Vertex, &'a Self::EdgeWeight)>>
+		where Self: Graph<Directedness=Directed>
 	{
-		edges_incident_on!(self.all_edges::<I>(), v, sink)
+		edges_incident_on!(self.all_edges(), v, sink)
 	}
-	fn edges_sinked_in_mut<'a, I>(&'a mut self, v: Self::Vertex) -> I
-		where I: EdgeIntoFromIterMut<'a, Self::Vertex, Self::EdgeWeight>,
-			  Self: Graph<Directedness=Directed>
+	fn edges_sinked_in_mut<'a>(&'a mut self, v: Self::Vertex)
+		-> Box<dyn 'a + Iterator<Item=(Self::Vertex, Self::Vertex, &'a mut Self::EdgeWeight)>>
+		where Self: Graph<Directedness=Directed>
 	{
-		edges_incident_on!(self.all_edges_mut::<I>(), v, sink)
+		edges_incident_on!(self.all_edges_mut(), v, sink)
 	}
-	fn edges_incident_on<'a, I>(&'a self, v: Self::Vertex) -> I
-		where I: EdgeIntoFromIter<'a, Self::Vertex, Self::EdgeWeight>
+	fn edges_incident_on<'a>(&'a self, v: Self::Vertex)
+		-> Box<dyn 'a + Iterator<Item=(Self::Vertex, Self::Vertex, &'a Self::EdgeWeight)>>
 	{
-		edges_incident_on!(self.all_edges::<I>(),v)
+		edges_incident_on!(self.all_edges(),v)
 	}
-	fn edges_incident_on_mut<'a, I>(&'a mut self, v: Self::Vertex) -> I
-		where I: EdgeIntoFromIterMut<'a, Self::Vertex, Self::EdgeWeight>
+	fn edges_incident_on_mut<'a>(&'a mut self, v: Self::Vertex)
+		-> Box<dyn 'a + Iterator<Item=(Self::Vertex, Self::Vertex, &'a mut Self::EdgeWeight)>>
 	{
-		edges_incident_on!(self.all_edges_mut::<I>(),v)
+		edges_incident_on!(self.all_edges_mut(),v)
 	}
 }
 
@@ -264,13 +276,13 @@ pub trait ExactGraph: Graph
 	/// Returns the number of vertices in the graph.
 	///
 	fn vertex_count(&self) -> usize {
-		self.all_vertices::<Vec<_>>().into_iter().count()
+		self.all_vertices().count()
 	}
 	
 	///
 	/// Returns the number of edges in the graph.
 	///
 	fn edge_count(&self) -> usize {
-		self.all_edges::<Vec<_>>().into_iter().count()
+		self.all_edges().count()
 	}
 }

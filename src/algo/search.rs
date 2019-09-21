@@ -28,7 +28,7 @@ impl<'a, G:'a + Graph> Iterator for DFS<'a,G>
 
 		'l: loop {
 			if let Some(&next) = self.stack.last() {
-				for e in self.graph.edges_incident_on::<Vec<_>>(next).into_iter()
+				for e in self.graph.edges_incident_on(next)
 				{
 					let other_v =
 						if next == e.source() { e.sink() }
