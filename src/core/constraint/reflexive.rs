@@ -1,4 +1,4 @@
-use crate::core::{Graph, Edge, EdgeWeighted, trait_aliases::*, AutoGraph, ManualGraph, Constrainer, BaseGraph};
+use crate::core::{Graph, Edge, EdgeWeighted, trait_aliases::*, AutoGraph, Constrainer, BaseGraph};
 use delegate::delegate;
 
 ///
@@ -67,16 +67,6 @@ impl<G> AutoGraph for ReflexiveGraph<G>
 		let v = self.0.new_vertex_weighted(w)?;
 		self.0.add_edge((v,v))?;
 		Ok(v)
-	}
-}
-
-impl<G> ManualGraph for ReflexiveGraph<G>
-	where G: ManualGraph, G::EdgeWeight: Default
-{
-	fn add_vertex_weighted(&mut self, v: Self::Vertex, w: Self::VertexWeight) -> Result<(), ()>
-	{
-		self.0.add_vertex_weighted(v, w)?;
-		self.0.add_edge((v,v))
 	}
 }
 

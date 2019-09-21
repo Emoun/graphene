@@ -1,6 +1,5 @@
-use crate::core::{Graph, Edge, trait_aliases::*, EdgeWeighted, Directedness, AutoGraph, ManualGraph, Constrainer, BaseGraph};
+use crate::core::{Graph, trait_aliases::*, EdgeWeighted, AutoGraph, Constrainer, BaseGraph};
 use delegate::delegate;
-use crate::algo::DFS;
 
 ///
 /// A marker trait for graphs that are connected.
@@ -53,12 +52,12 @@ impl<G: Graph> Graph for ConnectedGraph<G>
 		}
 	}
 	
-	fn remove_vertex(&mut self, v: Self::Vertex) -> Result<Self::VertexWeight, ()>
+	fn remove_vertex(&mut self, _: Self::Vertex) -> Result<Self::VertexWeight, ()>
 	{
 		Err(())
 	}
 	
-	fn remove_edge_where<F>(&mut self, f: F)
+	fn remove_edge_where<F>(&mut self, _: F)
 		-> Result<(Self::Vertex, Self::Vertex, Self::EdgeWeight), ()>
 		where F: Fn((Self::Vertex, Self::Vertex, &Self::EdgeWeight)) -> bool
 	{
@@ -76,21 +75,6 @@ impl<G: AutoGraph> AutoGraph for ConnectedGraph<G>
 	}
 }
 
-impl<G: ManualGraph> ManualGraph for ConnectedGraph<G>
-{
-	delegate! {
-		target self.0 {
-			fn add_vertex_weighted(&mut self, v: Self::Vertex, w: Self::VertexWeight)
-				-> Result<(), ()>;
-			
-			// We delegate this method because it maintains connectivity
-			// The default implementation will call unimplemented methods
-			fn replace_vertex(&mut self, to_replace: Self::Vertex, replacement: Self::Vertex)
-					  -> Result<(),()>;
-		}
-	}
-}
-
 impl<G: Graph> Connected for ConnectedGraph<G>{}
 
 impl_constraints!{
@@ -103,7 +87,7 @@ impl<B, C> Constrainer for ConnectedGraph<C>
 	type BaseGraph = B;
 	type Constrained = C;
 	
-	fn constrain_single(g: Self::Constrained) -> Result<Self, ()>{
+	fn constrain_single(_: Self::Constrained) -> Result<Self, ()>{
 		unimplemented!()
 	}
 	fn unconstrain_single(self) -> Self::Constrained{

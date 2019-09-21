@@ -1,4 +1,4 @@
-use crate::core::{Graph, EdgeWeighted, trait_aliases::*, AutoGraph, ManualGraph, Constrainer, BaseGraph};
+use crate::core::{Graph, EdgeWeighted, trait_aliases::*, AutoGraph, Constrainer, BaseGraph};
 use delegate::delegate;
 
 ///
@@ -61,16 +61,6 @@ impl<G: AutoGraph> AutoGraph for NoLoopsGraph<G>
 		target self.0 {
 			fn new_vertex_weighted(&mut self, w: Self::VertexWeight)
 				-> Result<Self::Vertex, ()>;
-		}
-	}
-}
-
-impl<G: ManualGraph> ManualGraph for NoLoopsGraph<G>
-{
-	delegate! {
-		target self.0 {
-			fn add_vertex_weighted(&mut self, v: Self::Vertex, w: Self::VertexWeight)
-				-> Result<(), ()>;
 		}
 	}
 }

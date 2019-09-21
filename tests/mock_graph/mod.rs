@@ -17,7 +17,7 @@ use graphene::core::Directedness;
 #[derive(Copy, Clone, Eq, PartialEq, Debug, Hash)]
 pub struct MockVertex
 {
-	pub value: u32
+	pub value: usize
 }
 
 #[derive(Debug, Clone, PartialEq)]

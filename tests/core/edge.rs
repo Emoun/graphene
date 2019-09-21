@@ -4,7 +4,7 @@
 #![allow(unused_must_use)]
 
 use crate::mock_graph::{MockVertex, MockEdgeWeight};
-use graphene::core::{Edge, EdgeWeighted, EdgeDeref, EdgeDerefMut, trait_aliases::Id};
+use graphene::core::{Edge, EdgeWeighted, EdgeDeref, EdgeDerefMut};
 
 
 #[test]

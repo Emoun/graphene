@@ -1,4 +1,4 @@
-use graphene::core::{Graph, Directedness, AutoGraph, Edge, EdgeWeighted, EdgeDeref};
+use graphene::core::{Graph, Directedness, AutoGraph, Edge, EdgeDeref};
 use crate::mock_graph::{MockGraph, MockVertex, MockVertexWeight, MockEdgeWeight};
 use std::collections::HashMap;
 #[macro_export]

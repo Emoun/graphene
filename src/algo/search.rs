@@ -1,4 +1,4 @@
-use crate::core::{Graph, Directedness, Edge, Undirected};
+use crate::core::{Graph, Edge};
 
 ///
 ///

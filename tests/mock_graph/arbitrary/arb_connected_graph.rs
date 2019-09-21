@@ -1,9 +1,10 @@
-use graphene::core::{Directedness, EdgeWeighted, ExactGraph, Graph, ManualGraph, Edge, Directed, Constrainer, trait_aliases::*};
+use graphene::core::{Directedness, EdgeWeighted, Graph, Edge, Directed, Constrainer, trait_aliases::*, AutoGraph};
 use graphene::core::constraint::ConnectedGraph;
 use quickcheck::{Arbitrary, Gen};
 use crate::mock_graph::{MockGraph, MockVertexWeight, MockVertex, MockEdgeWeight};
 use rand::Rng;
 use delegate::delegate;
+use crate::mock_graph::arbitrary::max_vertex_count;
 
 ///
 /// Returns whether there is a path from the first vertex given to the second (on the given graph).
@@ -81,21 +82,6 @@ impl<D: Directedness + Clone> Graph for ArbConnectedGraph<D>
 	}
 }
 
-impl<D: Directedness + Clone> ManualGraph for ArbConnectedGraph<D>
-{
-	delegate!{
-		target self.0{
-			fn add_vertex_weighted(&mut self, v: Self::Vertex, w: Self::VertexWeight)
-				-> Result<(), ()>;
-				
-			// We delegate this method because it maintains connectivity
-			// The default implementation will call unimplemented methods
-			fn replace_vertex(&mut self, to_replace: Self::Vertex, replacement: Self::Vertex)
-					  -> Result<(),()>;
-		}
-	}
-}
-
 impl Arbitrary for ArbConnectedGraph<Directed>
 {
 	fn arbitrary<G: Gen>(g: &mut G) -> Self {
@@ -104,18 +90,15 @@ impl Arbitrary for ArbConnectedGraph<Directed>
 		let mut graph = MockGraph::empty();
 		
 		//Decide the amount of vertices
-		let vertex_count = g.gen_range(0, g.size()/5);
+		let vertex_count = g.gen_range(0, max_vertex_count(g));
 		
 		/* If the amount of vertices is 0, no edges can be created.
 		 */
 		if vertex_count > 0 {
 			// Add all vertices to the graph
-			while graph.vertex_count() < vertex_count {
+			for _ in 0..vertex_count {
 				let v_weight = MockVertexWeight::arbitrary(g);
-				let mut v_candidate = MockVertex::arbitrary(g);
-				while graph.add_vertex_weighted(v_candidate,v_weight.clone()).is_err(){
-					v_candidate = MockVertex::arbitrary(g);
-				}
+				graph.new_vertex_weighted(v_weight.clone()).unwrap();
 			}
 			// Create a 'ring' with edges, ensuring the graph is connected
 			let mut verts = graph.all_vertices::<Vec<_>>().into_iter();

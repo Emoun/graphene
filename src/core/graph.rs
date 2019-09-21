@@ -1,7 +1,7 @@
 
 use crate::core::{Edge, EdgeWeighted, Directedness, trait_aliases::{
 	Id, IntoFromIter, EdgeIntoFromIter, EdgeIntoFromIterMut
-}, Directed, Undirected};
+}, Directed};
 
 use std::iter::Iterator;
 
@@ -79,7 +79,8 @@ pub trait Graph
 		where I: EdgeIntoFromIterMut<'a, Self::Vertex, Self::EdgeWeight>;
 	///
 	/// Removes an edge that matches the given predicate closure.
-	/// If no edge is found and removed, returns error.
+	/// If no edge is found to match and successfully removed, returns error
+	/// but otherwise doesn't change the graph.
 	///
 	fn remove_edge_where<F>(&mut self, f: F)
 		-> Result<(Self::Vertex, Self::Vertex, Self::EdgeWeight), ()>
@@ -225,72 +226,6 @@ pub trait Graph
 	{
 		edges_incident_on!(self.all_edges_mut::<I>(),v)
 	}
-}
-
-///
-/// A graph where the vertex ids can be provided by the user.
-///
-///
-pub trait ManualGraph: Graph
-{
-	
-	///
-	/// Adds the given vertex to the graph with the given weight.
-	///
-	fn add_vertex_weighted(&mut self, v: Self::Vertex, w: Self::VertexWeight) -> Result<(),()>;
-	
-	///
-	/// Adds the given vertex to graph as long as no identical vertex is already
-	/// present i the graph and the graph is capable of storing it.
-	///
-	/// ###Returns:
-	///
-	/// - `Ok` if the vertex is valid and has been added.
-	/// - `Err` if the vertex is already present in the graph or
-	/// it is otherwise unable to store it.
-	///
-	/// ###`Ok` properties :
-	///
-	/// - All vertices present before the call are also present after it.
-	/// - All edges present before the call are also present after it.
-	/// - No edges are changed.
-	/// - No new edges are introduced.
-	/// - Only the given vertex is added to the graph.
-	///
-	/// ###`Err` properties :
-	///
-	/// - The graph is unchanged.
-	///
-	///
-	fn add_vertex(&mut self, v: Self::Vertex) -> Result<(),()>
-		where Self::VertexWeight: Default
-	{
-		self.add_vertex_weighted(v, Self::VertexWeight::default())
-	}
-	
-	fn replace_vertex(&mut self, to_replace: Self::Vertex, replacement: Self::Vertex)
-					  -> Result<(),()>
-	{
-		let removed_edges = self.remove_edge_where_all(|e|
-			e.source() == to_replace || e.sink() == to_replace).into_iter();
-		
-		let map_to_replacement = |v| if v == to_replace {replacement} else {v};
-		if self.edges_incident_on::<Vec<_>>(to_replace).len() == 0 {
-			let v_weight = self.remove_vertex(to_replace).unwrap();
-			self.add_vertex_weighted(replacement, v_weight).unwrap();
-			removed_edges.map(|e| (
-				map_to_replacement(e.source()),
-				map_to_replacement(e.sink()), e.weight_owned()
-			)).for_each(|e| self.add_edge_weighted(e).unwrap());
-			Ok(())
-		} else {
-			for e in removed_edges {
-				self.add_edge_weighted(e).unwrap();
-			}
-			Err(())
-		}
-	}
-	
 }
 
 ///

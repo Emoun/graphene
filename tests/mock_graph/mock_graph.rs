@@ -2,7 +2,7 @@
 use crate::mock_graph::{MockVertex, MockEdgeWeight, MockVertexWeight,};
 use graphene::{
 	core::{
-		Graph, Edge, ManualGraph, EdgeWeighted,
+		Graph, Edge, EdgeWeighted,
 		trait_aliases::{
 			IntoFromIter
 		}
@@ -10,55 +10,98 @@ use graphene::{
 };
 use std::marker::PhantomData;
 use std::fmt::{Debug, Formatter, Error};
-use graphene::core::{Directedness, ExactGraph, BaseGraph};
+use graphene::core::{Directedness, ExactGraph, BaseGraph, AutoGraph};
+use std::collections::HashMap;
 
+///
+/// A simple graph implementation used for testing.
+///
+/// Vertex ids are maintained across vertex creation and removal.
+/// Vertex ids of previously removed vertices won't be reused unless `pack()` is called.
+///
+/// Will panic if it runs out of ids.
+///
 #[derive(Clone)]
 pub struct MockGraph<D>
 	where D: Directedness + Clone
 {
+	/// The number to give the next new vertex.
+	pub next_id: usize,
 	///
-	/// The vertices in the graph.
-	/// Each entry in the vector is a vertex.
-	/// The first element for each vertex is its ID.
-	/// The second element is its weight.
+	/// The weights of the vertices in the graph.
 	///
-	pub vertices: Vec<(
-		MockVertex,
-		MockVertexWeight,
-		Vec<(usize,MockEdgeWeight)>
-	)>,
+	pub vertices: HashMap<usize, MockVertexWeight>,
+	/// All edges in the graph, regardless of directedness.
+	pub edges: Vec<(usize, usize, MockEdgeWeight)>,
 	phantom: PhantomData<D>
 }
 
 impl<D: Directedness + Clone> MockGraph<D> {
 	
-	pub fn new(vertices: Vec<(
-		MockVertex,
-		MockVertexWeight,
-		Vec<(usize,MockEdgeWeight)>
-	)>) -> Self
+	/// Validates the internal integrity of the graph.
+	///
+	/// I.e:
+	/// * All edges are incident on currently vertices that are still in the graph.
+	/// * All vertex ids are less that the next id to be used
+	pub fn validate(&self)
 	{
-		Self{ vertices, phantom: PhantomData}
+		if let Some(v) = self.vertices.keys().find(|&&v| v >= self.next_id ) {
+			panic!("Found a vertex with id larger than 'next_id'({}): {}", self.next_id, v);
+		}
+		if let Some(e) = self.edges.iter().find(|e|
+			!self.vertices.contains_key(&e.source()) ||
+			!self.vertices.contains_key(&e.sink()) )
+		{
+			panic!("Found an edge incident on invalid vertices: {:?}", e);
+		}
 	}
 	
 	pub fn empty() -> Self
 	{
-		Self{vertices: Vec::new(), phantom: PhantomData}
+		Self{next_id: 0, vertices: HashMap::new(), edges: Vec::new(), phantom: PhantomData}
+	}
+	
+	///
+	/// Reassigns vertex ids such that there are no spaces between them.
+	///
+	/// I.e. if the vertices are {0,1,3,4,6} they become {0,1,2,3,4} and all edges are
+	/// corrected accordingly.
+	///
+	pub fn pack(&mut self)
+	{
+		let mut old_verts = self.vertices.keys().collect::<Vec<_>>();
+		old_verts.sort();
+		let vert_map: HashMap<usize, usize> = old_verts.into_iter().enumerate()
+			.map(|(idx, &old_v)| (old_v, idx)).collect();
+
+		self.next_id = 0;
+
+		// Move all vertex weight to new vertex map
+		let mut new_vertices = HashMap::new();
+		for (old_v, &new_v) in &vert_map {
+			new_vertices.insert(new_v, self.vertices.remove(old_v).unwrap());
+		}
+		self.vertices = new_vertices;
+
+		// Correct all edges
+		for e in self.edges.iter_mut() {
+			e.0 = vert_map[&e.0];
+			e.1 = vert_map[&e.1];
+		}
+
+		self.validate()
 	}
 }
 
 impl<D: Directedness + Clone> Debug for MockGraph<D> {
 	fn fmt(&self, f: &mut Formatter) -> Result<(), Error> {
 		f.write_str("MockGraph { vertices: [ ")?;
-		for (v,w,_) in &self.vertices {
-			f.write_fmt(format_args!("({:?}, {:?}), ", v.value, w.value))?;
+		for (v,w) in &self.vertices {
+			f.write_fmt(format_args!("({:?}, {:?}), ", v, w.value))?;
 		}
 		f.write_str("], edges: [ ")?;
-		for (v,_,edges) in &self.vertices {
-			for (idx, w) in edges {
-				f.write_fmt(format_args!("({:?}, {:?}, {:?}), ",
-										 v.value, self.vertices[*idx].0.value, w.value))?;
-			}
+		for (so,si,w) in &self.edges {
+			f.write_fmt(format_args!("({:?}, {:?}, {:?}), ", so, si, w.value))?;
 		}
 		f.write_str("] }")?;
 		Ok(())
@@ -67,6 +110,8 @@ impl<D: Directedness + Clone> Debug for MockGraph<D> {
 
 impl<D: Directedness + Clone> Graph for MockGraph<D>
 {
+	/// We hide u32 behind a struct to ensure our tests aren't dependent
+	/// on graphs using usize as ids
 	type Vertex = MockVertex;
 	type VertexWeight = MockVertexWeight;
 	type EdgeWeight = MockEdgeWeight;
@@ -74,96 +119,56 @@ impl<D: Directedness + Clone> Graph for MockGraph<D>
 	
 	fn all_vertices<I: IntoFromIter<Self::Vertex>>(&self) -> I
 	{
-		I::from_iter(self.vertices.iter().map(|(v,_,_)| *v))
+		I::from_iter(self.vertices.keys().map(|&v| MockVertex{value: v}))
 	}
 	
 	fn all_edges<'a, I>(&'a self) -> I
 		where I: IntoFromIter<(Self::Vertex, Self::Vertex, &'a Self::EdgeWeight)>
 	{
-		self.vertices.iter().flat_map(
-			|(source_id, _, out)| {
-				out.iter().map( move|(sink_idx, e_weight)| {
-					(*source_id, self.vertices[*sink_idx].0, e_weight)
-				})
-			}
-		).collect()
+		self.edges.iter().map(|(so, si, w)|
+			(MockVertex{value: *so}, MockVertex{value: *si}, w)).collect()
 	}
 	fn all_edges_mut<'a, I>(&'a mut self) -> I
 		where I: IntoFromIter<(Self::Vertex, Self::Vertex, &'a mut Self::EdgeWeight)>
 	{
-		let map: Vec<MockVertex> = self.vertices.iter().map(|(id,_,_)| id).cloned().collect();
-		self.vertices.iter_mut().flat_map(
-			|(source_id, _, out)| {
-				let map = &map;
-				out.iter_mut().map( move|(sink_idx, e_weight)| {
-					(*source_id, map[*sink_idx], e_weight)
-				})
-			}
-		).collect()
+		self.edges.iter_mut().map(|(so, si, w)|
+			(MockVertex{value: *so}, MockVertex{value: *si}, w)).collect()
 	}
 	
 	fn vertex_weight(&self, v: Self::Vertex) -> Option<&Self::VertexWeight>
 	{
-		if let Some((_,w,_)) = self.vertices.iter().find(|(id,_,_)| id.value == v.value){
-			Some(w)
-		}else{
-			None
-		}
+		self.vertices.get(&v.value)
 	}
 	
 	fn vertex_weight_mut(&mut self, v: Self::Vertex) -> Option<&mut Self::VertexWeight>
 	{
-		if let Some((_,w,_)) = self.vertices.iter_mut().find(|(id,_,_)| id.value == v.value){
-			Some(w)
-		}else{
-			None
-		}
+		self.vertices.get_mut(&v.value)
 	}
 	
-	fn remove_vertex(&mut self, v: Self::Vertex) -> Result<Self::VertexWeight,()>{
-		//Get index of vertex
-		if let Some(v_idx) = self.vertices.iter().position(|(id,_,_)| id.value == v.value){
-			if self.vertices[v_idx].2.len() != 0 {
-				while let Ok(_)  = self.remove_edge_where(|e| e.sink() == v || e.source() == v) {
-					// Drop edge
-				}
-			}
-			
-			// For efficiency, instead of just removing v and shifting all
-			// other vertices' indices, we swap the vertex with the highest
-			// index into the index of v
-			
-			// Start by re-point all edges pointing to last vertex (called 'last' from now on)
-			// to point to the index of v
-			let last_idx = self.vertices.len() - 1;
-			//For each vertex
-			//any edge pointing to the last value
-			//should now point to v
-			self.vertices.iter_mut().flat_map(|(_,_,out)| out.iter_mut())
-				.filter(|(sink_idx, _)| *sink_idx == last_idx)
-				.for_each(|(sink_idx, _)| *sink_idx = v_idx);
-			
-			// Remove v, swapping in the value of last
-			return Ok(self.vertices.swap_remove(v_idx).1);
+	fn remove_vertex(&mut self, mock_v: Self::Vertex) -> Result<Self::VertexWeight,()>{
+		let v = mock_v.value;
+		if let Some(weight) = self.vertices.remove(&v){
+			self.edges.retain(|e| e.source() != v && e.sink() != v);
+			self.validate();
+			Ok(weight)
+		} else {
+			Err(())
 		}
-		//Vertex not part of the core
-		Err(())
 	}
 	
 	fn add_edge_weighted<E>(&mut self, e: E) -> Result<(),()>
 		where
 			E: EdgeWeighted<Self::Vertex, Self::EdgeWeight>,
 	{
-		// Find the indices of the vertices
-		if let (Some(v1_idx), Some(v2_idx)) =
-			(	self.vertices.iter().position(|(id,_,_)| *id == e.source()),
-				 self.vertices.iter().position(|(id,_,_)| *id == e.sink())
-			)
+		if self.vertices.contains_key(&e.source().value) &&
+			self.vertices.contains_key(&e.sink().value)
 		{
-			// Add the edge
-			self.vertices[v1_idx].2.push((v2_idx, e.weight_owned()));
+			self.edges.push(
+				(e.source().value, e.sink().value, e.weight_owned())
+			);
+			self.validate();
 			Ok(())
-		}else{
+		} else {
 			Err(())
 		}
 	}
@@ -173,35 +178,28 @@ impl<D: Directedness + Clone> Graph for MockGraph<D>
 		where
 			F: Fn((Self::Vertex, Self::Vertex, &Self::EdgeWeight)) -> bool
 	{
-		let mut to_delete: Option<(usize, usize, Self::Vertex, Self::Vertex)> = None;
-		'l:
-		for (so_idx, (so_v, _, out)) in self.vertices.iter().enumerate() {
-			for(e_idx, (si_idx, e_weight)) in out.iter().enumerate() {
-				let si_v = self.vertices[*si_idx].0;
-				if f((*so_v, si_v, e_weight)) {
-					to_delete = Some((so_idx, e_idx, *so_v, si_v));
-					break 'l;
-				}
-			}
-		}
-		if let Some((so_idx, e_idx, so_v, si_v)) = to_delete {
-			let (_, weight) = self.vertices[so_idx].2.remove(e_idx);
-			Ok((so_v, si_v, weight))
-		}else{
+		if let Some((idx,_)) = self.edges.iter().enumerate()
+			.find(|(_, (so,si,w))|
+				f((MockVertex{value: *so},MockVertex{value: *si}, w)))
+		{
+			let (so,si,w) = self.edges.remove(idx);
+			self.validate();
+			Ok((MockVertex{value: so},MockVertex{value: si}, w))
+		} else {
 			Err(())
 		}
 	}
 }
 
-impl<D: Directedness + Clone> ManualGraph for MockGraph<D>
+impl<D: Directedness + Clone> AutoGraph for MockGraph<D>
 {
-	fn add_vertex_weighted(&mut self, v: Self::Vertex, w: Self::VertexWeight) -> Result<(),()>
-	{
-		if self.vertices.iter().any(|(id,_,_)| id.value == v.value ){
-			Err(())
-		}else{
-			self.vertices.push((v,w,Vec::new()));
-			Ok(())
+	fn new_vertex_weighted(&mut self, w: Self::VertexWeight) -> Result<Self::Vertex, ()> {
+		if self.vertices.insert(self.next_id, w).is_some() {
+			panic!("'next_id' was already in use.");
+		} else {
+			self.next_id += 1;
+			self.validate();
+			Ok(MockVertex{ value: self.next_id - 1})
 		}
 	}
 }
