@@ -45,6 +45,43 @@ fn main(){
 }
 ```
 
+### Use Cases
+
+The following is a non-exhaustive list of use cases Graphene aims to support:
+
+* Common, finite, in-memory graphs.
+* Abstract-Syntax-Tree-like graphs and use cases. (I.e. compilers and the like) The important part here is the distictive visitor pattern often used in these cases.
+* Math. This requires scientifically accurate naming and API.
+* Remote graph, i.e. graphs which are hosted on different machines and interaction with the data structure is dependent on a communication channel. These graphs may also be too big to fit in-memory for the machines that are working on them.
+* Infinite graphs. E.g. graphs over the possible moves and board state of games like Chess or Go.
+* Embedded, no-std (and maybe no-alloc) environments.
+ 
+### Naming convensions
+
+When choosing names for traits, struct, functions, etc.. the following guidelines should be kept in mind:
+
+* Avoid abreviations. 
+
+Not writing out words make it hard for the uninitiated to figure out what is meant.
+Therefore, avoid using abreviations, acronyms, contractions or other forms of shortening as much as possible. 
+Extemely common shortenings that can be expected to be known by almost any programmer are an exception (e.g. 'DFS' as a short form of 'Depth-First-Search' can be expected to be familiar by anyone that has taken a introductory course on algorithms.)
+If shortenings are used, the complete form must be used in the initial part of the documentation, such no confusion can arise.
+If two concepts have the same well-known shortening, neither of them can use it. 
+
+* Prioritize autocompletion
+
+IDE autocompletion is a good way to learn the API.
+Therefore, naming should account for how autocompletion works.
+Users should be expected to search for their needed struct, function, etc. using autocompletion, which means names should account for that.
+E.g. similar concepts should include the same words (preferably is a similar order) such that autocompletion can should the best suggestsions.
+An example could be all methods operating on vertices starting with the word 'vertex' followed by more specifics ('vertex_add', 'vertex_remove', 'vertex_weight', ...)
+
+* Accuracy
+
+Correct naming should be a priority, even in cases where they differ from the common naming. E.g. A directed acyclic graph with a edges pointing away from a 'root' is called an Arborescence and not a DAG nor simply Tree.
+
+
+
 ### License
 
 Licensed under the MIT license.
