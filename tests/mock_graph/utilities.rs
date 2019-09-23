@@ -107,7 +107,7 @@ pub fn auto_copy_from<G,D>(g: &mut G, mock: &MockGraph<D>)
 {
 	// Add all the vertices, remembering which mock vertices match which real vertices
 	let mut vertex_map = HashMap::new();
-	for (v,_) in mock.all_vertices() {
+	for v in mock.all_vertices() {
 		let new_v = g.new_vertex_weighted(mock.vertex_weight(v).unwrap().clone()).unwrap();
 		vertex_map.insert(v,new_v);
 	}

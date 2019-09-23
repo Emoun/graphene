@@ -26,10 +26,10 @@ impl<G: Graph> Graph for NoLoopsGraph<G>
 	delegate! {
 		target self.0 {
 	
-			fn all_vertices<'a>(&'a self)
+			fn all_vertices_weighted<'a>(&'a self)
 				-> Box<dyn 'a + Iterator<Item=(Self::Vertex, &'a Self::VertexWeight)>>;
 				
-			fn all_vertices_mut<'a>(&'a mut self)
+			fn all_vertices_weighted_mut<'a>(&'a mut self)
 				-> Box<dyn 'a + Iterator<Item=(Self::Vertex, &'a mut Self::VertexWeight)>>;
 			
 			fn remove_vertex(&mut self, v: Self::Vertex) -> Result<Self::VertexWeight, ()> ;
@@ -81,7 +81,7 @@ impl<B, C>  Constrainer for NoLoopsGraph<C>
 	fn constrain_single(g: Self::Constrained) -> Result<Self, ()>{
 
 		if g.all_vertices()
-			.any(|(v,_)| g.edges_between(v,v).next().is_some()){
+			.any(|v| g.edges_between(v,v).next().is_some()){
 			Err(())
 		} else {
 			Ok(NoLoopsGraph(g))

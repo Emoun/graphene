@@ -114,13 +114,13 @@ impl<D: Directedness + Clone> Graph for MockGraph<D>
 	type EdgeWeight = MockEdgeWeight;
 	type Directedness = D;
 	
-	fn all_vertices<'a>(&'a self)
+	fn all_vertices_weighted<'a>(&'a self)
 		-> Box<dyn 'a + Iterator<Item=(Self::Vertex, &'a Self::VertexWeight)>>
 	{
 		Box::new(self.vertices.iter().map(|(&v,w)| (MockVertex{value: v},w)))
 	}
 	
-	fn all_vertices_mut<'a>(&'a mut self)
+	fn all_vertices_weighted_mut<'a>(&'a mut self)
 		-> Box<dyn 'a + Iterator<Item=(Self::Vertex, &'a mut Self::VertexWeight)>>
 	{
 		Box::new(self.vertices.iter_mut().map(|(&v,w)| (MockVertex{value: v},w)))

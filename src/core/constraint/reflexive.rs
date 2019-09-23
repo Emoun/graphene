@@ -30,10 +30,10 @@ impl<G> Graph for ReflexiveGraph<G>
 	delegate! {
 		target self.0 {
 			
-			fn all_vertices<'a>(&'a self)
+			fn all_vertices_weighted<'a>(&'a self)
 				-> Box<dyn 'a + Iterator<Item=(Self::Vertex, &'a Self::VertexWeight)>>;
 				
-			fn all_vertices_mut<'a>(&'a mut self)
+			fn all_vertices_weighted_mut<'a>(&'a mut self)
 				-> Box<dyn 'a + Iterator<Item=(Self::Vertex, &'a mut Self::VertexWeight)>>;
 			
 			fn all_edges<'a>(&'a self) -> Box<dyn 'a + Iterator<Item=
@@ -95,7 +95,7 @@ impl<B, C> Constrainer for ReflexiveGraph<C>
 	
 	fn constrain_single(g: Self::Constrained) -> Result<Self, ()>{
 
-		if g.all_vertices().all(|(v,_)| {
+		if g.all_vertices().all(|v| {
 				let mut between = g.edges_between(v,v);
 				if let Some(_) = between.next() {
 					between.next().is_none()

@@ -11,13 +11,13 @@ impl<Vw,Ew,D> Graph for AdjListGraph<Vw,Ew,D>
 	type EdgeWeight = Ew;
 	type Directedness = D;
 	
-	fn all_vertices<'a>(&'a self)
+	fn all_vertices_weighted<'a>(&'a self)
 		-> Box<dyn 'a + Iterator<Item=(Self::Vertex, &'a Self::VertexWeight)>>
 	{
 		Box::new(self.vertices.iter().enumerate().map(|(v,(w,_))| (v, w)))
 	}
 	
-	fn all_vertices_mut<'a>(&'a mut self)
+	fn all_vertices_weighted_mut<'a>(&'a mut self)
 		-> Box<dyn 'a + Iterator<Item=(Self::Vertex, &'a mut Self::VertexWeight)>>
 	{
 		Box::new(self.vertices.iter_mut().enumerate().map(|(v,(w,_))| (v, w)))

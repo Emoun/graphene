@@ -35,10 +35,10 @@ impl<G: Graph> Graph for ConnectedGraph<G>
 	delegate! {
 		target self.0 {
 		
-			fn all_vertices<'a>(&'a self)
+			fn all_vertices_weighted<'a>(&'a self)
 				-> Box<dyn 'a + Iterator<Item=(Self::Vertex, &'a Self::VertexWeight)>>;
 				
-			fn all_vertices_mut<'a>(&'a mut self)
+			fn all_vertices_weighted_mut<'a>(&'a mut self)
 				-> Box<dyn 'a + Iterator<Item=(Self::Vertex, &'a mut Self::VertexWeight)>>;
 			
 			fn all_edges<'a>(&'a self) -> Box<dyn 'a + Iterator<Item=

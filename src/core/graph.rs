@@ -33,7 +33,6 @@ mod macros {
 	}
 }
 
-
 ///
 /// The basic graph interface. This is the main trait for all types of graphs.
 ///
@@ -58,10 +57,10 @@ pub trait Graph
 	///
 	/// Returns copies of all current vertex values in the graph.
 	///
-	fn all_vertices<'a>(&'a self)
-		-> Box<dyn 'a + Iterator<Item=(Self::Vertex, &'a Self::VertexWeight)>>;
-	fn all_vertices_mut<'a>(&'a mut self)
-		-> Box<dyn 'a + Iterator<Item=(Self::Vertex, &'a mut Self::VertexWeight)>>;
+	fn all_vertices_weighted<'a>(&'a self)
+		 -> Box<dyn 'a + Iterator<Item=(Self::Vertex, &'a Self::VertexWeight)>>;
+	fn all_vertices_weighted_mut<'a>(&'a mut self)
+		 -> Box<dyn 'a + Iterator<Item=(Self::Vertex, &'a mut Self::VertexWeight)>>;
 	///
 	/// Removes the given vertex from the graph, returning its weight.
 	/// If the vertex still has edges incident on it, they are also removed,
@@ -90,17 +89,25 @@ pub trait Graph
 	
 // Optional methods
 	
+	fn all_vertices<'a>(&'a self) -> Box<dyn 'a + Iterator<Item=Self::Vertex>>
+	{
+		Box::new(self.all_vertices_weighted().map(|(v, _)| v))
+	}
 	fn vertex_weight(&self, v: Self::Vertex) -> Option<&Self::VertexWeight>
 	{
-		self.all_vertices().find(|&(candidate,_)| candidate == v).map(|(_,w)| w)
+		self.all_vertices_weighted().find(|&(candidate,_)| candidate == v).map(|(_,w)| w)
 	}
 	fn vertex_weight_mut(&mut self, v: Self::Vertex) -> Option<&mut Self::VertexWeight>
 	{
-		self.all_vertices_mut().find(|&(candidate,_)| candidate == v).map(|(_,w)| w)
+		self.all_vertices_weighted_mut().find(|&(candidate,_)| candidate == v).map(|(_,w)| w)
 	}
 	fn contains_vertex(&self, v: Self::Vertex) -> bool
 	{
 		self.vertex_weight(v).is_some()
+	}
+	fn all_vertex_weights<'a>(&'a self) -> Box<dyn 'a + Iterator<Item=&'a Self::VertexWeight>>
+	{
+		Box::new(self.all_vertices_weighted().map(|(_,w)| w))
 	}
 	///
 	/// Adds the given edge to the graph, regardless of whether there are existing,

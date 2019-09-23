@@ -10,7 +10,7 @@ use crate::mock_graph::arbitrary::{ArbVertexIn, ArbEdgeIn};
 
 ///
 /// Tests that adding vertices to the graph results in the same vertices being
-/// output by `all_vertices`
+/// output by `all_vertices_weighted`
 ///
 #[quickcheck]
 fn same_vertices(mock: MockGraph<MockDirectedness>) -> bool
@@ -18,8 +18,8 @@ fn same_vertices(mock: MockGraph<MockDirectedness>) -> bool
 	let (g, v_map) = adj_list_from_mock(&mock);
 	
 	unordered_equivalent_lists_equal(
-		&mock.all_vertices().map(|(v,_)| v_map[&v]).collect(),
-		&g.all_vertices().map(|(v,_)| v).collect()
+		&mock.all_vertices().map(|v| v_map[&v]).collect(),
+		&g.all_vertices().collect()
 	)
 }
 
@@ -48,9 +48,9 @@ fn same_vertex_weight(mock: MockGraph<MockDirectedness>) -> bool
 
 	unordered_equivalent_lists_equal(
 		&mock.all_vertices()
-			.map(|(v,_)| (v_map[&v], mock.vertex_weight(v))).collect(),
+			.map(|v| (v_map[&v], mock.vertex_weight(v))).collect(),
 		&g.all_vertices()
-			.map(|(v,_)| (v, g.vertex_weight(v))).collect()
+			.map(|v| (v, g.vertex_weight(v))).collect()
 	)
 }
 
@@ -95,8 +95,8 @@ fn remove_vertex(ArbVertexIn(mock, v_remove):
 		false
 	} else {
 		// Check that the number of vertices decreased by 1
-		( g.all_vertices().count() ==
-			(mock.all_vertices().count() -1)
+		( g.all_vertices_weighted().count() ==
+			(mock.all_vertices().count() - 1)
 		) &&
 
 		// Check that the number of edges decreased by same as the number that was incident
@@ -107,10 +107,10 @@ fn remove_vertex(ArbVertexIn(mock, v_remove):
 		) &&
 
 		// Check that one less vertex has the same weight as the one removed
-		( g.all_vertices()
-			.filter(|&(v,_)| g.vertex_weight(v) == mock.vertex_weight(v_remove)).count() ==
-		  (mock.all_vertices()
-			.filter(|&(v,_)| mock.vertex_weight(v) == mock.vertex_weight(v_remove)).count() - 1)
+		( g.all_vertex_weights()
+			.filter(|&w| w == mock.vertex_weight(v_remove).unwrap()).count() ==
+		  (mock.all_vertex_weights()
+			.filter(|&w| w == mock.vertex_weight(v_remove).unwrap()).count() - 1)
 		)
 
 		// TODO: Test that the right edges were removed?

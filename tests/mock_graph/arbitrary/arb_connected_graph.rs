@@ -36,7 +36,7 @@ fn has_path_to(graph: &MockGraph<Directed>, start: MockVertex, end: MockVertex) 
 
 fn is_connected(graph: &MockGraph<Directed>) -> bool
 {
-	let v_all = graph.all_vertices().map(|(v,_)| v).collect::<Vec<_>>();
+	let v_all = graph.all_vertices().collect::<Vec<_>>();
 	v_all.iter().flat_map(|&v| v_all.iter().map(move |&v_other| (v, v_other)))
 		.all(|(v, v_other)| has_path_to(&graph, v, v_other))
 }
@@ -58,10 +58,10 @@ impl<D: Directedness + Clone> Graph for ArbConnectedGraph<D>
 	delegate! {
 		target self.0 {
 	
-			fn all_vertices<'a>(&'a self)
+			fn all_vertices_weighted<'a>(&'a self)
 				-> Box<dyn 'a + Iterator<Item=(Self::Vertex, &'a Self::VertexWeight)>>;
 		
-			fn all_vertices_mut<'a>(&'a mut self)
+			fn all_vertices_weighted_mut<'a>(&'a mut self)
 				-> Box<dyn 'a +Iterator<Item=(Self::Vertex, &'a mut Self::VertexWeight)>>;
 			
 			fn remove_vertex(&mut self, v: Self::Vertex) -> Result<Self::VertexWeight, ()>;
@@ -101,7 +101,7 @@ impl Arbitrary for ArbConnectedGraph<Directed>
 				graph.new_vertex_weighted(v_weight.clone()).unwrap();
 			}
 			// Create a 'ring' with edges, ensuring the graph is connected
-			let mut verts= graph.all_vertices().map(|(v,_)| v).collect::<Vec<_>>().into_iter();
+			let mut verts= graph.all_vertices().collect::<Vec<_>>().into_iter(); // Collect such that we no longer borrow graph
 			if let Some(mut v_prev) = verts.next() {
 				for v_next in verts.chain(vec![v_prev]){
 					graph.add_edge_weighted((v_prev, v_next, MockEdgeWeight::arbitrary(g))).unwrap();
@@ -111,7 +111,7 @@ impl Arbitrary for ArbConnectedGraph<Directed>
 			
 			// We now have a connected graph.
 			// We add a random set of additional edges for good measure.
-			let v_all = graph.all_vertices().map(|(v,_)| v).collect::<Vec<_>>();
+			let v_all = graph.all_vertices().collect::<Vec<_>>(); // Collect such that we no longer borrow graph
 			for _ in 0..g.gen_range(0, vertex_count+1) {
 				let source = v_all[g.gen_range(0,v_all.len())];
 				let sink = v_all[g.gen_range(0,v_all.len())];
@@ -148,10 +148,9 @@ impl Arbitrary for ArbConnectedGraph<Directed>
 		);
 		
 		// We also shrink by replacing any vertex with in- and outdegree of 1 with an edge
-		if self.all_vertices().collect::<Vec<_>>().len() > 1 {
+		if self.all_vertices().count() > 1 {
 			result.extend(
-				self.all_vertices().map(|(v,_)| v)
-					.filter(|&v| self.edges_sourced_in(v).count() == 1 &&
+				self.all_vertices().filter(|&v| self.edges_sourced_in(v).count() == 1 &&
 						self.edges_sinked_in(v).count() == 1)
 					.flat_map(|v| {
 						let mut clone = self.0.clone().unconstrain_single();
