@@ -1,5 +1,4 @@
 use crate::core::{Graph, Edge, EdgeWeighted, AutoGraph, Constrainer, BaseGraph};
-use delegate::delegate;
 
 ///
 /// A marker trait for a reflexive graph.
@@ -19,43 +18,21 @@ pub trait Reflexive: Graph
 pub struct ReflexiveGraph<G>(G)
 	where G: Graph, G::EdgeWeight: Default;
 
-impl<G> Graph for ReflexiveGraph<G>
-	where G: Graph, G::EdgeWeight: Default
-{
-	type Vertex = G::Vertex;
-	type VertexWeight = G::VertexWeight;
-	type EdgeWeight = G::EdgeWeight;
-	type Directedness = G::Directedness;
-	
-	delegate! {
-		target self.0 {
-			
-			fn all_vertices_weighted<'a>(&'a self)
-				-> Box<dyn 'a + Iterator<Item=(Self::Vertex, &'a Self::VertexWeight)>>;
-				
-			fn all_vertices_weighted_mut<'a>(&'a mut self)
-				-> Box<dyn 'a + Iterator<Item=(Self::Vertex, &'a mut Self::VertexWeight)>>;
-			
-			fn all_edges<'a>(&'a self) -> Box<dyn 'a + Iterator<Item=
-				(Self::Vertex, Self::Vertex, &'a Self::EdgeWeight)>>;
-			
-			fn all_edges_mut<'a>(&'a mut self) -> Box<dyn 'a + Iterator<Item=
-				(Self::Vertex, Self::Vertex, &'a mut Self::EdgeWeight)>>;
-			
-			fn add_edge_weighted<E>(&mut self, e: E) -> Result<(), ()>
-				where E: EdgeWeighted<Self::Vertex, Self::EdgeWeight>;
+delegate_graph!{
+	ReflexiveGraph<G> where G:: EdgeWeight: Default
+	{
+		
+		fn remove_vertex(&mut self, v: Self::Vertex) -> Result<Self::VertexWeight, ()>
+		{
+			self.remove_vertex_looped(v).map(|(v_weight,_)| v_weight)
 		}
-	}
-	fn remove_vertex(&mut self, v: Self::Vertex) -> Result<Self::VertexWeight, ()>
-	{
-		self.remove_vertex_looped(v).map(|(v_weight,_)| v_weight)
-	}
 	
-	fn remove_edge_where<F>(&mut self, f: F)
-							-> Result<(Self::Vertex, Self::Vertex, Self::EdgeWeight), ()>
-		where F: Fn((Self::Vertex, Self::Vertex, &Self::EdgeWeight)) -> bool
-	{
-		self.0.remove_edge_where(|e| f(e) && !e.is_loop())
+		fn remove_edge_where<F>(&mut self, f: F)
+								-> Result<(Self::Vertex, Self::Vertex, Self::EdgeWeight), ()>
+			where F: Fn((Self::Vertex, Self::Vertex, &Self::EdgeWeight)) -> bool
+		{
+			self.0.remove_edge_where(|e| f(e) && !e.is_loop())
+		}
 	}
 }
 

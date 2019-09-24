@@ -25,49 +25,24 @@ pub trait Unique: Graph
 
 pub struct UniqueGraph<G: Graph>(G);
 
-impl<G: Graph> Graph for UniqueGraph<G>
-{
-	type Vertex = G::Vertex;
-	type VertexWeight = G::VertexWeight;
-	type EdgeWeight = G::EdgeWeight;
-	type Directedness = G::Directedness;
-	
-	delegate! {
-		target self.0 {
-	
-			fn all_vertices_weighted<'a>(&'a self)
-				-> Box<dyn 'a + Iterator<Item=(Self::Vertex, &'a Self::VertexWeight)>>;
-				
-			fn all_vertices_weighted_mut<'a>(&'a mut self)
-				-> Box<dyn 'a + Iterator<Item=(Self::Vertex, &'a mut Self::VertexWeight)>>;
-			
-			fn remove_vertex(&mut self, v: Self::Vertex) -> Result<Self::VertexWeight, ()> ;
-			
-			fn all_edges<'a>(&'a self) -> Box<dyn 'a + Iterator<Item=
-				(Self::Vertex, Self::Vertex, &'a Self::EdgeWeight)>>;
-			
-			fn all_edges_mut<'a>(&'a mut self) -> Box<dyn 'a + Iterator<Item=
-				(Self::Vertex, Self::Vertex, &'a mut Self::EdgeWeight)>>;
-			
-			fn remove_edge_where<F>(&mut self, f: F)
-				-> Result<(Self::Vertex, Self::Vertex, Self::EdgeWeight), ()>
-				where F: Fn((Self::Vertex, Self::Vertex, &Self::EdgeWeight)) -> bool;
-		}
-	}
-	fn add_edge_weighted<E>(&mut self, e: E) -> Result<(), ()>
-		where E: EdgeWeighted<Self::Vertex, Self::EdgeWeight>
+delegate_graph!{
+	UniqueGraph<G>
 	{
-		if G::directed() {
-			if self.edges_between(e.source(), e.sink())
-				.any(|edge| e.source() == edge.source() && e.sink() == edge.sink()){
-				return Err(());
+		fn add_edge_weighted<E>(&mut self, e: E) -> Result<(), ()>
+			where E: EdgeWeighted<Self::Vertex, Self::EdgeWeight>
+		{
+			if G::directed() {
+				if self.edges_between(e.source(), e.sink())
+					.any(|edge| e.source() == edge.source() && e.sink() == edge.sink()){
+					return Err(());
+				}
+			} else {
+				if self.edges_between(e.source(), e.sink()).next().is_some() {
+					return Err(());
+				}
 			}
-		} else {
-			if self.edges_between(e.source(), e.sink()).next().is_some() {
-				return Err(());
-			}
+			self.0.add_edge_weighted(e)
 		}
-		self.0.add_edge_weighted(e)
 	}
 }
 
