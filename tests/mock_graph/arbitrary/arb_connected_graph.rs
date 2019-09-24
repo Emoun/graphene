@@ -86,7 +86,6 @@ impl Arbitrary for ArbConnectedGraph<Directed>
 {
 	fn arbitrary<G: Gen>(g: &mut G) -> Self {
 		
-		// Set the maximum amount of vertices and edges
 		let mut graph = MockGraph::empty();
 		
 		//Decide the amount of vertices
@@ -134,7 +133,6 @@ impl Arbitrary for ArbConnectedGraph<Directed>
 			}
 		}
 		assert!(is_connected(&graph));
-		println!("ConnectedGraph created.");
 		Self(ConnectedGraph::new(graph))
 	}
 	

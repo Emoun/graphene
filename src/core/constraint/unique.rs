@@ -23,7 +23,21 @@ pub trait Unique: Graph
 	}
 }
 
+#[derive(Clone, Debug)]
 pub struct UniqueGraph<G: Graph>(G);
+
+impl<G: Graph> UniqueGraph<G>
+{
+	///
+	/// Constrains the given graph.
+	///
+	/// The given graph must be unique. This is not checked by this function.
+	///
+	pub fn unchecked(g: G) -> Self
+	{
+		Self(g)
+	}
+}
 
 delegate_graph!{
 	UniqueGraph<G>
@@ -69,8 +83,10 @@ impl<B, C> Constrainer for UniqueGraph<C>
 	type Constrained = C;
 	
 	fn constrain_single(g: Self::Constrained) -> Result<Self, ()>{
-		for e in g.all_edges() {
-			for e2 in g.all_edges() {
+		let edges: Vec<_> = g.all_edges().collect();
+		let mut iter = edges.iter();
+		while let  Some(e) = iter.next() {
+			for e2 in iter.clone() {
 				if (e.source() == e2.source() && e.sink() == e2.sink()) ||
 					(e.source() == e2.sink() && e.sink() == e2.source() && !C::directed())
 				{

@@ -254,7 +254,7 @@ macro_rules! delegate_graph {
 					$( $($to_del)*; )*
 				}
 			}
-			$( $($no_del)* $no_del_bod)*
+			$( #[allow(unused_variables)] $($no_del)* $no_del_bod)*
 		}
 	};
 }

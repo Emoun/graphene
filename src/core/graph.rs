@@ -44,6 +44,10 @@ mod macros {
 /// Edges with the same source, sink, and id are identical and must be interchangeable. E.g. if any
 /// one of two or more identical edges is to be removed, then any one of them may be removed.
 ///
+/// TODO: When Rust supports 'impl trait' consider having some of the iterators be clone too
+/// (those that don't include mutable references). This allows cloning the iterators mid-iteration,
+/// which can be useful when comparing each item to the ones after it.
+///
 pub trait Graph
 {
 	///

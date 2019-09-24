@@ -55,6 +55,7 @@ The following is a non-exhaustive list of use cases Graphene aims to support:
 * Remote graph, i.e. graphs which are hosted on different machines and interaction with the data structure is dependent on a communication channel. These graphs may also be too big to fit in-memory for the machines that are working on them.
 * Infinite graphs. E.g. graphs over the possible moves and board state of games like Chess or Go.
 * Embedded, no-std (and maybe no-alloc) environments.
+* Compatible with existing graph crates (i.e. traits should be implementable for existing graph implementation): petgraph, graphlib
  
 ### Naming convensions
 

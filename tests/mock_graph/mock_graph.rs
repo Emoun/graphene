@@ -93,11 +93,16 @@ impl<D: Directedness + Clone> MockGraph<D> {
 impl<D: Directedness + Clone> Debug for MockGraph<D> {
 	fn fmt(&self, f: &mut Formatter) -> Result<(), Error> {
 		f.write_str("MockGraph { vertices: [ ")?;
-		for (v,w) in &self.vertices {
+		let mut verts: Vec<_> = self.vertices.iter().collect();
+		verts.sort_by_key(|(&v,_)| v);
+		for (v,w) in &verts {
 			f.write_fmt(format_args!("({:?}, {:?}), ", v, w.value))?;
 		}
 		f.write_str("], edges: [ ")?;
-		for (so,si,w) in &self.edges {
+		
+		let mut edges = self.edges.clone();
+		edges.sort_by_key(|(v,_,_)| *v);
+		for (so,si,w) in &edges {
 			f.write_fmt(format_args!("({:?}, {:?}, {:?}), ", so, si, w.value))?;
 		}
 		f.write_str("] }")?;
