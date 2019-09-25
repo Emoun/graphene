@@ -36,7 +36,11 @@ impl Default for MockT
 pub type MockEdgeWeight = MockT;
 pub type MockVertexWeight = MockT;
 
-#[derive(Clone, Debug)]
+///
+/// A mock of Directedness for when we want to ensure that some implementation
+/// is directedness-agnostic.
+///
+#[derive(Debug, Clone, Copy, Ord, PartialOrd, Eq, PartialEq)]
 pub struct MockDirectedness(pub bool);
 impl Directedness for MockDirectedness {
 	fn directed() -> bool {

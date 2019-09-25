@@ -4,10 +4,9 @@ use crate::core::Graph;
 /// Defines whether something is directed or not.
 ///
 /// The marker types [`Directed`](struct.Directed.html) and [`Undirected`](struct.Undirected.html) should be used
-/// when bounding types. However, other types can also implement this trait, e.g. any [`Graph`](trait.Graph.html)
-/// implements it according to its edge's [directedness](trait.Graph.html#associatedtype.Directedness).
+/// when bounding types.
 ///
-pub trait Directedness {
+pub trait Directedness: Copy + Clone + Send + Sync + 'static + Eq + Ord {
 	
 	///
 	/// Returns whether this instance is directed or not.
@@ -33,11 +32,5 @@ pub struct Undirected();
 impl Directedness for Undirected{
 	fn directed() -> bool {
 		false
-	}
-}
-
-impl<T> Directedness for T where T: Graph {
-	fn directed() -> bool {
-		<Self as Graph>::Directedness::directed()
 	}
 }

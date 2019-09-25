@@ -45,7 +45,7 @@ delegate_graph!{
 		fn add_edge_weighted<E>(&mut self, e: E) -> Result<(), ()>
 			where E: EdgeWeighted<Self::Vertex, Self::EdgeWeight>
 		{
-			if G::directed() {
+			if Self::Directedness::directed() {
 				if self.edges_between(e.source(), e.sink())
 					.any(|edge| e.source() == edge.source() && e.sink() == edge.sink()){
 					return Err(());
@@ -88,7 +88,7 @@ impl<B, C> Constrainer for UniqueGraph<C>
 		while let  Some(e) = iter.next() {
 			for e2 in iter.clone() {
 				if (e.source() == e2.source() && e.sink() == e2.sink()) ||
-					(e.source() == e2.sink() && e.sink() == e2.source() && !C::directed())
+					(e.source() == e2.sink() && e.sink() == e2.source() && !C::Directedness::directed())
 				{
 					return Err(())
 				}

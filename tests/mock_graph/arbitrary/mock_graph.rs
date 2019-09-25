@@ -30,8 +30,7 @@ impl Arbitrary for MockT
 	}
 }
 
-impl<D> Arbitrary for MockGraph<D>
-	where D: Directedness + Clone + Send + 'static
+impl<D: Directedness> Arbitrary for MockGraph<D>
 {
 	fn arbitrary<G: Gen>(g: &mut G) -> Self {
 		

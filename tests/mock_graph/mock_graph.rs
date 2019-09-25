@@ -19,8 +19,7 @@ use std::collections::HashMap;
 /// Will panic if it runs out of ids.
 ///
 #[derive(Clone)]
-pub struct MockGraph<D>
-	where D: Directedness + Clone
+pub struct MockGraph<D: Directedness>
 {
 	/// The number to give the next new vertex.
 	pub next_id: usize,
@@ -33,7 +32,7 @@ pub struct MockGraph<D>
 	phantom: PhantomData<D>
 }
 
-impl<D: Directedness + Clone> MockGraph<D> {
+impl<D: Directedness> MockGraph<D> {
 	
 	/// Validates the internal integrity of the graph.
 	///
@@ -90,7 +89,7 @@ impl<D: Directedness + Clone> MockGraph<D> {
 	}
 }
 
-impl<D: Directedness + Clone> Debug for MockGraph<D> {
+impl<D: Directedness> Debug for MockGraph<D> {
 	fn fmt(&self, f: &mut Formatter) -> Result<(), Error> {
 		f.write_str("MockGraph { vertices: [ ")?;
 		let mut verts: Vec<_> = self.vertices.iter().collect();
@@ -110,7 +109,7 @@ impl<D: Directedness + Clone> Debug for MockGraph<D> {
 	}
 }
 
-impl<D: Directedness + Clone> Graph for MockGraph<D>
+impl<D: Directedness> Graph for MockGraph<D>
 {
 	/// We hide u32 behind a struct to ensure our tests aren't dependent
 	/// on graphs using usize as ids
@@ -190,7 +189,7 @@ impl<D: Directedness + Clone> Graph for MockGraph<D>
 	}
 }
 
-impl<D: Directedness + Clone> AutoGraph for MockGraph<D>
+impl<D: Directedness> AutoGraph for MockGraph<D>
 {
 	fn new_vertex_weighted(&mut self, w: Self::VertexWeight) -> Result<Self::Vertex, ()> {
 		if self.vertices.insert(self.next_id, w).is_some() {
@@ -203,7 +202,7 @@ impl<D: Directedness + Clone> AutoGraph for MockGraph<D>
 	}
 }
 
-impl<D: Directedness + Clone> ExactGraph for MockGraph<D>{}
+impl<D: Directedness> ExactGraph for MockGraph<D>{}
 
-impl<D: Directedness + Clone> BaseGraph for MockGraph<D>
+impl<D: Directedness> BaseGraph for MockGraph<D>
 {}

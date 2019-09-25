@@ -103,7 +103,7 @@ pub fn auto_copy_from<G,D>(g: &mut G, mock: &MockGraph<D>)
 			VertexWeight=MockVertexWeight,
 			EdgeWeight=MockEdgeWeight,
 		> + AutoGraph,
-		D: Directedness + Clone
+		D: Directedness
 {
 	// Add all the vertices, remembering which mock vertices match which real vertices
 	let mut vertex_map = HashMap::new();

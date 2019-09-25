@@ -45,10 +45,10 @@ fn is_connected(graph: &MockGraph<Directed>) -> bool
 /// An arbitrary graph that is connected
 ///
 #[derive(Clone, Debug)]
-pub struct ArbConnectedGraph<D: Directedness + Clone>(
+pub struct ArbConnectedGraph<D: Directedness>(
 	pub ConnectedGraph<MockGraph<D>>,
 );
-impl<D: Directedness + Clone> Graph for ArbConnectedGraph<D>
+impl<D: Directedness> Graph for ArbConnectedGraph<D>
 {
 	type Vertex = MockVertex;
 	type VertexWeight = MockVertexWeight;
