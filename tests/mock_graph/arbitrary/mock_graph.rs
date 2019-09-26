@@ -2,8 +2,8 @@ use quickcheck::{Arbitrary, Gen};
 use crate::mock_graph::{MockVertex, MockT, MockGraph, MockVertexWeight, MockEdgeWeight};
 use graphene::core::{Directedness, Graph, AutoGraph};
 use rand::Rng;
-use crate::mock_graph::arbitrary::{max_vertex_count, GuidedArbGraph, Limit};
-use std::ops::{RangeBounds, Bound};
+use crate::mock_graph::arbitrary::{GuidedArbGraph, Limit};
+use std::ops::{RangeBounds};
 use std::collections::HashSet;
 
 impl Arbitrary for MockVertex
@@ -34,24 +34,15 @@ impl Arbitrary for MockT
 
 impl<D: Directedness> GuidedArbGraph for MockGraph<D>
 {
-	fn arbitrary_guided<G: Gen, R: RangeBounds<usize>>(g: &mut G, v_range: R, e_range: R)
+	fn arbitrary_guided<G: Gen>(g: &mut G, v_range: impl RangeBounds<usize>,
+								e_range: impl RangeBounds<usize>)
 		-> Self
 	{
-		let v_min = match v_range.start_bound() {
-			Bound::Included(x) =>  x ,
-			x => panic!("Unsupported lower vertex bound: {:?}", x)
-		};
-		let v_max = match v_range.end_bound() {
-			Bound::Included(x) =>  x + 1 ,
-			Bound::Excluded(x) => *x,
-			x => panic!("Unsupported upper vertex bound: {:?}", x)
-			
-		};
+		let (v_min, v_max, e_min, e_max) = Self::validate_ranges(g, v_range, e_range);
+		let mut graph = Self::empty();
 		
 		//Decide the amount of vertices
 		let vertex_count = g.gen_range(v_min, v_max);
-		
-		let mut graph = Self::empty();
 		
 		/* If the amount of vertices is 0, no edges can be created.
 		 */
@@ -63,15 +54,6 @@ impl<D: Directedness> GuidedArbGraph for MockGraph<D>
 			let vertices = graph.all_vertices().collect::<Vec<_>>();
 			
 			//Decide the amount of edges
-			let e_min = match e_range.start_bound() {
-				Bound::Included(x) =>  x ,
-				x => panic!("Unsupported lower vertex bound: {:?}", x)
-			};
-			let e_max = match e_range.end_bound() {
-				Bound::Included(x) =>  x + 1 ,
-				Bound::Excluded(x) => *x,
-				x => panic!("Unsupported upper vertex bound: {:?}", x)
-			};
 			let edge_count = g.gen_range(e_min, e_max);
 			
 			/* Create edges
@@ -160,8 +142,7 @@ impl<D: Directedness> GuidedArbGraph for MockGraph<D>
 impl<D: Directedness> Arbitrary for MockGraph<D>
 {
 	fn arbitrary<G: Gen>(g: &mut G) -> Self {
-		let v_max = max_vertex_count(g);
-		Self::arbitrary_guided(g, 0..v_max, 0..v_max)
+		Self::arbitrary_guided(g, .., ..)
 	}
 	
 	fn shrink(&self) -> Box<dyn Iterator<Item=Self>> {

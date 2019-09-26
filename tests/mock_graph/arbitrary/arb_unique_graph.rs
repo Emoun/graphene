@@ -3,9 +3,9 @@ use graphene::core::{Directedness, Graph, AutoGraph, Edge, EdgeWeighted, Constra
 use crate::mock_graph::{MockGraph, MockVertex, MockVertexWeight, MockEdgeWeight};
 use quickcheck::{Arbitrary, Gen};
 use rand::Rng;
-use crate::mock_graph::arbitrary::{max_vertex_count, GuidedArbGraph, Limit};
+use crate::mock_graph::arbitrary::{GuidedArbGraph, Limit};
 use delegate::delegate;
-use std::ops::{RangeBounds, Bound};
+use std::ops::{RangeBounds};
 use std::collections::HashSet;
 
 ///
@@ -50,6 +50,16 @@ impl<D: Directedness> Graph for ArbUniqueGraph<D>
 	}
 }
 
+impl<D: Directedness> AutoGraph for ArbUniqueGraph<D>
+{
+	delegate! {
+		target self.0 {
+			fn new_vertex_weighted(&mut self, w: Self::VertexWeight)
+				-> Result<Self::Vertex, ()>;
+		}
+	}
+}
+
 impl<D: Directedness> GuidedArbGraph for ArbUniqueGraph<D>
 {
 	///
@@ -58,33 +68,18 @@ impl<D: Directedness> GuidedArbGraph for ArbUniqueGraph<D>
 	/// The range for edges is only upheld if the lower bound is 1 and the lower bound of
 	/// vertices is 1, in which case the graph is guaranteed to have at least 1 edge.
 	///
-	fn arbitrary_guided<G: Gen, R: RangeBounds<usize>>(g: &mut G, v_range: R, e_range: R) -> Self {
-		let mut graph = MockGraph::empty();
-		
-		//Decide the amount of vertices
-		let v_min = match v_range.start_bound() {
-			Bound::Included(x) =>  x ,
-			x => panic!("Unsupported lower vertex bound: {:?}", x)
-		};
-		let v_max = match v_range.end_bound() {
-			Bound::Included(x) =>  x + 1 ,
-			Bound::Excluded(x) => *x,
-			x => panic!("Unsupported upper vertex bound: {:?}", x)
-			
-		};
-		let vertex_count = g.gen_range(v_min, v_max);
+	fn arbitrary_guided<G: Gen>(g: &mut G, v_range: impl RangeBounds<usize>,
+								e_range: impl RangeBounds<usize>)
+		-> Self
+	{
+		let (v_min, v_max, e_min, _) = Self::validate_ranges(g, v_range, e_range);
+		let mut graph = MockGraph::arbitrary_guided(g, v_min..v_max , 0..=0);
+		let verts: Vec<_>= graph.all_vertices().collect();
+		let vertex_count = verts.len();
 		
 		/* If the amount of vertices is 0, no edges can be created.
 		 */
 		if vertex_count > 0 {
-			// Add all vertices to the graph
-			for _ in 0..vertex_count {
-				let v_weight = MockVertexWeight::arbitrary(g);
-				graph.new_vertex_weighted(v_weight.clone()).unwrap();
-			}
-			// Collect vertices such that we don't borrow graph
-			let verts: Vec<_>= graph.all_vertices().collect();
-			
 			/* For each vertex pair (in each direction), maybe create an edge
 			 */
 			let edge_saturation = g.gen_range(0.0, 1.0);
@@ -109,12 +104,11 @@ impl<D: Directedness> GuidedArbGraph for ArbUniqueGraph<D>
 					iter_rest = iter.clone()
 				}
 			}
-			match e_range.start_bound() {
-				Bound::Included(&x) if x == 1 && graph.all_edges().count() < 1 =>
-					graph.add_edge_weighted((verts[g.gen_range(0, verts.len())],
-											 verts[g.gen_range(0, verts.len())],
-											 MockEdgeWeight::arbitrary(g))).unwrap(),
-				_ => ()
+			if e_min == 1 && graph.all_edges().count() < 1 {
+				graph.add_edge_weighted((verts[g.gen_range(0, verts.len())],
+										 verts[g.gen_range(0, verts.len())],
+											 MockEdgeWeight::arbitrary(g)))
+					.unwrap()
 			}
 		}
 		Self(UniqueGraph::unchecked(graph))
@@ -124,8 +118,7 @@ impl<D: Directedness> GuidedArbGraph for ArbUniqueGraph<D>
 impl<D: Directedness> Arbitrary for ArbUniqueGraph<D>
 {
 	fn arbitrary<G: Gen>(g: &mut G) -> Self {
-		let v_max = max_vertex_count(g);
-		Self::arbitrary_guided(g, 0..v_max, 0..v_max)
+		Self::arbitrary_guided(g, .., ..)
 	}
 	
 	fn shrink(&self) -> Box<dyn Iterator<Item=Self>> {
@@ -179,9 +172,8 @@ impl<D: Directedness> Graph for ArbNonUniqueGraph<D>
 impl<D: Directedness> Arbitrary for ArbNonUniqueGraph<D>
 {
 	fn arbitrary<G: Gen>(g: &mut G) -> Self {
-		let v_max = max_vertex_count(g);
 		// Ensure there are at least 1 edge (so that we can duplicate)
-		let mut graph = ArbUniqueGraph::arbitrary_guided(g, 1..v_max, 1..v_max).0.unconstrain();
+		let mut graph = ArbUniqueGraph::arbitrary_guided(g, .., 1..).0.unconstrain();
 		
 		// Duplicate a arbitrary number of additional edges (at least 1)
 		let original_edges: Vec<_> = graph.all_edges().map(|e| (e.source(), e.sink())).collect();

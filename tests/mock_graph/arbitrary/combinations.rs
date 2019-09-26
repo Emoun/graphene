@@ -3,6 +3,7 @@ use quickcheck::{Arbitrary, Gen};
 use crate::mock_graph::{MockVertex, MockEdgeWeight, MockVertexWeight};
 use graphene::core::{Edge, EdgeDeref, EdgeWeighted, Graph};
 use rand::{ Rng };
+use crate::mock_graph::arbitrary::{GuidedArbGraph};
 
 ///
 /// An arbitrary graph and two vertices in it.
@@ -204,14 +205,14 @@ pub struct ArbEdgeIn<G>(pub G, pub (MockVertex, MockVertex, MockEdgeWeight))
 			EdgeWeight=MockEdgeWeight>;
 impl<Gr> Arbitrary for ArbEdgeIn<Gr>
 	where
-		Gr: Arbitrary + Graph<Vertex=MockVertex, VertexWeight=MockVertexWeight,
+		Gr: GuidedArbGraph + Graph<Vertex=MockVertex, VertexWeight=MockVertexWeight,
 			EdgeWeight=MockEdgeWeight>
 {
 	fn arbitrary<G: Gen>(g: &mut G) -> Self {
-		let ArbTwoVerticesIn::<Gr>(mut mock, v1, v2) = ArbTwoVerticesIn::arbitrary(g);
-		let weight = MockEdgeWeight::arbitrary(g);
-		mock.add_edge_weighted((v1,v2,weight.clone())).unwrap();
-		Self(mock, (v1,v2,weight))
+		let graph = Gr::arbitrary_guided(g, .. , 1..);
+		let edge = graph.all_edges().nth(g.gen_range(0, graph.all_edges().count())).unwrap();
+		let edge_clone = (edge.source(),edge.sink(),edge.weight().clone());
+		Self(graph, edge_clone)
 	}
 
 	fn shrink(&self) -> Box<dyn Iterator<Item=Self>> {

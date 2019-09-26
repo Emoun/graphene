@@ -1,6 +1,7 @@
 use quickcheck::{Gen, Arbitrary};
-use std::ops::RangeBounds;
+use std::ops::{RangeBounds, Bound};
 use std::collections::HashSet;
+use crate::mock_graph::arbitrary::max_vertex_count;
 
 #[derive(Ord, PartialOrd, PartialEq, Eq, Hash)]
 pub enum Limit {
@@ -34,10 +35,42 @@ pub trait GuidedArbGraph: Arbitrary
 	///
 	/// The ranges are only guides, and adherence to them depends on implementation.
 	///
-	fn arbitrary_guided<G: Gen, R: RangeBounds<usize>>(g: &mut G, _v_range: R, _e_range: R)
+	fn arbitrary_guided<G: Gen>(g: &mut G, _v_range: impl RangeBounds<usize>,
+								_e_range: impl RangeBounds<usize>)
 		-> Self
 	{
 		Self::arbitrary(g)
+	}
+	
+	fn validate_ranges<G: Gen>(g: &mut G, v_range: impl RangeBounds<usize>,
+							   e_range: impl RangeBounds<usize>)
+		-> (usize, usize, usize, usize)
+	{
+		let e_min = match e_range.start_bound() {
+			Bound::Included(&x) =>  x,
+			Bound::Excluded(&x) => x + 1,
+			Bound::Unbounded => 0,
+		};
+		let v_min = match v_range.start_bound() {
+			Bound::Included(&x) =>  if e_min > 0 && x == 0 {
+				panic!("Cannot generate a graph with 0 vertices but minimum {} edges.", e_min)
+			} else { x },
+			Bound::Excluded(&x) => x + 1,
+			Bound::Unbounded => if e_min > 0 { 1 } else {0},
+		};
+		let v_max = match v_range.end_bound() {
+			Bound::Included(&x) =>  x + 1 ,
+			Bound::Excluded(&x) => x,
+			Bound::Unbounded => max_vertex_count(g),
+		};
+		let e_max = match e_range.end_bound() {
+			Bound::Included(&x) =>  x + 1 ,
+			Bound::Excluded(&x) => x,
+			Bound::Unbounded => v_max,
+		};
+		assert!(v_min < v_max);
+		assert!(e_min < e_max);
+		(v_min, v_max, e_min, e_max)
 	}
 	
 	fn shrink_guided(&self, _limits: HashSet<Limit>) -> Box<dyn Iterator<Item=Self>>
