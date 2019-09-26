@@ -3,8 +3,10 @@ use graphene::core::{Directedness, Graph, AutoGraph, Edge, EdgeWeighted, Constra
 use crate::mock_graph::{MockGraph, MockVertex, MockVertexWeight, MockEdgeWeight};
 use quickcheck::{Arbitrary, Gen};
 use rand::Rng;
-use crate::mock_graph::arbitrary::max_vertex_count;
+use crate::mock_graph::arbitrary::{max_vertex_count, GuidedArbGraph, Limit};
 use delegate::delegate;
+use std::ops::{RangeBounds, Bound};
+use std::collections::HashSet;
 
 ///
 /// An arbitrary graph that is unique
@@ -48,13 +50,29 @@ impl<D: Directedness> Graph for ArbUniqueGraph<D>
 	}
 }
 
-impl<D: Directedness> Arbitrary for ArbUniqueGraph<D>
+impl<D: Directedness> GuidedArbGraph for ArbUniqueGraph<D>
 {
-	fn arbitrary<G: Gen>(g: &mut G) -> Self {
+	///
+	/// Generates a Unique graph with a vertex count within the given range.
+	///
+	/// The range for edges is only upheld if the lower bound is 1 and the lower bound of
+	/// vertices is 1, in which case the graph is guaranteed to have at least 1 edge.
+	///
+	fn arbitrary_guided<G: Gen, R: RangeBounds<usize>>(g: &mut G, v_range: R, e_range: R) -> Self {
 		let mut graph = MockGraph::empty();
 		
 		//Decide the amount of vertices
-		let vertex_count = g.gen_range(0, max_vertex_count(g));
+		let v_min = match v_range.start_bound() {
+			Bound::Included(x) =>  x ,
+			x => panic!("Unsupported lower vertex bound: {:?}", x)
+		};
+		let v_max = match v_range.end_bound() {
+			Bound::Included(x) =>  x + 1 ,
+			Bound::Excluded(x) => *x,
+			x => panic!("Unsupported upper vertex bound: {:?}", x)
+			
+		};
+		let vertex_count = g.gen_range(v_min, v_max);
 		
 		/* If the amount of vertices is 0, no edges can be created.
 		 */
@@ -91,8 +109,23 @@ impl<D: Directedness> Arbitrary for ArbUniqueGraph<D>
 					iter_rest = iter.clone()
 				}
 			}
+			match e_range.start_bound() {
+				Bound::Included(&x) if x == 1 && graph.all_edges().count() < 1 =>
+					graph.add_edge_weighted((verts[g.gen_range(0, verts.len())],
+											 verts[g.gen_range(0, verts.len())],
+											 MockEdgeWeight::arbitrary(g))).unwrap(),
+				_ => ()
+			}
 		}
 		Self(UniqueGraph::unchecked(graph))
+	}
+}
+
+impl<D: Directedness> Arbitrary for ArbUniqueGraph<D>
+{
+	fn arbitrary<G: Gen>(g: &mut G) -> Self {
+		let v_max = max_vertex_count(g);
+		Self::arbitrary_guided(g, 0..v_max, 0..v_max)
 	}
 	
 	fn shrink(&self) -> Box<dyn Iterator<Item=Self>> {
@@ -146,63 +179,31 @@ impl<D: Directedness> Graph for ArbNonUniqueGraph<D>
 impl<D: Directedness> Arbitrary for ArbNonUniqueGraph<D>
 {
 	fn arbitrary<G: Gen>(g: &mut G) -> Self {
-		let mut graph = {
-			let mut cand = ArbUniqueGraph::arbitrary(g).0.unconstrain();
-			while cand.all_edges().count() < 1 {
-				cand = ArbUniqueGraph::arbitrary(g).0.unconstrain();
-			}
-			cand
-		};
-		let original_edges: Vec<_> = graph.all_edges().map(|e| (e.source(), e.sink())).collect();
+		let v_max = max_vertex_count(g);
+		// Ensure there are at least 1 edge (so that we can duplicate)
+		let mut graph = ArbUniqueGraph::arbitrary_guided(g, 1..v_max, 1..v_max).0.unconstrain();
 		
 		// Duplicate a arbitrary number of additional edges (at least 1)
+		let original_edges: Vec<_> = graph.all_edges().map(|e| (e.source(), e.sink())).collect();
 		let duplicate_count = g.gen_range(1, original_edges.len()+1);
 		for _ in 0..duplicate_count{
 			let dup_edge = original_edges[g.gen_range(0, original_edges.len())];
-			graph.add_edge_weighted((dup_edge.source(), dup_edge.sink(), MockEdgeWeight::arbitrary(g)));
+			graph.add_edge_weighted((dup_edge.source(),
+									 dup_edge.sink(),
+									 MockEdgeWeight::arbitrary(g)))
+				.unwrap();
 		}
 		Self(graph, duplicate_count)
 	}
 	
 	fn shrink(&self) -> Box<dyn Iterator<Item=Self>> {
-		/* Base case
-		 */
-		if self.all_vertices().count() == 0 {
-			return Box::new(std::iter::empty());
-		}
 		
 		let mut result = Vec::new();
 		
-		/* Shrink by shrinking vertex weight
-		 */
-		self.all_vertices_weighted()
-			//Get all possible shrinkages
-			.flat_map(|(v,weight)| weight.shrink().map(move|shrunk| (v,shrunk)))
-			//For each shrunk weight,
-			//create a new graph where the vertex has that weight
-			.for_each(|(v, shrunk_weight)|{
-				let mut new_graph = self.0.clone();
-				new_graph.vertices.insert(v.value, shrunk_weight);
-				result.push(Self(new_graph, self.1));
-			});
-		
-		/* Shrink by shrinking edge weight
-		 */
-		//For each edge
-		self.all_edges().for_each(|(source,sink,ref weight)|{
-			let shrunk_weights = weight.shrink();
-			
-			shrunk_weights.for_each( |s_w| {
-				let mut shrunk_graph = self.clone();
-				if let Some(w) = shrunk_graph.all_edges_mut()
-					.find(|(so,si,w)| source == *so && sink == *si && w.value == weight.value)
-					.map(|(_,_,w)| w)
-				{
-					*w = s_w
-				}
-				result.push(shrunk_graph);
-			});
-		});
+		// Allow MockGraph to shrink everything except removing edges.
+		let mut limits = HashSet::new();
+		limits.insert(Limit::EdgeRemove);
+		result.extend(self.0.shrink_guided(limits).map(|g| Self(g,self.1)));
 		
 		/* Shrink by removing an edge.
 		 * Can only remove an edge if there are more than 2 (must have at least 2 edges duplicating
@@ -249,18 +250,6 @@ impl<D: Directedness> Arbitrary for ArbNonUniqueGraph<D>
 						result.push(Self(shrunk_graph, shrunk_dup_count));
 					}
 				}
-			}
-		}
-		/* Shrink by removing a vertex that has no edges.
-		 * We don't remove any edges in this step (to be able to remove a vertex)
-		 * because we are already shrinking by removing edges, which means, there
-		 * should be a set of edge shrinkages that result in a removable vertex.
-		 */
-		for v in self.all_vertices(){
-			if self.edges_incident_on(v).next().is_none(){
-				let mut shrunk_graph = self.clone();
-				shrunk_graph.remove_vertex(v).unwrap();
-				result.push(shrunk_graph);
 			}
 		}
 		
