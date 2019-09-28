@@ -1,4 +1,3 @@
-use crate::core::Graph;
 
 ///
 /// Defines whether something is directed or not.
