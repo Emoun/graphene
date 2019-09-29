@@ -4,7 +4,6 @@ use quickcheck::{Arbitrary, Gen};
 use crate::mock_graph::{MockGraph, MockVertexWeight, MockVertex, MockEdgeWeight};
 use rand::Rng;
 use delegate::delegate;
-use crate::mock_graph::arbitrary::max_vertex_count;
 
 ///
 /// Returns whether there is a path from the first vertex given to the second (on the given graph).
@@ -89,7 +88,7 @@ impl Arbitrary for ArbConnectedGraph<Directed>
 		let mut graph = MockGraph::empty();
 		
 		//Decide the amount of vertices
-		let vertex_count = g.gen_range(0, max_vertex_count(g));
+		let vertex_count = g.gen_range(0, g.size());
 		
 		/* If the amount of vertices is 0, no edges can be created.
 		 */

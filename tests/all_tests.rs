@@ -3,48 +3,35 @@
 #[macro_use(quickcheck)]
 extern crate quickcheck_macros;
 
-macro_rules! tt_curry {
-	{
-		$curried_macro:ident $dollar:tt $macro_to_curry:ident {
-			$($body_to_curry:tt)*
-		}
-	} => {
-		macro_rules! $curried_macro {
-			{
-				$dollar caller:tt
-				$dollar input:ident = [{$dollar($dollar body:tt)*}]
-			} => {
-				$macro_to_curry! {
-					$dollar caller
-					$dollar input = [{ $($body_to_curry)* $dollar($dollar body)* }]
-				}
-			};
-		}
-	}
-}
-
 macro_rules! duplicate_for_directedness{
 
 	{
 		$dollar:tt $placeholder:ident
 		$($rest:tt)*
 	} => {
-		tt_curry!{is_placeholder $dollar tt_equal{$placeholder}}
-		
+		macro_rules! duplicate_for_directedness_predicate {
+			{
+				$dollar caller:tt
+				input = [{ $dollar body:tt }]
+			} => {
+				tt_equal::tt_equal! {
+					$dollar caller
+					input = [{ $placeholder $dollar body }]
+				}
+			}
+		}
 		mod directed{
-			use tt_equal::tt_equal;
 			tt_call::tt_call! {
 				macro = [{ tt_call::tt_replace }]
-				condition = [{ is_placeholder }]
+				condition = [{ duplicate_for_directedness_predicate }]
 				replace_with = [{ graphene::core::Directed }]
 				input = [{ $($rest)* }]
 			}
         }
         mod undirected{
-        	use tt_equal::tt_equal;
 			tt_call::tt_call! {
 				macro = [{ tt_call::tt_replace }]
-				condition = [{ is_placeholder }]
+				condition = [{ duplicate_for_directedness_predicate }]
 				replace_with = [{ graphene::core::Undirected }]
 				input = [{ $($rest)* }]
 			}

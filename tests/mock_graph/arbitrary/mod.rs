@@ -13,8 +13,3 @@ pub  use self::{
 	guided_arb_graph::*,
 };
 use quickcheck::Gen;
-
-fn max_vertex_count<G: Gen>(g: &G) -> usize
-{
-	g.size() / 5
-}

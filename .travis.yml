@@ -8,6 +8,10 @@ script:
   - cargo build --verbose
   - cargo test --verbose
   - cargo doc
+env:
+  - QUICKCHECK_GENERATOR_SIZE=10 QUICKCHECK_TESTS=25
+  - QUICKCHECK_GENERATOR_SIZE=50
+  
 matrix:
   allow_failures:
     - rust: nightly

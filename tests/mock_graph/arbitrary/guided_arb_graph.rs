@@ -1,7 +1,6 @@
 use quickcheck::{Gen, Arbitrary};
 use std::ops::{RangeBounds, Bound};
 use std::collections::HashSet;
-use crate::mock_graph::arbitrary::max_vertex_count;
 
 #[derive(Ord, PartialOrd, PartialEq, Eq, Hash)]
 pub enum Limit {
@@ -61,7 +60,7 @@ pub trait GuidedArbGraph: Arbitrary
 		let v_max = match v_range.end_bound() {
 			Bound::Included(&x) =>  x + 1 ,
 			Bound::Excluded(&x) => x,
-			Bound::Unbounded => max_vertex_count(g),
+			Bound::Unbounded => g.size(),
 		};
 		let e_max = match e_range.end_bound() {
 			Bound::Included(&x) =>  x + 1 ,
