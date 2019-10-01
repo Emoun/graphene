@@ -6,6 +6,9 @@ trait Graph {
 trait GraphMut: Graph {
 	fn graph_mut(&mut self) -> &mut u32;
 }
+trait GraphMut2: Graph {
+	fn graph_mut2(&mut self) -> &mut u32;
+}
 
 trait BaseConstraint: Sized {
 	type Graph: Graph;
@@ -18,8 +21,7 @@ trait BaseConstraint: Sized {
 }
 trait BaseConstraintMut: BaseConstraint
 {
-	type GraphMut: GraphMut;
-	fn get_graph_mut(&mut self) -> &mut Self::GraphMut;
+	fn get_graph_mut(&mut self) -> &mut Self::Graph;
 }
 trait Constraint: Sized
 {
@@ -46,7 +48,7 @@ trait ConstraintMut: Constraint
 	type BaseMut:  BaseConstraintMut;
 	type ConstrainedMut: ConstraintMut<BaseMut=Self::BaseMut>;
 	fn base_single_mut(&mut self) -> &mut Self::ConstrainedMut;
-	fn base_mut(&mut self) -> &mut <Self::BaseMut as BaseConstraintMut>::GraphMut {
+	fn base_mut(&mut self) -> &mut <Self::BaseMut as BaseConstraint>::Graph {
 		self.base_single_mut().base_mut()
 	}
 }
@@ -58,8 +60,7 @@ impl<G: Graph, D: Deref<Target=G>> BaseConstraint for D
 }
 impl<G: GraphMut, D: DerefMut<Target=G>> BaseConstraintMut for D
 {
-	type GraphMut = G;
-	fn get_graph_mut(&mut self) -> &mut Self::GraphMut {&mut **self}
+	fn get_graph_mut(&mut self) -> &mut Self::Graph {&mut **self}
 }
 impl<B: BaseConstraint> Constraint for B {
 	type Base = Self;
@@ -77,7 +78,7 @@ impl<B: BaseConstraintMut> ConstraintMut for B {
 	type BaseMut = Self;
 	type ConstrainedMut = Self;
 	fn base_single_mut(&mut self) -> &mut Self::Constrained { self }
-	fn base_mut(&mut self) -> &mut <Self::BaseMut as BaseConstraintMut>::GraphMut {
+	fn base_mut(&mut self) -> &mut <Self::BaseMut as BaseConstraint>::Graph {
 		self.get_graph_mut()
 	}
 }
@@ -102,8 +103,7 @@ impl BaseConstraint for BaseGraph {
 	fn get_graph(&self) -> &Self::Graph {self}
 }
 impl BaseConstraintMut for BaseGraph{
-	type GraphMut = Self;
-	fn get_graph_mut(&mut self) -> &mut Self::GraphMut {self}
+	fn get_graph_mut(&mut self) -> &mut Self::Graph {self}
 }
 
 struct Connected<C: Constraint>(C);
@@ -120,8 +120,14 @@ impl<C: Constraint> Graph for Connected<C>{
 	}
 }
 impl<C: ConstraintMut> GraphMut for Connected<C>
+	where <C::BaseMut as BaseConstraint>::Graph: GraphMut
 {
 	fn graph_mut(&mut self) -> &mut u32 { self.0.base_mut().graph_mut() }
+}
+impl<C: ConstraintMut> GraphMut2 for Connected<C>
+	where <C::BaseMut as BaseConstraint>::Graph: GraphMut2
+{
+	fn graph_mut2(&mut self) -> &mut u32 { self.0.base_mut().graph_mut2() }
 }
 impl<C: Constraint> Constraint for Connected<C>
 {
