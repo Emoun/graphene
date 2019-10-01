@@ -98,6 +98,9 @@ impl Graph for BaseGraph{
 impl GraphMut for BaseGraph {
 	fn graph_mut(&mut self) -> &mut u32 { &mut self.0 }
 }
+impl GraphMut2 for BaseGraph {
+	fn graph_mut2(&mut self) -> &mut u32 { &mut self.0 }
+}
 impl BaseConstraint for BaseGraph {
 	type Graph = Self;
 	fn get_graph(&self) -> &Self::Graph {self}
@@ -175,6 +178,7 @@ fn constrainer_constraining_base(){
 	
 	let mut c_ref_mut = ConstrainedGraphMut::constrain(&mut g).unwrap();
 	*c_ref_mut.graph_mut() = 30;
+	*c_ref_mut.graph_mut2() = 30;
 	assert_eq!(c_ref_mut.connected_fn(), 30);
 	
 	type ConstrainedGraph<'a> =
