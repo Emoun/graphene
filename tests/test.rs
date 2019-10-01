@@ -10,6 +10,11 @@ trait GraphMut: Graph {
 trait BaseConstraint: Sized {
 	type Graph: Graph;
 	fn get_graph(&self) -> &Self::Graph;
+	fn constrain<G>(self) -> Result<G, ()>
+		where G: Constraint<Base=Self>
+	{
+		G::constrain(self)
+	}
 }
 trait BaseConstraintMut: BaseConstraint
 {
@@ -46,7 +51,17 @@ trait ConstraintMut: Constraint
 	}
 }
 
-impl<B: BaseConstraint> Constraint for B{
+impl<G: Graph, D: Deref<Target=G>> BaseConstraint for D
+{
+	type Graph = G;
+	fn get_graph(&self) -> &Self::Graph {&**self}
+}
+impl<G: GraphMut, D: DerefMut<Target=G>> BaseConstraintMut for D
+{
+	type GraphMut = G;
+	fn get_graph_mut(&mut self) -> &mut Self::GraphMut {&mut **self}
+}
+impl<B: BaseConstraint> Constraint for B {
 	type Base = Self;
 	type Constrained = Self;
 	
@@ -58,7 +73,7 @@ impl<B: BaseConstraint> Constraint for B{
 	fn constrain(g: Self::Base) -> Result<Self, ()>{ Ok(g) }
 	fn base(&self) -> &<Self::Base as BaseConstraint>::Graph { self.get_graph() }
 }
-impl<B: BaseConstraintMut> ConstraintMut for B{
+impl<B: BaseConstraintMut> ConstraintMut for B {
 	type BaseMut = Self;
 	type ConstrainedMut = Self;
 	fn base_single_mut(&mut self) -> &mut Self::Constrained { self }
@@ -67,18 +82,13 @@ impl<B: BaseConstraintMut> ConstraintMut for B{
 	}
 }
 
-impl<G: Graph, D: Deref<Target=G>> BaseConstraint for D
-{
-	type Graph = G;
-	fn get_graph(&self) -> &Self::Graph {&**self}
-}
-impl<G: GraphMut, D: DerefMut<Target=G>> BaseConstraintMut for D
-{
-	type GraphMut = G;
-	fn get_graph_mut(&mut self) -> &mut Self::GraphMut {&mut **self}
-}
-
 struct BaseGraph(u32);
+impl BaseGraph {
+	fn base_graph_fn(&self) -> u32
+	{
+		self.0
+	}
+}
 impl Graph for BaseGraph{
 	fn graph_fn(&self) -> u32 {
 		self.0
@@ -97,6 +107,13 @@ impl BaseConstraintMut for BaseGraph{
 }
 
 struct Connected<C: Constraint>(C);
+impl<C: Constraint> Connected<C>
+{
+	fn connected_fn(&self) -> u32
+	{
+		self.base().graph_fn()
+	}
+}
 impl<C: Constraint> Graph for Connected<C>{
 	fn graph_fn(&self) -> u32 {
 		self.base().graph_fn()
@@ -110,7 +127,7 @@ impl<C: Constraint> Constraint for Connected<C>
 {
 	type Base = C::Base;
 	type Constrained = C;
-	
+
 	fn base_single(&self) -> &Self::Constrained { &self.0 }
 	fn unconstrain_single(self) -> Self::Constrained { self.0 }
 	fn constrain_single(g: Self::Constrained) -> Result<Self, ()> {
@@ -119,7 +136,7 @@ impl<C: Constraint> Constraint for Connected<C>
 		} else {
 			Err(())
 		}
-		
+
 	}
 }
 impl<C: ConstraintMut> ConstraintMut for Connected<C>
@@ -127,22 +144,113 @@ impl<C: ConstraintMut> ConstraintMut for Connected<C>
 	type BaseMut = C::BaseMut;
 	type ConstrainedMut = C;
 	
-	fn base_single_mut(&mut self) -> &mut Self::Constrained { &mut self.0 }
+	fn base_single_mut(&mut self) -> &mut Self::ConstrainedMut { &mut self.0 }
 }
 
 #[test]
-fn test(){
+fn constrainer_constraining_base(){
+	type ConstrainedGraphRef<'a> =
+	Connected<
+		Connected<
+			&'a BaseGraph
+		>>;
+	
 	let mut g = BaseGraph(16);
 	assert_eq!(g.graph_fn(), 16);
 	
-	let c_ref = Connected::constrain_single(&g).unwrap();
-	assert_eq!(c_ref.graph_fn(), 16);
+	let c_ref = ConstrainedGraphRef::constrain(&g).unwrap();
+	assert_eq!(c_ref.connected_fn(), 16);
 	
-	let mut c_ref_mut = Connected::constrain_single(&mut g).unwrap();
+	type ConstrainedGraphMut<'a> =
+	Connected<
+		Connected<
+			&'a mut BaseGraph
+		>>;
+	
+	let mut c_ref_mut = ConstrainedGraphMut::constrain(&mut g).unwrap();
 	*c_ref_mut.graph_mut() = 30;
-	assert_eq!(c_ref_mut.graph_fn(), 30);
+	assert_eq!(c_ref_mut.connected_fn(), 30);
 	
-	let c_owned = Connected::constrain_single(g).unwrap();
-	assert_eq!(c_owned.graph_fn(), 30);
+	type ConstrainedGraph<'a> =
+	Connected<
+		Connected<
+			BaseGraph
+		>>;
 	
+	let c_owned = ConstrainedGraph::constrain(g).unwrap();
+	assert_eq!(c_owned.connected_fn(), 30);
+	
+}
+
+#[test]
+fn inline_constrainer_constraining_base(){
+	
+	let mut g = BaseGraph(16);
+	assert_eq!(g.graph_fn(), 16);
+	
+	let c_ref = <Connected<Connected<&BaseGraph>>>::constrain(&g).unwrap();
+	assert_eq!(c_ref.connected_fn(), 16);
+	
+	let mut c_ref_mut = <Connected<Connected<&mut BaseGraph>>>::constrain(&mut g).unwrap();
+	*c_ref_mut.graph_mut() = 30;
+	assert_eq!(c_ref_mut.connected_fn(), 30);
+	
+	let c_owned = <Connected<Connected<BaseGraph>>>::constrain(g).unwrap();
+	assert_eq!(c_owned.connected_fn(), 30);
+	
+}
+
+#[test]
+fn base_constrains_self_by_constraint_inference(){
+	type ConstrainedGraph<G> = Connected< Connected< Connected<G> > >;
+	
+	let mut g = BaseGraph(16);
+	assert_eq!(g.graph_fn(), 16);
+	
+	let c_ref: ConstrainedGraph<&BaseGraph> = (&g).constrain().unwrap();
+	assert_eq!(c_ref.connected_fn(), 16);
+	let c_ref_unc = c_ref.unconstrain_single();
+	assert_eq!(c_ref_unc.connected_fn(), 16);
+	
+	let mut c_ref_mut: ConstrainedGraph<&mut BaseGraph> = (&mut g).constrain().unwrap();
+	*c_ref_mut.graph_mut() = 30;
+	assert_eq!(c_ref_mut.connected_fn(), 30);
+	let mut c_ref_mut_unc = c_ref_mut.unconstrain_single();
+	assert_eq!(c_ref_mut_unc.connected_fn(), 30);
+	*c_ref_mut_unc.graph_mut() = 31;
+	assert_eq!(c_ref_mut_unc.connected_fn(), 31);
+	
+	let c_owned: ConstrainedGraph<BaseGraph> = g.constrain().unwrap();
+	assert_eq!(c_owned.connected_fn(), 31);
+	let c_owned_unc = c_owned.unconstrain_single();
+	assert_eq!(c_owned_unc.connected_fn(), 31);
+	let g2 = c_owned_unc.unconstrain();
+	assert_eq!(g2.base_graph_fn(), 31);
+}
+
+#[test]
+fn base_constrains_self_by_inline_constraint_inference(){
+	
+	let mut g = BaseGraph(16);
+	assert_eq!(g.graph_fn(), 16);
+	
+	let c_ref: Connected<Connected<Connected<&BaseGraph>>> = (&g).constrain().unwrap();
+	assert_eq!(c_ref.connected_fn(), 16);
+	let c_ref_unc = c_ref.unconstrain_single();
+	assert_eq!(c_ref_unc.connected_fn(), 16);
+	
+	let mut c_ref_mut: Connected<Connected<Connected<&mut BaseGraph>>> = (&mut g).constrain().unwrap();
+	*c_ref_mut.graph_mut() = 30;
+	assert_eq!(c_ref_mut.connected_fn(), 30);
+	let mut c_ref_mut_unc = c_ref_mut.unconstrain_single();
+	assert_eq!(c_ref_mut_unc.connected_fn(), 30);
+	*c_ref_mut_unc.graph_mut() = 31;
+	assert_eq!(c_ref_mut_unc.connected_fn(), 31);
+	
+	let c_owned: Connected<Connected<Connected<BaseGraph>>> = g.constrain().unwrap();
+	assert_eq!(c_owned.connected_fn(), 31);
+	let c_owned_unc = c_owned.unconstrain_single();
+	assert_eq!(c_owned_unc.connected_fn(), 31);
+	let g2 = c_owned_unc.unconstrain();
+	assert_eq!(g2.base_graph_fn(), 31);
 }
