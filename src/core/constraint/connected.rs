@@ -58,10 +58,9 @@ impl_constraints!{
 	ConnectedGraph<G>: Connected
 }
 
-impl<B, C> Constrainer for ConnectedGraph<C>
-	where B: BaseGraph, C: Constrainer<BaseGraph=B>
+impl<C: Constrainer> Constrainer for ConnectedGraph<C>
 {
-	type BaseGraph = B;
+	type BaseGraph = C::BaseGraph;
 	type Constrained = C;
 	
 	fn constrain_single(_: Self::Constrained) -> Result<Self, ()>{

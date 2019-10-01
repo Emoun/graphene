@@ -64,10 +64,12 @@ impl_constraints!{
 	where G::EdgeWeight: Default
 }
 
-impl<B, C> Constrainer for ReflexiveGraph<C>
-	where B: BaseGraph, C: Graph + Constrainer<BaseGraph=B>, C::EdgeWeight: Default
+impl<C> Constrainer for ReflexiveGraph<C>
+	where
+		C: Constrainer,
+		C::EdgeWeight: Default
 {
-	type BaseGraph = B;
+	type BaseGraph = C::BaseGraph;
 	type Constrained = C;
 	
 	fn constrain_single(g: Self::Constrained) -> Result<Self, ()>{

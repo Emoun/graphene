@@ -76,10 +76,9 @@ impl_constraints!{
 	UniqueGraph<G>: Unique
 }
 
-impl<B, C> Constrainer for UniqueGraph<C>
-	where B: BaseGraph, C: Graph + Constrainer<BaseGraph=B>
+impl<C: Constrainer> Constrainer for UniqueGraph<C>
 {
-	type BaseGraph = B;
+	type BaseGraph = C::BaseGraph;
 	type Constrained = C;
 	
 	fn constrain_single(g: Self::Constrained) -> Result<Self, ()>{

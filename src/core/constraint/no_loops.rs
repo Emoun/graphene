@@ -47,10 +47,9 @@ impl_constraints!{
 	NoLoopsGraph<G>: NoLoops
 }
 
-impl<B, C>  Constrainer for NoLoopsGraph<C>
-	where B: BaseGraph, C: Graph + Constrainer<BaseGraph=B>
+impl<C: Constrainer>  Constrainer for NoLoopsGraph<C>
 {
-	type BaseGraph = B;
+	type BaseGraph = C::BaseGraph;
 	type Constrained = C;
 	
 	fn constrain_single(g: Self::Constrained) -> Result<Self, ()>{
