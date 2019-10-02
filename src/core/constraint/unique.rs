@@ -1,4 +1,4 @@
-use crate::core::{Graph, EdgeWeighted, Directedness, Edge, AutoGraph, Constrainer, BaseGraph};
+use crate::core::{Graph, EdgeWeighted, Directedness, Edge, AutoGraph, Constrainer};
 use delegate::delegate;
 
 ///

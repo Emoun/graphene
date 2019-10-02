@@ -1,4 +1,4 @@
-use crate::core::{Graph, Edge, EdgeWeighted, AutoGraph, Constrainer, BaseGraph};
+use crate::core::{Graph, Edge, EdgeWeighted, AutoGraph, Constrainer};
 
 ///
 /// A marker trait for a reflexive graph.

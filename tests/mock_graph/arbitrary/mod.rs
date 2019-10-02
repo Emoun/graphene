@@ -12,4 +12,3 @@ pub  use self::{
 	arb_unique_graph::*,
 	guided_arb_graph::*,
 };
-use quickcheck::Gen;

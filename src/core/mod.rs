@@ -3,7 +3,8 @@
 //!
 //!
 //!
-
+#[macro_use]
+mod delegate_graph;
 #[macro_use]
 pub mod constraint;
 pub mod trait_aliases;
