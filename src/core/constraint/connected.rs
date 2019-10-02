@@ -1,5 +1,4 @@
-use crate::core::{Graph, EdgeWeighted, AddVertex, Constrainer, GraphMut, AddEdge};
-use delegate::delegate;
+use crate::core::{Graph, EdgeWeighted, AddVertex, Constrainer, GraphMut, AddEdge, ConstrainerMut, BaseGraph};
 
 ///
 /// A marker trait for graphs that are connected.
@@ -11,98 +10,121 @@ pub trait Connected: Graph
 {}
 
 #[derive(Clone, Debug)]
-pub struct ConnectedGraph<G: Graph>(G);
+pub struct ConnectedGraph<C: Constrainer>(C);
 
-impl<G:Graph> ConnectedGraph<G>
+impl<C: Constrainer> ConnectedGraph<C>
 {
 	///
 	/// Creates a new connected graph. The given graph *must* be connected.
 	/// This method does not check for this!!
 	///
-	pub fn new(g: G) -> Self
+	pub fn new(c: C) -> Self
 	{
-		Self(g)
+		Self(c)
 	}
 }
 
-impl<G: Graph> Graph for ConnectedGraph<G>
+impl<C: Constrainer> Constrainer for ConnectedGraph<C>
 {
-	type Vertex = G::Vertex;
-	type VertexWeight = G::VertexWeight;
-	type EdgeWeight = G::EdgeWeight;
-	type Directedness = G::Directedness;
-	delegate!{
-		target self.0 {
-			fn all_vertices_weighted<'a>(&'a self) -> Box<dyn 'a + Iterator<Item=
-				(Self::Vertex, &'a Self::VertexWeight)>> ;
-			
-			fn all_edges<'a>(&'a self) -> Box<dyn 'a + Iterator<Item=
-				(Self::Vertex, Self::Vertex, &'a Self::EdgeWeight)>> ;
-		}
-	}
-}
-
-impl<G: GraphMut> GraphMut for ConnectedGraph<G>
-{
-	delegate!{
-		target self.0 {
-			fn all_vertices_weighted_mut<'a>(&'a mut self) -> Box<dyn 'a + Iterator<Item=
-				(Self::Vertex, &'a mut Self::VertexWeight)>> ;
+	type Base = C::Base;
+	type Constrained = C;
 	
-			
-			fn all_edges_mut<'a>(&'a mut self) -> Box<dyn 'a + Iterator<Item=
-				(Self::Vertex, Self::Vertex, &'a mut Self::EdgeWeight)>> ;
+	fn constrain_single(_: Self::Constrained) -> Result<Self, ()>{
+		unimplemented!()
+	}
 	
-		}
+	fn constrained(&self) -> &Self::Constrained {
+		&self.0
+	}
+	
+	
+	fn unconstrain_single(self) -> Self::Constrained{
+		self.0
+	}
+}
+impl<C: ConstrainerMut> ConstrainerMut for ConnectedGraph<C>
+{
+	type BaseMut = C::BaseMut;
+	type ConstrainedMut = C;
+	
+	fn constrained_mut(&mut self) -> &mut Self::ConstrainedMut {
+		&mut self.0
 	}
 }
 
-impl<G: AddVertex> AddVertex for ConnectedGraph<G>
+impl<C: Constrainer> Graph for ConnectedGraph<C>
 {
-	delegate! {
-		target self.0 {
-			fn new_vertex_weighted(&mut self, w: Self::VertexWeight)
-				-> Result<Self::Vertex, ()>;
-			
-		}
+	type Vertex = <<C::Base as BaseGraph>::Graph as Graph>::Vertex;
+	type VertexWeight = <<C::Base as BaseGraph>::Graph as Graph>::VertexWeight;
+	type EdgeWeight = <<C::Base as BaseGraph>::Graph as Graph>::EdgeWeight;
+	type Directedness = <<C::Base as BaseGraph>::Graph as Graph>::Directedness;
+	
+	fn all_vertices_weighted<'a>(&'a self) -> Box<dyn 'a + Iterator<Item=
+		(Self::Vertex, &'a Self::VertexWeight)>>
+	{
+		self.base().all_vertices_weighted()
 	}
-	fn remove_vertex(&mut self, v: Self::Vertex) -> Result<Self::VertexWeight, ()>
+	
+	fn all_edges<'a>(&'a self) -> Box<dyn 'a + Iterator<Item=
+		(Self::Vertex, Self::Vertex, &'a Self::EdgeWeight)>>
+	{
+		self.base().all_edges()
+	}
+}
+
+impl<C: ConstrainerMut> GraphMut for ConnectedGraph<C>
+	where <C::Base as BaseGraph>::Graph: GraphMut
+{
+	fn all_vertices_weighted_mut<'a>(&'a mut self) -> Box<dyn 'a + Iterator<Item=
+		(Self::Vertex, &'a mut Self::VertexWeight)>>
+	{
+		self.base_mut().all_vertices_weighted_mut()
+	}
+	
+	fn all_edges_mut<'a>(&'a mut self) -> Box<dyn 'a + Iterator<Item=
+		(Self::Vertex, Self::Vertex, &'a mut Self::EdgeWeight)>>
+	{
+		self.base_mut().all_edges_mut()
+	}
+	
+}
+
+impl<C: ConstrainerMut> AddVertex for ConnectedGraph<C>
+	where <C::Base as BaseGraph>::Graph: AddVertex
+{
+	fn new_vertex_weighted(&mut self, w: Self::VertexWeight)
+	   -> Result<Self::Vertex, ()>
+	{
+		self.base_mut().new_vertex_weighted(w)
+	}
+	
+	fn remove_vertex(&mut self, _v: Self::Vertex) -> Result<Self::VertexWeight, ()>
 	{
 		Err(())
 	}
 }
 
-impl<G: AddEdge> AddEdge for ConnectedGraph<G>
+impl<C: ConstrainerMut> AddEdge for ConnectedGraph<C>
+	where <C::Base as BaseGraph>::Graph: AddEdge
 {
-	delegate! {
-		target self.0 {
-			fn add_edge_weighted<E>(&mut self, e: E) -> Result<(), ()>
-				where E: EdgeWeighted<Self::Vertex, Self::EdgeWeight>;
-		}
+
+	fn add_edge_weighted<E>(&mut self, e: E) -> Result<(), ()>
+		where E: EdgeWeighted<Self::Vertex, Self::EdgeWeight>
+	{
+		self.base_mut().add_edge_weighted(e)
 	}
-	fn remove_edge_where<F>(&mut self, f: F)
-							-> Result<(Self::Vertex, Self::Vertex, Self::EdgeWeight), ()>
+
+	fn remove_edge_where<F>(&mut self, _f: F)
+		-> Result<(Self::Vertex, Self::Vertex, Self::EdgeWeight), ()>
 		where F: Fn((Self::Vertex, Self::Vertex, &Self::EdgeWeight)) -> bool
 	{
 		unimplemented!()
 	}
 }
 
-impl<G: Graph> Connected for ConnectedGraph<G>{}
+impl<C: Constrainer> Connected for ConnectedGraph<C>{}
 
 impl_constraints!{
-	ConnectedGraph<G>: Connected
+	ConnectedGraph<C>: Connected
 }
 
-impl<C: Constrainer> Constrainer for ConnectedGraph<C>
-{
-	type BaseGraph = C::BaseGraph;
-	type Constrained = C;
-	
-	fn constrain_single(_: Self::Constrained) -> Result<Self, ()>{
-		unimplemented!()
-	}
-	fn unconstrain_single(self) -> Self::Constrained{
-		self.0
-	}
-}

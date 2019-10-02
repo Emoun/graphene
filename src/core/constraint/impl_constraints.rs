@@ -21,7 +21,8 @@ macro_rules! impl_constraints {
 			input = [{$trait Unique}]
 			true = [{}]
 			false = [{
-				impl<$generic_graph> $crate::core::constraint::Unique for $struct<$generic_graph>
+				impl<$generic_graph: $crate::core::Constrainer> $crate::core::constraint::Unique
+					for $struct<$generic_graph>
 					where
 						$generic_graph: $crate::core::constraint::Unique,
 						$($($bounds)*)?
@@ -35,7 +36,8 @@ macro_rules! impl_constraints {
 			input = [{$trait NoLoops}]
 			true = [{}]
 			false = [{
-				impl<$generic_graph> $crate::core::constraint::NoLoops for $struct<$generic_graph>
+				impl<$generic_graph: $crate::core::Constrainer> $crate::core::constraint::NoLoops
+					for $struct<$generic_graph>
 					where
 						$generic_graph: $crate::core::constraint::NoLoops,
 						$($($bounds)*)?
@@ -49,10 +51,12 @@ macro_rules! impl_constraints {
 			input = [{$trait Reflexive}]
 			true = [{}]
 			false = [{
-				impl<$generic_graph> $crate::core::constraint::Reflexive for $struct<$generic_graph>
+				impl<$generic_graph: $crate::core::Constrainer> $crate::core::constraint::Reflexive
+					for $struct<$generic_graph>
 					where
 						$generic_graph: $crate::core::constraint::Reflexive,
-						G::EdgeWeight: std::default::Default,
+						$generic_graph::EdgeWeight: Default,
+						<<$generic_graph::Base as BaseGraph>::Graph as Graph>::EdgeWeight: Default
 						$($($bounds)*)?
 				{}
 			}]
@@ -64,7 +68,8 @@ macro_rules! impl_constraints {
 			input = [{$trait Connected}]
 			true = [{}]
 			false = [{
-				impl<$generic_graph> $crate::core::constraint::Connected for $struct<$generic_graph>
+				impl<$generic_graph: $crate::core::Constrainer> $crate::core::constraint::Connected
+					for $struct<$generic_graph>
 					where
 						$generic_graph: $crate::core::constraint::Connected,
 						$($($bounds)*)?

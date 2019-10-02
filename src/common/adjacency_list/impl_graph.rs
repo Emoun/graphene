@@ -1,5 +1,5 @@
 
-use crate::core::{Graph, EdgeWeighted, Directedness, BaseGraph, AddVertex, Edge, ExactGraph, AddEdge, GraphMut};
+use crate::core::{Graph, EdgeWeighted, Directedness, BaseGraph, AddVertex, Edge, ExactGraph, AddEdge, GraphMut, BaseGraphMut};
 use crate::common::AdjListGraph;
 
 
@@ -117,7 +117,15 @@ impl<Vw,Ew,D> ExactGraph for AdjListGraph<Vw,Ew,D>
 
 impl<Vw,Ew,D> BaseGraph for AdjListGraph<Vw,Ew,D>
 	where D: Directedness,
-{}
+{
+	type Graph = Self;
+	fn graph(&self) -> &Self::Graph {self}
+}
+impl<Vw,Ew,D> BaseGraphMut for AdjListGraph<Vw,Ew,D>
+	where D: Directedness,
+{
+	fn graph_mut(&mut self) -> &mut Self::Graph {self}
+}
 
 
 

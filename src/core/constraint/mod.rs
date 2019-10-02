@@ -9,10 +9,10 @@ mod reflexive;
 mod connected;
 
 pub use self::{
+	impl_constraints::*,
 	unique::*,
 	no_loops::*,
 	reflexive::*,
-	impl_constraints::*,
 	connected::*,
 };
 

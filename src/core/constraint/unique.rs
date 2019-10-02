@@ -1,5 +1,4 @@
-use crate::core::{Graph, EdgeWeighted, Directedness, Edge, AddVertex, Constrainer, GraphMut, AddEdge};
-use delegate::delegate;
+use crate::core::{Graph, EdgeWeighted, Directedness, Edge, AddVertex, Constrainer, GraphMut, AddEdge, ConstrainerMut, BaseGraph};
 
 ///
 /// A marker trait for graphs containing only unique edges.
@@ -24,73 +23,120 @@ pub trait Unique: Graph
 }
 
 #[derive(Clone, Debug)]
-pub struct UniqueGraph<G: Graph>(G);
+pub struct UniqueGraph<C: Constrainer>(C);
 
-impl<G: Graph> UniqueGraph<G>
+impl<C: Constrainer> UniqueGraph<C>
 {
 	///
 	/// Constrains the given graph.
 	///
 	/// The given graph must be unique. This is not checked by this function.
 	///
-	pub fn unchecked(g: G) -> Self
+	pub fn unchecked(c: C) -> Self
 	{
-		Self(g)
+		Self(c)
 	}
 }
 
-impl<G: Graph> Graph for UniqueGraph<G>
+impl<C: Constrainer> Constrainer for UniqueGraph<C>
 {
-	type Vertex = G::Vertex;
-	type VertexWeight = G::VertexWeight;
-	type EdgeWeight = G::EdgeWeight;
-	type Directedness = G::Directedness;
-	delegate!{
-		target self.0 {
-			fn all_vertices_weighted<'a>(&'a self) -> Box<dyn 'a + Iterator<Item=
-				(Self::Vertex, &'a Self::VertexWeight)>> ;
-			
-			fn all_edges<'a>(&'a self) -> Box<dyn 'a + Iterator<Item=
-				(Self::Vertex, Self::Vertex, &'a Self::EdgeWeight)>> ;
-		}
-	}
-}
-
-impl<G: GraphMut> GraphMut for UniqueGraph<G>
-{
-	delegate!{
-		target self.0 {
-			fn all_vertices_weighted_mut<'a>(&'a mut self) -> Box<dyn 'a + Iterator<Item=
-				(Self::Vertex, &'a mut Self::VertexWeight)>> ;
+	type Base = C::Base;
+	type Constrained = C;
 	
-			
-			fn all_edges_mut<'a>(&'a mut self) -> Box<dyn 'a + Iterator<Item=
-				(Self::Vertex, Self::Vertex, &'a mut Self::EdgeWeight)>> ;
+	fn constrain_single(g: Self::Constrained) -> Result<Self, ()>{
+		let edges: Vec<_> = g.base().all_edges().collect();
+		let mut iter = edges.iter();
+		while let  Some(e) = iter.next() {
+			for e2 in iter.clone() {
+				if (e.source() == e2.source() && e.sink() == e2.sink()) ||
+					(e.source() == e2.sink() && e.sink() == e2.source() &&
+						!<<<C as Constrainer>::Base as BaseGraph>::Graph as Graph>
+							::Directedness::directed())
+				{
+					return Err(())
+				}
+			}
+		}
+		
+		Ok(UniqueGraph(g))
+	}
 	
-		}
+	fn constrained(&self) -> &Self::Constrained {
+		&self.0
+	}
+	
+	fn unconstrain_single(self) -> Self::Constrained{
+		self.0
+	}
+}
+impl<C: ConstrainerMut> ConstrainerMut for UniqueGraph<C>
+{
+	type BaseMut = C::BaseMut;
+	type ConstrainedMut = C;
+	
+	fn constrained_mut(&mut self) -> &mut Self::ConstrainedMut {
+		&mut self.0
 	}
 }
 
-impl<G: AddVertex> AddVertex for UniqueGraph<G>
+impl<C: Constrainer> Graph for UniqueGraph<C>
 {
-	delegate! {
-		target self.0 {
-			fn new_vertex_weighted(&mut self, w: Self::VertexWeight)
-				-> Result<Self::Vertex, ()>;
-			
-			fn remove_vertex(&mut self, v: Self::Vertex) -> Result<Self::VertexWeight, ()> ;
-		}
+	type Vertex = <<C::Base as BaseGraph>::Graph as Graph>::Vertex;
+	type VertexWeight = <<C::Base as BaseGraph>::Graph as Graph>::VertexWeight;
+	type EdgeWeight = <<C::Base as BaseGraph>::Graph as Graph>::EdgeWeight;
+	type Directedness = <<C::Base as BaseGraph>::Graph as Graph>::Directedness;
+	
+	fn all_vertices_weighted<'a>(&'a self) -> Box<dyn 'a + Iterator<Item=
+		(Self::Vertex, &'a Self::VertexWeight)>>
+	{
+		self.base().all_vertices_weighted()
+	}
+	
+	fn all_edges<'a>(&'a self) -> Box<dyn 'a + Iterator<Item=
+		(Self::Vertex, Self::Vertex, &'a Self::EdgeWeight)>>
+	{
+		self.base().all_edges()
 	}
 }
 
-impl<G: AddEdge> AddEdge for UniqueGraph<G>
+impl<C: ConstrainerMut>  GraphMut for UniqueGraph<C>
+	where <C::Base as BaseGraph>::Graph: GraphMut
 {
-	delegate! {
-		target self.0 {
-			fn remove_edge_where<F>(&mut self, f: F) -> Result<(Self::Vertex, Self::Vertex, Self::EdgeWeight), ()>
-				where F: Fn((Self::Vertex, Self::Vertex, &Self::EdgeWeight)) -> bool;
+	fn all_vertices_weighted_mut<'a>(&'a mut self) -> Box<dyn 'a + Iterator<Item=
+		(Self::Vertex, &'a mut Self::VertexWeight)>>
+	{
+		self.base_mut().all_vertices_weighted_mut()
+	}
+	
+	fn all_edges_mut<'a>(&'a mut self) -> Box<dyn 'a + Iterator<Item=
+		(Self::Vertex, Self::Vertex, &'a mut Self::EdgeWeight)>>
+	{
+		self.base_mut().all_edges_mut()
+	}
+}
 
-		}
+impl<C: ConstrainerMut> AddVertex for UniqueGraph<C>
+	where <C::Base as BaseGraph>::Graph: AddVertex
+{
+	fn new_vertex_weighted(&mut self, w: Self::VertexWeight)
+		-> Result<Self::Vertex, ()>
+	{
+		self.base_mut().new_vertex_weighted(w)
+	}
+	
+	fn remove_vertex(&mut self, v: Self::Vertex) -> Result<Self::VertexWeight, ()>
+	{
+		self.base_mut().remove_vertex(v)
+	}
+}
+
+impl<C: ConstrainerMut> AddEdge for UniqueGraph<C>
+	where <C::Base as BaseGraph>::Graph: AddEdge
+{
+	fn remove_edge_where<F>(&mut self, f: F) -> Result<(Self::Vertex, Self::Vertex, Self::EdgeWeight), ()>
+		where F: Fn((Self::Vertex, Self::Vertex, &Self::EdgeWeight)) -> bool
+	{
+		self.base_mut().remove_edge_where(f)
 	}
 	
 	fn add_edge_weighted<E>(&mut self, e: E) -> Result<(), ()>
@@ -106,37 +152,13 @@ impl<G: AddEdge> AddEdge for UniqueGraph<G>
 				return Err(());
 			}
 		}
-		self.0.add_edge_weighted(e)
+		self.base_mut().add_edge_weighted(e)
 	}
 }
 
-impl<G: Graph> Unique for UniqueGraph<G>{}
+impl<C: Constrainer> Unique for UniqueGraph<C>{}
 
 impl_constraints!{
-	UniqueGraph<G>: Unique
+	UniqueGraph<C>: Unique
 }
 
-impl<C: Constrainer> Constrainer for UniqueGraph<C>
-{
-	type BaseGraph = C::BaseGraph;
-	type Constrained = C;
-	
-	fn constrain_single(g: Self::Constrained) -> Result<Self, ()>{
-		let edges: Vec<_> = g.all_edges().collect();
-		let mut iter = edges.iter();
-		while let  Some(e) = iter.next() {
-			for e2 in iter.clone() {
-				if (e.source() == e2.source() && e.sink() == e2.sink()) ||
-					(e.source() == e2.sink() && e.sink() == e2.source() && !C::Directedness::directed())
-				{
-					return Err(())
-				}
-			}
-		}
-
-		Ok(UniqueGraph(g))
-	}
-	fn unconstrain_single(self) -> Self::Constrained{
-		self.0
-	}
-}

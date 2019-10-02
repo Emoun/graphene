@@ -150,12 +150,14 @@ impl<C: ConstraintMut> GraphMut for Connected<C>
 	fn graph_mut<'a>(&'a mut self) -> Box<dyn 'a + Iterator<Item=
 		&'a mut <<C::Base as BaseConstraint>::Graph as Graph>::R>>
 	{
-		self.0.base_mut().graph_mut()
+		self.base_mut().graph_mut()
 	}
 }
 impl<C: ConstraintMut> GraphMut2 for Connected<C>
 	where <C::Base as BaseConstraint>::Graph: GraphMut2 {
-	fn graph_mut2(&mut self) -> &mut <<C::Base as BaseConstraint>::Graph as Graph>::R { self.0.base_mut().graph_mut2() }
+	fn graph_mut2(&mut self) -> &mut <<C::Base as BaseConstraint>::Graph as Graph>::R {
+		self.base_mut().graph_mut2()
+	}
 }
 
 #[test]
@@ -179,7 +181,7 @@ fn constrainer_constraining_base(){
 		>>;
 
 	let mut c_ref_mut = ConstrainedGraphMut::constrain(&mut g).unwrap();
-	*c_ref_mut.graph_mut().next().unwrap() = 30;
+	*(c_ref_mut.graph_mut().next().unwrap()) = 30;
 	*c_ref_mut.graph_mut2() = 30;
 	assert_eq!(c_ref_mut.connected_fn(), &30);
 
