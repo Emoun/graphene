@@ -1,5 +1,5 @@
 
-use crate::core::{Graph, EdgeWeighted, Directedness, BaseGraph, AutoGraph, Edge, ExactGraph};
+use crate::core::{Graph, EdgeWeighted, Directedness, BaseGraph, AddVertex, Edge, ExactGraph, AddEdge, GraphMut};
 use crate::common::AdjListGraph;
 
 
@@ -17,12 +17,6 @@ impl<Vw,Ew,D> Graph for AdjListGraph<Vw,Ew,D>
 		Box::new(self.vertices.iter().enumerate().map(|(v,(w,_))| (v, w)))
 	}
 	
-	fn all_vertices_weighted_mut<'a>(&'a mut self)
-		-> Box<dyn 'a + Iterator<Item=(Self::Vertex, &'a mut Self::VertexWeight)>>
-	{
-		Box::new(self.vertices.iter_mut().enumerate().map(|(v,(w,_))| (v, w)))
-	}
-	
 	fn all_edges<'a>(&'a self) -> Box<dyn 'a + Iterator<Item=
 		(Self::Vertex, Self::Vertex, &'a Self::EdgeWeight)>>
 	{
@@ -34,8 +28,19 @@ impl<Vw,Ew,D> Graph for AdjListGraph<Vw,Ew,D>
 			}
 		))
 	}
+}
+
+impl<Vw,Ew,D> GraphMut for AdjListGraph<Vw,Ew,D>
+	where D: Directedness
+{
+	fn all_vertices_weighted_mut<'a>(&'a mut self)
+		 -> Box<dyn 'a + Iterator<Item=(Self::Vertex, &'a mut Self::VertexWeight)>>
+	{
+		Box::new(self.vertices.iter_mut().enumerate().map(|(v,(w,_))| (v, w)))
+	}
+	
 	fn all_edges_mut<'a>(&'a mut self) -> Box<dyn 'a + Iterator<Item=
-		(Self::Vertex, Self::Vertex, &'a mut Self::EdgeWeight)>>
+	(Self::Vertex, Self::Vertex, &'a mut Self::EdgeWeight)>>
 	{
 		Box::new(self.vertices.iter_mut().enumerate().flat_map(
 			|(source_id,( _, out))| {
@@ -44,6 +49,17 @@ impl<Vw,Ew,D> Graph for AdjListGraph<Vw,Ew,D>
 				})
 			}
 		))
+	}
+}
+
+impl<Vw,Ew,D> AddVertex for AdjListGraph<Vw,Ew,D>
+	where D: Directedness,
+{
+	fn new_vertex_weighted(&mut self, w: Self::VertexWeight) -> Result<Self::Vertex,()>
+	{
+		let new_v = self.vertices.len();
+		self.vertices.push((w,Vec::new()));
+		Ok(new_v)
 	}
 	
 	fn remove_vertex(&mut self, v: Self::Vertex) -> Result<Self::VertexWeight,()>
@@ -57,7 +73,11 @@ impl<Vw,Ew,D> Graph for AdjListGraph<Vw,Ew,D>
 			Err(())
 		}
 	}
-	
+}
+
+impl<Vw,Ew,D> AddEdge for AdjListGraph<Vw,Ew,D>
+	where D: Directedness
+{
 	fn add_edge_weighted<E>(&mut self, e: E) -> Result<(),()>
 		where
 			E: EdgeWeighted<Self::Vertex, Self::EdgeWeight>,
@@ -72,7 +92,7 @@ impl<Vw,Ew,D> Graph for AdjListGraph<Vw,Ew,D>
 	}
 	
 	fn remove_edge_where<F>(&mut self, f: F)
-		-> Result<(Self::Vertex, Self::Vertex, Self::EdgeWeight), ()>
+							-> Result<(Self::Vertex, Self::Vertex, Self::EdgeWeight), ()>
 		where
 			F: Fn((Self::Vertex, Self::Vertex, &Self::EdgeWeight)) -> bool
 	{
@@ -90,16 +110,6 @@ impl<Vw,Ew,D> Graph for AdjListGraph<Vw,Ew,D>
 	}
 }
 
-impl<Vw,Ew,D> AutoGraph for AdjListGraph<Vw,Ew,D>
-	where D: Directedness,
-{
-	fn new_vertex_weighted(&mut self, w: Self::VertexWeight) -> Result<Self::Vertex,()>
-	{
-		let new_v = self.vertices.len();
-		self.vertices.push((w,Vec::new()));
-		Ok(new_v)
-	}
-}
 
 impl<Vw,Ew,D> ExactGraph for AdjListGraph<Vw,Ew,D>
 	where D: Directedness,

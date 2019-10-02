@@ -2,11 +2,14 @@
 //! Tests the `Graph` and `AutoGraph` implementations of `AdjListGraph`
 //!
 
-use crate::mock_graph::{MockDirectedness, MockGraph};
-use graphene::core::{Graph, Edge, EdgeWeighted};
-use crate::mock_graph::utilities::{unordered_equivalent_lists_equal};
-use crate::common::adjacency_list::adj_list_from_mock;
-use crate::mock_graph::arbitrary::{ArbVertexIn, ArbEdgeIn};
+use crate::{
+	mock_graph::{
+		MockDirectedness, MockGraph, utilities::{unordered_equivalent_lists_equal},
+		arbitrary::{ArbVertexIn, ArbEdgeIn}
+	},
+	common::adjacency_list::adj_list_from_mock,
+};
+use graphene::core::{Graph, Edge, EdgeWeighted, GraphMut, AddVertex, AddEdge};
 
 ///
 /// Tests that adding vertices to the graph results in the same vertices being

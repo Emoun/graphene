@@ -1,5 +1,5 @@
 use graphene::core::constraint::UniqueGraph;
-use graphene::core::{Directedness, Graph, AutoGraph, Edge, EdgeWeighted, Constrainer};
+use graphene::core::{Directedness, Graph, AddVertex, Edge, EdgeWeighted, Constrainer, GraphMut, AddEdge};
 use crate::mock_graph::{MockGraph, MockVertex, MockVertexWeight, MockEdgeWeight};
 use quickcheck::{Arbitrary, Gen};
 use rand::Rng;
@@ -29,33 +29,50 @@ impl<D: Directedness> Graph for ArbUniqueGraph<D>
 			fn all_vertices_weighted<'a>(&'a self)
 				-> Box<dyn 'a + Iterator<Item=(Self::Vertex, &'a Self::VertexWeight)>>;
 		
-			fn all_vertices_weighted_mut<'a>(&'a mut self)
-				-> Box<dyn 'a +Iterator<Item=(Self::Vertex, &'a mut Self::VertexWeight)>>;
-			
-			fn remove_vertex(&mut self, v: Self::Vertex) -> Result<Self::VertexWeight, ()>;
-			
 			fn all_edges<'a>(&'a self)
 				-> Box<dyn 'a + Iterator<Item=(Self::Vertex, Self::Vertex, &'a Self::EdgeWeight)>>;
+			
+		}
+	}
+}
+
+impl<D: Directedness> GraphMut for ArbUniqueGraph<D>
+{
+	delegate! {
+		target self.0 {
+			fn all_vertices_weighted_mut<'a>(&'a mut self)
+				-> Box<dyn 'a +Iterator<Item=(Self::Vertex, &'a mut Self::VertexWeight)>>;
 			
 			fn all_edges_mut<'a>(&'a mut self) -> Box<dyn 'a + Iterator<Item=
 				(Self::Vertex, Self::Vertex, &'a mut Self::EdgeWeight)>>;
 			
+		}
+	}
+}
+
+impl<D: Directedness> AddVertex for ArbUniqueGraph<D>
+{
+	delegate! {
+		target self.0 {
+			fn new_vertex_weighted(&mut self, w: Self::VertexWeight)
+				-> Result<Self::Vertex, ()>;
+				
+			fn remove_vertex(&mut self, v: Self::Vertex) -> Result<Self::VertexWeight, ()>;
+		}
+	}
+}
+
+impl<D: Directedness> AddEdge for ArbUniqueGraph<D>
+{
+	delegate! {
+		target self.0 {
+	
 			fn remove_edge_where<F>(&mut self, f: F)
 				-> Result<(Self::Vertex, Self::Vertex, Self::EdgeWeight), ()>
 				where F: Fn((Self::Vertex, Self::Vertex, &Self::EdgeWeight)) -> bool ;
 			
 			fn add_edge_weighted<E>(&mut self, e: E) -> Result<(), ()>
 				where E: EdgeWeighted<Self::Vertex, Self::EdgeWeight>;
-		}
-	}
-}
-
-impl<D: Directedness> AutoGraph for ArbUniqueGraph<D>
-{
-	delegate! {
-		target self.0 {
-			fn new_vertex_weighted(&mut self, w: Self::VertexWeight)
-				-> Result<Self::Vertex, ()>;
 		}
 	}
 }
@@ -148,23 +165,9 @@ impl<D: Directedness> Graph for ArbNonUniqueGraph<D>
 			fn all_vertices_weighted<'a>(&'a self)
 				-> Box<dyn 'a + Iterator<Item=(Self::Vertex, &'a Self::VertexWeight)>>;
 		
-			fn all_vertices_weighted_mut<'a>(&'a mut self)
-				-> Box<dyn 'a +Iterator<Item=(Self::Vertex, &'a mut Self::VertexWeight)>>;
-			
-			fn remove_vertex(&mut self, v: Self::Vertex) -> Result<Self::VertexWeight, ()>;
-			
 			fn all_edges<'a>(&'a self)
 				-> Box<dyn 'a + Iterator<Item=(Self::Vertex, Self::Vertex, &'a Self::EdgeWeight)>>;
 			
-			fn all_edges_mut<'a>(&'a mut self) -> Box<dyn 'a + Iterator<Item=
-				(Self::Vertex, Self::Vertex, &'a mut Self::EdgeWeight)>>;
-			
-			fn remove_edge_where<F>(&mut self, f: F)
-				-> Result<(Self::Vertex, Self::Vertex, Self::EdgeWeight), ()>
-				where F: Fn((Self::Vertex, Self::Vertex, &Self::EdgeWeight)) -> bool ;
-			
-			fn add_edge_weighted<E>(&mut self, e: E) -> Result<(), ()>
-				where E: EdgeWeighted<Self::Vertex, Self::EdgeWeight>;
 		}
 	}
 }

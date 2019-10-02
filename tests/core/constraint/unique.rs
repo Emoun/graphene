@@ -5,12 +5,13 @@
 duplicate_for_directedness!{
 	$directedness
 	
-	use crate::mock_graph::arbitrary::{
-		ArbUniqueGraph, ArbNonUniqueGraph, ArbEdgeIn, ArbVertexIn
+	use graphene::core::{Constrainer, Graph, Edge, AddVertex, AddEdge, constraint::UniqueGraph};
+	use crate::mock_graph::{
+		MockEdgeWeight, MockVertexWeight,
+		arbitrary::{
+			ArbUniqueGraph, ArbNonUniqueGraph, ArbEdgeIn, ArbVertexIn
+		}
 	};
-	use graphene::core::{Constrainer, Graph, Edge, AutoGraph};
-	use graphene::core::constraint::UniqueGraph;
-	use crate::mock_graph::{MockEdgeWeight, MockVertexWeight};
 	
 	///
 	/// Tests that UniqueGraph correctly identifies unique graphs.

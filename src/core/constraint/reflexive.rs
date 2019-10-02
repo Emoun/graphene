@@ -1,4 +1,5 @@
-use crate::core::{Graph, Edge, EdgeWeighted, AutoGraph, Constrainer};
+use crate::core::{Graph, Edge, EdgeWeighted, AddVertex, Constrainer, AddEdge, GraphMut};
+use delegate::delegate;
 
 ///
 /// A marker trait for a reflexive graph.
@@ -11,53 +12,84 @@ use crate::core::{Graph, Edge, EdgeWeighted, AutoGraph, Constrainer};
 ///
 pub trait Reflexive: Graph
 	where Self::EdgeWeight: Default
-{
-	fn remove_vertex_looped(&mut self, v: Self::Vertex) -> Result<(Self::VertexWeight, Self::EdgeWeight), ()>;
-}
+{}
 
 pub struct ReflexiveGraph<G>(G)
 	where G: Graph, G::EdgeWeight: Default;
 
-delegate_graph!{
-	ReflexiveGraph<G> where G:: EdgeWeight: Default
-	{
-		
-		fn remove_vertex(&mut self, v: Self::Vertex) -> Result<Self::VertexWeight, ()>
-		{
-			self.remove_vertex_looped(v).map(|(v_weight,_)| v_weight)
-		}
-	
-		fn remove_edge_where<F>(&mut self, f: F)
-								-> Result<(Self::Vertex, Self::Vertex, Self::EdgeWeight), ()>
-			where F: Fn((Self::Vertex, Self::Vertex, &Self::EdgeWeight)) -> bool
-		{
-			self.0.remove_edge_where(|e| f(e) && !e.is_loop())
+impl<G: Graph> Graph for ReflexiveGraph<G>
+	where G::EdgeWeight: Default
+{
+	type Vertex = G::Vertex;
+	type VertexWeight = G::VertexWeight;
+	type EdgeWeight = G::EdgeWeight;
+	type Directedness = G::Directedness;
+	delegate!{
+		target self.0 {
+			fn all_vertices_weighted<'a>(&'a self) -> Box<dyn 'a + Iterator<Item=
+				(Self::Vertex, &'a Self::VertexWeight)>> ;
+			
+			fn all_edges<'a>(&'a self) -> Box<dyn 'a + Iterator<Item=
+				(Self::Vertex, Self::Vertex, &'a Self::EdgeWeight)>> ;
 		}
 	}
 }
 
-impl<G> AutoGraph for ReflexiveGraph<G>
-	where G: AutoGraph, G::EdgeWeight: Default
+impl<G: GraphMut> GraphMut for ReflexiveGraph<G>
+	where G::EdgeWeight: Default
+{
+	delegate!{
+		target self.0 {
+			fn all_vertices_weighted_mut<'a>(&'a mut self) -> Box<dyn 'a + Iterator<Item=
+				(Self::Vertex, &'a mut Self::VertexWeight)>> ;
+	
+			
+			fn all_edges_mut<'a>(&'a mut self) -> Box<dyn 'a + Iterator<Item=
+				(Self::Vertex, Self::Vertex, &'a mut Self::EdgeWeight)>> ;
+	
+		}
+	}
+}
+
+impl<G: AddVertex + AddEdge> AddVertex for ReflexiveGraph<G>
+	where G::EdgeWeight: Default
 {
 	fn new_vertex_weighted(&mut self, w: Self::VertexWeight)
-				-> Result<Self::Vertex, ()>
+						   -> Result<Self::Vertex, ()>
 	{
 		let v = self.0.new_vertex_weighted(w)?;
 		self.0.add_edge((v,v))?;
 		Ok(v)
 	}
+	
+	fn remove_vertex(&mut self, v: Self::Vertex) -> Result<Self::VertexWeight, ()>
+	{
+		self.0.remove_edge((v, v))?;
+		self.0.remove_vertex(v)
+	}
+}
+
+impl<G: AddEdge> AddEdge for ReflexiveGraph<G>
+	where G::EdgeWeight: Default
+{
+	delegate! {
+		target self.0 {
+			fn add_edge_weighted<E>(&mut self, e: E) -> Result<(), ()>
+				where E: EdgeWeighted<Self::Vertex, Self::EdgeWeight>;
+		}
+	}
+	
+	fn remove_edge_where<F>(&mut self, f: F)
+		-> Result<(Self::Vertex, Self::Vertex, Self::EdgeWeight), ()>
+		where F: Fn((Self::Vertex, Self::Vertex, &Self::EdgeWeight)) -> bool
+	{
+		self.0.remove_edge_where(|e| f(e) && !e.is_loop())
+	}
 }
 
 impl<G> Reflexive for ReflexiveGraph<G>
 	where G: Graph, G::EdgeWeight: Default
-{
-	fn remove_vertex_looped(&mut self, v: Self::Vertex)
-		-> Result<(Self::VertexWeight, Self::EdgeWeight), ()>
-	{
-		let edge_weight = self.0.remove_edge((v, v))?;
-		self.0.remove_vertex(v).map(|vertex_weight| (vertex_weight,edge_weight))
-	}
-}
+{}
 
 impl_constraints!{
 	ReflexiveGraph<G>: Reflexive
