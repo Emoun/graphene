@@ -7,7 +7,7 @@ use graphene::{
 };
 use std::marker::PhantomData;
 use std::fmt::{Debug, Formatter, Error};
-use graphene::core::{Directedness, ExactGraph, BaseGraph, AutoGraph};
+use graphene::core::{Directedness, ExactGraph, BaseGraph, AddVertex, AddEdge, GraphMut};
 use std::collections::HashMap;
 
 ///
@@ -124,23 +124,41 @@ impl<D: Directedness> Graph for MockGraph<D>
 		Box::new(self.vertices.iter().map(|(&v,w)| (MockVertex{value: v},w)))
 	}
 	
-	fn all_vertices_weighted_mut<'a>(&'a mut self)
-		-> Box<dyn 'a + Iterator<Item=(Self::Vertex, &'a mut Self::VertexWeight)>>
-	{
-		Box::new(self.vertices.iter_mut().map(|(&v,w)| (MockVertex{value: v},w)))
-	}
-	
 	fn all_edges<'a>(&'a self) -> Box<dyn 'a + Iterator<Item=
 		(Self::Vertex, Self::Vertex, &'a Self::EdgeWeight)>>
 	{
 		Box::new(self.edges.iter().map(|(so, si, w)|
 			(MockVertex{value: *so}, MockVertex{value: *si}, w)))
 	}
+	
+}
+
+impl<D: Directedness> GraphMut for MockGraph<D>
+{
+	fn all_vertices_weighted_mut<'a>(&'a mut self)
+		 -> Box<dyn 'a + Iterator<Item=(Self::Vertex, &'a mut Self::VertexWeight)>>
+	{
+		Box::new(self.vertices.iter_mut().map(|(&v,w)| (MockVertex{value: v},w)))
+	}
 	fn all_edges_mut<'a>(&'a mut self) -> Box<dyn 'a + Iterator<Item=
 		(Self::Vertex, Self::Vertex, &'a mut Self::EdgeWeight)>>
 	{
 		Box::new(self.edges.iter_mut().map(|(so, si, w)|
 			(MockVertex{value: *so}, MockVertex{value: *si}, w)))
+	}
+	
+}
+
+impl<D: Directedness> AddVertex for MockGraph<D>
+{
+	fn new_vertex_weighted(&mut self, w: Self::VertexWeight) -> Result<Self::Vertex, ()> {
+		if self.vertices.insert(self.next_id, w).is_some() {
+			panic!("'next_id' was already in use.");
+		} else {
+			self.next_id += 1;
+			self.validate();
+			Ok(MockVertex{ value: self.next_id - 1})
+		}
 	}
 	
 	fn remove_vertex(&mut self, mock_v: Self::Vertex) -> Result<Self::VertexWeight,()>{
@@ -154,6 +172,10 @@ impl<D: Directedness> Graph for MockGraph<D>
 		}
 	}
 	
+}
+
+impl<D: Directedness> AddEdge for MockGraph<D>
+{
 	fn add_edge_weighted<E>(&mut self, e: E) -> Result<(),()>
 		where
 			E: EdgeWeighted<Self::Vertex, Self::EdgeWeight>,
@@ -172,7 +194,7 @@ impl<D: Directedness> Graph for MockGraph<D>
 	}
 	
 	fn remove_edge_where<F>(&mut self, f: F)
-		-> Result<(Self::Vertex, Self::Vertex, Self::EdgeWeight), ()>
+							-> Result<(Self::Vertex, Self::Vertex, Self::EdgeWeight), ()>
 		where
 			F: Fn((Self::Vertex, Self::Vertex, &Self::EdgeWeight)) -> bool
 	{
@@ -185,19 +207,6 @@ impl<D: Directedness> Graph for MockGraph<D>
 			Ok((MockVertex{value: so},MockVertex{value: si}, w))
 		} else {
 			Err(())
-		}
-	}
-}
-
-impl<D: Directedness> AutoGraph for MockGraph<D>
-{
-	fn new_vertex_weighted(&mut self, w: Self::VertexWeight) -> Result<Self::Vertex, ()> {
-		if self.vertices.insert(self.next_id, w).is_some() {
-			panic!("'next_id' was already in use.");
-		} else {
-			self.next_id += 1;
-			self.validate();
-			Ok(MockVertex{ value: self.next_id - 1})
 		}
 	}
 }

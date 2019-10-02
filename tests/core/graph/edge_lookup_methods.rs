@@ -10,7 +10,7 @@ use crate::mock_graph::{
 	utilities::*,
 };
 use graphene::core::{
-	Graph, Edge, Directed
+	Graph, Edge, Directed, GraphMut
 };
 
 ///

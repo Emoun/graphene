@@ -1,7 +1,7 @@
 
 use quickcheck::{Arbitrary, Gen};
 use crate::mock_graph::{MockVertex, MockEdgeWeight, MockVertexWeight};
-use graphene::core::{Edge, EdgeDeref, EdgeWeighted, Graph};
+use graphene::core::{Edge, EdgeDeref, EdgeWeighted, Graph, AddVertex, GraphMut, AddEdge};
 use rand::{ Rng };
 use crate::mock_graph::arbitrary::{GuidedArbGraph};
 
@@ -14,12 +14,12 @@ use crate::mock_graph::arbitrary::{GuidedArbGraph};
 #[derive(Clone, Debug)]
 pub struct ArbTwoVerticesIn<G>(pub G, pub MockVertex, pub MockVertex)
 	where
-		G: Arbitrary + Graph<Vertex=MockVertex, VertexWeight=MockVertexWeight,
+		G: Arbitrary + GraphMut<Vertex=MockVertex, VertexWeight=MockVertexWeight,
 			EdgeWeight=MockEdgeWeight>;
 
 impl<Gr> Arbitrary for ArbTwoVerticesIn<Gr>
 	where
-		Gr: Arbitrary + Graph<Vertex=MockVertex, VertexWeight=MockVertexWeight,
+		Gr: Arbitrary + AddVertex<Vertex=MockVertex, VertexWeight=MockVertexWeight,
 			EdgeWeight=MockEdgeWeight>
 {
 	fn arbitrary<G: Gen>(g: &mut G) -> Self {
@@ -86,11 +86,11 @@ impl<Gr> Arbitrary for ArbTwoVerticesIn<Gr>
 #[derive(Clone, Debug)]
 pub struct ArbVertexIn<G>(pub G, pub MockVertex)
 	where
-		G: Arbitrary + Graph<Vertex=MockVertex, VertexWeight=MockVertexWeight,
+		G: Arbitrary + GraphMut<Vertex=MockVertex, VertexWeight=MockVertexWeight,
 			EdgeWeight=MockEdgeWeight>;
 impl<Gr> Arbitrary for ArbVertexIn<Gr>
 	where
-		Gr: Arbitrary + Graph<Vertex=MockVertex, VertexWeight=MockVertexWeight,
+		Gr: Arbitrary + AddVertex<Vertex=MockVertex, VertexWeight=MockVertexWeight,
 			EdgeWeight=MockEdgeWeight>
 {
 	fn arbitrary<G: Gen>(g: &mut G) -> Self {
@@ -201,12 +201,12 @@ impl<Gr> Arbitrary for ArbEdgeOutside<Gr>
 #[derive(Clone, Debug)]
 pub struct ArbEdgeIn<G>(pub G, pub (MockVertex, MockVertex, MockEdgeWeight))
 	where
-		G: Arbitrary + Graph<Vertex=MockVertex, VertexWeight=MockVertexWeight,
+		G: Arbitrary + GraphMut<Vertex=MockVertex, VertexWeight=MockVertexWeight,
 			EdgeWeight=MockEdgeWeight>;
 impl<Gr> Arbitrary for ArbEdgeIn<Gr>
 	where
-		Gr: GuidedArbGraph + Graph<Vertex=MockVertex, VertexWeight=MockVertexWeight,
-			EdgeWeight=MockEdgeWeight>
+		Gr: GuidedArbGraph + AddVertex<Vertex=MockVertex, VertexWeight=MockVertexWeight,
+			EdgeWeight=MockEdgeWeight> + AddEdge
 {
 	fn arbitrary<G: Gen>(g: &mut G) -> Self {
 		let graph = Gr::arbitrary_guided(g, .. , 1..);

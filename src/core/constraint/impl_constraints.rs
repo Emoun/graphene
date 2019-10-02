@@ -28,7 +28,7 @@ macro_rules! impl_constraints {
 				{}
 			}]
 		}
-		
+
 		// NoLoops
 		tt_call::tt_if!{
 			condition = [{tt_equal::tt_equal}]
@@ -42,7 +42,7 @@ macro_rules! impl_constraints {
 				{}
 			}]
 		}
-		
+
 		// Reflexive
 		tt_call::tt_if!{
 			condition = [{tt_equal::tt_equal}]
@@ -54,17 +54,10 @@ macro_rules! impl_constraints {
 						$generic_graph: $crate::core::constraint::Reflexive,
 						G::EdgeWeight: std::default::Default,
 						$($($bounds)*)?
-				{
-					delegate!{
-						target self.0{
-							fn remove_vertex_looped(&mut self, v: Self::Vertex)
-								-> Result<(Self::VertexWeight, Self::EdgeWeight), ()>;
-						}
-					}
-				}
+				{}
 			}]
 		}
-		
+
 		// Connected
 		tt_call::tt_if!{
 			condition = [{tt_equal::tt_equal}]

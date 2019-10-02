@@ -1,4 +1,4 @@
-use graphene::core::{Directedness, EdgeWeighted, Graph, Edge, Directed, Constrainer, AutoGraph};
+use graphene::core::{Directedness, EdgeWeighted, Graph, Edge, Directed, Constrainer, AddVertex, GraphMut, AddEdge};
 use graphene::core::constraint::ConnectedGraph;
 use quickcheck::{Arbitrary, Gen};
 use crate::mock_graph::{MockGraph, MockVertexWeight, MockVertex, MockEdgeWeight};
@@ -60,17 +60,44 @@ impl<D: Directedness> Graph for ArbConnectedGraph<D>
 			fn all_vertices_weighted<'a>(&'a self)
 				-> Box<dyn 'a + Iterator<Item=(Self::Vertex, &'a Self::VertexWeight)>>;
 		
-			fn all_vertices_weighted_mut<'a>(&'a mut self)
-				-> Box<dyn 'a +Iterator<Item=(Self::Vertex, &'a mut Self::VertexWeight)>>;
-			
-			fn remove_vertex(&mut self, v: Self::Vertex) -> Result<Self::VertexWeight, ()>;
-			
 			fn all_edges<'a>(&'a self)
 				-> Box<dyn 'a + Iterator<Item=(Self::Vertex, Self::Vertex, &'a Self::EdgeWeight)>>;
+			
+		}
+	}
+}
+
+impl<D: Directedness> GraphMut for ArbConnectedGraph<D>
+{
+	delegate! {
+		target self.0 {
+			fn all_vertices_weighted_mut<'a>(&'a mut self)
+				-> Box<dyn 'a +Iterator<Item=(Self::Vertex, &'a mut Self::VertexWeight)>>;
 			
 			fn all_edges_mut<'a>(&'a mut self) -> Box<dyn 'a + Iterator<Item=
 				(Self::Vertex, Self::Vertex, &'a mut Self::EdgeWeight)>>;
 			
+		}
+	}
+}
+
+impl<D: Directedness> AddVertex for ArbConnectedGraph<D>
+{
+	delegate! {
+		target self.0 {
+			fn new_vertex_weighted(&mut self, w: Self::VertexWeight)
+				-> Result<Self::Vertex, ()>;
+				
+			fn remove_vertex(&mut self, v: Self::Vertex) -> Result<Self::VertexWeight, ()>;
+		}
+	}
+}
+
+impl<D: Directedness> AddEdge for ArbConnectedGraph<D>
+{
+	delegate! {
+		target self.0 {
+	
 			fn remove_edge_where<F>(&mut self, f: F)
 				-> Result<(Self::Vertex, Self::Vertex, Self::EdgeWeight), ()>
 				where F: Fn((Self::Vertex, Self::Vertex, &Self::EdgeWeight)) -> bool ;
