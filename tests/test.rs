@@ -5,7 +5,7 @@ trait Graph {
 	fn graph_fn<'a>(&'a self) -> Box<dyn 'a + Iterator<Item=&'a Self::R>> ;
 }
 trait GraphMut: Graph {
-	fn graph_mut(&mut self) -> &mut Self::R;
+	fn graph_mut<'a>(&'a mut self) -> Box<dyn 'a + Iterator<Item=&'a mut Self::R>>;
 }
 trait GraphMut2: Graph {
 	fn graph_mut2(&mut self) -> &mut Self::R;
@@ -95,7 +95,9 @@ impl Graph for BaseGraph{
 	}
 }
 impl GraphMut for BaseGraph {
-	fn graph_mut(&mut self) -> &mut u32 { &mut self.0 }
+	fn graph_mut<'a>(&'a mut self) -> Box<dyn 'a + Iterator<Item=&'a mut u32>> {
+		Box::new(vec![&mut self.0].into_iter())
+	}
 }
 impl GraphMut2 for BaseGraph {
 	fn graph_mut2(&mut self) -> &mut u32 { &mut self.0 }
@@ -145,7 +147,8 @@ impl<C: Constraint> Graph for Connected<C>{
 }
 impl<C: ConstraintMut> GraphMut for Connected<C>
 	where <C::Base as BaseConstraint>::Graph: GraphMut {
-	fn graph_mut(&mut self) -> &mut <<C::Base as BaseConstraint>::Graph as Graph>::R
+	fn graph_mut<'a>(&'a mut self) -> Box<dyn 'a + Iterator<Item=
+		&'a mut <<C::Base as BaseConstraint>::Graph as Graph>::R>>
 	{
 		self.0.base_mut().graph_mut()
 	}
@@ -176,7 +179,7 @@ fn constrainer_constraining_base(){
 		>>;
 
 	let mut c_ref_mut = ConstrainedGraphMut::constrain(&mut g).unwrap();
-	*c_ref_mut.graph_mut() = 30;
+	*c_ref_mut.graph_mut().next().unwrap() = 30;
 	*c_ref_mut.graph_mut2() = 30;
 	assert_eq!(c_ref_mut.connected_fn(), &30);
 
@@ -201,7 +204,7 @@ fn inline_constrainer_constraining_base(){
 	assert_eq!(c_ref.connected_fn(), &16);
 
 	let mut c_ref_mut = <Connected<Connected<&mut BaseGraph>>>::constrain(&mut g).unwrap();
-	*c_ref_mut.graph_mut() = 30;
+	*c_ref_mut.graph_mut().next().unwrap() = 30;
 	assert_eq!(c_ref_mut.connected_fn(), &30);
 
 	let c_owned = <Connected<Connected<BaseGraph>>>::constrain(g).unwrap();
@@ -222,11 +225,11 @@ fn base_constrains_self_by_constraint_inference(){
 	assert_eq!(c_ref_unc.connected_fn(), &16);
 
 	let mut c_ref_mut: ConstrainedGraph<&mut BaseGraph> = (&mut g).constrain().unwrap();
-	*c_ref_mut.graph_mut() = 30;
+	*c_ref_mut.graph_mut().next().unwrap() = 30;
 	assert_eq!(c_ref_mut.connected_fn(), &30);
 	let mut c_ref_mut_unc = c_ref_mut.unconstrain_single();
 	assert_eq!(c_ref_mut_unc.connected_fn(), &30);
-	*c_ref_mut_unc.graph_mut() = 31;
+	*c_ref_mut_unc.graph_mut().next().unwrap() = 31;
 	assert_eq!(c_ref_mut_unc.connected_fn(), &31);
 
 	let c_owned: ConstrainedGraph<BaseGraph> = g.constrain().unwrap();
@@ -249,11 +252,11 @@ fn base_constrains_self_by_inline_constraint_inference(){
 	assert_eq!(c_ref_unc.connected_fn(), &16);
 
 	let mut c_ref_mut: Connected<Connected<Connected<&mut BaseGraph>>> = (&mut g).constrain().unwrap();
-	*c_ref_mut.graph_mut() = 30;
+	*c_ref_mut.graph_mut().next().unwrap() = 30;
 	assert_eq!(c_ref_mut.connected_fn(), &30);
 	let mut c_ref_mut_unc = c_ref_mut.unconstrain_single();
 	assert_eq!(c_ref_mut_unc.connected_fn(), &30);
-	*c_ref_mut_unc.graph_mut() = 31;
+	*c_ref_mut_unc.graph_mut().next().unwrap() = 31;
 	assert_eq!(c_ref_mut_unc.connected_fn(), &31);
 
 	let c_owned: Connected<Connected<Connected<BaseGraph>>> = g.constrain().unwrap();
