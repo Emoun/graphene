@@ -1,4 +1,4 @@
-use crate::core::{Graph, Edge, EdgeWeighted, AddVertex, Constrainer, AddEdge, GraphMut, BaseGraph, ConstrainerMut};
+use crate::core::{Graph, Edge, EdgeWeighted, AddVertex, Constrainer, AddEdge, GraphMut, BaseGraph, ImplGraph, ImplGraphMut};
 
 ///
 /// A marker trait for a reflexive graph.
@@ -14,16 +14,32 @@ pub trait Reflexive: Graph
 {}
 
 pub struct ReflexiveGraph<C: Constrainer>(C)
-	where <<C::Base as BaseGraph>::Graph as Graph>::EdgeWeight: Default;
+	where <C::Graph as Graph>::EdgeWeight: Default;
 
+impl<C: Constrainer> ImplGraph for ReflexiveGraph<C>
+	where <C::Graph as Graph>::EdgeWeight: Default
+{
+	type Graph = Self;
+	
+	fn graph(&self) -> &Self::Graph {
+		self
+	}
+}
+impl<C: Constrainer> ImplGraphMut for ReflexiveGraph<C>
+	where <C::Graph as Graph>::EdgeWeight: Default
+{
+	fn graph_mut(&mut self) -> &mut Self::Graph {
+		self
+	}
+}
 impl<C: Constrainer> Constrainer for ReflexiveGraph<C>
-	where <<C::Base as BaseGraph>::Graph as Graph>::EdgeWeight: Default
+	where <C::Graph as Graph>::EdgeWeight: Default
 {
 	type Base = C::Base;
 	type Constrained = C;
 	
 	fn constrain_single(c: Self::Constrained) -> Result<Self, ()>{
-		let g = c.base();
+		let g = c.graph();
 		if g.all_vertices().all(|v| {
 			let mut between = g.edges_between(v,v);
 			if let Some(_) = between.next() {
@@ -39,107 +55,93 @@ impl<C: Constrainer> Constrainer for ReflexiveGraph<C>
 		}
 	}
 	
-	fn constrained(&self) -> &Self::Constrained {
-		&self.0
-	}
-	
 	fn unconstrain_single(self) -> Self::Constrained{
 		self.0
 	}
 }
-impl<C: ConstrainerMut> ConstrainerMut for ReflexiveGraph<C>
-	where <<C::Base as BaseGraph>::Graph as Graph>::EdgeWeight: Default
-{
-	type BaseMut = C::BaseMut;
-	type ConstrainedMut = C;
-	
-	fn constrained_mut(&mut self) -> &mut Self::ConstrainedMut {
-		&mut self.0
-	}
-}
 
 impl<C: Constrainer> Graph for ReflexiveGraph<C>
-	where <<C::Base as BaseGraph>::Graph as Graph>::EdgeWeight: Default
+	where <C::Graph as Graph>::EdgeWeight: Default
 {
-	type Vertex = <<C::Base as BaseGraph>::Graph as Graph>::Vertex;
-	type VertexWeight = <<C::Base as BaseGraph>::Graph as Graph>::VertexWeight;
-	type EdgeWeight = <<C::Base as BaseGraph>::Graph as Graph>::EdgeWeight;
-	type Directedness = <<C::Base as BaseGraph>::Graph as Graph>::Directedness;
+	type Vertex = <C::Graph as Graph>::Vertex;
+	type VertexWeight = <C::Graph as Graph>::VertexWeight;
+	type EdgeWeight = <C::Graph as Graph>::EdgeWeight;
+	type Directedness = <C::Graph as Graph>::Directedness;
 	
 	fn all_vertices_weighted<'a>(&'a self) -> Box<dyn 'a + Iterator<Item=
 		(Self::Vertex, &'a Self::VertexWeight)>>
 	{
-		self.base().all_vertices_weighted()
+		self.0.graph().all_vertices_weighted()
 	}
 	
 	fn all_edges<'a>(&'a self) -> Box<dyn 'a + Iterator<Item=
 		(Self::Vertex, Self::Vertex, &'a Self::EdgeWeight)>>
 	{
-		self.base().all_edges()
+		self.0.graph().all_edges()
 	}
 }
 
-impl<C: ConstrainerMut>  GraphMut for ReflexiveGraph<C>
+impl<C: Constrainer + ImplGraphMut>  GraphMut for ReflexiveGraph<C>
 	where
-		<<C::Base as BaseGraph>::Graph as Graph>::EdgeWeight: Default,
-		<C::Base as BaseGraph>::Graph: GraphMut
+		<C::Graph as Graph>::EdgeWeight: Default,
+		C::Graph: GraphMut
 {
 	fn all_vertices_weighted_mut<'a>(&'a mut self) -> Box<dyn 'a + Iterator<Item=
 		(Self::Vertex, &'a mut Self::VertexWeight)>>
 	{
-		self.base_mut().all_vertices_weighted_mut()
+		self.0.graph_mut().all_vertices_weighted_mut()
 	}
 	
 	fn all_edges_mut<'a>(&'a mut self) -> Box<dyn 'a + Iterator<Item=
 		(Self::Vertex, Self::Vertex, &'a mut Self::EdgeWeight)>>
 	{
-		self.base_mut().all_edges_mut()
+		self.0.graph_mut().all_edges_mut()
 	}
 }
 
-impl<C: ConstrainerMut> AddVertex for ReflexiveGraph<C>
+impl<C: Constrainer + ImplGraphMut> AddVertex for ReflexiveGraph<C>
 	where
-		<C::Base as BaseGraph>::Graph: AddVertex + AddEdge,
-		<<C::Base as BaseGraph>::Graph as Graph>::EdgeWeight: Default,
+		C::Graph: AddVertex + AddEdge,
+		<C::Graph as Graph>::EdgeWeight: Default,
 {
 	fn new_vertex_weighted(&mut self, w: Self::VertexWeight)
 						   -> Result<Self::Vertex, ()>
 	{
-		let v = self.base_mut().new_vertex_weighted(w)?;
-		self.base_mut().add_edge((v,v))?;
+		let v = self.0.graph_mut().new_vertex_weighted(w)?;
+		self.0.graph_mut().add_edge((v,v))?;
 		Ok(v)
 	}
 	
 	fn remove_vertex(&mut self, v: Self::Vertex) -> Result<Self::VertexWeight, ()>
 	{
-		self.base_mut().remove_edge((v, v))?;
-		self.base_mut().remove_vertex(v)
+		self.0.graph_mut().remove_edge((v, v))?;
+		self.0.graph_mut().remove_vertex(v)
 	}
 }
 
-impl<C: ConstrainerMut> AddEdge for ReflexiveGraph<C>
+impl<C: Constrainer + ImplGraphMut> AddEdge for ReflexiveGraph<C>
 	where
-		<C::Base as BaseGraph>::Graph: AddEdge,
-		<<C::BaseMut as BaseGraph>::Graph as Graph>::EdgeWeight: Default
+		C::Graph: AddEdge,
+		<C::Graph as Graph>::EdgeWeight: Default
 {
 	fn remove_edge_where<F>(&mut self, f: F) -> Result<(Self::Vertex, Self::Vertex, Self::EdgeWeight), ()>
 		where F: Fn((Self::Vertex, Self::Vertex, &Self::EdgeWeight)) -> bool
 	{
-		self.base_mut().remove_edge_where(|e| f(e) && !e.is_loop())
+		self.0.graph_mut().remove_edge_where(|e| f(e) && !e.is_loop())
 	}
 	
 	fn add_edge_weighted<E>(&mut self, e: E) -> Result<(), ()>
 		where E: EdgeWeighted<Self::Vertex, Self::EdgeWeight>
 	{
-		self.base_mut().add_edge_weighted(e)
+		self.0.graph_mut().add_edge_weighted(e)
 	}
 }
 
 impl<C: Constrainer> Reflexive for ReflexiveGraph<C>
-	where <<C::Base as BaseGraph>::Graph as Graph>::EdgeWeight: Default
+	where <C::Graph as Graph>::EdgeWeight: Default
 {}
 
 impl_constraints!{
 	ReflexiveGraph<C>: Reflexive
-		where <<C::Base as BaseGraph>::Graph as Graph>::EdgeWeight: Default,
+		where <C::Graph as Graph>::EdgeWeight: Default,
 }

@@ -56,7 +56,7 @@ macro_rules! impl_constraints {
 					where
 						$generic_graph: $crate::core::constraint::Reflexive,
 						$generic_graph::EdgeWeight: Default,
-						<<$generic_graph::Base as BaseGraph>::Graph as Graph>::EdgeWeight: Default
+						<$generic_graph::Graph as Graph>::EdgeWeight: Default
 						$($($bounds)*)?
 				{}
 			}]

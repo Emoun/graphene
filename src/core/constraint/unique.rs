@@ -1,4 +1,4 @@
-use crate::core::{Graph, EdgeWeighted, Directedness, Edge, AddVertex, Constrainer, GraphMut, AddEdge, ConstrainerMut, BaseGraph};
+use crate::core::{Graph, EdgeWeighted, Directedness, Edge, AddVertex, Constrainer, GraphMut, AddEdge, BaseGraph, ImplGraphMut, ImplGraph};
 
 ///
 /// A marker trait for graphs containing only unique edges.
@@ -38,20 +38,31 @@ impl<C: Constrainer> UniqueGraph<C>
 	}
 }
 
+impl<C: Constrainer> ImplGraph for UniqueGraph<C> {
+	type Graph = Self;
+	
+	fn graph(&self) -> &Self::Graph {
+		self
+	}
+}
+impl<C: Constrainer> ImplGraphMut for UniqueGraph<C>  {
+	fn graph_mut(&mut self) -> &mut Self::Graph {
+		self
+	}
+}
 impl<C: Constrainer> Constrainer for UniqueGraph<C>
 {
 	type Base = C::Base;
 	type Constrained = C;
 	
 	fn constrain_single(g: Self::Constrained) -> Result<Self, ()>{
-		let edges: Vec<_> = g.base().all_edges().collect();
+		let edges: Vec<_> = g.graph().all_edges().collect();
 		let mut iter = edges.iter();
 		while let  Some(e) = iter.next() {
 			for e2 in iter.clone() {
 				if (e.source() == e2.source() && e.sink() == e2.sink()) ||
 					(e.source() == e2.sink() && e.sink() == e2.source() &&
-						!<<<C as Constrainer>::Base as BaseGraph>::Graph as Graph>
-							::Directedness::directed())
+						!<C::Graph as Graph>::Directedness::directed())
 				{
 					return Err(())
 				}
@@ -61,82 +72,69 @@ impl<C: Constrainer> Constrainer for UniqueGraph<C>
 		Ok(UniqueGraph(g))
 	}
 	
-	fn constrained(&self) -> &Self::Constrained {
-		&self.0
-	}
-	
 	fn unconstrain_single(self) -> Self::Constrained{
 		self.0
-	}
-}
-impl<C: ConstrainerMut> ConstrainerMut for UniqueGraph<C>
-{
-	type BaseMut = C::BaseMut;
-	type ConstrainedMut = C;
-	
-	fn constrained_mut(&mut self) -> &mut Self::ConstrainedMut {
-		&mut self.0
 	}
 }
 
 impl<C: Constrainer> Graph for UniqueGraph<C>
 {
-	type Vertex = <<C::Base as BaseGraph>::Graph as Graph>::Vertex;
-	type VertexWeight = <<C::Base as BaseGraph>::Graph as Graph>::VertexWeight;
-	type EdgeWeight = <<C::Base as BaseGraph>::Graph as Graph>::EdgeWeight;
-	type Directedness = <<C::Base as BaseGraph>::Graph as Graph>::Directedness;
+	type Vertex = <C::Graph as Graph>::Vertex;
+	type VertexWeight = <C::Graph as Graph>::VertexWeight;
+	type EdgeWeight = <C::Graph as Graph>::EdgeWeight;
+	type Directedness = <C::Graph as Graph>::Directedness;
 	
 	fn all_vertices_weighted<'a>(&'a self) -> Box<dyn 'a + Iterator<Item=
 		(Self::Vertex, &'a Self::VertexWeight)>>
 	{
-		self.base().all_vertices_weighted()
+		self.0.graph().all_vertices_weighted()
 	}
 	
 	fn all_edges<'a>(&'a self) -> Box<dyn 'a + Iterator<Item=
 		(Self::Vertex, Self::Vertex, &'a Self::EdgeWeight)>>
 	{
-		self.base().all_edges()
+		self.0.graph().all_edges()
 	}
 }
 
-impl<C: ConstrainerMut>  GraphMut for UniqueGraph<C>
-	where <C::Base as BaseGraph>::Graph: GraphMut
+impl<C: Constrainer + ImplGraphMut>  GraphMut for UniqueGraph<C>
+	where C::Graph: GraphMut
 {
 	fn all_vertices_weighted_mut<'a>(&'a mut self) -> Box<dyn 'a + Iterator<Item=
 		(Self::Vertex, &'a mut Self::VertexWeight)>>
 	{
-		self.base_mut().all_vertices_weighted_mut()
+		self.0.graph_mut().all_vertices_weighted_mut()
 	}
 	
 	fn all_edges_mut<'a>(&'a mut self) -> Box<dyn 'a + Iterator<Item=
 		(Self::Vertex, Self::Vertex, &'a mut Self::EdgeWeight)>>
 	{
-		self.base_mut().all_edges_mut()
+		self.0.graph_mut().all_edges_mut()
 	}
 }
 
-impl<C: ConstrainerMut> AddVertex for UniqueGraph<C>
-	where <C::Base as BaseGraph>::Graph: AddVertex
+impl<C: Constrainer + ImplGraphMut> AddVertex for UniqueGraph<C>
+	where C::Graph: AddVertex
 {
 	fn new_vertex_weighted(&mut self, w: Self::VertexWeight)
 		-> Result<Self::Vertex, ()>
 	{
-		self.base_mut().new_vertex_weighted(w)
+		self.0.graph_mut().new_vertex_weighted(w)
 	}
 	
 	fn remove_vertex(&mut self, v: Self::Vertex) -> Result<Self::VertexWeight, ()>
 	{
-		self.base_mut().remove_vertex(v)
+		self.0.graph_mut().remove_vertex(v)
 	}
 }
 
-impl<C: ConstrainerMut> AddEdge for UniqueGraph<C>
-	where <C::Base as BaseGraph>::Graph: AddEdge
+impl<C: Constrainer + ImplGraphMut> AddEdge for UniqueGraph<C>
+	where C::Graph: AddEdge
 {
 	fn remove_edge_where<F>(&mut self, f: F) -> Result<(Self::Vertex, Self::Vertex, Self::EdgeWeight), ()>
 		where F: Fn((Self::Vertex, Self::Vertex, &Self::EdgeWeight)) -> bool
 	{
-		self.base_mut().remove_edge_where(f)
+		self.0.graph_mut().remove_edge_where(f)
 	}
 	
 	fn add_edge_weighted<E>(&mut self, e: E) -> Result<(), ()>
@@ -152,7 +150,7 @@ impl<C: ConstrainerMut> AddEdge for UniqueGraph<C>
 				return Err(());
 			}
 		}
-		self.base_mut().add_edge_weighted(e)
+		self.0.graph_mut().add_edge_weighted(e)
 	}
 }
 

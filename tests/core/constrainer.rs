@@ -3,7 +3,7 @@
 //!
 
 use crate::mock_graph::{MockDirectedness, MockGraph, MockEdgeWeight, MockVertexWeight};
-use graphene::core::{Graph, Constrainer, BaseGraph, EdgeWeighted, GraphMut, AddVertex, AddEdge, ConstrainerMut};
+use graphene::core::{Graph, Constrainer, BaseGraph, EdgeWeighted, GraphMut, AddVertex, AddEdge, ImplGraphMut, ImplGraph};
 
 ///
 /// A mock constraint simply to test.
@@ -19,6 +19,18 @@ trait MockConstraint: Graph
 }
 struct MockConstrainer<C: Constrainer>(pub C);
 
+impl<C: Constrainer> ImplGraph for MockConstrainer<C> {
+	type Graph = Self;
+	
+	fn graph(&self) -> &Self::Graph {
+		self
+	}
+}
+impl<C: Constrainer> ImplGraphMut for MockConstrainer<C>  {
+	fn graph_mut(&mut self) -> &mut Self::Graph {
+		self
+	}
+}
 impl<C: Constrainer> Constrainer for MockConstrainer<C>
 {
 	type Base = C::Base;
@@ -26,81 +38,68 @@ impl<C: Constrainer> Constrainer for MockConstrainer<C>
 	
 	fn constrain_single(g: Self::Constrained) -> Result<Self, ()> {
 		
-		if g.base().all_vertices().count() < 5 {
+		if g.graph().all_vertices().count() < 5 {
 			Ok(Self(g))
 		} else {
 			Err(())
 		}
 	}
 	
-	fn constrained(&self) -> &Self::Constrained {
-		&self.0
-	}
-	
 	fn unconstrain_single(self) -> Self::Constrained {
 		self.0
-	}
-}
-impl<C: ConstrainerMut> ConstrainerMut for MockConstrainer<C>
-{
-	type BaseMut = C::BaseMut;
-	type ConstrainedMut = C;
-	
-	fn constrained_mut(&mut self) -> &mut Self::ConstrainedMut {
-		&mut self.0
 	}
 }
 
 impl<C: Constrainer> Graph for MockConstrainer<C>
 {
-	type Vertex = <<C::Base as BaseGraph>::Graph as Graph>::Vertex;
-	type VertexWeight = <<C::Base as BaseGraph>::Graph as Graph>::VertexWeight;
-	type EdgeWeight = <<C::Base as BaseGraph>::Graph as Graph>::EdgeWeight;
-	type Directedness = <<C::Base as BaseGraph>::Graph as Graph>::Directedness;
+	type Vertex = <C::Graph as Graph>::Vertex;
+	type VertexWeight = <C::Graph as Graph>::VertexWeight;
+	type EdgeWeight = <C::Graph as Graph>::EdgeWeight;
+	type Directedness = <C::Graph as Graph>::Directedness;
 	
 	
 	fn all_vertices_weighted<'a>(&'a self) -> Box<dyn 'a + Iterator<Item=
 		(Self::Vertex, &'a Self::VertexWeight)>>
 	{
-		self.base().all_vertices_weighted()
+		self.0.graph().all_vertices_weighted()
 	}
 	
 	fn all_edges<'a>(&'a self) -> Box<dyn 'a + Iterator<Item=
 		(Self::Vertex, Self::Vertex, &'a Self::EdgeWeight)>>
 	{
-		self.base().all_edges()
+		self.0.graph().all_edges()
 	}
 
 }
 
-impl<C: ConstrainerMut>  GraphMut for MockConstrainer<C>
-	where <C::Base as BaseGraph>::Graph: GraphMut
+impl<C: Constrainer + ImplGraphMut>  GraphMut for MockConstrainer<C>
+	where C::Graph: GraphMut
 {
 	
 	fn all_vertices_weighted_mut<'a>(&'a mut self) -> Box<dyn 'a + Iterator<Item=
 		(Self::Vertex, &'a mut Self::VertexWeight)>>
 	{
-		self.base_mut().all_vertices_weighted_mut()
+		self.0.graph_mut().all_vertices_weighted_mut()
 	}
 
 	
 	fn all_edges_mut<'a>(&'a mut self) -> Box<dyn 'a + Iterator<Item=
 		(Self::Vertex, Self::Vertex, &'a mut Self::EdgeWeight)>>
 	{
-		self.base_mut().all_edges_mut()
+		self.0.graph_mut().all_edges_mut()
 	}
 
 }
 
-impl<C: ConstrainerMut>  AddVertex for MockConstrainer<C>
-	where <C::Base as BaseGraph>::Graph: AddVertex
+impl<C: Constrainer + ImplGraphMut>  AddVertex for MockConstrainer<C>
+	where C::Graph: AddVertex
 {
 
 	fn new_vertex_weighted(&mut self, w: Self::VertexWeight)
 		-> Result<Self::Vertex, ()>
 	{
-		if self.base().all_vertices().count() < 4 {
-			self.base_mut().new_vertex_weighted(w)
+		if self.0.graph().all_vertices().count() < 4 {
+			self.0.graph_mut().new_vertex_weighted(w)
 		} else {
 			Err(())
 		}
@@ -108,26 +107,26 @@ impl<C: ConstrainerMut>  AddVertex for MockConstrainer<C>
 	
 	fn remove_vertex(&mut self, v: Self::Vertex) -> Result<Self::VertexWeight, ()>
 	{
-		self.base_mut().remove_vertex(v)
+		self.0.graph_mut().remove_vertex(v)
 	}
 
 }
 
-impl<C: ConstrainerMut>  AddEdge for MockConstrainer<C>
-	where <C::Base as BaseGraph>::Graph: AddEdge
+impl<C: Constrainer + ImplGraphMut>  AddEdge for MockConstrainer<C>
+	where C::Graph: AddEdge
 {
 
 	fn remove_edge_where<F>(&mut self, f: F) -> Result<(Self::Vertex, Self::Vertex, Self::EdgeWeight), ()>
 		where F: Fn((Self::Vertex, Self::Vertex, &Self::EdgeWeight)) -> bool
 	{
-		self.base_mut().remove_edge_where(f)
+		self.0.graph_mut().remove_edge_where(f)
 	}
 
 	
 	fn add_edge_weighted<E>(&mut self, e: E) -> Result<(), ()>
 		where E: EdgeWeighted<Self::Vertex, Self::EdgeWeight>
 	{
-		self.base_mut().add_edge_weighted(e)
+		self.0.graph_mut().add_edge_weighted(e)
 	}
 }
 

@@ -1,5 +1,4 @@
 use std::ops::{Deref, DerefMut};
-use std::borrow::Borrow;
 
 trait Graph {
 	type R: PartialOrd<u32>;

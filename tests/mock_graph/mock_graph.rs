@@ -7,7 +7,7 @@ use graphene::{
 };
 use std::marker::PhantomData;
 use std::fmt::{Debug, Formatter, Error};
-use graphene::core::{Directedness, ExactGraph, BaseGraph, AddVertex, AddEdge, GraphMut, BaseGraphMut};
+use graphene::core::{Directedness, ExactGraph, BaseGraph, AddVertex, AddEdge, GraphMut, ImplGraph, ImplGraphMut};
 use std::collections::HashMap;
 
 ///
@@ -213,7 +213,7 @@ impl<D: Directedness> AddEdge for MockGraph<D>
 
 impl<D: Directedness> ExactGraph for MockGraph<D>{}
 
-impl<D: Directedness> BaseGraph for MockGraph<D>
+impl<D: Directedness> ImplGraph for MockGraph<D>
 {
 	type Graph = Self;
 	
@@ -221,9 +221,10 @@ impl<D: Directedness> BaseGraph for MockGraph<D>
 		self
 	}
 }
-impl<D: Directedness> BaseGraphMut for MockGraph<D>
+impl<D: Directedness> ImplGraphMut for MockGraph<D>
 {
 	fn graph_mut(&mut self) -> &mut Self::Graph {
 		self
 	}
 }
+impl<D: Directedness> BaseGraph for MockGraph<D> {}
