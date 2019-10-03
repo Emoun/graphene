@@ -1,4 +1,5 @@
 use std::ops::{Deref, DerefMut};
+use std::borrow::Borrow;
 
 trait Graph {
 	type R: PartialOrd<u32>;
@@ -25,7 +26,6 @@ trait BaseConstraint: Sized + ImplGraph {
 		G::constrain(self)
 	}
 }
-trait BaseConstraintMut: BaseConstraint + ImplGraphMut {}
 trait Constraint: Sized  + ImplGraph{
 	type Base:  BaseConstraint;
 	type Constrained: Constraint<Base=Self::Base>;
@@ -42,10 +42,6 @@ trait Constraint: Sized  + ImplGraph{
 	}
 	
 }
-trait ConstraintMut: Constraint<Base=<Self as ConstraintMut>::BaseMut, Constrained=<Self as ConstraintMut>::ConstrainedMut> + ImplGraphMut {
-	type BaseMut:  BaseConstraintMut;
-	type ConstrainedMut: ConstraintMut<BaseMut=Self::BaseMut>;
-}
 
 impl<G: Graph, D: Deref<Target=G>> ImplGraph for D {
 	type Graph = G;
@@ -55,7 +51,6 @@ impl<G: Graph, D: DerefMut<Target=G>> ImplGraphMut for D {
 	fn get_graph_mut(&mut self) -> &mut Self::Graph {&mut **self}
 }
 impl<G: Graph, D: Deref<Target=G>> BaseConstraint for D {}
-impl<G: GraphMut, D: DerefMut<Target=G>> BaseConstraintMut for D {}
 impl<B: BaseConstraint> Constraint for B {
 	type Base = Self;
 	type Constrained = Self;
@@ -65,10 +60,6 @@ impl<B: BaseConstraint> Constraint for B {
 
 	fn unconstrain(self) -> Self::Base { self }
 	fn constrain(g: Self::Base) -> Result<Self, ()>{ println!("Constraint for BaseConstraint constrain()");Ok(g) }
-}
-impl<B: BaseConstraintMut> ConstraintMut for B {
-	type BaseMut = Self;
-	type ConstrainedMut = Self;
 }
 
 struct BaseGraph(u32);
@@ -94,7 +85,6 @@ impl GraphMut2 for BaseGraph {
 }
 impl ImplGraph for BaseGraph {
 	type Graph = Self;
-	
 	fn get_graph(&self) -> &Self::Graph {
 		self
 	}
@@ -105,12 +95,11 @@ impl ImplGraphMut for BaseGraph {
 	}
 }
 impl BaseConstraint for BaseGraph {}
-impl BaseConstraintMut for BaseGraph{}
 
 struct Connected<C: Constraint>(C);
 impl<C: Constraint> ImplGraph for Connected<C> {
 	type Graph = Self;
-	
+
 	fn get_graph(&self) -> &Self::Graph {
 		println!("ImplGraph for Connected get_graph()");
 		self
@@ -136,10 +125,6 @@ impl<C: Constraint> Constraint for Connected<C> {
 
 	}
 }
-impl<C: ConstraintMut> ConstraintMut for Connected<C> {
-	type BaseMut = C::BaseMut;
-	type ConstrainedMut = C;
-}
 
 impl<C: Constraint> Connected<C> {
 	fn connected_fn(&self) -> &<C::Graph as Graph>::R
@@ -154,7 +139,7 @@ impl<C: Constraint> Graph for Connected<C>{
 		self.0.get_graph().graph_fn()
 	}
 }
-impl<C: ConstraintMut> GraphMut for Connected<C>
+impl<C: Constraint + ImplGraphMut> GraphMut for Connected<C>
 	where C::Graph: GraphMut {
 	fn graph_mut<'a>(&'a mut self) -> Box<dyn 'a + Iterator<Item=
 		&'a mut <C::Graph as Graph>::R>>
@@ -162,7 +147,7 @@ impl<C: ConstraintMut> GraphMut for Connected<C>
 		self.0.get_graph_mut().graph_mut()
 	}
 }
-impl<C: ConstraintMut> GraphMut2 for Connected<C>
+impl<C: Constraint + ImplGraphMut> GraphMut2 for Connected<C>
 	where C::Graph: GraphMut2 {
 	fn graph_mut2(&mut self) -> &mut <C::Graph as Graph>::R {
 		self.0.get_graph_mut().graph_mut2()
