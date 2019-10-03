@@ -11,74 +11,64 @@ trait GraphMut2: Graph {
 	fn graph_mut2(&mut self) -> &mut Self::R;
 }
 
-trait BaseConstraint: Sized {
+trait ImplGraph {
 	type Graph: Graph;
 	fn get_graph(&self) -> &Self::Graph;
+}
+trait ImplGraphMut: ImplGraph {
+	fn get_graph_mut(&mut self) -> &mut Self::Graph;
+}
+trait BaseConstraint: Sized + ImplGraph {
 	fn constrain<G>(self) -> Result<G, ()>
 		where G: Constraint<Base=Self>
 	{
 		G::constrain(self)
 	}
 }
-trait BaseConstraintMut: BaseConstraint {
-	fn get_graph_mut(&mut self) -> &mut Self::Graph;
-}
-trait Constraint: Sized {
+trait BaseConstraintMut: BaseConstraint + ImplGraphMut {}
+trait Constraint: Sized  + ImplGraph{
 	type Base:  BaseConstraint;
 	type Constrained: Constraint<Base=Self::Base>;
 	
-	fn base_single(&self) -> &Self::Constrained;
-	fn unconstrain_single(self) -> Self::Constrained;
 	fn constrain_single(g: Self::Constrained) -> Result<Self, ()>;
+	fn unconstrain_single(self) -> Self::Constrained;
 	
+	fn constrain(g: Self::Base) -> Result<Self, ()>{
+		println!("Default constrain()");
+		Self::constrain_single(Self::Constrained::constrain(g)?)
+	}
 	fn unconstrain(self) -> Self::Base{
 		self.unconstrain_single().unconstrain()
 	}
-	fn constrain(g: Self::Base) -> Result<Self, ()>{
-		Self::constrain_single(Self::Constrained::constrain(g)?)
-	}
-	fn base(&self) -> &<Self::Base as BaseConstraint>::Graph {
-		self.base_single().base()
-	}
 	
 }
-trait ConstraintMut: Constraint<Base=<Self as ConstraintMut>::BaseMut, Constrained=<Self as ConstraintMut>::ConstrainedMut> {
+trait ConstraintMut: Constraint<Base=<Self as ConstraintMut>::BaseMut, Constrained=<Self as ConstraintMut>::ConstrainedMut> + ImplGraphMut {
 	type BaseMut:  BaseConstraintMut;
 	type ConstrainedMut: ConstraintMut<BaseMut=Self::BaseMut>;
-	
-	fn base_single_mut(&mut self) -> &mut Self::ConstrainedMut;
-	fn base_mut(&mut self) -> &mut <Self::BaseMut as BaseConstraint>::Graph
-	{
-		self.base_single_mut().base_mut()
-	}
 }
 
-impl<G: Graph, D: Deref<Target=G>> BaseConstraint for D {
+impl<G: Graph, D: Deref<Target=G>> ImplGraph for D {
 	type Graph = G;
-	fn get_graph(&self) -> &Self::Graph {&**self}
+	fn get_graph(&self) -> &Self::Graph { println!("ImplGraph for Deref get_Graph()"); &**self}
 }
-impl<G: GraphMut, D: DerefMut<Target=G>> BaseConstraintMut for D {
+impl<G: Graph, D: DerefMut<Target=G>> ImplGraphMut for D {
 	fn get_graph_mut(&mut self) -> &mut Self::Graph {&mut **self}
 }
+impl<G: Graph, D: Deref<Target=G>> BaseConstraint for D {}
+impl<G: GraphMut, D: DerefMut<Target=G>> BaseConstraintMut for D {}
 impl<B: BaseConstraint> Constraint for B {
 	type Base = Self;
 	type Constrained = Self;
 
-	fn base_single(&self) -> &Self::Constrained { &self }
 	fn unconstrain_single(self) -> Self::Constrained { self }
-	fn constrain_single(g: Self::Constrained) -> Result<Self, ()> { Ok(g)}
+	fn constrain_single(g: Self::Constrained) -> Result<Self, ()> { println!("Constraint for BaseConstraint constrain_single()");Ok(g)}
 
 	fn unconstrain(self) -> Self::Base { self }
-	fn constrain(g: Self::Base) -> Result<Self, ()>{ Ok(g) }
-	fn base(&self) -> &<Self::Base as BaseConstraint>::Graph { self.get_graph() }
+	fn constrain(g: Self::Base) -> Result<Self, ()>{ println!("Constraint for BaseConstraint constrain()");Ok(g) }
 }
 impl<B: BaseConstraintMut> ConstraintMut for B {
 	type BaseMut = Self;
 	type ConstrainedMut = Self;
-	fn base_single_mut(&mut self) -> &mut Self::ConstrainedMut { self }
-	fn base_mut(&mut self) -> &mut <Self::BaseMut as BaseConstraint>::Graph {
-		self.get_graph_mut()
-	}
 }
 
 struct BaseGraph(u32);
@@ -102,23 +92,43 @@ impl GraphMut for BaseGraph {
 impl GraphMut2 for BaseGraph {
 	fn graph_mut2(&mut self) -> &mut u32 { &mut self.0 }
 }
-impl BaseConstraint for BaseGraph {
+impl ImplGraph for BaseGraph {
 	type Graph = Self;
-	fn get_graph(&self) -> &Self::Graph {self}
+	
+	fn get_graph(&self) -> &Self::Graph {
+		self
+	}
 }
-impl BaseConstraintMut for BaseGraph{
-	fn get_graph_mut(&mut self) -> &mut Self::Graph {self}
+impl ImplGraphMut for BaseGraph {
+	fn get_graph_mut(&mut self) -> &mut Self::Graph {
+		self
+	}
 }
+impl BaseConstraint for BaseGraph {}
+impl BaseConstraintMut for BaseGraph{}
 
 struct Connected<C: Constraint>(C);
+impl<C: Constraint> ImplGraph for Connected<C> {
+	type Graph = Self;
+	
+	fn get_graph(&self) -> &Self::Graph {
+		println!("ImplGraph for Connected get_graph()");
+		self
+	}
+}
+impl<C: Constraint> ImplGraphMut for Connected<C>  {
+	fn get_graph_mut(&mut self) -> &mut Self::Graph {
+		self
+	}
+}
 impl<C: Constraint> Constraint for Connected<C> {
 	type Base = C::Base;
 	type Constrained = C;
 
-	fn base_single(&self) -> &Self::Constrained { &self.0 }
 	fn unconstrain_single(self) -> Self::Constrained { self.0 }
 	fn constrain_single(g: Self::Constrained) -> Result<Self, ()> {
-		if g.base().graph_fn().next().unwrap() < &32 {
+		println!("Constraint for Connected constrain_single()");
+		if g.get_graph().graph_fn().next().unwrap() < &32 {
 			Ok(Self(g))
 		} else {
 			Err(())
@@ -129,34 +139,33 @@ impl<C: Constraint> Constraint for Connected<C> {
 impl<C: ConstraintMut> ConstraintMut for Connected<C> {
 	type BaseMut = C::BaseMut;
 	type ConstrainedMut = C;
-	
-	fn base_single_mut(&mut self) -> &mut Self::Constrained { &mut self.0 }
 }
 
 impl<C: Constraint> Connected<C> {
-	fn connected_fn(&self) -> &<<C::Base as BaseConstraint>::Graph as Graph>::R
+	fn connected_fn(&self) -> &<C::Graph as Graph>::R
 	{
-		self.base().graph_fn().next().unwrap()
+		self.get_graph().graph_fn().next().unwrap()
 	}
 }
 impl<C: Constraint> Graph for Connected<C>{
-	type R = <<C::Base as BaseConstraint>::Graph as Graph>::R;
+	type R = <C::Graph as Graph>::R;
 	fn graph_fn<'a>(&'a self) -> Box<dyn 'a + Iterator<Item=&'a Self::R>> {
-		self.base().graph_fn()
+		println!("Graph for Connected graph_fn()");
+		self.0.get_graph().graph_fn()
 	}
 }
 impl<C: ConstraintMut> GraphMut for Connected<C>
-	where <C::Base as BaseConstraint>::Graph: GraphMut {
+	where C::Graph: GraphMut {
 	fn graph_mut<'a>(&'a mut self) -> Box<dyn 'a + Iterator<Item=
-		&'a mut <<C::Base as BaseConstraint>::Graph as Graph>::R>>
+		&'a mut <C::Graph as Graph>::R>>
 	{
-		self.base_mut().graph_mut()
+		self.0.get_graph_mut().graph_mut()
 	}
 }
 impl<C: ConstraintMut> GraphMut2 for Connected<C>
-	where <C::Base as BaseConstraint>::Graph: GraphMut2 {
-	fn graph_mut2(&mut self) -> &mut <<C::Base as BaseConstraint>::Graph as Graph>::R {
-		self.base_mut().graph_mut2()
+	where C::Graph: GraphMut2 {
+	fn graph_mut2(&mut self) -> &mut <C::Graph as Graph>::R {
+		self.0.get_graph_mut().graph_mut2()
 	}
 }
 
