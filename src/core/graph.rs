@@ -177,6 +177,7 @@ pub trait GraphMut: Graph
 		edges_incident_on!(self.all_edges_mut(),v)
 	}
 	
+	#[allow(unreachable_code)]
 	fn constrain_directedness_mut(&mut self) -> DirectednessVariants<& mut Self>
 		where Self: BaseGraph
 	{

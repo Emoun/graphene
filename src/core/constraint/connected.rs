@@ -1,4 +1,6 @@
-use crate::core::{Graph, EdgeWeighted, AddVertex, Constrainer, GraphMut, AddEdge, ImplGraph, ImplGraphMut};
+use crate::core::{Graph, EdgeWeighted, AddVertex, Constrainer, GraphMut, AddEdge, ImplGraph, ImplGraphMut, ReverseGraph};
+use crate::algo::DFS;
+use crate::core::constraint::DirectedGraph;
 
 ///
 /// A marker trait for graphs that are connected.
@@ -41,8 +43,25 @@ impl<C: Constrainer> Constrainer for ConnectedGraph<C>
 	type Base = C::Base;
 	type Constrained = C;
 	
-	fn constrain_single(_: Self::Constrained) -> Result<Self, ()>{
-		unimplemented!()
+	fn constrain_single(c: Self::Constrained) -> Result<Self, ()>{
+		let g = c.graph();
+		let v_count = g.all_vertices().count();
+		
+		if v_count > 0 {
+			let v = g.all_vertices().next().unwrap();
+			if DFS::new(g, v).count() == v_count {
+				// If its undirected, no more needs to be done
+				if let Ok(g) = <DirectedGraph<&C::Graph>>::constrain(g) {
+					let reverse = ReverseGraph::new(g);
+					if DFS::new(&reverse, v).count() != v_count {
+						return Err(())
+					}
+				}
+				return Ok(Self(c))
+			}
+			return Err(())
+		}
+		Ok(Self(c))
 	}
 	
 	fn unconstrain_single(self) -> Self::Constrained{

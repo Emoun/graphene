@@ -11,10 +11,12 @@ mod graph;
 mod edge;
 mod directedness;
 mod constrainer;
+mod reverse_graph;
 
 pub use self::{
 	graph::*,
 	edge::*,
 	directedness::*,
 	constrainer::*,
+	reverse_graph::*,
 };

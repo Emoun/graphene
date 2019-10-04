@@ -3,3 +3,4 @@
 //!
 
 mod unique;
+mod connected;
