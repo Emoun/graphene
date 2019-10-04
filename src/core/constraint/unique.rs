@@ -1,4 +1,4 @@
-use crate::core::{Graph, EdgeWeighted, Directedness, Edge, AddVertex, Constrainer, GraphMut, AddEdge, BaseGraph, ImplGraphMut, ImplGraph};
+use crate::core::{Graph, EdgeWeighted, Directedness, Edge, AddVertex, Constrainer, GraphMut, AddEdge, ImplGraphMut, ImplGraph};
 
 ///
 /// A marker trait for graphs containing only unique edges.

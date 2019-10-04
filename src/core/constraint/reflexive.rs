@@ -1,4 +1,4 @@
-use crate::core::{Graph, Edge, EdgeWeighted, AddVertex, Constrainer, AddEdge, GraphMut, BaseGraph, ImplGraph, ImplGraphMut};
+use crate::core::{Graph, Edge, EdgeWeighted, AddVertex, Constrainer, AddEdge, GraphMut, ImplGraph, ImplGraphMut};
 
 ///
 /// A marker trait for a reflexive graph.

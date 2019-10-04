@@ -1,4 +1,4 @@
-use crate::core::{Graph, EdgeWeighted, AddVertex, Constrainer, AddEdge, GraphMut, BaseGraph, ImplGraph, ImplGraphMut};
+use crate::core::{Graph, EdgeWeighted, AddVertex, Constrainer, AddEdge, GraphMut, ImplGraph, ImplGraphMut};
 
 
 ///

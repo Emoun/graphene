@@ -1,6 +1,5 @@
-use crate::core::{Graph, GraphMut};
+use crate::core::{Graph};
 use std::ops::{Deref, DerefMut};
-
 
 pub trait ImplGraph {
 	type Graph: Graph;

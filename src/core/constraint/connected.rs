@@ -1,4 +1,4 @@
-use crate::core::{Graph, EdgeWeighted, AddVertex, Constrainer, GraphMut, AddEdge, BaseGraph, ImplGraph, ImplGraphMut};
+use crate::core::{Graph, EdgeWeighted, AddVertex, Constrainer, GraphMut, AddEdge, ImplGraph, ImplGraphMut};
 
 ///
 /// A marker trait for graphs that are connected.
