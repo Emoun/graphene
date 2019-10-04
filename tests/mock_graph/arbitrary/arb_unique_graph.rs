@@ -1,4 +1,4 @@
-use graphene::core::constraint::UniqueGraph;
+use graphene::core::constraint::{UniqueGraph, DirectedGraph};
 use graphene::core::{Directedness, Graph, AddVertex, Edge, EdgeWeighted, Constrainer, GraphMut, AddEdge};
 use crate::mock_graph::{MockGraph, MockVertex, MockVertexWeight, MockEdgeWeight};
 use quickcheck::{Arbitrary, Gen};
@@ -172,6 +172,47 @@ impl<D: Directedness> Graph for ArbNonUniqueGraph<D>
 	}
 }
 
+impl<D: Directedness> GraphMut for ArbNonUniqueGraph<D>
+{
+	delegate! {
+		target self.0 {
+			fn all_vertices_weighted_mut<'a>(&'a mut self)
+				-> Box<dyn 'a +Iterator<Item=(Self::Vertex, &'a mut Self::VertexWeight)>>;
+			
+			fn all_edges_mut<'a>(&'a mut self) -> Box<dyn 'a + Iterator<Item=
+				(Self::Vertex, Self::Vertex, &'a mut Self::EdgeWeight)>>;
+			
+		}
+	}
+}
+
+impl<D: Directedness> AddVertex for ArbNonUniqueGraph<D>
+{
+	delegate! {
+		target self.0 {
+			fn new_vertex_weighted(&mut self, w: Self::VertexWeight)
+				-> Result<Self::Vertex, ()>;
+				
+			fn remove_vertex(&mut self, v: Self::Vertex) -> Result<Self::VertexWeight, ()>;
+		}
+	}
+}
+
+impl<D: Directedness> AddEdge for ArbNonUniqueGraph<D>
+{
+	delegate! {
+		target self.0 {
+	
+			fn remove_edge_where<F>(&mut self, f: F)
+				-> Result<(Self::Vertex, Self::Vertex, Self::EdgeWeight), ()>
+				where F: Fn((Self::Vertex, Self::Vertex, &Self::EdgeWeight)) -> bool ;
+			
+			fn add_edge_weighted<E>(&mut self, e: E) -> Result<(), ()>
+				where E: EdgeWeighted<Self::Vertex, Self::EdgeWeight>;
+		}
+	}
+}
+
 impl<D: Directedness> Arbitrary for ArbNonUniqueGraph<D>
 {
 	fn arbitrary<G: Gen>(g: &mut G) -> Self {
@@ -211,9 +252,8 @@ impl<D: Directedness> Arbitrary for ArbNonUniqueGraph<D>
 				 */
 				let mut shrunk_graph = self.0.clone();
 				let mut shrunk_dup_count = self.1;
-				if D::directed() {
-					if self.edges_between(e.source(), e.sink())
-						.filter(|&(so, _, _)| so == e.source())
+				if let Ok(g) = <DirectedGraph<&MockGraph<D>>>::constrain(&self.0) {
+					if g.edges_sourced_in(e.source())
 						.count() > 1
 					{
 						// Trying to remove a duplicate edge

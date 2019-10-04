@@ -7,6 +7,8 @@ mod unique;
 mod no_loops;
 mod reflexive;
 mod connected;
+mod directed_constraint;
+mod undirected_constraint;
 
 pub use self::{
 	impl_constraints::*,
@@ -14,5 +16,7 @@ pub use self::{
 	no_loops::*,
 	reflexive::*,
 	connected::*,
+	directed_constraint::*,
+	undirected_constraint::*,
 };
 

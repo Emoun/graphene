@@ -14,35 +14,32 @@ macro_rules! impl_constraints {
 		$struct:ident<$generic_graph:ident>: $trait:ident
 		$(where $($bounds:tt)*)?
 	} => {
+		//Directed
+		impl_constraints!{
+			@inner
+			$struct<$generic_graph>: $trait
+			$([$($bounds)*])? DirectedConstraint
+		}
+		
+		//Undirected
+		impl_constraints!{
+			@inner
+			$struct<$generic_graph>: $trait
+			$([$($bounds)*])? UndirectedConstraint
+		}
 		
 		// Unique
-		tt_call::tt_if!{
-			condition = [{tt_equal::tt_equal}]
-			input = [{$trait Unique}]
-			true = [{}]
-			false = [{
-				impl<$generic_graph: $crate::core::Constrainer> $crate::core::constraint::Unique
-					for $struct<$generic_graph>
-					where
-						$generic_graph: $crate::core::constraint::Unique,
-						$($($bounds)*)?
-				{}
-			}]
+		impl_constraints!{
+			@inner
+			$struct<$generic_graph>: $trait
+			$([$($bounds)*])? Unique
 		}
 
 		// NoLoops
-		tt_call::tt_if!{
-			condition = [{tt_equal::tt_equal}]
-			input = [{$trait NoLoops}]
-			true = [{}]
-			false = [{
-				impl<$generic_graph: $crate::core::Constrainer> $crate::core::constraint::NoLoops
-					for $struct<$generic_graph>
-					where
-						$generic_graph: $crate::core::constraint::NoLoops,
-						$($($bounds)*)?
-				{}
-			}]
+		impl_constraints!{
+			@inner
+			$struct<$generic_graph>: $trait
+			$([$($bounds)*])? NoLoops
 		}
 
 		// Reflexive
@@ -63,15 +60,27 @@ macro_rules! impl_constraints {
 		}
 
 		// Connected
+		impl_constraints!{
+			@inner
+			$struct<$generic_graph>: $trait
+			$([$($bounds)*])? Connected
+		}
+	};
+	
+	{
+		@inner
+		$struct:ident<$generic_graph:ident>: $trait:ident
+		$([$($bounds:tt)*])? $constraint:ident
+	} => {
 		tt_call::tt_if!{
 			condition = [{tt_equal::tt_equal}]
-			input = [{$trait Connected}]
+			input = [{$trait $constraint}]
 			true = [{}]
 			false = [{
-				impl<$generic_graph: $crate::core::Constrainer> $crate::core::constraint::Connected
+				impl<$generic_graph: $crate::core::Constrainer> $crate::core::constraint::$constraint
 					for $struct<$generic_graph>
 					where
-						$generic_graph: $crate::core::constraint::Connected,
+						$generic_graph: $crate::core::constraint::$constraint,
 						$($($bounds)*)?
 				{}
 			}]

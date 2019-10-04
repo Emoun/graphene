@@ -2,7 +2,6 @@
 use crate::core::{Edge, EdgeWeighted, Directedness, trait_aliases::{
 	Id,
 }, Directed};
-
 use std::iter::Iterator;
 
 #[macro_use]
@@ -70,7 +69,7 @@ pub trait Graph
 		(Self::Vertex, Self::Vertex, &'a Self::EdgeWeight)>>;
 	
 // Optional methods
-	
+
 	fn all_vertices<'a>(&'a self) -> Box<dyn 'a + Iterator<Item=Self::Vertex>>
 	{
 		Box::new(self.all_vertices_weighted().map(|(v, _)| v))
