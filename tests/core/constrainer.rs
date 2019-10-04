@@ -201,8 +201,8 @@ fn constrainer_constraining_base() {
 	let c_ref_uncon = c_ref.unconstrain_single();
 	assert_eq!(c_ref_uncon.mock_constraint_count(), 0);
 	
-	// We don't test unconstraint, because it happens automatically when constrainer is
-	// no longer used and the reference is freed.
+	// By reusing 'g' below, we test that the previous constraint is dropped when the it in no
+	// longer used.
 	
 	type ConstrainedGraphMut<'a> =
 	MockConstrainer<
@@ -251,7 +251,7 @@ fn constrainer_constraining_base() {
 	assert!(c_owned_uncon.new_vertex_weighted(MockVertexWeight { value: 32 }).is_err());
 	
 	// Test all constraints can be removed at once
-	let mut g: MockGraph<_> = c_owned_uncon.unconstrain();
+	let mut g = c_owned_uncon.unconstrain();
 	let vertex = g.new_vertex_weighted(MockVertexWeight { value: 32 }).unwrap();
 	g.add_edge_weighted((vertex, vertex, MockEdgeWeight { value: 32 })).unwrap();
 	assert_eq!(g.all_vertices().count(), 5);
@@ -260,76 +260,70 @@ fn constrainer_constraining_base() {
 	// Test can no longer constrain it
 	assert!(ConstrainedGraph::constrain(g).is_err());
 }
-//
-//#[test]
-//fn inline_constrainer_constraining_base(){
-//
-//	let mut g = BaseGraph(16);
-//	assert_eq!(g.graph_fn().next().unwrap(), &16);
-//
-//	let c_ref = <Connected<Connected<&BaseGraph>>>::constrain(&g).unwrap();
-//	assert_eq!(c_ref.connected_fn(), &16);
-//
-//	let mut c_ref_mut = <Connected<Connected<&mut BaseGraph>>>::constrain(&mut g).unwrap();
-//	*c_ref_mut.graph_mut().next().unwrap() = 30;
-//	assert_eq!(c_ref_mut.connected_fn(), &30);
-//
-//	let c_owned = <Connected<Connected<BaseGraph>>>::constrain(g).unwrap();
-//	assert_eq!(c_owned.connected_fn(), &30);
-//
-//}
-//
-//#[test]
-//fn base_constrains_self_by_constraint_inference(){
-//	type ConstrainedGraph<G> = Connected< Connected< Connected<G> > >;
-//
-//	let mut g = BaseGraph(16);
-//	assert_eq!(g.graph_fn().next().unwrap(), &16);
-//
-//	let c_ref: ConstrainedGraph<&BaseGraph> = (&g).constrain().unwrap();
-//	assert_eq!(c_ref.connected_fn(), &16);
-//	let c_ref_unc = c_ref.unconstrain_single();
-//	assert_eq!(c_ref_unc.connected_fn(), &16);
-//
-//	let mut c_ref_mut: ConstrainedGraph<&mut BaseGraph> = (&mut g).constrain().unwrap();
-//	*c_ref_mut.graph_mut().next().unwrap() = 30;
-//	assert_eq!(c_ref_mut.connected_fn(), &30);
-//	let mut c_ref_mut_unc = c_ref_mut.unconstrain_single();
-//	assert_eq!(c_ref_mut_unc.connected_fn(), &30);
-//	*c_ref_mut_unc.graph_mut().next().unwrap() = 31;
-//	assert_eq!(c_ref_mut_unc.connected_fn(), &31);
-//
-//	let c_owned: ConstrainedGraph<BaseGraph> = g.constrain().unwrap();
-//	assert_eq!(c_owned.connected_fn(), &31);
-//	let c_owned_unc = c_owned.unconstrain_single();
-//	assert_eq!(c_owned_unc.connected_fn(), &31);
-//	let g2 = c_owned_unc.unconstrain();
-//	assert_eq!(g2.base_graph_fn(), 31);
-//}
-//
-//#[test]
-//fn base_constrains_self_by_inline_constraint_inference(){
-//
-//	let mut g = BaseGraph(16);
-//	assert_eq!(g.graph_fn().next().unwrap(), &16);
-//
-//	let c_ref: Connected<Connected<Connected<&BaseGraph>>> = (&g).constrain().unwrap();
-//	assert_eq!(c_ref.connected_fn(), &16);
-//	let c_ref_unc = c_ref.unconstrain_single();
-//	assert_eq!(c_ref_unc.connected_fn(), &16);
-//
-//	let mut c_ref_mut: Connected<Connected<Connected<&mut BaseGraph>>> = (&mut g).constrain().unwrap();
-//	*c_ref_mut.graph_mut().next().unwrap() = 30;
-//	assert_eq!(c_ref_mut.connected_fn(), &30);
-//	let mut c_ref_mut_unc = c_ref_mut.unconstrain_single();
-//	assert_eq!(c_ref_mut_unc.connected_fn(), &30);
-//	*c_ref_mut_unc.graph_mut().next().unwrap() = 31;
-//	assert_eq!(c_ref_mut_unc.connected_fn(), &31);
-//
-//	let c_owned: Connected<Connected<Connected<BaseGraph>>> = g.constrain().unwrap();
-//	assert_eq!(c_owned.connected_fn(), &31);
-//	let c_owned_unc = c_owned.unconstrain_single();
-//	assert_eq!(c_owned_unc.connected_fn(), &31);
-//	let g2 = c_owned_unc.unconstrain();
-//	assert_eq!(g2.base_graph_fn(), 31);
-//}
+
+#[test]
+fn inline_constrainer_constraining_base(){
+
+	let mut g = MockGraph::empty();
+	assert_eq!(g.all_vertices().count(), 0);
+
+	let c_ref = <MockConstrainer<MockConstrainer<&MockGraph<MockDirectedness>>>>::constrain(&g).unwrap();
+	assert_eq!(c_ref.all_vertices().count(), 0);
+
+	let mut c_ref_mut = <MockConstrainer<MockConstrainer<&mut MockGraph<MockDirectedness>>>>::constrain(&mut g).unwrap();
+	c_ref_mut.new_vertex_weighted(MockVertexWeight{value: 10}).unwrap();
+	assert_eq!(c_ref_mut.all_vertices().count(), 1);
+
+	let mut c_owned = <MockConstrainer<MockConstrainer<MockGraph<MockDirectedness>>>>::constrain(g).unwrap();
+	c_owned.new_vertex_weighted(MockVertexWeight{value: 10}).unwrap();
+	assert_eq!(c_owned.all_vertices().count(), 2);
+
+}
+
+#[test]
+fn base_constrains_self_by_constraint_inference(){
+	type ConstrainedGraph<G> = MockConstrainer< MockConstrainer<G> >;
+	
+	let mut g = MockGraph::empty();
+	assert_eq!(g.all_vertices().count(), 0);
+
+	let c_ref: ConstrainedGraph<&MockGraph<MockDirectedness>> = (&g).constrain().unwrap();
+	assert_eq!(c_ref.all_vertices().count(), 0);
+	let c_ref_unc = c_ref.unconstrain_single();
+	assert_eq!(c_ref_unc.all_vertices().count(), 0);
+
+	let mut c_ref_mut: ConstrainedGraph<&mut MockGraph<MockDirectedness>> = (&mut g).constrain().unwrap();
+	c_ref_mut.new_vertex_weighted(MockVertexWeight{value: 10}).unwrap();
+	assert_eq!(c_ref_mut.all_vertices().count(), 1);
+
+	let mut c_owned: ConstrainedGraph<MockGraph<MockDirectedness>> = g.constrain().unwrap();
+	c_owned.new_vertex_weighted(MockVertexWeight{value: 10}).unwrap();
+	assert_eq!(c_owned.all_vertices().count(), 2);
+}
+
+#[test]
+fn base_constrains_self_by_inline_constraint_inference(){
+	
+	let mut g = MockGraph::empty();
+	assert_eq!(g.all_vertices().count(), 0);
+
+	let c_ref: MockConstrainer<MockConstrainer<&MockGraph<MockDirectedness>>> = (&g).constrain().unwrap();
+	assert_eq!(c_ref.all_vertices().count(), 0);
+	let c_ref_unc = c_ref.unconstrain_single();
+	assert_eq!(c_ref_unc.all_vertices().count(), 0);
+
+	let mut c_ref_mut: MockConstrainer<MockConstrainer<&mut MockGraph<MockDirectedness>>> = (&mut g).constrain().unwrap();
+	c_ref_mut.new_vertex_weighted(MockVertexWeight{value: 10}).unwrap();
+	assert_eq!(c_ref_mut.all_vertices().count(), 1);
+	let mut c_ref_mut_unc = c_ref_mut.unconstrain_single();
+	c_ref_mut_unc.new_vertex_weighted(MockVertexWeight{value: 10}).unwrap();
+	assert_eq!(c_ref_mut_unc.all_vertices().count(), 2);
+
+	let c_owned: MockConstrainer<MockConstrainer<MockGraph<MockDirectedness>>> = g.constrain().unwrap();
+	assert_eq!(c_owned.all_vertices().count(), 2);
+	let mut c_owned_unc = c_owned.unconstrain_single();
+	c_owned_unc.new_vertex_weighted(MockVertexWeight{value: 10}).unwrap();
+	assert_eq!(c_owned_unc.all_vertices().count(), 3);
+	let g2 = c_owned_unc.unconstrain();
+	assert_eq!(g2.all_vertices().count(), 3);
+}
