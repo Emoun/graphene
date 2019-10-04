@@ -1,8 +1,9 @@
 
 use crate::core::{Edge, EdgeWeighted, Directedness, trait_aliases::{
 	Id,
-}, Directed};
+}, Directed, Constrainer, BaseGraph};
 use std::iter::Iterator;
+use crate::core::constraint::{DirectedGraph, UndirectedGraph};
 
 #[macro_use]
 mod macros {
@@ -126,6 +127,16 @@ pub trait Graph
 	{
 		edges_incident_on!(self.all_edges(),v)
 	}
+	
+	fn constrain_directedness(&self) -> DirectednessVariants<&Self>
+		where Self: BaseGraph
+	{
+		if let Ok(g) = self.constrain() {
+			DirectednessVariants::Directed(g)
+		} else {
+			DirectednessVariants::Undirected(UndirectedGraph::unchecked(self))
+		}
+	}
 }
 
 pub trait GraphMut: Graph
@@ -166,6 +177,26 @@ pub trait GraphMut: Graph
 		edges_incident_on!(self.all_edges_mut(),v)
 	}
 	
+	fn constrain_directedness_mut(&mut self) -> DirectednessVariants<& mut Self>
+		where Self: BaseGraph
+	{
+		unimplemented!("I suspect the below implementation to work, but needs review.");
+		/*  We use this unsafe block to allow us to use 'self' in the 'else' branch below.
+			This is safe because 'self' is not used by 'g' if the 'else' branch is taken and
+			therefore the reference is not shared with anyone.
+			However, the compiler cannot see this and there doesn't seem to a fix in the pipeline:
+			https://github.com/rust-lang/rust/issues/53528
+			
+			If/when this issue is fixed, this code can be updated to remove the unsafe block.
+		*/
+		let self_2: &mut Self = unsafe {  (self as *mut Self).as_mut().unwrap() } ;
+		
+		if let Ok(g) = self.constrain() {
+			DirectednessVariants::Directed(g)
+		} else {
+			DirectednessVariants::Undirected(UndirectedGraph::unchecked(self_2))
+		}
+	}
 }
 
 ///
@@ -314,4 +345,10 @@ pub trait ExactGraph: Graph
 	fn edge_count(&self) -> usize {
 		self.all_edges().count()
 	}
+}
+
+pub enum DirectednessVariants<C: Constrainer>
+{
+	Directed(DirectedGraph<C>),
+	Undirected(UndirectedGraph<C>),
 }
