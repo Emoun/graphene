@@ -1,10 +1,10 @@
-use graphene::core::{Directedness, EdgeWeighted, Graph, Edge, Constrainer, AddVertex, GraphMut, AddEdge,};
+use graphene::core::{Directedness, EdgeWeighted, Graph, Edge, Constrainer, AddVertex, AddEdge, ImplGraph, ImplGraphMut};
 use graphene::core::constraint::{ConnectedGraph, DirectedGraph};
 use quickcheck::{Arbitrary, Gen};
-use crate::mock_graph::{MockGraph, MockVertexWeight, MockVertex, MockEdgeWeight};
+use crate::mock_graph::{MockGraph, MockVertex, MockEdgeWeight};
 use rand::Rng;
-use delegate::delegate;
 use crate::mock_graph::arbitrary::GuidedArbGraph;
+use std::collections::HashMap;
 
 fn dfs_rec<G: Graph<Vertex=MockVertex>>(graph: &G, start: MockVertex,
 	end: Option<MockVertex>, visited: &mut Vec<MockVertex>)
@@ -63,64 +63,19 @@ fn is_connected<D: Directedness>(graph: &MockGraph<D>) -> bool
 pub struct ArbConnectedGraph<D: Directedness>(
 	pub ConnectedGraph<MockGraph<D>>,
 );
-impl<D: Directedness> Graph for ArbConnectedGraph<D>
+
+impl<D: Directedness> ImplGraph for ArbConnectedGraph<D>
 {
-	type Vertex = MockVertex;
-	type VertexWeight = MockVertexWeight;
-	type EdgeWeight = MockEdgeWeight;
-	type Directedness = D;
+	type Graph = ConnectedGraph<MockGraph<D>>;
 	
-	delegate! {
-		target self.0 {
-	
-			fn all_vertices_weighted<'a>(&'a self)
-				-> Box<dyn 'a + Iterator<Item=(Self::Vertex, &'a Self::VertexWeight)>>;
-		
-			fn all_edges<'a>(&'a self)
-				-> Box<dyn 'a + Iterator<Item=(Self::Vertex, Self::Vertex, &'a Self::EdgeWeight)>>;
-			
-		}
+	fn graph(&self) -> &Self::Graph {
+		&self.0
 	}
 }
-
-impl<D: Directedness> GraphMut for ArbConnectedGraph<D>
+impl<D: Directedness> ImplGraphMut for ArbConnectedGraph<D>
 {
-	delegate! {
-		target self.0 {
-			fn all_vertices_weighted_mut<'a>(&'a mut self)
-				-> Box<dyn 'a +Iterator<Item=(Self::Vertex, &'a mut Self::VertexWeight)>>;
-			
-			fn all_edges_mut<'a>(&'a mut self) -> Box<dyn 'a + Iterator<Item=
-				(Self::Vertex, Self::Vertex, &'a mut Self::EdgeWeight)>>;
-			
-		}
-	}
-}
-
-impl<D: Directedness> AddVertex for ArbConnectedGraph<D>
-{
-	delegate! {
-		target self.0 {
-			fn new_vertex_weighted(&mut self, w: Self::VertexWeight)
-				-> Result<Self::Vertex, ()>;
-				
-			fn remove_vertex(&mut self, v: Self::Vertex) -> Result<Self::VertexWeight, ()>;
-		}
-	}
-}
-
-impl<D: Directedness> AddEdge for ArbConnectedGraph<D>
-{
-	delegate! {
-		target self.0 {
-	
-			fn remove_edge_where<F>(&mut self, f: F)
-				-> Result<(Self::Vertex, Self::Vertex, Self::EdgeWeight), ()>
-				where F: Fn((Self::Vertex, Self::Vertex, &Self::EdgeWeight)) -> bool ;
-			
-			fn add_edge_weighted<E>(&mut self, e: E) -> Result<(), ()>
-				where E: EdgeWeighted<Self::Vertex, Self::EdgeWeight>;
-		}
+	fn graph_mut(&mut self) -> &mut Self::Graph {
+		&mut self.0
 	}
 }
 
@@ -171,24 +126,24 @@ impl<D: Directedness> Arbitrary for ArbConnectedGraph<D>
 		);
 		
 		// We also shrink by replacing any vertex with in- and outdegree of 1 with an edge
-		if self.all_vertices().count() > 1 {
+		if self.0.all_vertices().count() > 1 {
 			result.extend(
-				self.all_vertices().filter(|&v| {
-					if let Ok(g) = <DirectedGraph<&Self>>::constrain(self) {
+				self.0.all_vertices().filter(|&v| {
+					if let Ok(g) = <DirectedGraph<&<Self as ImplGraph>::Graph>>::constrain(&(self.0)) {
 						g.edges_sourced_in(v).count() == 1 &&
 							g.edges_sinked_in(v).count() == 1
 					} else {
-						self.edges_incident_on(v).count() == 2
+						self.0.edges_incident_on(v).count() == 2
 					}
 				})
 					.flat_map(|v| {
 						let mut clone = self.0.clone().unconstrain_single();
 						let (e_in, e_out)=
-							if let Ok(g) = <DirectedGraph<&Self>>::constrain(self) {
+							if let Ok(g) = <DirectedGraph<&<Self as ImplGraph>::Graph>>::constrain(&self.0) {
 								(g.edges_sinked_in(v).next().unwrap().split().0,
 								 g.edges_sourced_in(v).next().unwrap().split().0)
 							} else {
-								let mut edges = self.edges_incident_on(v);
+								let mut edges = self.0.edges_incident_on(v);
 								(edges.next().unwrap().split().0, edges.next().unwrap().split().0)
 							};
 						let weight1 = clone.remove_edge(e_in).unwrap();
@@ -200,14 +155,74 @@ impl<D: Directedness> Arbitrary for ArbConnectedGraph<D>
 						clone.add_edge_weighted((e_in.source(), e_out.sink(), weight1)).unwrap();
 						clone2.add_edge_weighted((e_in.source(), e_out.sink(), weight2)).unwrap();
 
-//					assert!(is_connected(&clone));
-//					assert!(is_connected(&clone2));
+					assert!(is_connected(&clone));
+					assert!(is_connected(&clone2));
 						
 						vec![Self(ConnectedGraph::new(clone)),
 							 Self(ConnectedGraph::new(clone2))].into_iter()
 					})
 			);
 		}
+		Box::new(result.into_iter())
+	}
+}
+
+///
+/// An arbitrary graph that is connected
+///
+#[derive(Clone, Debug)]
+pub struct ArbUnconnectedGraph<D: Directedness>(
+	pub MockGraph<D>,
+);
+
+impl<D: Directedness> ImplGraph for ArbUnconnectedGraph<D>
+{
+	type Graph = MockGraph<D>;
+	
+	fn graph(&self) -> &Self::Graph {
+		&self.0
+	}
+}
+impl<D: Directedness> ImplGraphMut for ArbUnconnectedGraph<D>
+{
+	fn graph_mut(&mut self) -> &mut Self::Graph {
+		&mut self.0
+	}
+}
+
+impl<D: Directedness> Arbitrary for ArbUnconnectedGraph<D>
+{
+	fn arbitrary<G: Gen>(g: &mut G) -> Self {
+		
+		// We merge 2 graphs into 1. This will ensure they are not connected.
+		// They must each have at least 1 vertex, otherwise the result
+		// might be trivially connected (<2 vertices)
+		let mut graph = MockGraph::arbitrary_guided(g, 1..(g.size()/2), ..);
+		let g2 = <MockGraph<D>>::arbitrary_guided(g, 1..(g.size()/2), ..);
+		
+		// Map of vertices in 'g2', to their new counterparts in 'graph'
+		let mut v_map: HashMap<MockVertex,MockVertex> = HashMap::new();
+		
+		for (v,w) in g2.all_vertices_weighted() {
+			let new_v = graph.new_vertex_weighted(w.clone()).unwrap();
+			v_map.insert(v, new_v);
+		}
+		for (so,si, w) in g2.all_edges() {
+			graph.add_edge_weighted((v_map[&so], v_map[&si], w.clone())).unwrap();
+		}
+		assert!(!is_connected(&graph));
+		Self(graph)
+	}
+	
+	fn shrink(&self) -> Box<dyn Iterator<Item=Self>> {
+		let mut result = Vec::new();
+		
+		// We shrink the MockGraph, keeping only the shrunk graphs that are still unconnected
+		result.extend(
+			self.0.shrink().filter( |g| !is_connected(&g))
+				.map(|g| Self(g))
+		);
+		
 		Box::new(result.into_iter())
 	}
 }

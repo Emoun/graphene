@@ -3,7 +3,7 @@
 //!
 
 use crate::mock_graph::arbitrary::{ArbTwoVerticesIn, ArbConnectedGraph};
-use graphene::core::Directed;
+use graphene::core::{Directed, ImplGraph};
 use graphene::algo::DFS;
 
 ///
@@ -13,5 +13,5 @@ use graphene::algo::DFS;
 fn connected(ArbTwoVerticesIn(mock, v1, v2): ArbTwoVerticesIn<ArbConnectedGraph<Directed>>)
 			 -> bool
 {
-	DFS::new(&mock, v1).find(|&v| v == v2).is_some()
+	DFS::new(mock.graph(), v1).find(|&v| v == v2).is_some()
 }

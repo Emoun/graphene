@@ -2,6 +2,7 @@ use quickcheck::{Gen, Arbitrary};
 use std::ops::{RangeBounds, Bound};
 use std::collections::HashSet;
 
+#[allow(dead_code)]
 #[derive(Ord, PartialOrd, PartialEq, Eq, Hash)]
 pub enum Limit {
 	/// Shrinkages shouldn't remove vertices

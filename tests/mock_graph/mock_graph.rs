@@ -63,6 +63,7 @@ impl<D: Directedness> MockGraph<D> {
 	/// I.e. if the vertices are {0,1,3,4,6} they become {0,1,2,3,4} and all edges are
 	/// corrected accordingly.
 	///
+	#[allow(dead_code)]
 	pub fn pack(&mut self)
 	{
 		let mut old_verts = self.vertices.keys().collect::<Vec<_>>();

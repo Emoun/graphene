@@ -1,10 +1,9 @@
 use graphene::core::constraint::{UniqueGraph, DirectedGraph};
-use graphene::core::{Directedness, Graph, AddVertex, Edge, EdgeWeighted, Constrainer, GraphMut, AddEdge};
-use crate::mock_graph::{MockGraph, MockVertex, MockVertexWeight, MockEdgeWeight};
+use graphene::core::{Directedness, Graph, Edge, Constrainer, AddEdge, ImplGraph, ImplGraphMut};
+use crate::mock_graph::{MockGraph, MockEdgeWeight};
 use quickcheck::{Arbitrary, Gen};
 use rand::Rng;
 use crate::mock_graph::arbitrary::{GuidedArbGraph, Limit};
-use delegate::delegate;
 use std::ops::{RangeBounds};
 use std::collections::HashSet;
 
@@ -16,64 +15,18 @@ pub struct ArbUniqueGraph<D:Directedness>(
 	pub UniqueGraph<MockGraph<D>>
 );
 
-impl<D: Directedness> Graph for ArbUniqueGraph<D>
+impl<D: Directedness> ImplGraph for ArbUniqueGraph<D>
 {
-	type Vertex = MockVertex;
-	type VertexWeight = MockVertexWeight;
-	type EdgeWeight = MockEdgeWeight;
-	type Directedness = D;
+	type Graph = UniqueGraph<MockGraph<D>>;
 	
-	delegate! {
-		target self.0 {
-	
-			fn all_vertices_weighted<'a>(&'a self)
-				-> Box<dyn 'a + Iterator<Item=(Self::Vertex, &'a Self::VertexWeight)>>;
-		
-			fn all_edges<'a>(&'a self)
-				-> Box<dyn 'a + Iterator<Item=(Self::Vertex, Self::Vertex, &'a Self::EdgeWeight)>>;
-			
-		}
+	fn graph(&self) -> &Self::Graph {
+		&self.0
 	}
 }
-
-impl<D: Directedness> GraphMut for ArbUniqueGraph<D>
+impl<D: Directedness> ImplGraphMut for ArbUniqueGraph<D>
 {
-	delegate! {
-		target self.0 {
-			fn all_vertices_weighted_mut<'a>(&'a mut self)
-				-> Box<dyn 'a +Iterator<Item=(Self::Vertex, &'a mut Self::VertexWeight)>>;
-			
-			fn all_edges_mut<'a>(&'a mut self) -> Box<dyn 'a + Iterator<Item=
-				(Self::Vertex, Self::Vertex, &'a mut Self::EdgeWeight)>>;
-			
-		}
-	}
-}
-
-impl<D: Directedness> AddVertex for ArbUniqueGraph<D>
-{
-	delegate! {
-		target self.0 {
-			fn new_vertex_weighted(&mut self, w: Self::VertexWeight)
-				-> Result<Self::Vertex, ()>;
-				
-			fn remove_vertex(&mut self, v: Self::Vertex) -> Result<Self::VertexWeight, ()>;
-		}
-	}
-}
-
-impl<D: Directedness> AddEdge for ArbUniqueGraph<D>
-{
-	delegate! {
-		target self.0 {
-	
-			fn remove_edge_where<F>(&mut self, f: F)
-				-> Result<(Self::Vertex, Self::Vertex, Self::EdgeWeight), ()>
-				where F: Fn((Self::Vertex, Self::Vertex, &Self::EdgeWeight)) -> bool ;
-			
-			fn add_edge_weighted<E>(&mut self, e: E) -> Result<(), ()>
-				where E: EdgeWeighted<Self::Vertex, Self::EdgeWeight>;
-		}
+	fn graph_mut(&mut self) -> &mut Self::Graph {
+		&mut self.0
 	}
 }
 
@@ -152,67 +105,6 @@ pub struct ArbNonUniqueGraph<D:Directedness>(
 	usize
 );
 
-impl<D: Directedness> Graph for ArbNonUniqueGraph<D>
-{
-	type Vertex = MockVertex;
-	type VertexWeight = MockVertexWeight;
-	type EdgeWeight = MockEdgeWeight;
-	type Directedness = D;
-	
-	delegate! {
-		target self.0 {
-	
-			fn all_vertices_weighted<'a>(&'a self)
-				-> Box<dyn 'a + Iterator<Item=(Self::Vertex, &'a Self::VertexWeight)>>;
-		
-			fn all_edges<'a>(&'a self)
-				-> Box<dyn 'a + Iterator<Item=(Self::Vertex, Self::Vertex, &'a Self::EdgeWeight)>>;
-			
-		}
-	}
-}
-
-impl<D: Directedness> GraphMut for ArbNonUniqueGraph<D>
-{
-	delegate! {
-		target self.0 {
-			fn all_vertices_weighted_mut<'a>(&'a mut self)
-				-> Box<dyn 'a +Iterator<Item=(Self::Vertex, &'a mut Self::VertexWeight)>>;
-			
-			fn all_edges_mut<'a>(&'a mut self) -> Box<dyn 'a + Iterator<Item=
-				(Self::Vertex, Self::Vertex, &'a mut Self::EdgeWeight)>>;
-			
-		}
-	}
-}
-
-impl<D: Directedness> AddVertex for ArbNonUniqueGraph<D>
-{
-	delegate! {
-		target self.0 {
-			fn new_vertex_weighted(&mut self, w: Self::VertexWeight)
-				-> Result<Self::Vertex, ()>;
-				
-			fn remove_vertex(&mut self, v: Self::Vertex) -> Result<Self::VertexWeight, ()>;
-		}
-	}
-}
-
-impl<D: Directedness> AddEdge for ArbNonUniqueGraph<D>
-{
-	delegate! {
-		target self.0 {
-	
-			fn remove_edge_where<F>(&mut self, f: F)
-				-> Result<(Self::Vertex, Self::Vertex, Self::EdgeWeight), ()>
-				where F: Fn((Self::Vertex, Self::Vertex, &Self::EdgeWeight)) -> bool ;
-			
-			fn add_edge_weighted<E>(&mut self, e: E) -> Result<(), ()>
-				where E: EdgeWeighted<Self::Vertex, Self::EdgeWeight>;
-		}
-	}
-}
-
 impl<D: Directedness> Arbitrary for ArbNonUniqueGraph<D>
 {
 	fn arbitrary<G: Gen>(g: &mut G) -> Self {
@@ -245,8 +137,8 @@ impl<D: Directedness> Arbitrary for ArbNonUniqueGraph<D>
 		 * Can only remove an edge if there are more than 2 (must have at least 2 edges duplicating
 		 * each other.
 		 */
-		if self.all_edges().count() > 2 {
-			for e in self.all_edges() {
+		if self.0.all_edges().count() > 2 {
+			for e in self.0.all_edges() {
 				/* Add to the result a copy of the graph
 				 * without the edge
 				 */
@@ -270,7 +162,7 @@ impl<D: Directedness> Arbitrary for ArbNonUniqueGraph<D>
 						result.push(Self(shrunk_graph, shrunk_dup_count));
 					}
 				} else {
-					if self.edges_between(e.source(), e.sink()).count() > 1 {
+					if self.0.edges_between(e.source(), e.sink()).count() > 1 {
 						// Trying to remove a duplicate edge
 						if shrunk_dup_count > 1 {
 							shrunk_dup_count -= 1;
@@ -289,5 +181,20 @@ impl<D: Directedness> Arbitrary for ArbNonUniqueGraph<D>
 		}
 		
 		Box::new(result.into_iter())
+	}
+}
+
+impl<D: Directedness> ImplGraph for ArbNonUniqueGraph<D>
+{
+	type Graph = MockGraph<D>;
+	
+	fn graph(&self) -> &Self::Graph {
+		&self.0
+	}
+}
+impl<D: Directedness> ImplGraphMut for ArbNonUniqueGraph<D>
+{
+	fn graph_mut(&mut self) -> &mut Self::Graph {
+		&mut self.0
 	}
 }

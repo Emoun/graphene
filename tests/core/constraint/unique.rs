@@ -38,7 +38,7 @@ duplicate_for_directedness!{
 	fn reject_add_edge(ArbEdgeIn(mut g,e): ArbEdgeIn<ArbUniqueGraph<directedness>>,
 								weight: MockEdgeWeight) -> bool
 	{
-		g.add_edge_weighted((e.source(), e.sink(), weight)).is_err()
+		g.0.add_edge_weighted((e.source(), e.sink(), weight)).is_err()
 	}
 	
 	///
@@ -51,8 +51,8 @@ duplicate_for_directedness!{
 	{
 		// To ensure we add a non-duplicate edge,
 		// we create a new vertex and add an edge to it from an existing one.
-		let v2 = g.new_vertex_weighted(v_weight).unwrap();
-		let accepted = g.add_edge_weighted((v, v2, e_weight)).is_ok();
-			accepted && g.edges_between(v,v2).count() == 1
+		let v2 = g.0.new_vertex_weighted(v_weight).unwrap();
+		let accepted = g.0.add_edge_weighted((v, v2, e_weight)).is_ok();
+			accepted && g.0.edges_between(v,v2).count() == 1
 	}
 }

@@ -1,7 +1,7 @@
 
 use quickcheck::{Arbitrary, Gen};
 use crate::mock_graph::{MockVertex, MockEdgeWeight, MockVertexWeight};
-use graphene::core::{Edge, EdgeDeref, EdgeWeighted, Graph, AddVertex, GraphMut, AddEdge};
+use graphene::core::{Edge, EdgeDeref, EdgeWeighted, Graph, AddVertex, GraphMut, AddEdge, ImplGraphMut, ImplGraph};
 use rand::{ Rng };
 use crate::mock_graph::arbitrary::{GuidedArbGraph};
 
@@ -14,60 +14,64 @@ use crate::mock_graph::arbitrary::{GuidedArbGraph};
 #[derive(Clone, Debug)]
 pub struct ArbTwoVerticesIn<G>(pub G, pub MockVertex, pub MockVertex)
 	where
-		G: Arbitrary + GraphMut<Vertex=MockVertex, VertexWeight=MockVertexWeight,
+		G: Arbitrary + ImplGraphMut,
+		G::Graph: Graph<Vertex=MockVertex, VertexWeight=MockVertexWeight,
 			EdgeWeight=MockEdgeWeight>;
 
 impl<Gr> Arbitrary for ArbTwoVerticesIn<Gr>
 	where
-		Gr: Arbitrary + AddVertex<Vertex=MockVertex, VertexWeight=MockVertexWeight,
+		Gr: Arbitrary + ImplGraphMut,
+		Gr::Graph: AddVertex<Vertex=MockVertex, VertexWeight=MockVertexWeight,
 			EdgeWeight=MockEdgeWeight>
 {
 	fn arbitrary<G: Gen>(g: &mut G) -> Self {
 		// Create a graph with at least 1 vertex
-		let graph = {
+		let arb_graph = {
 			let mut candidate_graph = Gr::arbitrary(g);
-			while candidate_graph.all_vertices().count() == 0 {
+			while candidate_graph.graph().all_vertices().count() == 0 {
 				candidate_graph = Gr::arbitrary(g);
 			}
 			candidate_graph
 		};
-		
+		let graph = arb_graph.graph();
 		let verts: Vec<_> = graph.all_vertices().collect();
 		let v1 = verts[g.gen_range(0, verts.len())];
 		let v2 = verts[g.gen_range(0, verts.len())];
 		
-		ArbTwoVerticesIn(graph, v1, v2)
+		ArbTwoVerticesIn(arb_graph, v1, v2)
 	}
 	
 	fn shrink(&self) -> Box<dyn Iterator<Item = Self>>
 	{
 		let mut result = Vec::new();
-		
-		if self.0.all_vertices().count() > 1 {
+		let arb_graph = &self.0;
+		let graph = arb_graph.graph();
+		if graph.all_vertices().count() > 1 {
 			/*	First we shrink the graph, using only the shrunk graphs where the vertices are valid
 			*/
 			result.extend(
-				self.0.shrink()
+				arb_graph.shrink()
 					.filter(|g|{
+						let g = g.graph();
 						g.contains_vertex(self.1) && g.contains_vertex(self.2)
 					})
 					.map(|g| ArbTwoVerticesIn(g, self.1, self.2))
 			);
 			// Lastly, if the graph has only 2 vertices and no edges, remove one and
 			// update the corresponding vertex to the remaining one
-			if self.0.all_vertices().count() == 2 &&
-				self.0.all_edges().next().is_none()
+			if graph.all_vertices().count() == 2 &&
+				graph.all_edges().next().is_none()
 			{
-				let mut verts = self.0.all_vertices();
+				let mut verts = graph.all_vertices();
 				let v1 = verts.next().unwrap();
 				let v2 = verts.next().unwrap();
 				
-				let mut clone = self.0.clone();
-				clone.remove_vertex(v1).unwrap();
+				let mut clone = arb_graph.clone();
+				clone.graph_mut().remove_vertex(v1).unwrap();
 				result.push(ArbTwoVerticesIn(clone, v2, v2));
 				
-				let mut clone = self.0.clone();
-				clone.remove_vertex(v2).unwrap();
+				let mut clone = arb_graph.clone();
+				clone.graph_mut().remove_vertex(v2).unwrap();
 				result.push(ArbTwoVerticesIn(clone, v1, v1));
 			}
 		}
@@ -86,11 +90,13 @@ impl<Gr> Arbitrary for ArbTwoVerticesIn<Gr>
 #[derive(Clone, Debug)]
 pub struct ArbVertexIn<G>(pub G, pub MockVertex)
 	where
-		G: Arbitrary + GraphMut<Vertex=MockVertex, VertexWeight=MockVertexWeight,
+		G: Arbitrary + ImplGraph,
+		G::Graph: Graph<Vertex=MockVertex, VertexWeight=MockVertexWeight,
 			EdgeWeight=MockEdgeWeight>;
 impl<Gr> Arbitrary for ArbVertexIn<Gr>
 	where
-		Gr: Arbitrary + AddVertex<Vertex=MockVertex, VertexWeight=MockVertexWeight,
+		Gr: Arbitrary + ImplGraphMut,
+		Gr::Graph: AddVertex<Vertex=MockVertex, VertexWeight=MockVertexWeight,
 			EdgeWeight=MockEdgeWeight>
 {
 	fn arbitrary<G: Gen>(g: &mut G) -> Self {
@@ -201,18 +207,21 @@ impl<Gr> Arbitrary for ArbEdgeOutside<Gr>
 #[derive(Clone, Debug)]
 pub struct ArbEdgeIn<G>(pub G, pub (MockVertex, MockVertex, MockEdgeWeight))
 	where
-		G: Arbitrary + GraphMut<Vertex=MockVertex, VertexWeight=MockVertexWeight,
+		G: Arbitrary + ImplGraph,
+		G::Graph: Graph<Vertex=MockVertex, VertexWeight=MockVertexWeight,
 			EdgeWeight=MockEdgeWeight>;
 impl<Gr> Arbitrary for ArbEdgeIn<Gr>
 	where
-		Gr: GuidedArbGraph + AddVertex<Vertex=MockVertex, VertexWeight=MockVertexWeight,
+		Gr: GuidedArbGraph + ImplGraphMut,
+		Gr::Graph: AddVertex<Vertex=MockVertex, VertexWeight=MockVertexWeight,
 			EdgeWeight=MockEdgeWeight> + AddEdge
 {
 	fn arbitrary<G: Gen>(g: &mut G) -> Self {
-		let graph = Gr::arbitrary_guided(g, .. , 1..);
+		let arb_graph = Gr::arbitrary_guided(g, .. , 1..);
+		let graph = arb_graph.graph();
 		let edge = graph.all_edges().nth(g.gen_range(0, graph.all_edges().count())).unwrap();
 		let edge_clone = (edge.source(),edge.sink(),edge.weight().clone());
-		Self(graph, edge_clone)
+		Self(arb_graph, edge_clone)
 	}
 
 	fn shrink(&self) -> Box<dyn Iterator<Item=Self>> {
@@ -222,7 +231,7 @@ impl<Gr> Arbitrary for ArbEdgeIn<Gr>
 		result.extend(
 			(self.1).2.shrink().map(|shrunk| {
 				let mut clone = self.0.clone();
-				let edge = clone.all_edges_mut()
+				let edge = clone.graph_mut().all_edges_mut()
 					.find(|e|
 						e.source() == self.1.source() &&
 							e.sink() == self.1.sink() &&
@@ -236,7 +245,7 @@ impl<Gr> Arbitrary for ArbEdgeIn<Gr>
 		/* We shrink each vertex in the edge
 		*/
 		let mut without_edge = self.0.clone();
-		without_edge.remove_edge_where(|e|
+		without_edge.graph_mut().remove_edge_where(|e|
 			e.source() == self.1.source() &&
 				e.sink() == self.1.sink() &&
 				e.weight() == self.1.weight_ref()
@@ -244,7 +253,7 @@ impl<Gr> Arbitrary for ArbEdgeIn<Gr>
 		result.extend(
 			ArbTwoVerticesIn(without_edge, (self.1).0, (self.1).1).shrink()
 				.map(|ArbTwoVerticesIn(mut g, v1, v2)| {
-					g.add_edge_weighted((v1,v2,(self.1).2.clone())).unwrap();
+					g.graph_mut().add_edge_weighted((v1,v2,(self.1).2.clone())).unwrap();
 					Self(g, (v1,v2,(self.1).2.clone()))
 				})
 		);
