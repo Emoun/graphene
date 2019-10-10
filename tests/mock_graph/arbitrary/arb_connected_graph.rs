@@ -5,6 +5,7 @@ use crate::mock_graph::{MockGraph, MockVertex, MockEdgeWeight};
 use rand::Rng;
 use crate::mock_graph::arbitrary::GuidedArbGraph;
 use std::collections::HashMap;
+use std::ops::RangeBounds;
 
 fn dfs_rec<G: Graph<Vertex=MockVertex>>(graph: &G, start: MockVertex,
 	end: Option<MockVertex>, visited: &mut Vec<MockVertex>)
@@ -35,6 +36,7 @@ fn dfs_rec<G: Graph<Vertex=MockVertex>>(graph: &G, start: MockVertex,
 	false
 }
 
+/// This is very inefficient (but never the less correct)
 fn is_connected<D: Directedness>(graph: &MockGraph<D>) -> bool
 {
 	if let Ok(graph) = <DirectedGraph<&MockGraph<D>>>::constrain(graph) {
@@ -79,40 +81,66 @@ impl<D: Directedness> ImplGraphMut for ArbConnectedGraph<D>
 	}
 }
 
+impl<D: Directedness> GuidedArbGraph for ArbConnectedGraph<D>
+{
+	fn arbitrary_guided<G: Gen>(g: &mut G, v_range: impl RangeBounds<usize>,
+								e_range: impl RangeBounds<usize>)
+								-> Self
+	{
+		let (v_min, v_max, e_min, e_max) = Self::validate_ranges(g, v_range, e_range);
+		// If we are asked to make the singleton or empty graph, we just do
+		if v_max <= 2 {
+			return Self(ConnectedGraph::new(MockGraph::arbitrary_guided(g,
+				v_min..v_max, e_min..e_max)))
+		}
+		
+		// If the exact size of the graph hasn't been decided yet, do so.
+		if (v_min + 1) != v_max {
+			let v_count = g.gen_range(v_min, v_max);
+			return Self::arbitrary_guided(g, v_count..v_count + 1, e_min..e_max)
+		}
+		
+		let (v_count_1, v_count_2) = ((v_min/2) + (v_min%2), v_min/2);
+		let e_min_2 = e_min / 2;
+		let e_min_1 = e_min_2 + (e_min%2);
+		let e_max_2 = e_max / 2;
+		let e_max_1 = e_max_2 + (e_max%2);
+		
+		// We create two smaller connected graphs
+		let mut graph = Self::arbitrary_guided(g, v_count_1..v_count_1+1, e_min_1..e_max_1).0.unconstrain_single();
+		let g2 = Self::arbitrary_guided(g, v_count_2..v_count_2+1, e_min_2..e_max_2).0;
+		
+		// We find random vertices in each graph for later use
+		let v11 = graph.all_vertices().nth(g.gen_range(0, graph.all_vertices().count())).unwrap();
+		let v12 = graph.all_vertices().nth(g.gen_range(0, graph.all_vertices().count())).unwrap();
+		let v21 = g2.all_vertices().nth(g.gen_range(0, g2.all_vertices().count())).unwrap();
+		let v22 = g2.all_vertices().nth(g.gen_range(0, g2.all_vertices().count())).unwrap();
+		
+		// Join the second into the first making an unconnected graph with the 2 components
+		let mut v_map: HashMap<MockVertex, MockVertex> = HashMap::new();
+		for (v,w) in g2.all_vertices_weighted() {
+			let new_v = graph.new_vertex_weighted(w.clone()).unwrap();
+			v_map.insert(v, new_v);
+		}
+		for (so,si, w) in g2.all_edges() {
+			graph.add_edge_weighted((v_map[&so], v_map[&si], w.clone())).unwrap();
+		}
+		
+		// Add vertices connecting the two components
+		graph.add_edge_weighted((v11,v_map[&v21], MockEdgeWeight::arbitrary(g))).unwrap();
+		if D::directed() {
+			graph.add_edge_weighted((v_map[&v22],v12, MockEdgeWeight::arbitrary(g))).unwrap();
+		}
+		
+		Self(ConnectedGraph::new(graph))
+	}
+}
+
 impl<D: Directedness> Arbitrary for ArbConnectedGraph<D>
 {
 	fn arbitrary<G: Gen>(g: &mut G) -> Self {
-		
-		let mut graph = MockGraph::arbitrary_guided(g, .., ..(2*g.size()));
-		let vertex_count = graph.all_vertices().count();
-		
-		/* If the amount of vertices is 0, no edges can be created.
-		 */
-		if vertex_count > 0 {
-			// Create a 'ring' with edges, ensuring the graph is connected
-			let mut verts= graph.all_vertices().collect::<Vec<_>>().into_iter(); // Collect such that we no longer borrow graph
-			if let Some(mut v_prev) = verts.next() {
-				for v_next in verts.chain(vec![v_prev]){
-					graph.add_edge_weighted((v_prev, v_next, MockEdgeWeight::arbitrary(g))).unwrap();
-					v_prev = v_next;
-				}
-			}
-			
-			// We now try to remove a random number of edges yet preserve connectedness
-			// If an edge can't be removed, we don't care
-			for e in graph.all_edges().map(|e| (e.source(), e.sink())).collect::<Vec<_>>().into_iter() {
-				if g.gen_bool(0.5) {
-					if let Ok(e_weight) = graph.remove_edge(e) {
-						// We check that all vertices still have paths to each other.
-						// If not, we return the edge
-						if !is_connected(&graph)	{
-							graph.add_edge_weighted((e.source(), e.sink(), e_weight)).unwrap();
-						}
-					}
-				}
-			}
-		}
-		assert!(is_connected(&graph));
+		let graph = Self::arbitrary_guided(g, .., ..).0.unconstrain_single();
+//		assert!(is_connected(&graph));
 		Self(ConnectedGraph::new(graph))
 	}
 	

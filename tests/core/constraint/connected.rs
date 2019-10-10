@@ -53,7 +53,7 @@ duplicate_for_directedness! {
 	/// Tests that a ConnectedGraph rejects removing an edge that is critical for connectedness
 	///
 	#[quickcheck]
-	fn reject_remove_edge_where(ArbVertexIn(mut g1,v1):
+	fn reject_remove_edge_where(ArbVertexIn(g1,v1):
 		ArbVertexIn<ArbConnectedGraph<directedness>>, ArbVertexIn(g2,v2):
 		ArbVertexIn<ArbConnectedGraph<directedness>>,
 		e_weight: MockEdgeWeight)
@@ -76,9 +76,8 @@ duplicate_for_directedness! {
 			graph.add_edge_weighted((v_map[&v2],v1, e_weight.clone())).unwrap();
 		}
 		let mut connected = ConnectedGraph::constrain_single(graph).unwrap();
-		
+
 		// We now try to remove the the added edge
 		connected.remove_edge_where(|e| (e.source() == v1 && e.sink() == v_map[&v2])).is_err()
 	}
 }
-
