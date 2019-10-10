@@ -1,4 +1,4 @@
-use crate::core::{Graph, Edge};
+use crate::core::{Graph, Edge, Directedness};
 
 ///
 ///
@@ -32,6 +32,8 @@ impl<'a, G:'a + Graph> Iterator for DFS<'a,G>
 				{
 					let other_v =
 						if next == e.source() { e.sink() }
+						// In a directed graph, we have to skip incomming edges
+						else if G::Directedness::directed() { continue }
 						else { e.source() };
 
 					if !self.visited.contains(&other_v) {

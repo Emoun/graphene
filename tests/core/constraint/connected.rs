@@ -6,11 +6,14 @@
 duplicate_for_directedness! {
 	$directedness
 	use graphene::{
-		core::{ Constrainer, AddEdge, Edge, constraint::ConnectedGraph, Directedness, },
+		core::{ Graph, Constrainer, AddEdge, Edge, constraint::ConnectedGraph, Directedness,
+			AddVertex,
+		},
 	};
-	use crate::mock_graph::{ MockEdgeWeight,
-		arbitrary::{ArbConnectedGraph, ArbUnconnectedGraph, ArbTwoVerticesIn}
+	use crate::mock_graph::{ MockEdgeWeight, MockVertex,
+		arbitrary::{ArbConnectedGraph, ArbUnconnectedGraph, ArbTwoVerticesIn, ArbVertexIn}
 	};
+	use std::collections::HashMap;
 
 	///
 	/// Tests that Connected Graph correctly identifies connected graphs.
@@ -45,4 +48,37 @@ duplicate_for_directedness! {
 		
 		g.0.remove_edge_where(|e| (e.source() == v1 && e.sink() == v2)).is_ok()
 	}
+	
+	///
+	/// Tests that a ConnectedGraph rejects removing an edge that is critical for connectedness
+	///
+	#[quickcheck]
+	fn reject_remove_edge_where(ArbVertexIn(mut g1,v1):
+		ArbVertexIn<ArbConnectedGraph<directedness>>, ArbVertexIn(g2,v2):
+		ArbVertexIn<ArbConnectedGraph<directedness>>,
+		e_weight: MockEdgeWeight)
+		-> bool
+	{
+		let mut graph = g1.0.unconstrain();
+		// We start by joining 2 connected graphs into a unconnected graph with the 2 components
+		let mut v_map: HashMap<MockVertex, MockVertex> = HashMap::new();
+		for (v,w) in g2.0.all_vertices_weighted() {
+			let new_v = graph.new_vertex_weighted(w.clone()).unwrap();
+			v_map.insert(v, new_v);
+		}
+		for (so,si, w) in g2.0.all_edges() {
+			graph.add_edge_weighted((v_map[&so], v_map[&si], w.clone())).unwrap();
+		}
+
+		// We then connect the two components
+		graph.add_edge_weighted((v1,v_map[&v2], e_weight.clone())).unwrap();
+		if directedness::directed() {
+			graph.add_edge_weighted((v_map[&v2],v1, e_weight.clone())).unwrap();
+		}
+		let mut connected = ConnectedGraph::constrain_single(graph).unwrap();
+		
+		// We now try to remove the the added edge
+		connected.remove_edge_where(|e| (e.source() == v1 && e.sink() == v_map[&v2])).is_err()
+	}
 }
+

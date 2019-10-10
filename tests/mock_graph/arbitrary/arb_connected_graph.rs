@@ -203,7 +203,6 @@ impl<D: Directedness> Arbitrary for ArbUnconnectedGraph<D>
 		
 		// Map of vertices in 'g2', to their new counterparts in 'graph'
 		let mut v_map: HashMap<MockVertex,MockVertex> = HashMap::new();
-		
 		for (v,w) in g2.all_vertices_weighted() {
 			let new_v = graph.new_vertex_weighted(w.clone()).unwrap();
 			v_map.insert(v, new_v);
@@ -211,6 +210,7 @@ impl<D: Directedness> Arbitrary for ArbUnconnectedGraph<D>
 		for (so,si, w) in g2.all_edges() {
 			graph.add_edge_weighted((v_map[&so], v_map[&si], w.clone())).unwrap();
 		}
+		
 		assert!(!is_connected(&graph));
 		Self(graph)
 	}
