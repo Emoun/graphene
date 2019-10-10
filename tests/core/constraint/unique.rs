@@ -55,5 +55,4 @@ duplicate_for_directedness!{
 	{
 		g.0.add_edge_weighted((e.source(), e.sink(), weight)).is_err()
 	}
-	
 }

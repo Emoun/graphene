@@ -9,8 +9,7 @@ script:
   - cargo test --verbose
   - cargo doc
 env:
-  - QUICKCHECK_GENERATOR_SIZE=10 QUICKCHECK_TESTS=25
-  - QUICKCHECK_GENERATOR_SIZE=50
+  - QUICKCHECK_GENERATOR_SIZE=50 QUICKCHECK_TESTS=1000
   
 matrix:
   allow_failures:

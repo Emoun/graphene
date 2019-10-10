@@ -52,8 +52,11 @@ impl<D: Directedness> GuidedArbGraph for ArbUniqueGraph<D>
 		if vertex_count > 0 {
 			/* For each vertex pair (in each direction), maybe create an edge
 			 */
-			let edge_saturation = g.gen_range(0.0, 1.0);
+			// The maximum number of edges is ridiculously big, so we allow approximately the same
+			// the same number as vertices
+			let edge_saturation = g.gen_range(0.0, (vertex_count) as f64/(vertex_count*vertex_count) as f64);
 			let mut maybe_add_edge = |source, sink|{
+				println!("{:?}", edge_saturation);
 				if g.gen_bool(edge_saturation) {
 					graph.add_edge_weighted((source, sink, MockEdgeWeight::arbitrary(g))).unwrap();
 				}

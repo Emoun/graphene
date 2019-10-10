@@ -2,7 +2,6 @@
 //! Tests the `core::Connected` trait and its constrainer `core::ConnectedGraph`.
 //!
 
-
 duplicate_for_directedness! {
 	$directedness
 	use graphene::{
