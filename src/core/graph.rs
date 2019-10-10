@@ -231,7 +231,7 @@ pub trait AddVertex: GraphMut
 	
 }
 
-pub trait AddEdge: GraphMut
+pub trait AddEdge: Graph
 {
 	///
 	/// Adds a copy of the given edge to the graph
@@ -302,8 +302,9 @@ pub trait AddEdge: GraphMut
 			E: Edge<Self::Vertex>,
 			F: Fn(&Self::EdgeWeight) -> bool,
 	{
-		self.remove_edge_where(|(so,si, w)|
-			(so == e.source()) && (si == e.sink()) && f(w))
+		self.remove_edge_where(|(so,si, w)| f(w) &&
+		   ((so == e.source()) && (si == e.sink()) ||
+			   (!Self::Directedness::directed() && (so == e.sink()) && (si == e.source()))) )
 			.map(|removed_edge| removed_edge.2)
 	}
 	

@@ -12,6 +12,7 @@ mod edge;
 mod directedness;
 mod constrainer;
 mod reverse_graph;
+pub mod proxy;
 
 pub use self::{
 	graph::*,

@@ -136,31 +136,32 @@ impl<D: Directedness> Arbitrary for ArbConnectedGraph<D>
 						self.0.edges_incident_on(v).count() == 2
 					}
 				})
-					.flat_map(|v| {
-						let mut clone = self.0.clone().unconstrain_single();
-						let (e_in, e_out)=
-							if let Ok(g) = <DirectedGraph<&<Self as ImplGraph>::Graph>>::constrain(&self.0) {
-								(g.edges_sinked_in(v).next().unwrap().split().0,
-								 g.edges_sourced_in(v).next().unwrap().split().0)
-							} else {
-								let mut edges = self.0.edges_incident_on(v);
-								(edges.next().unwrap().split().0, edges.next().unwrap().split().0)
-							};
-						let weight1 = clone.remove_edge(e_in).unwrap();
-						let weight2 = clone.remove_edge(e_out).unwrap();
-						clone.remove_vertex(v).unwrap();
-						
-						let mut clone2 = clone.clone();
-						
-						clone.add_edge_weighted((e_in.source(), e_out.sink(), weight1)).unwrap();
-						clone2.add_edge_weighted((e_in.source(), e_out.sink(), weight2)).unwrap();
+				.flat_map(|v| {
+					let mut clone = self.0.clone().unconstrain_single();
+					let (e_in, e_out)=
+						if let Ok(g) = <DirectedGraph<&<Self as ImplGraph>::Graph>>::constrain(&self.0) {
+							(g.edges_sinked_in(v).next().unwrap().split().0,
+							 g.edges_sourced_in(v).next().unwrap().split().0)
+						} else {
+							let mut edges = self.0.edges_incident_on(v);
+							let v1 = edges.next().unwrap().split().0.other(v);
+							let v2 = edges.next().unwrap().split().0.other(v);
+							((v1, v), (v, v2))
+						};
+					let weight1 = clone.remove_edge(e_in).unwrap();
+					let weight2 = clone.remove_edge(e_out).unwrap();
+					clone.remove_vertex(v).unwrap();
+					
+					let mut clone2 = clone.clone();
+					clone.add_edge_weighted((e_in.source(), e_out.sink(), weight1)).unwrap();
+					clone2.add_edge_weighted((e_in.source(), e_out.sink(), weight2)).unwrap();
 
 					assert!(is_connected(&clone));
 					assert!(is_connected(&clone2));
-						
-						vec![Self(ConnectedGraph::new(clone)),
-							 Self(ConnectedGraph::new(clone2))].into_iter()
-					})
+					
+					vec![Self(ConnectedGraph::new(clone)),
+						 Self(ConnectedGraph::new(clone2))].into_iter()
+				})
 			);
 		}
 		Box::new(result.into_iter())

@@ -1,6 +1,7 @@
-use crate::core::{Graph, EdgeWeighted, AddVertex, Constrainer, GraphMut, AddEdge, ImplGraph, ImplGraphMut, ReverseGraph};
+use crate::core::{Graph, EdgeWeighted, AddVertex, Constrainer, GraphMut, AddEdge, ImplGraph, ImplGraphMut, ReverseGraph, Edge};
 use crate::algo::DFS;
 use crate::core::constraint::DirectedGraph;
+use crate::core::proxy::EdgeProxyGraph;
 
 ///
 /// A marker trait for graphs that are connected.
@@ -49,7 +50,8 @@ impl<C: Constrainer> Constrainer for ConnectedGraph<C>
 		
 		if v_count > 0 {
 			let v = g.all_vertices().next().unwrap();
-			if DFS::new(g, v).count() == v_count {
+			let dfs_count = DFS::new(g, v).count();
+			if dfs_count == v_count {
 				// If its undirected, no more needs to be done
 				if let Ok(g) = <DirectedGraph<&C::Graph>>::constrain(g) {
 					let reverse = ReverseGraph::new(g);
@@ -109,10 +111,11 @@ impl<C: Constrainer + ImplGraphMut> GraphMut for ConnectedGraph<C>
 impl<C: Constrainer + ImplGraphMut> AddVertex for ConnectedGraph<C>
 	where C::Graph: AddVertex
 {
-	fn new_vertex_weighted(&mut self, w: Self::VertexWeight)
+	fn new_vertex_weighted(&mut self, _w: Self::VertexWeight)
 	   -> Result<Self::Vertex, ()>
 	{
-		self.0.graph_mut().new_vertex_weighted(w)
+		unimplemented!("Its never safe to add a vertex, \
+		because it guarantees the graph becomes unconnected")
 	}
 	
 	fn remove_vertex(&mut self, _v: Self::Vertex) -> Result<Self::VertexWeight, ()>
@@ -131,11 +134,26 @@ impl<C: Constrainer + ImplGraphMut> AddEdge for ConnectedGraph<C>
 		self.0.graph_mut().add_edge_weighted(e)
 	}
 
-	fn remove_edge_where<F>(&mut self, _f: F)
+	fn remove_edge_where<F>(&mut self, f: F)
 		-> Result<(Self::Vertex, Self::Vertex, Self::EdgeWeight), ()>
 		where F: Fn((Self::Vertex, Self::Vertex, &Self::EdgeWeight)) -> bool
 	{
-		unimplemented!()
+		let to_remove = self.all_edges().find(|&e| f(e)).map(|e| (e.source(), e.sink()));
+		let proxy =
+			if let Some(e) = to_remove {
+				// We must create a new &mut, otherwise 'self' is moved and unavailable afterwards
+				let mut proxy = EdgeProxyGraph::new(&mut (*self));
+				proxy.remove_edge((e.source(), e.sink()))?;
+				proxy
+			} else {
+				return Err(())
+			};
+		
+		if ConnectedGraph::constrain_single(proxy).is_ok() {
+			self.0.graph_mut().remove_edge_where(f)
+		} else {
+			Err(())
+		}
 	}
 }
 
