@@ -2,16 +2,16 @@
 //! Tests the `core::Unique` trait and its constrainer `core::UniqueGraph`.
 //!
 
+use graphene::core::{Constrainer, Graph, Edge, AddVertex, AddEdge, constraint::UniqueGraph};
+use crate::mock_graph::{
+	MockEdgeWeight, MockVertexWeight,
+	arbitrary::{
+		ArbUniqueGraph, ArbNonUniqueGraph, ArbEdgeIn, ArbVertexIn
+	}
+};
+
 duplicate_for_directedness!{
 	$directedness
-	
-	use graphene::core::{Constrainer, Graph, Edge, AddVertex, AddEdge, constraint::UniqueGraph};
-	use crate::mock_graph::{
-		MockEdgeWeight, MockVertexWeight,
-		arbitrary::{
-			ArbUniqueGraph, ArbNonUniqueGraph, ArbEdgeIn, ArbVertexIn
-		}
-	};
 	
 	///
 	/// Tests that UniqueGraph correctly identifies unique graphs.

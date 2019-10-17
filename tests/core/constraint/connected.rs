@@ -2,18 +2,19 @@
 //! Tests the `core::Connected` trait and its constrainer `core::ConnectedGraph`.
 //!
 
+use graphene::{
+	core::{ Graph, Constrainer, AddEdge, Edge, constraint::ConnectedGraph, Directedness,
+			AddVertex,
+	},
+};
+use crate::mock_graph::{ MockEdgeWeight, MockVertex,
+						 arbitrary::{ArbConnectedGraph, ArbUnconnectedGraph, ArbTwoVerticesIn, ArbVertexIn}
+};
+use std::collections::HashMap;
+
 duplicate_for_directedness! {
 	$directedness
-	use graphene::{
-		core::{ Graph, Constrainer, AddEdge, Edge, constraint::ConnectedGraph, Directedness,
-			AddVertex,
-		},
-	};
-	use crate::mock_graph::{ MockEdgeWeight, MockVertex,
-		arbitrary::{ArbConnectedGraph, ArbUnconnectedGraph, ArbTwoVerticesIn, ArbVertexIn}
-	};
-	use std::collections::HashMap;
-
+	
 	///
 	/// Tests that Connected Graph correctly identifies connected graphs.
 	///

@@ -13,8 +13,8 @@ extern crate quickcheck_macros;
 /// using 'graphene::core::Undirected'.
 ///
 /// The two version are put in modules called 'directed' and 'undirected', so shouldn't
-/// interfere with each other or any code surrounding the macro call. This also means
-/// the input must include any necessary imports.
+/// interfere with each other or any code surrounding the macro call. The modules
+/// use the super-module's imports.
 ///
 macro_rules! duplicate_for_directedness{
 
@@ -34,6 +34,7 @@ macro_rules! duplicate_for_directedness{
 			}
 		}
 		mod directed{
+			use super::*;
 			tt_call::tt_call! {
 				macro = [{ tt_call::tt_replace }]
 				condition = [{ duplicate_for_directedness_predicate }]
@@ -42,6 +43,7 @@ macro_rules! duplicate_for_directedness{
 			}
         }
         mod undirected{
+        	use super::*;
 			tt_call::tt_call! {
 				macro = [{ tt_call::tt_replace }]
 				condition = [{ duplicate_for_directedness_predicate }]
