@@ -60,14 +60,7 @@ duplicate_for_directedness! {
 	{
 		let mut graph = g1.0.unconstrain();
 		// We start by joining 2 connected graphs into a unconnected graph with the 2 components
-		let mut v_map: HashMap<MockVertex, MockVertex> = HashMap::new();
-		for (v,w) in g2.0.all_vertices_weighted() {
-			let new_v = graph.new_vertex_weighted(w.clone()).unwrap();
-			v_map.insert(v, new_v);
-		}
-		for (so,si, w) in g2.0.all_edges() {
-			graph.add_edge_weighted((v_map[&so], v_map[&si], w.clone())).unwrap();
-		}
+		let mut v_map = graph.join(&g2.0);
 
 		// We then connect the two components
 		graph.add_edge_weighted((v1,v_map[&v2], e_weight.clone())).unwrap();

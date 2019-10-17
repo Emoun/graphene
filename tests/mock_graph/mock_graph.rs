@@ -88,6 +88,23 @@ impl<D: Directedness> MockGraph<D> {
 
 		self.validate()
 	}
+	
+	pub fn join<G>(&mut self, other: &G) -> HashMap<MockVertex, MockVertex>
+		where G: Graph<Vertex=MockVertex, VertexWeight=MockEdgeWeight,
+			EdgeWeight=MockEdgeWeight, Directedness=D>
+	{
+		let mut v_map: HashMap<MockVertex, MockVertex> = HashMap::new();
+		
+		for (v,w) in other.all_vertices_weighted() {
+			let new_v = self.new_vertex_weighted(w.clone()).unwrap();
+			v_map.insert(v, new_v);
+		}
+		for (so,si, w) in other.all_edges() {
+			self.add_edge_weighted((v_map[&so], v_map[&si], w.clone())).unwrap();
+		}
+		
+		v_map
+	}
 }
 
 impl<D: Directedness> Debug for MockGraph<D> {

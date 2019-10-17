@@ -41,14 +41,7 @@ duplicate_for_directedness!{
 		let mut graph = g1.0.unconstrain();
 		
 		// First join the two graphs
-		let mut v_map: HashMap<MockVertex,MockVertex> = HashMap::new();
-		for (v,w) in g2.all_vertices_weighted() {
-			let new_v = graph.new_vertex_weighted(w.clone()).unwrap();
-			v_map.insert(v, new_v);
-		}
-		for (so,si, w) in g2.all_edges() {
-			graph.add_edge_weighted((v_map[&so], v_map[&si], w.clone())).unwrap();
-		}
+		let mut v_map = graph.join(&g2);
 		
 		// Ensure that no visited vertex comes from outside the start component
 		DFS::new(&graph, v).all(|visit| v_map.values().all(|&new_v| visit != new_v))

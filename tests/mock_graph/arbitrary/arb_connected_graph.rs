@@ -117,16 +117,9 @@ impl<D: Directedness> GuidedArbGraph for ArbConnectedGraph<D>
 		let v22 = g2.all_vertices().nth(g.gen_range(0, g2.all_vertices().count())).unwrap();
 		
 		// Join the second into the first making an unconnected graph with the 2 components
-		let mut v_map: HashMap<MockVertex, MockVertex> = HashMap::new();
-		for (v,w) in g2.all_vertices_weighted() {
-			let new_v = graph.new_vertex_weighted(w.clone()).unwrap();
-			v_map.insert(v, new_v);
-		}
-		for (so,si, w) in g2.all_edges() {
-			graph.add_edge_weighted((v_map[&so], v_map[&si], w.clone())).unwrap();
-		}
+		let mut v_map = graph.join(&g2);
 		
-		// Add vertices connecting the two components
+		// Add edges connecting the two components
 		graph.add_edge_weighted((v11,v_map[&v21], MockEdgeWeight::arbitrary(g))).unwrap();
 		if D::directed() {
 			graph.add_edge_weighted((v_map[&v22],v12, MockEdgeWeight::arbitrary(g))).unwrap();
@@ -229,15 +222,8 @@ impl<D: Directedness> Arbitrary for ArbUnconnectedGraph<D>
 		let mut graph = MockGraph::arbitrary_guided(g, 1..(g.size()/2), ..);
 		let g2 = <MockGraph<D>>::arbitrary_guided(g, 1..(g.size()/2), ..);
 		
-		// Map of vertices in 'g2', to their new counterparts in 'graph'
-		let mut v_map: HashMap<MockVertex,MockVertex> = HashMap::new();
-		for (v,w) in g2.all_vertices_weighted() {
-			let new_v = graph.new_vertex_weighted(w.clone()).unwrap();
-			v_map.insert(v, new_v);
-		}
-		for (so,si, w) in g2.all_edges() {
-			graph.add_edge_weighted((v_map[&so], v_map[&si], w.clone())).unwrap();
-		}
+		// Join the two graph into one graph with no edges between the two parts
+		graph.join(&g2);
 		
 		assert!(!is_connected(&graph));
 		Self(graph)
