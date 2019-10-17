@@ -69,11 +69,41 @@ fn directed_doesnt_visit_incomming_component(
 	// First join the two graphs
 	let mut v_map = graph.join(&g2);
 
-	// Add edges from other components to the start component
+	// Add edges from the other component to the start component
 	for (v1,v2) in comp_set.iter().zip(g2_set.iter()) {
 		graph.add_edge_weighted((v_map[v2], *v1, weight.clone())).unwrap();
 	}
 
 	// Ensure that no visited vertex comes from outside the start component
 	DFS::new(&graph, v).all(|visit| v_map.values().all(|&new_v| visit != new_v))
+}
+
+///
+/// Tests for directed graphs that any component with an edge to it from the start component
+/// is also visited in full.
+/// 
+#[quickcheck]
+fn directed_visits_outgoing_component(
+	comp1: ArbVerticesIn<ArbVertexIn<ArbConnectedGraph<Directed>>>,
+	comp2: ArbVerticesIn<ArbVertexIn<ArbConnectedGraph<Directed>>>, weight: MockEdgeWeight)
+	-> bool
+{
+	let mut graph = ((comp1.0).0).0.unconstrain();
+	let comp1_set = comp1.1;
+	let v = (comp1.0).1;
+	let g2 = ((comp2.0).0).0;
+	let comp2_set = comp2.1;
+	let v2 = (comp2.0).1;
+	
+	// First join the two graphs
+	let mut v_map = graph.join(&g2);
+	
+	// Add edges from start component to the other component
+	graph.add_edge_weighted((v, v_map[&v2], weight.clone())).unwrap();
+	for (v1,v2) in comp1_set.iter().zip(comp2_set.iter()) {
+		graph.add_edge_weighted((*v1, v_map[v2], weight.clone())).unwrap();
+	}
+	
+	// Ensure that all vertices are visited
+	DFS::new(&graph, v).count() == graph.all_vertices().count()
 }
