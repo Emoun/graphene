@@ -20,7 +20,7 @@ duplicate_for_directedness! {
 	#[quickcheck]
 	fn accept_connected(g: ArbConnectedGraph<directedness>) -> bool
 	{
-	ConnectedGraph::constrain_single(g.0.unconstrain()).is_ok()
+		ConnectedGraph::constrain_single(g.0.unconstrain()).is_ok()
 	}
 
 	///
@@ -29,7 +29,7 @@ duplicate_for_directedness! {
 	#[quickcheck]
 	fn reject_unconnected(g: ArbUnconnectedGraph<directedness>) -> bool
 	{
-	ConnectedGraph::constrain_single(g.0).is_err()
+		ConnectedGraph::constrain_single(g.0).is_err()
 	}
 	
 
