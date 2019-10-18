@@ -122,12 +122,16 @@ impl<D: Directedness> GuidedArbGraph for MockGraph<D>
 				result.push(shrunk_graph);
 			}
 		}
+		
 		/* Shrink by removing a vertex that has no edges.
 		 * We don't remove any edges in this step (to be able to remove a vertex)
 		 * because we are already shrinking by removing edges, which means, there
 		 * should be a set of edge shrinkages that result in a removable vertex.
 		 */
-		for v in self.all_vertices(){
+		for v in self.all_vertices()
+			// Dont touch untouchable vertices
+			.filter(|&v| !limits.contains(&Limit::VertexKeep(v)))
+		{
 			if self.edges_incident_on(v).next().is_none(){
 				let mut shrunk_graph = self.clone();
 				shrunk_graph.remove_vertex(v).unwrap();

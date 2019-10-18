@@ -1,7 +1,7 @@
 use crate::mock_graph::{MockVertex, MockVertexWeight, MockEdgeWeight};
 use quickcheck::{Arbitrary, Gen};
 use graphene::core::{ImplGraph, Graph, ImplGraphMut, AddVertex};
-use crate::mock_graph::arbitrary::ArbTwoVerticesIn;
+use crate::mock_graph::arbitrary::{ArbTwoVerticesIn, GuidedArbGraph};
 
 ///
 /// An arbitrary graph and a vertex in it.
@@ -17,7 +17,7 @@ pub struct ArbVertexIn<G>(pub G, pub MockVertex)
 			EdgeWeight=MockEdgeWeight>;
 impl<Gr> Arbitrary for ArbVertexIn<Gr>
 	where
-		Gr: Arbitrary + ImplGraphMut,
+		Gr: GuidedArbGraph + ImplGraphMut,
 		Gr::Graph: AddVertex<Vertex=MockVertex, VertexWeight=MockVertexWeight,
 			EdgeWeight=MockEdgeWeight>
 {
@@ -31,6 +31,8 @@ impl<Gr> Arbitrary for ArbVertexIn<Gr>
 			.map(|ArbTwoVerticesIn(g, v, _)| ArbVertexIn(g, v)))
 	}
 }
+
+
 impl<G> ImplGraph for ArbVertexIn<G>
 	where
 		G: Arbitrary + ImplGraph,

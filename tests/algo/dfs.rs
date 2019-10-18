@@ -81,7 +81,7 @@ fn directed_doesnt_visit_incomming_component(
 ///
 /// Tests for directed graphs that any component with an edge to it from the start component
 /// is also visited in full.
-/// 
+///
 #[quickcheck]
 fn directed_visits_outgoing_component(
 	comp1: ArbVerticesIn<ArbVertexIn<ArbConnectedGraph<Directed>>>,

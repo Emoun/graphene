@@ -1,21 +1,26 @@
 use quickcheck::{Gen, Arbitrary};
 use std::ops::{RangeBounds, Bound};
 use std::collections::HashSet;
+use crate::mock_graph::MockVertex;
 
 #[allow(dead_code)]
-#[derive(Ord, PartialOrd, PartialEq, Eq, Hash)]
+#[derive(PartialEq, Eq, Hash)]
 pub enum Limit {
-	/// Shrinkages shouldn't remove vertices
+	/// Shrinkages shouldn't remove any vertices
 	VertexRemove,
 	
-	/// Shrinkages shouldn't remove edges
+	/// Shrinkages shouldn't remove any edges
 	EdgeRemove,
+	
+	/// Shrinkages shouldn't alter the given vertex
+	/// (neither change its value nor remove it from the graph)
+	VertexKeep(MockVertex),
 	
 	/// Shrinkages shouldn't remove vertices if it results in their count
 	/// becoming lower than the given.
 	VertexMin(usize),
 
-	/// Shrinkages shouldn't remove vertices if it results in their count
+	/// Shrinkages shouldn't remove edges if it results in their count
 	/// becoming lower than the given.
 	EdgeMin(usize),
 }

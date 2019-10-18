@@ -34,7 +34,7 @@ pub trait EdgeWeighted<V,W>: Edge<V> + Sized
 	///
 	/// Returns the other vertex than the one given.
 	///
-	/// If the one given is not in this edge, the sink is given.
+	/// If the one given is not in this edge, the sink is returned.
 	///
 	fn other(&self, v: V) -> V
 	{

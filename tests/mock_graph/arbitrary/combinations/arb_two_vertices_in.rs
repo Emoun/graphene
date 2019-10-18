@@ -2,6 +2,8 @@ use crate::mock_graph::{MockVertex, MockEdgeWeight, MockVertexWeight};
 use quickcheck::{Arbitrary, Gen};
 use graphene::core::{ImplGraph, Graph, ImplGraphMut, AddVertex};
 use rand::Rng;
+use crate::mock_graph::arbitrary::{GuidedArbGraph, Limit};
+use std::collections::HashSet;
 
 ///
 /// An arbitrary graph and two vertices in it.
@@ -18,25 +20,18 @@ pub struct ArbTwoVerticesIn<G>(pub G, pub MockVertex, pub MockVertex)
 
 impl<Gr> Arbitrary for ArbTwoVerticesIn<Gr>
 	where
-		Gr: Arbitrary + ImplGraphMut,
+		Gr: GuidedArbGraph + ImplGraphMut,
 		Gr::Graph: AddVertex<Vertex=MockVertex, VertexWeight=MockVertexWeight,
 			EdgeWeight=MockEdgeWeight>
 {
 	fn arbitrary<G: Gen>(g: &mut G) -> Self {
 		// Create a graph with at least 1 vertex
-		let arb_graph = {
-			let mut candidate_graph = Gr::arbitrary(g);
-			while candidate_graph.graph().all_vertices().count() == 0 {
-				candidate_graph = Gr::arbitrary(g);
-			}
-			candidate_graph
-		};
-		let graph = arb_graph.graph();
-		let verts: Vec<_> = graph.all_vertices().collect();
+		let graph = Gr::arbitrary_guided(g, 1.., ..);
+		let verts: Vec<_> = graph.graph().all_vertices().collect();
 		let v1 = verts[g.gen_range(0, verts.len())];
 		let v2 = verts[g.gen_range(0, verts.len())];
 		
-		ArbTwoVerticesIn(arb_graph, v1, v2)
+		ArbTwoVerticesIn(graph, v1, v2)
 	}
 	
 	fn shrink(&self) -> Box<dyn Iterator<Item = Self>>
@@ -44,36 +39,25 @@ impl<Gr> Arbitrary for ArbTwoVerticesIn<Gr>
 		let mut result = Vec::new();
 		let arb_graph = &self.0;
 		let graph = arb_graph.graph();
-		if graph.all_vertices().count() > 1 {
-			/*	First we shrink the graph, using only the shrunk graphs where the vertices are valid
-			*/
-			result.extend(
-				arb_graph.shrink()
-					.filter(|g|{
-						let g = g.graph();
-						g.contains_vertex(self.1) && g.contains_vertex(self.2)
-					})
-					.map(|g| ArbTwoVerticesIn(g, self.1, self.2))
-			);
-			// Lastly, if the graph has only 2 vertices and no edges, remove one and
-			// update the corresponding vertex to the remaining one
-			if graph.all_vertices().count() == 2 &&
-				graph.all_edges().next().is_none()
-			{
-				let mut verts = graph.all_vertices();
-				let v1 = verts.next().unwrap();
-				let v2 = verts.next().unwrap();
-				
-				let mut clone = arb_graph.clone();
-				clone.graph_mut().remove_vertex(v1).unwrap();
-				result.push(ArbTwoVerticesIn(clone, v2, v2));
-				
-				let mut clone = arb_graph.clone();
-				clone.graph_mut().remove_vertex(v2).unwrap();
-				result.push(ArbTwoVerticesIn(clone, v1, v1));
-			}
-		}
 		
+		/*	First we shrink the graph without touching the two designated vertices
+		*/
+		let mut limits = HashSet::new();
+		limits.insert(Limit::VertexKeep(self.1));
+		limits.insert(Limit::VertexKeep(self.2));
+		result.extend(
+			arb_graph.shrink_guided(limits)
+				.map(|g| ArbTwoVerticesIn(g, self.1, self.2))
+		);
+		
+		// Lastly, simply remove one of the vertices and use the other for both positions
+		if self.1 != self.2 {
+			let mut clone = arb_graph.clone();
+			result.push(ArbTwoVerticesIn(clone, self.1, self.1));
+			
+			let mut clone = arb_graph.clone();
+			result.push(ArbTwoVerticesIn(clone, self.2, self.2));
+		}
 		Box::new(result.into_iter())
 	}
 	
