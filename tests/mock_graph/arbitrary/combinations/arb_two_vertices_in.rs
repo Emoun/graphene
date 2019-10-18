@@ -62,9 +62,8 @@ impl<Gr> GuidedArbGraph for ArbTwoVerticesIn<Gr>
 	fn shrink_guided(&self, mut limits: HashSet<Limit>) -> Box<dyn Iterator<Item=Self>>
 	{
 		Box::new(ArbVerticesIn(self.0.clone(), HashSet::from_iter([self.1, self.2].iter().cloned()))
-			.shrink_guided(HashSet::new())
-			// Don't let it shrink to less than 1 vertex, can happen if self.1 and self.2 are
-			// equal
+			.shrink_guided(limits)
+			// Don't let it shrink to less than 1 vertex, can happen if self.1 and self.2 are equal
 			.filter(|g| g.1.len() > 0)
 			.map(|g| {
 				// we cycle, such that when the set only contains 1 vertex, we can use the same

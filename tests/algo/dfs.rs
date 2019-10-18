@@ -51,7 +51,7 @@ duplicate_for_directedness!{
 /// component, only the first component's vertices are produced.
 ///
 /// This is different from `visits_none_outside_component` because in that case the components
-/// are completely unconnected with no edges between them (incomming or outgoing).
+/// are completely unconnected with no edges between them (incoming or outgoing).
 /// This test therefore ensures edges aren't taken the wrong directed.
 ///
 #[quickcheck]
