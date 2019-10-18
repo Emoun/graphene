@@ -3,6 +3,9 @@ use crate::mock_graph::{MockVertex, MockEdgeWeight, MockVertexWeight};
 use quickcheck::{Arbitrary, Gen};
 use graphene::core::{ImplGraph, Graph, ImplGraphMut, AddVertex};
 use rand::Rng;
+use crate::mock_graph::arbitrary::{Limit, ArbTwoVerticesIn, GuidedArbGraph};
+use std::collections::hash_map::RandomState;
+use std::ops::RangeBounds;
 
 ///
 /// An arbitrary graph and an arbitrary set of vertices in it.
@@ -15,12 +18,28 @@ pub struct ArbVerticesIn<G>(pub G, pub HashSet<MockVertex>)
 			EdgeWeight=MockEdgeWeight>;
 impl<Gr> Arbitrary for ArbVerticesIn<Gr>
 	where
-		Gr: Arbitrary + ImplGraphMut,
+		Gr: GuidedArbGraph + ImplGraphMut,
 		Gr::Graph: AddVertex<Vertex=MockVertex, VertexWeight=MockVertexWeight,
 			EdgeWeight=MockEdgeWeight>
 {
 	fn arbitrary<G: Gen>(g: &mut G) -> Self {
-		let graph = Gr::arbitrary(g);
+		Self::arbitrary_guided(g, .., ..)
+	}
+	
+	fn shrink(&self) -> Box<dyn Iterator<Item=Self>> {
+		self.shrink_guided(HashSet::new())
+	}
+}
+impl<Gr> GuidedArbGraph for ArbVerticesIn<Gr>
+	where
+		Gr: GuidedArbGraph + ImplGraphMut,
+		Gr::Graph: AddVertex<Vertex=MockVertex, VertexWeight=MockVertexWeight,
+			EdgeWeight=MockEdgeWeight>
+{
+	fn arbitrary_guided<G: Gen>(g: &mut G, v_range: impl RangeBounds<usize>,
+								e_range: impl RangeBounds<usize>) -> Self
+	{
+		let graph = Gr::arbitrary_guided(g, v_range, e_range);
 		let v_count = graph.graph().all_vertices().count();
 		
 		let mut set = HashSet::new();
@@ -37,4 +56,26 @@ impl<Gr> Arbitrary for ArbVerticesIn<Gr>
 		Self(graph, set)
 	}
 	
+	fn shrink_guided(&self, mut limits: HashSet<Limit, RandomState>) -> Box<Iterator<Item=Self>> {
+		let mut result = Vec::new();
+		let arb_graph = &self.0;
+		let graph = arb_graph.graph();
+		
+		// First we shrink the graph without touching the designated vertices
+		for v in self.1.iter() {
+			limits.insert(Limit::VertexKeep(*v));
+		}
+		result.extend(
+			arb_graph.shrink_guided(limits)
+				.map(|g| Self(g, self.1.clone()))
+		);
+		
+		// The we simply remove one of the vertices and keep the rest
+		for v in self.1.iter() {
+			let mut new_set = self.1.clone();
+			new_set.remove(v);
+			result.push(Self(self.0.clone(), new_set));
+		}
+		Box::new(result.into_iter())
+	}
 }

@@ -2,8 +2,10 @@ use crate::mock_graph::{MockVertex, MockEdgeWeight, MockVertexWeight};
 use quickcheck::{Arbitrary, Gen};
 use graphene::core::{ImplGraph, Graph, ImplGraphMut, AddVertex};
 use rand::Rng;
-use crate::mock_graph::arbitrary::{GuidedArbGraph, Limit};
+use crate::mock_graph::arbitrary::{GuidedArbGraph, Limit, ArbVerticesIn};
 use std::collections::HashSet;
+use std::ops::RangeBounds;
+use std::iter::FromIterator;
 
 ///
 /// An arbitrary graph and two vertices in it.
@@ -24,9 +26,32 @@ impl<Gr> Arbitrary for ArbTwoVerticesIn<Gr>
 		Gr::Graph: AddVertex<Vertex=MockVertex, VertexWeight=MockVertexWeight,
 			EdgeWeight=MockEdgeWeight>
 {
-	fn arbitrary<G: Gen>(g: &mut G) -> Self {
+	fn arbitrary<G: Gen>(g: &mut G) -> Self
+	{
+		Self::arbitrary_guided(g, .., ..)
+	}
+	
+	fn shrink(&self) -> Box<dyn Iterator<Item = Self>>
+	{
+		self.shrink_guided(HashSet::new())
+	}
+	
+}
+impl<Gr> GuidedArbGraph for ArbTwoVerticesIn<Gr>
+	where
+		Gr: GuidedArbGraph + ImplGraphMut,
+		Gr::Graph: AddVertex<Vertex=MockVertex, VertexWeight=MockVertexWeight,
+			EdgeWeight=MockEdgeWeight>
+{
+	fn arbitrary_guided<G: Gen>(g: &mut G, v_range: impl RangeBounds<usize>,
+								e_range: impl RangeBounds<usize>)
+								-> Self
+	{
+		let (v_min, v_max, e_min, e_max) = Self::validate_ranges(g, v_range, e_range);
+		
 		// Create a graph with at least 1 vertex
-		let graph = Gr::arbitrary_guided(g, 1.., ..);
+		let v_min_max = if 1 < v_min { v_min } else { 1 };
+		let graph = Gr::arbitrary_guided(g, v_min_max..v_max, e_min..e_max);
 		let verts: Vec<_> = graph.graph().all_vertices().collect();
 		let v1 = verts[g.gen_range(0, verts.len())];
 		let v2 = verts[g.gen_range(0, verts.len())];
@@ -34,34 +59,22 @@ impl<Gr> Arbitrary for ArbTwoVerticesIn<Gr>
 		ArbTwoVerticesIn(graph, v1, v2)
 	}
 	
-	fn shrink(&self) -> Box<dyn Iterator<Item = Self>>
+	fn shrink_guided(&self, mut limits: HashSet<Limit>) -> Box<dyn Iterator<Item=Self>>
 	{
-		let mut result = Vec::new();
-		let arb_graph = &self.0;
-		let graph = arb_graph.graph();
-		
-		/*	First we shrink the graph without touching the two designated vertices
-		*/
-		let mut limits = HashSet::new();
-		limits.insert(Limit::VertexKeep(self.1));
-		limits.insert(Limit::VertexKeep(self.2));
-		result.extend(
-			arb_graph.shrink_guided(limits)
-				.map(|g| ArbTwoVerticesIn(g, self.1, self.2))
-		);
-		
-		// Lastly, simply remove one of the vertices and use the other for both positions
-		if self.1 != self.2 {
-			let mut clone = arb_graph.clone();
-			result.push(ArbTwoVerticesIn(clone, self.1, self.1));
-			
-			let mut clone = arb_graph.clone();
-			result.push(ArbTwoVerticesIn(clone, self.2, self.2));
-		}
-		Box::new(result.into_iter())
+		Box::new(ArbVerticesIn(self.0.clone(), HashSet::from_iter([self.1, self.2].iter().cloned()))
+			.shrink_guided(HashSet::new())
+			// Don't let it shrink to less than 1 vertex, can happen if self.1 and self.2 are
+			// equal
+			.filter(|g| g.1.len() > 0)
+			.map(|g| {
+				// we cycle, such that when the set only contains 1 vertex, we can use the same
+				// one for both positions.
+				let mut set = g.1.iter().cycle();
+				Self(g.0, *set.next().unwrap(), *set.next().unwrap())
+			}))
 	}
-	
 }
+
 impl<G> ImplGraph for ArbTwoVerticesIn<G>
 	where
 		G: Arbitrary + ImplGraph,

@@ -86,6 +86,11 @@ impl<D: Directedness> GuidedArbGraph for ArbUniqueGraph<D>
 		}
 		Self(UniqueGraph::unchecked(graph))
 	}
+	
+	fn shrink_guided(&self, _limits: HashSet<Limit>) -> Box<dyn Iterator<Item=Self>>
+	{
+		Box::new(self.0.clone().unconstrain().shrink().map(|g| Self(UniqueGraph::unchecked(g))))
+	}
 }
 
 impl<D: Directedness> Arbitrary for ArbUniqueGraph<D>
@@ -95,7 +100,7 @@ impl<D: Directedness> Arbitrary for ArbUniqueGraph<D>
 	}
 	
 	fn shrink(&self) -> Box<dyn Iterator<Item=Self>> {
-		Box::new(self.0.clone().unconstrain().shrink().map(|g| Self(UniqueGraph::unchecked(g))))
+		self.shrink_guided(HashSet::new())
 	}
 }
 

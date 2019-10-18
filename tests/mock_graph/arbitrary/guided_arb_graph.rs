@@ -41,11 +41,7 @@ pub trait GuidedArbGraph: Arbitrary
 	/// The ranges are only guides, and adherence to them depends on implementation.
 	///
 	fn arbitrary_guided<G: Gen>(g: &mut G, _v_range: impl RangeBounds<usize>,
-								_e_range: impl RangeBounds<usize>)
-		-> Self
-	{
-		Self::arbitrary(g)
-	}
+								_e_range: impl RangeBounds<usize>) -> Self;
 	
 	fn validate_ranges<G: Gen>(g: &mut G, v_range: impl RangeBounds<usize>,
 							   e_range: impl RangeBounds<usize>)
@@ -78,9 +74,7 @@ pub trait GuidedArbGraph: Arbitrary
 		(v_min, v_max, e_min, e_max)
 	}
 	
-	fn shrink_guided(&self, _limits: HashSet<Limit>) -> Box<dyn Iterator<Item=Self>>
-	{
-		self.shrink()
-	}
+	fn shrink_guided(&self, _limits: HashSet<Limit>) -> Box<dyn Iterator<Item=Self>>;
 	
 }
+
