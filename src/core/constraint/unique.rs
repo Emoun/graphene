@@ -1,4 +1,4 @@
-use crate::core::{Graph, EdgeWeighted, Directedness, Edge, AddVertex, Constrainer, GraphMut, AddEdge, ImplGraphMut, ImplGraph};
+use crate::core::{Graph, EdgeWeighted, Directedness, Edge, NewVertex, Constrainer, GraphMut, AddEdge, ImplGraphMut, ImplGraph, RemoveVertex};
 
 ///
 /// A marker trait for graphs containing only unique edges.
@@ -113,15 +113,19 @@ impl<C: Constrainer + ImplGraphMut>  GraphMut for UniqueGraph<C>
 	}
 }
 
-impl<C: Constrainer + ImplGraphMut> AddVertex for UniqueGraph<C>
-	where C::Graph: AddVertex
+impl<C: Constrainer + ImplGraphMut> NewVertex for UniqueGraph<C>
+	where C::Graph: NewVertex
 {
 	fn new_vertex_weighted(&mut self, w: Self::VertexWeight)
-		-> Result<Self::Vertex, ()>
+						   -> Result<Self::Vertex, ()>
 	{
 		self.0.graph_mut().new_vertex_weighted(w)
 	}
-	
+}
+
+impl<C: Constrainer + ImplGraphMut> RemoveVertex for UniqueGraph<C>
+	where C::Graph: RemoveVertex
+{
 	fn remove_vertex(&mut self, v: Self::Vertex) -> Result<Self::VertexWeight, ()>
 	{
 		self.0.graph_mut().remove_vertex(v)

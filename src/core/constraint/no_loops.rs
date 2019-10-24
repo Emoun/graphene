@@ -1,4 +1,4 @@
-use crate::core::{Graph, EdgeWeighted, AddVertex, Constrainer, AddEdge, GraphMut, ImplGraph, ImplGraphMut};
+use crate::core::{Graph, EdgeWeighted, NewVertex, Constrainer, AddEdge, GraphMut, ImplGraph, ImplGraphMut, RemoveVertex};
 
 
 ///
@@ -83,15 +83,19 @@ impl<C: Constrainer + ImplGraphMut>  GraphMut for NoLoopsGraph<C>
 	}
 }
 
-impl<C: Constrainer + ImplGraphMut> AddVertex for NoLoopsGraph<C>
-	where C::Graph: AddVertex
+impl<C: Constrainer + ImplGraphMut> NewVertex for NoLoopsGraph<C>
+	where C::Graph: NewVertex
 {
 	fn new_vertex_weighted(&mut self, w: Self::VertexWeight)
 		-> Result<Self::Vertex, ()>
 	{
 		self.0.graph_mut().new_vertex_weighted(w)
 	}
-	
+}
+
+impl<C: Constrainer + ImplGraphMut> RemoveVertex for NoLoopsGraph<C>
+	where C::Graph: RemoveVertex
+{
 	fn remove_vertex(&mut self, v: Self::Vertex) -> Result<Self::VertexWeight, ()>
 	{
 		self.0.graph_mut().remove_vertex(v)

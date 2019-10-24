@@ -1,4 +1,4 @@
-use crate::core::{Graph, Constrainer, ImplGraph, ImplGraphMut, GraphMut, AddVertex, AddEdge, EdgeWeighted, Directedness, Directed};
+use crate::core::{Graph, Constrainer, ImplGraph, ImplGraphMut, GraphMut, NewVertex, AddEdge, EdgeWeighted, Directedness, Directed, RemoveVertex};
 
 ///
 /// A marker trait for graphs who's esges are directed.
@@ -89,15 +89,18 @@ impl<C: Constrainer + ImplGraphMut>  GraphMut for DirectedGraph<C>
 	}
 }
 
-impl<C: Constrainer + ImplGraphMut> AddVertex for DirectedGraph<C>
-	where C::Graph: AddVertex
+impl<C: Constrainer + ImplGraphMut> NewVertex for DirectedGraph<C>
+	where C::Graph: NewVertex
 {
-	fn new_vertex_weighted(&mut self, w: Self::VertexWeight)
-						   -> Result<Self::Vertex, ()>
+	fn new_vertex_weighted(&mut self, w: Self::VertexWeight) -> Result<Self::Vertex, ()>
 	{
 		self.0.graph_mut().new_vertex_weighted(w)
 	}
-	
+}
+
+impl<C: Constrainer + ImplGraphMut> RemoveVertex for DirectedGraph<C>
+	where C::Graph: RemoveVertex
+{
 	fn remove_vertex(&mut self, v: Self::Vertex) -> Result<Self::VertexWeight, ()>
 	{
 		self.0.graph_mut().remove_vertex(v)

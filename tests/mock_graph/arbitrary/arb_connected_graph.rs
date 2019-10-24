@@ -1,10 +1,10 @@
-use graphene::core::{Directedness, EdgeWeighted, Graph, Edge, Constrainer, AddVertex, AddEdge, ImplGraph, ImplGraphMut, EdgeDeref};
+use graphene::core::{Directedness, EdgeWeighted, Graph, Edge, Constrainer, RemoveVertex, AddEdge, ImplGraph, ImplGraphMut, EdgeDeref};
 use graphene::core::constraint::{ConnectedGraph, DirectedGraph};
 use quickcheck::{Arbitrary, Gen};
 use crate::mock_graph::{MockGraph, MockVertex, MockEdgeWeight};
 use rand::Rng;
 use crate::mock_graph::arbitrary::{GuidedArbGraph, Limit};
-use std::collections::{HashMap, HashSet};
+use std::collections::{HashSet};
 use std::ops::RangeBounds;
 
 fn dfs_rec<G: Graph<Vertex=MockVertex>>(graph: &G, start: MockVertex,
@@ -120,7 +120,7 @@ impl<D: Directedness> GuidedArbGraph for ArbConnectedGraph<D>
 		let v22 = g2.all_vertices().nth(g.gen_range(0, g2.all_vertices().count())).unwrap();
 		
 		// Join the second into the first making an unconnected graph with the 2 components
-		let mut v_map = graph.join(&g2);
+		let v_map = graph.join(&g2);
 		
 		// Add edges connecting the two components
 		graph.add_edge_weighted((v11,v_map[&v21], MockEdgeWeight::arbitrary(g))).unwrap();

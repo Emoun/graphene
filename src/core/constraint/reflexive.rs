@@ -1,4 +1,4 @@
-use crate::core::{Graph, Edge, EdgeWeighted, AddVertex, Constrainer, AddEdge, GraphMut, ImplGraph, ImplGraphMut};
+use crate::core::{Graph, Edge, EdgeWeighted, NewVertex, Constrainer, AddEdge, GraphMut, ImplGraph, ImplGraphMut, RemoveVertex};
 
 ///
 /// A marker trait for a reflexive graph.
@@ -99,19 +99,25 @@ impl<C: Constrainer + ImplGraphMut>  GraphMut for ReflexiveGraph<C>
 	}
 }
 
-impl<C: Constrainer + ImplGraphMut> AddVertex for ReflexiveGraph<C>
+impl<C: Constrainer + ImplGraphMut> NewVertex for ReflexiveGraph<C>
 	where
-		C::Graph: AddVertex + AddEdge,
+		C::Graph: NewVertex + AddEdge,
 		<C::Graph as Graph>::EdgeWeight: Default,
 {
 	fn new_vertex_weighted(&mut self, w: Self::VertexWeight)
 						   -> Result<Self::Vertex, ()>
 	{
 		let v = self.0.graph_mut().new_vertex_weighted(w)?;
-		self.0.graph_mut().add_edge((v,v))?;
+		self.0.graph_mut().add_edge((v, v))?;
 		Ok(v)
 	}
-	
+}
+
+impl<C: Constrainer + ImplGraphMut> RemoveVertex for ReflexiveGraph<C>
+	where
+		C::Graph: RemoveVertex + AddEdge,
+		<C::Graph as Graph>::EdgeWeight: Default,
+{
 	fn remove_vertex(&mut self, v: Self::Vertex) -> Result<Self::VertexWeight, ()>
 	{
 		self.0.graph_mut().remove_edge((v, v))?;

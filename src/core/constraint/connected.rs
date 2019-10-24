@@ -1,4 +1,4 @@
-use crate::core::{Graph, EdgeWeighted, AddVertex, Constrainer, GraphMut, AddEdge, ImplGraph, ImplGraphMut, ReverseGraph, Edge};
+use crate::core::{Graph, EdgeWeighted, NewVertex, Constrainer, GraphMut, AddEdge, ImplGraph, ImplGraphMut, ReverseGraph, Edge, RemoveVertex};
 use crate::algo::DFS;
 use crate::core::constraint::DirectedGraph;
 use crate::core::proxy::EdgeProxyGraph;
@@ -108,16 +108,9 @@ impl<C: Constrainer + ImplGraphMut> GraphMut for ConnectedGraph<C>
 	
 }
 
-impl<C: Constrainer + ImplGraphMut> AddVertex for ConnectedGraph<C>
-	where C::Graph: AddVertex
+impl<C: Constrainer + ImplGraphMut> RemoveVertex for ConnectedGraph<C>
+	where C::Graph: RemoveVertex
 {
-	fn new_vertex_weighted(&mut self, _w: Self::VertexWeight)
-	   -> Result<Self::Vertex, ()>
-	{
-		unimplemented!("Its never safe to add a vertex, \
-		because it guarantees the graph becomes unconnected")
-	}
-	
 	fn remove_vertex(&mut self, _v: Self::Vertex) -> Result<Self::VertexWeight, ()>
 	{
 		Err(())

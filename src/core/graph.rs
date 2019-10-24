@@ -201,22 +201,16 @@ pub trait GraphMut: Graph
 }
 
 ///
-/// A graph where the vertex ids are assigned automatically.
+/// A graph where new vertices can be added
 ///
-pub trait AddVertex: GraphMut
+pub trait NewVertex: Graph
 {
 	///
 	/// Adds a new vertex with the given weight to the graph.
 	/// Returns the id of the new vertex.
 	///
 	fn new_vertex_weighted(&mut self, w: Self::VertexWeight) -> Result<Self::Vertex,()>;
-	///
-	/// Removes the given vertex from the graph, returning its weight.
-	/// If the vertex still has edges incident on it, they are also removed,
-	/// dropping their weights.
-	///
-	fn remove_vertex(&mut self, v: Self::Vertex) -> Result<Self::VertexWeight,()>;
-
+	
 // Optional methods
 	///
 	/// Adds a new vertex to the graph.
@@ -229,6 +223,19 @@ pub trait AddVertex: GraphMut
 		self.new_vertex_weighted(Self::VertexWeight::default())
 	}
 	
+}
+
+///
+/// A graph where vertices can be removed.
+///
+pub trait RemoveVertex: Graph
+{
+	///
+	/// Removes the given vertex from the graph, returning its weight.
+	/// If the vertex still has edges incident on it, they are also removed,
+	/// dropping their weights.
+	///
+	fn remove_vertex(&mut self, v: Self::Vertex) -> Result<Self::VertexWeight,()>;
 }
 
 pub trait AddEdge: Graph

@@ -2,7 +2,7 @@
 //! Tests the `core::Unique` trait and its constrainer `core::UniqueGraph`.
 //!
 
-use graphene::core::{Constrainer, Graph, Edge, AddVertex, AddEdge, constraint::UniqueGraph};
+use graphene::core::{Constrainer, Graph, Edge, NewVertex, AddEdge, constraint::UniqueGraph};
 use crate::mock_graph::{
 	MockEdgeWeight, MockVertexWeight,
 	arbitrary::{

@@ -2,10 +2,10 @@
 //! Tests `DFS`
 //!
 
-use crate::mock_graph::{MockGraph, MockVertex, arbitrary::{ArbVertexIn, ArbConnectedGraph}, MockEdgeWeight};
-use graphene::core::{ImplGraph, Graph, Constrainer, AddVertex, AddEdge, Directed};
+use crate::mock_graph::{MockGraph, arbitrary::{ArbVertexIn, ArbConnectedGraph}, MockEdgeWeight};
+use graphene::core::{ImplGraph, Graph, Constrainer, AddEdge, Directed};
 use graphene::algo::DFS;
-use std::collections::{ HashSet, HashMap };
+use std::collections::{ HashSet };
 use crate::mock_graph::arbitrary::ArbVerticesIn;
 
 duplicate_for_directedness!{
@@ -39,7 +39,7 @@ duplicate_for_directedness!{
 		let mut graph = g1.0.unconstrain();
 		
 		// First join the two graphs
-		let mut v_map = graph.join(&g2);
+		let v_map = graph.join(&g2);
 		
 		// Ensure that no visited vertex comes from outside the start component
 		DFS::new(&graph, v).all(|visit| v_map.values().all(|&new_v| visit != new_v))
@@ -67,7 +67,7 @@ fn directed_doesnt_visit_incomming_component(
 	let g2_set = rest.1;
 
 	// First join the two graphs
-	let mut v_map = graph.join(&g2);
+	let v_map = graph.join(&g2);
 
 	// Add edges from the other component to the start component
 	for (v1,v2) in comp_set.iter().zip(g2_set.iter()) {
@@ -96,7 +96,7 @@ fn directed_visits_outgoing_component(
 	let v2 = (comp2.0).1;
 	
 	// First join the two graphs
-	let mut v_map = graph.join(&g2);
+	let v_map = graph.join(&g2);
 	
 	// Add edges from start component to the other component
 	graph.add_edge_weighted((v, v_map[&v2], weight.clone())).unwrap();

@@ -3,7 +3,7 @@
 //!
 
 use crate::mock_graph::{MockDirectedness, MockGraph, MockEdgeWeight, MockVertexWeight};
-use graphene::core::{Graph, Constrainer, BaseGraph, EdgeWeighted, GraphMut, AddVertex, AddEdge, ImplGraphMut, ImplGraph};
+use graphene::core::{Graph, Constrainer, BaseGraph, EdgeWeighted, GraphMut, NewVertex, AddEdge, ImplGraphMut, ImplGraph, RemoveVertex};
 
 ///
 /// A mock constraint simply to test.
@@ -91,12 +91,11 @@ impl<C: Constrainer + ImplGraphMut>  GraphMut for MockConstrainer<C>
 
 }
 
-impl<C: Constrainer + ImplGraphMut>  AddVertex for MockConstrainer<C>
-	where C::Graph: AddVertex
+impl<C: Constrainer + ImplGraphMut> NewVertex for MockConstrainer<C>
+	where C::Graph: NewVertex
 {
-
 	fn new_vertex_weighted(&mut self, w: Self::VertexWeight)
-		-> Result<Self::Vertex, ()>
+						   -> Result<Self::Vertex, ()>
 	{
 		if self.0.graph().all_vertices().count() < 4 {
 			self.0.graph_mut().new_vertex_weighted(w)
@@ -104,7 +103,10 @@ impl<C: Constrainer + ImplGraphMut>  AddVertex for MockConstrainer<C>
 			Err(())
 		}
 	}
-	
+}
+impl<C: Constrainer + ImplGraphMut>  RemoveVertex for MockConstrainer<C>
+	where C::Graph: RemoveVertex
+{
 	fn remove_vertex(&mut self, v: Self::Vertex) -> Result<Self::VertexWeight, ()>
 	{
 		self.0.graph_mut().remove_vertex(v)

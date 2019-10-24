@@ -1,9 +1,9 @@
 use std::collections::HashSet;
 use crate::mock_graph::{MockVertex, MockEdgeWeight, MockVertexWeight};
 use quickcheck::{Arbitrary, Gen};
-use graphene::core::{ImplGraph, Graph, ImplGraphMut, AddVertex};
+use graphene::core::{ImplGraph, Graph, ImplGraphMut};
 use rand::Rng;
-use crate::mock_graph::arbitrary::{Limit, ArbTwoVerticesIn, GuidedArbGraph};
+use crate::mock_graph::arbitrary::{Limit, GuidedArbGraph};
 use std::collections::hash_map::RandomState;
 use std::ops::RangeBounds;
 
@@ -19,7 +19,7 @@ pub struct ArbVerticesIn<G>(pub G, pub HashSet<MockVertex>)
 impl<Gr> Arbitrary for ArbVerticesIn<Gr>
 	where
 		Gr: GuidedArbGraph + ImplGraphMut,
-		Gr::Graph: AddVertex<Vertex=MockVertex, VertexWeight=MockVertexWeight,
+		Gr::Graph: Graph<Vertex=MockVertex, VertexWeight=MockVertexWeight,
 			EdgeWeight=MockEdgeWeight>
 {
 	fn arbitrary<G: Gen>(g: &mut G) -> Self {
@@ -33,7 +33,7 @@ impl<Gr> Arbitrary for ArbVerticesIn<Gr>
 impl<Gr> GuidedArbGraph for ArbVerticesIn<Gr>
 	where
 		Gr: GuidedArbGraph + ImplGraphMut,
-		Gr::Graph: AddVertex<Vertex=MockVertex, VertexWeight=MockVertexWeight,
+		Gr::Graph: Graph<Vertex=MockVertex, VertexWeight=MockVertexWeight,
 			EdgeWeight=MockEdgeWeight>
 {
 	fn arbitrary_guided<G: Gen>(g: &mut G, v_range: impl RangeBounds<usize>,
@@ -56,10 +56,9 @@ impl<Gr> GuidedArbGraph for ArbVerticesIn<Gr>
 		Self(graph, set)
 	}
 	
-	fn shrink_guided(&self, mut limits: HashSet<Limit, RandomState>) -> Box<Iterator<Item=Self>> {
+	fn shrink_guided(&self, mut limits: HashSet<Limit, RandomState>) -> Box<dyn Iterator<Item=Self>> {
 		let mut result = Vec::new();
 		let arb_graph = &self.0;
-		let graph = arb_graph.graph();
 		
 		// First we shrink the graph without touching the designated vertices
 		for v in self.1.iter() {

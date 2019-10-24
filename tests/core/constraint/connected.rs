@@ -3,14 +3,11 @@
 //!
 
 use graphene::{
-	core::{ Graph, Constrainer, AddEdge, Edge, constraint::ConnectedGraph, Directedness,
-			AddVertex,
-	},
+	core::{Constrainer, AddEdge, Edge, constraint::ConnectedGraph, Directedness },
 };
-use crate::mock_graph::{ MockEdgeWeight, MockVertex,
+use crate::mock_graph::{ MockEdgeWeight,
 						 arbitrary::{ArbConnectedGraph, ArbUnconnectedGraph, ArbTwoVerticesIn, ArbVertexIn}
 };
-use std::collections::HashMap;
 
 duplicate_for_directedness! {
 	$directedness
@@ -61,7 +58,7 @@ duplicate_for_directedness! {
 	{
 		let mut graph = g1.0.unconstrain();
 		// We start by joining 2 connected graphs into a unconnected graph with the 2 components
-		let mut v_map = graph.join(&g2.0);
+		let v_map = graph.join(&g2.0);
 
 		// We then connect the two components
 		graph.add_edge_weighted((v1,v_map[&v2], e_weight.clone())).unwrap();

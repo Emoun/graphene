@@ -7,7 +7,7 @@ use graphene::{
 };
 use std::marker::PhantomData;
 use std::fmt::{Debug, Formatter, Error};
-use graphene::core::{Directedness, ExactGraph, BaseGraph, AddVertex, AddEdge, GraphMut, ImplGraph, ImplGraphMut};
+use graphene::core::{Directedness, ExactGraph, BaseGraph, NewVertex, AddEdge, GraphMut, ImplGraph, ImplGraphMut, RemoveVertex};
 use std::collections::HashMap;
 
 ///
@@ -167,7 +167,7 @@ impl<D: Directedness> GraphMut for MockGraph<D>
 	
 }
 
-impl<D: Directedness> AddVertex for MockGraph<D>
+impl<D: Directedness> NewVertex for MockGraph<D>
 {
 	fn new_vertex_weighted(&mut self, w: Self::VertexWeight) -> Result<Self::Vertex, ()> {
 		if self.vertices.insert(self.next_id, w).is_some() {
@@ -175,10 +175,12 @@ impl<D: Directedness> AddVertex for MockGraph<D>
 		} else {
 			self.next_id += 1;
 			self.validate();
-			Ok(MockVertex{ value: self.next_id - 1})
+			Ok(MockVertex { value: self.next_id - 1 })
 		}
 	}
-	
+}
+impl<D: Directedness> RemoveVertex for MockGraph<D>
+{
 	fn remove_vertex(&mut self, mock_v: Self::Vertex) -> Result<Self::VertexWeight,()>{
 		let v = mock_v.value;
 		if let Some(weight) = self.vertices.remove(&v){
