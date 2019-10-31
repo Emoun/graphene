@@ -3,7 +3,7 @@
 //!
 
 use crate::mock_graph::{MockDirectedness, MockGraph, MockEdgeWeight, MockVertexWeight};
-use graphene::core::{Graph, Constrainer, BaseGraph, EdgeWeighted, GraphMut, NewVertex, AddEdge, ImplGraphMut, ImplGraph, RemoveVertex};
+use graphene::core::{Graph, Constrainer, BaseGraph, EdgeWeighted, GraphMut, NewVertex, AddEdge, ImplGraphMut, ImplGraph, RemoveVertex, RemoveEdge};
 
 ///
 /// A mock constraint simply to test.
@@ -117,18 +117,20 @@ impl<C: Constrainer + ImplGraphMut>  RemoveVertex for MockConstrainer<C>
 impl<C: Constrainer + ImplGraphMut>  AddEdge for MockConstrainer<C>
 	where C::Graph: AddEdge
 {
-
-	fn remove_edge_where<F>(&mut self, f: F) -> Result<(Self::Vertex, Self::Vertex, Self::EdgeWeight), ()>
-		where F: Fn((Self::Vertex, Self::Vertex, &Self::EdgeWeight)) -> bool
-	{
-		self.0.graph_mut().remove_edge_where(f)
-	}
-
-	
 	fn add_edge_weighted<E>(&mut self, e: E) -> Result<(), ()>
 		where E: EdgeWeighted<Self::Vertex, Self::EdgeWeight>
 	{
 		self.0.graph_mut().add_edge_weighted(e)
+	}
+}
+
+impl<C: Constrainer + ImplGraphMut>  RemoveEdge for MockConstrainer<C>
+	where C::Graph: RemoveEdge
+{
+	fn remove_edge_where<F>(&mut self, f: F) -> Result<(Self::Vertex, Self::Vertex, Self::EdgeWeight), ()>
+		where F: Fn((Self::Vertex, Self::Vertex, &Self::EdgeWeight)) -> bool
+	{
+		self.0.graph_mut().remove_edge_where(f)
 	}
 }
 

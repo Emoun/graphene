@@ -1,6 +1,6 @@
 use quickcheck::{Arbitrary, Gen};
 use crate::mock_graph::{MockVertex, MockT, MockGraph, MockVertexWeight, MockEdgeWeight};
-use graphene::core::{Directedness, Graph, NewVertex, AddEdge, RemoveVertex};
+use graphene::core::{Directedness, Graph, NewVertex, AddEdge, RemoveVertex, RemoveEdge};
 use rand::Rng;
 use crate::mock_graph::arbitrary::{GuidedArbGraph, Limit};
 use std::ops::{RangeBounds};

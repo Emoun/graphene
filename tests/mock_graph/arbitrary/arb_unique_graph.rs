@@ -1,5 +1,5 @@
 use graphene::core::constraint::{UniqueGraph, DirectedGraph};
-use graphene::core::{Directedness, Graph, Edge, Constrainer, AddEdge, ImplGraph, ImplGraphMut};
+use graphene::core::{Directedness, Graph, Edge, Constrainer, AddEdge, ImplGraph, ImplGraphMut, RemoveEdge};
 use crate::mock_graph::{MockGraph, MockEdgeWeight};
 use quickcheck::{Arbitrary, Gen};
 use rand::Rng;

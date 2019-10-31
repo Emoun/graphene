@@ -245,14 +245,7 @@ pub trait AddEdge: Graph
 	///
 	fn add_edge_weighted<E>(&mut self, e: E) -> Result<(),()>
 		where E: EdgeWeighted<Self::Vertex, Self::EdgeWeight>;
-	///
-	/// Removes an edge that matches the given predicate closure.
-	/// If no edge is found to match and successfully removed, returns error
-	/// but otherwise doesn't change the graph.
-	///
-	fn remove_edge_where<F>(&mut self, f: F) -> Result<(Self::Vertex, Self::Vertex, Self::EdgeWeight), ()>
-		where F: Fn((Self::Vertex, Self::Vertex, &Self::EdgeWeight)) -> bool;
-
+	
 // Optional methods
 
 	///
@@ -281,6 +274,19 @@ pub trait AddEdge: Graph
 	{
 		self.add_edge_weighted((e.source(), e.sink(), Self::EdgeWeight::default()))
 	}
+	
+}
+
+pub trait RemoveEdge: Graph {
+	///
+	/// Removes an edge that matches the given predicate closure.
+	/// If no edge is found to match and successfully removed, returns error
+	/// but otherwise doesn't change the graph.
+	///
+	fn remove_edge_where<F>(&mut self, f: F) -> Result<(Self::Vertex, Self::Vertex, Self::EdgeWeight), ()>
+		where F: Fn((Self::Vertex, Self::Vertex, &Self::EdgeWeight)) -> bool;
+	
+// Optional methods
 	///
 	/// Removes the given edge from the graph if it exists.
 	///
@@ -304,14 +310,15 @@ pub trait AddEdge: Graph
 	{
 		self.remove_edge_where_weight(e, |_| true)
 	}
+	
 	fn remove_edge_where_weight<E,F>(&mut self, e: E, f: F) -> Result<Self::EdgeWeight,()>
 		where
 			E: Edge<Self::Vertex>,
 			F: Fn(&Self::EdgeWeight) -> bool,
 	{
 		self.remove_edge_where(|(so,si, w)| f(w) &&
-		   ((so == e.source()) && (si == e.sink()) ||
-			   (!Self::Directedness::directed() && (so == e.sink()) && (si == e.source()))) )
+			((so == e.source()) && (si == e.sink()) ||
+				(!Self::Directedness::directed() && (so == e.sink()) && (si == e.source()))) )
 			.map(|removed_edge| removed_edge.2)
 	}
 	

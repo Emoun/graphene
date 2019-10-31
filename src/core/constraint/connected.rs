@@ -1,4 +1,4 @@
-use crate::core::{Graph, EdgeWeighted, NewVertex, Constrainer, GraphMut, AddEdge, ImplGraph, ImplGraphMut, ReverseGraph, Edge, RemoveVertex};
+use crate::core::{Graph, EdgeWeighted, Constrainer, GraphMut, AddEdge, ImplGraph, ImplGraphMut, ReverseGraph, Edge, RemoveVertex, RemoveEdge};
 use crate::algo::DFS;
 use crate::core::constraint::DirectedGraph;
 use crate::core::proxy::EdgeProxyGraph;
@@ -120,13 +120,16 @@ impl<C: Constrainer + ImplGraphMut> RemoveVertex for ConnectedGraph<C>
 impl<C: Constrainer + ImplGraphMut> AddEdge for ConnectedGraph<C>
 	where C::Graph: AddEdge
 {
-
 	fn add_edge_weighted<E>(&mut self, e: E) -> Result<(), ()>
 		where E: EdgeWeighted<Self::Vertex, Self::EdgeWeight>
 	{
 		self.0.graph_mut().add_edge_weighted(e)
 	}
+}
 
+impl<C: Constrainer + ImplGraphMut> RemoveEdge for ConnectedGraph<C>
+	where C::Graph: RemoveEdge
+{
 	fn remove_edge_where<F>(&mut self, f: F)
 		-> Result<(Self::Vertex, Self::Vertex, Self::EdgeWeight), ()>
 		where F: Fn((Self::Vertex, Self::Vertex, &Self::EdgeWeight)) -> bool

@@ -9,7 +9,7 @@ use crate::{
 	},
 	common::adjacency_list::adj_list_from_mock,
 };
-use graphene::core::{Graph, Edge, EdgeWeighted, GraphMut, AddEdge, RemoveVertex};
+use graphene::core::{Graph, Edge, EdgeWeighted, GraphMut, RemoveVertex, RemoveEdge};
 
 ///
 /// Tests that adding vertices to the graph results in the same vertices being

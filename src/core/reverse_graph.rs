@@ -1,4 +1,4 @@
-use crate::core::{Graph, Directed, Edge, GraphMut, NewVertex, AddEdge, EdgeWeighted, EdgeDeref, Constrainer, ImplGraphMut, ImplGraph, BaseGraph, RemoveVertex};
+use crate::core::{Graph, Directed, Edge, GraphMut, NewVertex, AddEdge, EdgeWeighted, EdgeDeref, Constrainer, ImplGraphMut, ImplGraph, BaseGraph, RemoveVertex, RemoveEdge};
 
 #[derive(Debug)]
 pub struct ReverseGraph<C: Constrainer>(C)
@@ -75,17 +75,21 @@ impl<C: Constrainer + ImplGraphMut> RemoveVertex for ReverseGraph<C>
 impl<C: Constrainer + ImplGraphMut> AddEdge for ReverseGraph<C>
 	where C::Graph: AddEdge<Directedness=Directed>
 {
-	fn remove_edge_where<F>(&mut self, f: F)
-		-> Result<(Self::Vertex, Self::Vertex, Self::EdgeWeight), ()>
-		where F: Fn((Self::Vertex, Self::Vertex, &Self::EdgeWeight)) -> bool
-	{
-		self.0.graph_mut().remove_edge_where(|e| f((e.sink(), e.source(), e.weight())))
-	}
-	
 	fn add_edge_weighted<E>(&mut self, e: E) -> Result<(), ()>
 		where E: EdgeWeighted<Self::Vertex, Self::EdgeWeight>
 	{
 		self.0.graph_mut().add_edge_weighted((e.sink(), e.source(), e.weight_owned()))
+	}
+}
+
+impl<C: Constrainer + ImplGraphMut> RemoveEdge for ReverseGraph<C>
+	where C::Graph: RemoveEdge<Directedness=Directed>
+{
+	fn remove_edge_where<F>(&mut self, f: F)
+							-> Result<(Self::Vertex, Self::Vertex, Self::EdgeWeight), ()>
+		where F: Fn((Self::Vertex, Self::Vertex, &Self::EdgeWeight)) -> bool
+	{
+		self.0.graph_mut().remove_edge_where(|e| f((e.sink(), e.source(), e.weight())))
 	}
 }
 

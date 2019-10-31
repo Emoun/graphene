@@ -1,4 +1,4 @@
-use crate::core::{Graph, Edge, EdgeWeighted, NewVertex, Constrainer, AddEdge, GraphMut, ImplGraph, ImplGraphMut, RemoveVertex};
+use crate::core::{Graph, Edge, EdgeWeighted, NewVertex, Constrainer, AddEdge, GraphMut, ImplGraph, ImplGraphMut, RemoveVertex, RemoveEdge};
 
 ///
 /// A marker trait for a reflexive graph.
@@ -115,7 +115,7 @@ impl<C: Constrainer + ImplGraphMut> NewVertex for ReflexiveGraph<C>
 
 impl<C: Constrainer + ImplGraphMut> RemoveVertex for ReflexiveGraph<C>
 	where
-		C::Graph: RemoveVertex + AddEdge,
+		C::Graph: RemoveVertex + RemoveEdge,
 		<C::Graph as Graph>::EdgeWeight: Default,
 {
 	fn remove_vertex(&mut self, v: Self::Vertex) -> Result<Self::VertexWeight, ()>
@@ -130,16 +130,22 @@ impl<C: Constrainer + ImplGraphMut> AddEdge for ReflexiveGraph<C>
 		C::Graph: AddEdge,
 		<C::Graph as Graph>::EdgeWeight: Default
 {
-	fn remove_edge_where<F>(&mut self, f: F) -> Result<(Self::Vertex, Self::Vertex, Self::EdgeWeight), ()>
-		where F: Fn((Self::Vertex, Self::Vertex, &Self::EdgeWeight)) -> bool
-	{
-		self.0.graph_mut().remove_edge_where(|e| f(e) && !e.is_loop())
-	}
-	
 	fn add_edge_weighted<E>(&mut self, e: E) -> Result<(), ()>
 		where E: EdgeWeighted<Self::Vertex, Self::EdgeWeight>
 	{
 		self.0.graph_mut().add_edge_weighted(e)
+	}
+}
+
+impl<C: Constrainer + ImplGraphMut> RemoveEdge for ReflexiveGraph<C>
+	where
+		C::Graph: RemoveEdge,
+		<C::Graph as Graph>::EdgeWeight: Default
+{
+	fn remove_edge_where<F>(&mut self, f: F) -> Result<(Self::Vertex, Self::Vertex, Self::EdgeWeight), ()>
+		where F: Fn((Self::Vertex, Self::Vertex, &Self::EdgeWeight)) -> bool
+	{
+		self.0.graph_mut().remove_edge_where(|e| f(e) && !e.is_loop())
 	}
 }
 

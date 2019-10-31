@@ -1,4 +1,4 @@
-use crate::core::{Graph, EdgeWeighted, NewVertex, Constrainer, AddEdge, GraphMut, ImplGraph, ImplGraphMut, RemoveVertex};
+use crate::core::{Graph, EdgeWeighted, NewVertex, Constrainer, AddEdge, GraphMut, ImplGraph, ImplGraphMut, RemoveVertex, RemoveEdge};
 
 
 ///
@@ -105,12 +105,6 @@ impl<C: Constrainer + ImplGraphMut> RemoveVertex for NoLoopsGraph<C>
 impl<C: Constrainer + ImplGraphMut> AddEdge for NoLoopsGraph<C>
 	where C::Graph: AddEdge
 {
-	fn remove_edge_where<F>(&mut self, f: F) -> Result<(Self::Vertex, Self::Vertex, Self::EdgeWeight), ()>
-		where F: Fn((Self::Vertex, Self::Vertex, &Self::EdgeWeight)) -> bool
-	{
-		self.0.graph_mut().remove_edge_where(f)
-	}
-	
 	fn add_edge_weighted<E>(&mut self, e: E) -> Result<(), ()>
 		where E: EdgeWeighted<Self::Vertex, Self::EdgeWeight>
 	{
@@ -119,6 +113,16 @@ impl<C: Constrainer + ImplGraphMut> AddEdge for NoLoopsGraph<C>
 		} else {
 			self.0.graph_mut().add_edge_weighted(e)
 		}
+	}
+}
+
+impl<C: Constrainer + ImplGraphMut> RemoveEdge for NoLoopsGraph<C>
+	where C::Graph: RemoveEdge
+{
+	fn remove_edge_where<F>(&mut self, f: F) -> Result<(Self::Vertex, Self::Vertex, Self::EdgeWeight), ()>
+		where F: Fn((Self::Vertex, Self::Vertex, &Self::EdgeWeight)) -> bool
+	{
+		self.0.graph_mut().remove_edge_where(f)
 	}
 }
 

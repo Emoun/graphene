@@ -3,7 +3,7 @@
 //!
 
 use graphene::{
-	core::{Constrainer, AddEdge, Edge, constraint::ConnectedGraph, Directedness },
+	core::{Constrainer, AddEdge, RemoveEdge, Edge, constraint::ConnectedGraph, Directedness },
 };
 use crate::mock_graph::{ MockEdgeWeight,
 						 arbitrary::{ArbConnectedGraph, ArbUnconnectedGraph, ArbTwoVerticesIn, ArbVertexIn}

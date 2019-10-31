@@ -7,7 +7,7 @@ use graphene::{
 };
 use std::marker::PhantomData;
 use std::fmt::{Debug, Formatter, Error};
-use graphene::core::{Directedness, ExactGraph, BaseGraph, NewVertex, AddEdge, GraphMut, ImplGraph, ImplGraphMut, RemoveVertex};
+use graphene::core::{Directedness, ExactGraph, BaseGraph, NewVertex, AddEdge, GraphMut, ImplGraph, ImplGraphMut, RemoveVertex, RemoveEdge};
 use std::collections::HashMap;
 
 ///
@@ -196,7 +196,7 @@ impl<D: Directedness> RemoveVertex for MockGraph<D>
 
 impl<D: Directedness> AddEdge for MockGraph<D>
 {
-	fn add_edge_weighted<E>(&mut self, e: E) -> Result<(),()>
+	fn add_edge_weighted<E>(&mut self, e: E) -> Result<(), ()>
 		where
 			E: EdgeWeighted<Self::Vertex, Self::EdgeWeight>,
 	{
@@ -212,7 +212,10 @@ impl<D: Directedness> AddEdge for MockGraph<D>
 			Err(())
 		}
 	}
-	
+}
+
+impl<D: Directedness> RemoveEdge for MockGraph<D>
+{
 	fn remove_edge_where<F>(&mut self, f: F)
 							-> Result<(Self::Vertex, Self::Vertex, Self::EdgeWeight), ()>
 		where

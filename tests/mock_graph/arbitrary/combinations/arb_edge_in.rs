@@ -1,6 +1,6 @@
 use crate::mock_graph::{MockVertex, MockEdgeWeight, MockVertexWeight};
 use quickcheck::{Arbitrary, Gen};
-use graphene::core::{ImplGraph, Graph, GraphMut, ImplGraphMut, AddEdge, Edge, EdgeDeref, EdgeWeighted};
+use graphene::core::{ImplGraph, Graph, GraphMut, ImplGraphMut, AddEdge, Edge, EdgeDeref, EdgeWeighted, RemoveEdge};
 use crate::mock_graph::arbitrary::{GuidedArbGraph, ArbTwoVerticesIn};
 use rand::Rng;
 
@@ -17,7 +17,7 @@ impl<Gr> Arbitrary for ArbEdgeIn<Gr>
 	where
 		Gr: GuidedArbGraph + ImplGraphMut,
 		Gr::Graph: GraphMut<Vertex=MockVertex, VertexWeight=MockVertexWeight,
-			EdgeWeight=MockEdgeWeight> + AddEdge
+			EdgeWeight=MockEdgeWeight> + AddEdge + RemoveEdge
 {
 	fn arbitrary<G: Gen>(g: &mut G) -> Self {
 		let arb_graph = Gr::arbitrary_guided(g, .. , 1..);

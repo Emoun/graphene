@@ -1,4 +1,4 @@
-use crate::core::{Directedness, Constrainer, Graph, Edge, ImplGraphMut, AddEdge, EdgeWeighted, ImplGraph, BaseGraph};
+use crate::core::{Directedness, Constrainer, Graph, Edge, ImplGraphMut, AddEdge, EdgeWeighted, ImplGraph, BaseGraph, RemoveEdge};
 
 pub struct EdgeProxyGraph<C: Constrainer>{
 	/// The underlying graph
@@ -64,7 +64,11 @@ impl<C: Constrainer + ImplGraphMut> AddEdge for EdgeProxyGraph<C>
 		self.new.push((e.source(), e.sink()));
 		Ok(())
 	}
-	
+}
+
+impl<C: Constrainer + ImplGraphMut> RemoveEdge for EdgeProxyGraph<C>
+	where C::Graph: RemoveEdge,
+{
 	fn remove_edge_where<F>(&mut self, f: F)
 		-> Result<(Self::Vertex, Self::Vertex, Self::EdgeWeight), ()>
 		where F: Fn((Self::Vertex, Self::Vertex, &Self::EdgeWeight)) -> bool

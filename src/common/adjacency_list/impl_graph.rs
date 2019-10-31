@@ -1,5 +1,5 @@
 
-use crate::core::{Graph, EdgeWeighted, Directedness, BaseGraph, NewVertex, Edge, ExactGraph, AddEdge, GraphMut, ImplGraph, ImplGraphMut, RemoveVertex};
+use crate::core::{Graph, EdgeWeighted, Directedness, BaseGraph, NewVertex, Edge, ExactGraph, AddEdge, GraphMut, ImplGraph, ImplGraphMut, RemoveVertex, RemoveEdge};
 use crate::common::AdjListGraph;
 
 
@@ -81,7 +81,7 @@ impl<Vw,Ew,D> RemoveVertex for AdjListGraph<Vw,Ew,D>
 impl<Vw,Ew,D> AddEdge for AdjListGraph<Vw,Ew,D>
 	where D: Directedness
 {
-	fn add_edge_weighted<E>(&mut self, e: E) -> Result<(),()>
+	fn add_edge_weighted<E>(&mut self, e: E) -> Result<(), ()>
 		where
 			E: EdgeWeighted<Self::Vertex, Self::EdgeWeight>,
 	{
@@ -93,7 +93,11 @@ impl<Vw,Ew,D> AddEdge for AdjListGraph<Vw,Ew,D>
 			Err(())
 		}
 	}
-	
+}
+
+impl<Vw,Ew,D> RemoveEdge for AdjListGraph<Vw,Ew,D>
+	where D: Directedness
+{
 	fn remove_edge_where<F>(&mut self, f: F)
 							-> Result<(Self::Vertex, Self::Vertex, Self::EdgeWeight), ()>
 		where
