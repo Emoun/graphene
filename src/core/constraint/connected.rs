@@ -1,7 +1,7 @@
 use crate::core::{Graph, EdgeWeighted, Constrainer, GraphMut, AddEdge, ImplGraph, ImplGraphMut, ReverseGraph, Edge, RemoveVertex, RemoveEdge};
 use crate::algo::DFS;
 use crate::core::constraint::DirectedGraph;
-use crate::core::proxy::EdgeProxyGraph;
+use crate::core::proxy::{EdgeProxyGraph, VertexProxyGraph, ProxyVertex};
 
 ///
 /// A marker trait for graphs that are connected.
@@ -111,9 +111,18 @@ impl<C: Constrainer + ImplGraphMut> GraphMut for ConnectedGraph<C>
 impl<C: Constrainer + ImplGraphMut> RemoveVertex for ConnectedGraph<C>
 	where C::Graph: RemoveVertex
 {
-	fn remove_vertex(&mut self, _v: Self::Vertex) -> Result<Self::VertexWeight, ()>
+	fn remove_vertex(&mut self, v: Self::Vertex) -> Result<Self::VertexWeight, ()>
 	{
-		Err(())
+		let mut proxy = VertexProxyGraph::new(&mut *self);
+		
+		proxy.remove_vertex(ProxyVertex::Underlying(v))
+			.expect("Couldn't remove a vertex from the proxy");
+		
+		if let Ok(_) = ConnectedGraph::constrain_single(proxy) {
+			self.0.graph_mut().remove_vertex(v)
+		} else {
+			Err(())
+		}
 	}
 }
 

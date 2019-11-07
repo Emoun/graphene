@@ -1,5 +1,5 @@
 //#![feature(trace_macros)] //trace_macros!(true);
-#![recursion_limit="4096"]
+#![recursion_limit="8192"]
 #[macro_use(quickcheck)]
 extern crate quickcheck_macros;
 
