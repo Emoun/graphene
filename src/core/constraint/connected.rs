@@ -1,15 +1,15 @@
 use crate::core::{Graph, EdgeWeighted, Constrainer, GraphMut, AddEdge, ImplGraph, ImplGraphMut, ReverseGraph, Edge, RemoveVertex, RemoveEdge};
 use crate::algo::DFS;
-use crate::core::constraint::DirectedGraph;
+use crate::core::constraint::{DirectedGraph, UnilaterallyConnected};
 use crate::core::proxy::{EdgeProxyGraph, VertexProxyGraph, ProxyVertex};
 
 ///
 /// A marker trait for graphs that are connected.
 ///
-/// A graph is connected if there is  apath from any vertex to any other vertex.
+/// A graph is connected if there is a path from any vertex to any other vertex.
 /// Graphs with one or zero vertices count as connected.
 ///
-pub trait Connected: Graph
+pub trait Connected: UnilaterallyConnected
 {}
 
 #[derive(Clone, Debug)]
@@ -162,9 +162,10 @@ impl<C: Constrainer + ImplGraphMut> RemoveEdge for ConnectedGraph<C>
 	}
 }
 
+impl<C: Constrainer> UnilaterallyConnected for ConnectedGraph<C>{}
 impl<C: Constrainer> Connected for ConnectedGraph<C>{}
 
 impl_constraints!{
-	ConnectedGraph<C>: Connected
+	ConnectedGraph<C>: Connected, UnilaterallyConnected
 }
 

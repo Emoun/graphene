@@ -9,6 +9,7 @@ mod reflexive;
 mod connected;
 mod directed_constraint;
 mod undirected_constraint;
+mod unilaterally_connected;
 
 pub use self::{
 	impl_constraints::*,
@@ -18,5 +19,6 @@ pub use self::{
 	connected::*,
 	directed_constraint::*,
 	undirected_constraint::*,
+	unilaterally_connected::*,
 };
 

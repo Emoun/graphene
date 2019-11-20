@@ -1,4 +1,5 @@
-use crate::core::{Graph, EdgeWeighted, Directedness, Edge, NewVertex, Constrainer, GraphMut, AddEdge, ImplGraphMut, ImplGraph, RemoveVertex, RemoveEdge};
+use crate::core::{Graph, EdgeWeighted, Directedness, Edge, NewVertex, Constrainer, GraphMut, AddEdge, ImplGraphMut, ImplGraph, RemoveVertex, RemoveEdge, Directed};
+use crate::core::constraint::UnilaterallyConnected;
 
 ///
 /// A marker trait for graphs containing only unique edges.
@@ -168,3 +169,6 @@ impl_constraints!{
 	UniqueGraph<C>: Unique
 }
 
+//impl<C: Constrainer> UnilaterallyConnected for UniqueGraph<C>
+//	where C::Graph: UnilaterallyConnected
+//{}
