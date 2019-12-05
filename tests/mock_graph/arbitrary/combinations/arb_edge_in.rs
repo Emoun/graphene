@@ -1,8 +1,10 @@
 use crate::mock_graph::{MockVertex, MockEdgeWeight, MockVertexWeight};
 use quickcheck::{Arbitrary, Gen};
 use graphene::core::{ImplGraph, Graph, GraphMut, ImplGraphMut, AddEdge, Edge, EdgeDeref, EdgeWeighted, RemoveEdge};
-use crate::mock_graph::arbitrary::{GuidedArbGraph, ArbTwoVerticesIn};
+use crate::mock_graph::arbitrary::{GuidedArbGraph, ArbTwoVerticesIn, Limit};
 use rand::Rng;
+use std::ops::RangeBounds;
+use std::collections::HashSet;
 
 ///
 /// An arbitrary graph with an edge that is guaranteed to be in the graph (the weight is a clone)
@@ -13,21 +15,24 @@ pub struct ArbEdgeIn<G>(pub G, pub (MockVertex, MockVertex, MockEdgeWeight))
 		G: Arbitrary + ImplGraph,
 		G::Graph: Graph<Vertex=MockVertex, VertexWeight=MockVertexWeight,
 			EdgeWeight=MockEdgeWeight>;
-impl<Gr> Arbitrary for ArbEdgeIn<Gr>
+impl<Gr> GuidedArbGraph for ArbEdgeIn<Gr>
 	where
 		Gr: GuidedArbGraph + ImplGraphMut,
 		Gr::Graph: GraphMut<Vertex=MockVertex, VertexWeight=MockVertexWeight,
 			EdgeWeight=MockEdgeWeight> + AddEdge + RemoveEdge
 {
-	fn arbitrary<G: Gen>(g: &mut G) -> Self {
-		let arb_graph = Gr::arbitrary_guided(g, .. , 1..);
+	fn arbitrary_guided<G: Gen>(g: &mut G, v_range: impl RangeBounds<usize>,
+								e_range: impl RangeBounds<usize>) -> Self
+	{
+		let (v_min, v_max, e_min, e_max) = Self::validate_ranges(g, v_range, e_range);
+		let arb_graph = Gr::arbitrary_guided(g, v_min..v_max , (if e_min < 1 {1} else {e_min})..e_max );
 		let graph = arb_graph.graph();
 		let edge = graph.all_edges().nth(g.gen_range(0, graph.all_edges().count())).unwrap();
 		let edge_clone = (edge.source(),edge.sink(),edge.weight().clone());
 		Self(arb_graph, edge_clone)
 	}
 	
-	fn shrink(&self) -> Box<dyn Iterator<Item=Self>> {
+	fn shrink_guided(&self, _: HashSet<Limit>) -> Box<dyn Iterator<Item=Self>> {
 		let mut result = Vec::new();
 		/*	First, we can simply shrink the weight
 		*/
@@ -62,5 +67,19 @@ impl<Gr> Arbitrary for ArbEdgeIn<Gr>
 		);
 		
 		Box::new(result.into_iter())
+	}
+}
+impl<Gr> Arbitrary for ArbEdgeIn<Gr>
+	where
+		Gr: GuidedArbGraph + ImplGraphMut,
+		Gr::Graph: GraphMut<Vertex=MockVertex, VertexWeight=MockVertexWeight,
+			EdgeWeight=MockEdgeWeight> + AddEdge + RemoveEdge
+{
+	fn arbitrary<G: Gen>(g: &mut G) -> Self {
+		Self::arbitrary_guided(g, .., 1..)
+	}
+	
+	fn shrink(&self) -> Box<dyn Iterator<Item=Self>> {
+		self.shrink_guided(HashSet::new())
 	}
 }

@@ -211,7 +211,7 @@ impl<D: Directedness> Arbitrary for ArbConnectedGraph<D>
 }
 
 ///
-/// An arbitrary graph that is connected
+/// An arbitrary graph that is unconnected
 ///
 #[derive(Clone, Debug)]
 pub struct ArbUnconnectedGraph<D: Directedness>(
