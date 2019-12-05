@@ -1,7 +1,7 @@
 use graphene::core::constraint::UnilaterallyConnectedGraph;
 use crate::mock_graph::{MockGraph, MockEdgeWeight, MockVertexWeight};
-use graphene::core::{Directed, ImplGraph, ImplGraphMut, Constrainer, Graph, AddEdge, NewVertex, Edge};
-use crate::mock_graph::arbitrary::{GuidedArbGraph, Limit, ArbEdgeIn};
+use graphene::core::{Directed, ImplGraph, ImplGraphMut, RemoveEdge, Constrainer, Graph, AddEdge, NewVertex, Edge};
+use crate::mock_graph::arbitrary::{GuidedArbGraph, Limit, ArbEdgeIn, ArbTwoVerticesIn, ArbVertexIn};
 use std::collections::hash_map::RandomState;
 use std::ops::RangeBounds;
 use std::collections::HashSet;
@@ -35,10 +35,10 @@ impl GuidedArbGraph for ArbUnilatralGraph
 								e_range: impl RangeBounds<usize>) -> Self
 	{
 		let (v_min, v_max, e_min, e_max) = Self::validate_ranges(g, v_range, e_range);
-		// If we are asked to make the singleton or empty graph, we just do
-		if v_max <= 2 {
+		// If we are asked to make the empty graph, we just do
+		if v_max <= 1{
 			return Self(UnilaterallyConnectedGraph::new(MockGraph::arbitrary_guided(g,
-				v_min..v_max, e_min..e_max)))
+				v_min..v_max, v_min..v_max)))
 		}
 		
 		// If the exact size of the graph hasn't been decided yet, do so.
@@ -48,43 +48,57 @@ impl GuidedArbGraph for ArbUnilatralGraph
 		}
 		
 		let mut graph;
-		// If the target is exactly 2 vertices, just create it
-		if v_min == 2 {
+		let v;
+		// If the target is exactly 1 vertex, just create it
+		if v_min == 1 {
 			graph = MockGraph::empty();
-			
-			let v1 = graph.new_vertex_weighted(MockVertexWeight::arbitrary(g)).unwrap();
-			let v2 = graph.new_vertex_weighted(MockVertexWeight::arbitrary(g)).unwrap();
-			
-			// Create a path between the edges to guarantee unilateralism.
-			if g.gen_bool(0.5) {
-				graph.add_edge_weighted((v1,v2,MockEdgeWeight::arbitrary(g))).unwrap();
-			} else {
-				graph.add_edge_weighted((v2,v1,MockEdgeWeight::arbitrary(g))).unwrap();
-			}
-			
-			// Randomly add another edge
-			if g.gen_bool(0.5) {
-				if g.gen_bool(0.5) {
-					graph.add_edge_weighted((v1,v2,MockEdgeWeight::arbitrary(g))).unwrap();
-				} else {
-					graph.add_edge_weighted((v2,v1,MockEdgeWeight::arbitrary(g))).unwrap();
-				}
-			}
-			
+			v = graph.new_vertex_weighted(MockVertexWeight::arbitrary(g)).unwrap();
 		} else {
 			// For larger graphs, we start by making a unilateral graph with 1 less vertex
 			// and get an edge
-			let ArbEdgeIn(graph, edge) = ArbEdgeIn::<Self>::
-				arbitrary_guided(g, v_min-1..v_min, e_min..e_max);
-			let mut graph = graph.0.unconstrain_single();
+			let arb = ArbVertexIn::<Self>::arbitrary_guided(g, v_min-1..v_min, e_min..e_max);
+			graph = (arb.0).0.unconstrain_single();
+			let v_original = arb.1;
 			
 			// Add a new vertex to the graph
-			let v = graph.new_vertex_weighted(MockVertexWeight::arbitrary(g)).unwrap();
+			v = graph.new_vertex_weighted(MockVertexWeight::arbitrary(g)).unwrap();
 			
-			// Break the edge between the existing vertices, and substiture it with a path that
-			// connects the existing vertices through the new vertex.
-			
-			unimplemented!()
+			// Add an edge to/from the new and old vertices
+			if g.gen_bool(0.5) {
+				// To ensure unilateralism, take all outgoing edges from the original vertex
+				// and move them to the new one.
+				let outgoing_sinks  = graph.edges_sourced_in(v_original)
+					.map(|e|  e.sink()).collect::<Vec<_>>();
+				for sink in outgoing_sinks {
+					let weight = graph.remove_edge((v_original, sink)).unwrap();
+					graph.add_edge_weighted((v, sink, weight)).unwrap();
+				}
+				
+				graph.add_edge_weighted((v_original, v, MockEdgeWeight::arbitrary(g))).unwrap();
+			} else {
+				// To ensure unilateralism, take all the incoming edges from the original vertex
+				// and move them to the new one.
+				let sources  = graph.edges_sinked_in(v_original)
+					.map(|e|  e.source()).collect::<Vec<_>>();
+				for source in sources {
+					let weight = graph.remove_edge((source, v_original)).unwrap();
+					graph.add_edge_weighted((source, v, weight)).unwrap();
+				}
+				
+				graph.add_edge_weighted((v, v_original, MockEdgeWeight::arbitrary(g))).unwrap();
+				
+			}
+		}
+		
+		// We now randomly create additional edges from/to the new vertex
+		let p = 0.5/(v_min as f64);
+		for v_other in graph.all_vertices().collect::<Vec<_>>() {
+			if g.gen_bool(p) {
+				graph.add_edge_weighted((v, v_other, MockEdgeWeight::arbitrary(g))).unwrap();
+			}
+			if g.gen_bool(p) {
+				graph.add_edge_weighted((v_other, v, MockEdgeWeight::arbitrary(g))).unwrap();
+			}
 		}
 		
 		Self(UnilaterallyConnectedGraph::new(graph))
