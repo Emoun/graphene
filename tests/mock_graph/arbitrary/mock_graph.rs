@@ -1,10 +1,11 @@
 use quickcheck::{Arbitrary, Gen};
 use crate::mock_graph::{MockVertex, MockT, MockGraph, MockVertexWeight, MockEdgeWeight};
-use graphene::core::{Directedness, Graph, NewVertex, AddEdge, RemoveVertex, RemoveEdge};
+use graphene::core::{Directedness, Constrainer, Graph, NewVertex, AddEdge, RemoveVertex, RemoveEdge, EdgeWeighted, Edge, EdgeDeref};
 use rand::Rng;
 use crate::mock_graph::arbitrary::{GuidedArbGraph, Limit};
 use std::ops::{RangeBounds};
 use std::collections::HashSet;
+use graphene::core::constraint::DirectedGraph;
 
 impl Arbitrary for MockVertex
 {
@@ -152,4 +153,125 @@ impl<D: Directedness> Arbitrary for MockGraph<D>
 	fn shrink(&self) -> Box<dyn Iterator<Item=Self>> {
 		self.shrink_guided(HashSet::new())
 	}
+}
+
+impl<D: Directedness> MockGraph<D> {
+	///
+	/// Performs Depth First Search recursively tracking which vertices have been
+	/// visited in the 'visited' argument.
+	///
+	/// If given, will stop when the 'end' is visited.
+	/// Returns whether 'end' was visited and false if 'end' isn't given or wasn't visited.
+	///
+	pub fn dfs_rec(&self, start: MockVertex, end: Option<MockVertex>, visited: &mut Vec<MockVertex>)
+		-> bool
+	{
+		if let Some(end) = end {
+			if start == end {
+				return true
+			}
+		}
+		visited.push(start);
+		if D::directed() {
+			for e in self.edges_incident_on(start).filter(|e| e.source() == start) {
+				if !visited.contains(&e.sink()) {
+					if self.dfs_rec(e.sink(), end, visited) {
+						return true //early return of 'end' is found
+					}
+				}
+			}
+		} else {
+			for e in self.edges_incident_on(start) {
+				let v_other = if e.source() == start {e.sink()} else {e.source()};
+				if !visited.contains(&v_other) {
+					self.dfs_rec(v_other, end, visited);
+				}
+			}
+		}
+		false
+	}
+	
+	///
+	/// Shrinks the graph by removing an edge, as long as the given closure succeeds
+	/// on the resulting graph.
+	///
+	/// Adds all the shrunk graphs into the given vec.
+	///
+	pub fn shrink_by_removing_edge<F>(&self, limits: &HashSet<Limit>, result: &mut Vec<Self>, f: F)
+		where
+			F: Fn(&Self) -> bool,
+	{
+		if	!limits.contains(&Limit::EdgeRemove) &&
+			!limits.contains(&Limit::EdgeMin(self.all_edges().count()))
+		{
+			result.extend(
+				self.all_edges()
+					.map(|e| {
+						let mut g = self.clone();
+						g.remove_edge_where_weight(e, |w| w == e.weight()).unwrap();
+						g
+					})
+					.filter(|g| f(&g))
+			);
+		}
+	}
+	
+	///
+	/// Shrinks the graph by removing a vertex and replacing it with edges, such that all paths
+	/// that went through the removed vertex are still there.
+	///
+	/// Adds all the shrunk graphs into the given vec.
+	///
+	pub fn shrink_by_replacing_vertex_with_edges(&self,
+	 	limits: &HashSet<Limit>, result: &mut Vec<Self>)
+	{
+		if	!limits.contains(&Limit::VertexRemove) &&
+			!limits.contains(&Limit::EdgeRemove) &&
+			!limits.contains(&Limit::VertexMin(self.all_vertices().count()))
+		{
+			for v in self.all_vertices().filter(|v| !limits.contains(&Limit::VertexKeep(*v))) {
+				let mut clone = self.clone();
+				clone.remove_vertex(v).unwrap();
+				if let Ok(g) = DirectedGraph::constrain_single(self) {
+					for (sink, w1) in g.edges_sourced_in(v).map(|e| (e.sink(), e.weight_owned())) {
+						if sink == v { continue }
+						for (source, w2) in g.edges_sinked_in(v).map(|e| (e.source(), e.weight_owned())) {
+							if source == v { continue }
+							clone.add_edge_weighted((source, sink, w1.clone())).unwrap();
+							clone.add_edge_weighted((source, sink, w2.clone())).unwrap();
+						}
+					}
+				} else {
+					let neighbors: Vec<_> = self.edges_incident_on(v)
+						.map(|e| (e.other(v), e.weight_owned())).collect();
+					let mut neighbor_iter = neighbors.iter();
+					while let Some(&(v1, w1)) = neighbor_iter.next() {
+						if v1 == v { continue }
+						let rest = neighbor_iter.clone();
+						for &(v2, w2) in rest {
+							if v2 == v { continue }
+							clone.add_edge_weighted((v1, v2, w1.clone())).unwrap();
+							clone.add_edge_weighted((v1, v2, w2.clone())).unwrap();
+						}
+					}
+				}
+				result.push(clone);
+			}
+		}
+	}
+	
+	///
+	/// Shrinks the graph values, not removing any vertices or edges
+	///
+	pub fn shrink_values(&self, limits: &HashSet<Limit>, result: &mut Vec<Self>)
+	{
+		let mut limits = limits.clone();
+		limits.insert(Limit::EdgeRemove);
+		limits.insert(Limit::VertexRemove);
+		result.extend(
+			self.clone().shrink_guided(limits)
+		);
+	}
+	
+	
 }

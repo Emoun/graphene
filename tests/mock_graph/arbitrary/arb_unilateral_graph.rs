@@ -1,12 +1,34 @@
 use graphene::core::constraint::UnilaterallyConnectedGraph;
 use crate::mock_graph::{MockGraph, MockEdgeWeight, MockVertexWeight};
 use graphene::core::{Directed, ImplGraph, ImplGraphMut, RemoveEdge, Constrainer, Graph, AddEdge, NewVertex, Edge};
-use crate::mock_graph::arbitrary::{GuidedArbGraph, Limit, ArbEdgeIn, ArbTwoVerticesIn, ArbVertexIn};
-use std::collections::hash_map::RandomState;
+use crate::mock_graph::arbitrary::{GuidedArbGraph, Limit, ArbVertexIn};
 use std::ops::RangeBounds;
 use std::collections::HashSet;
 use quickcheck::{Gen, Arbitrary};
 use rand::Rng;
+
+fn is_unilateral(graph: &MockGraph<Directed>) -> bool
+{
+	let v_all = graph.all_vertices().collect::<Vec<_>>();
+	let v_count = v_all.len();
+	
+	if v_count <= 1 {
+		// Trivial cases.
+		return true
+	}
+	
+	let mut iter = v_all.iter();
+	while let Some(v1) = iter.next() {
+		let rest = iter.clone();
+		for v2 in rest {
+			if 	!graph.dfs_rec(*v1, Some(*v2), &mut Vec::new()) &&
+				!graph.dfs_rec(*v2, Some(*v1), &mut Vec::new()) {
+				return false;
+			}
+		}
+	}
+	true
+}
 
 ///
 /// An arbitrary graph that is unilaterally connected
@@ -86,12 +108,11 @@ impl GuidedArbGraph for ArbUnilatralGraph
 				}
 				
 				graph.add_edge_weighted((v, v_original, MockEdgeWeight::arbitrary(g))).unwrap();
-				
 			}
 		}
 		
 		// We now randomly create additional edges from/to the new vertex
-		let p = 0.5/(v_min as f64);
+		let p = 0.25/(v_min as f64);
 		for v_other in graph.all_vertices().collect::<Vec<_>>() {
 			if g.gen_bool(p) {
 				graph.add_edge_weighted((v, v_other, MockEdgeWeight::arbitrary(g))).unwrap();
@@ -104,8 +125,19 @@ impl GuidedArbGraph for ArbUnilatralGraph
 		Self(UnilaterallyConnectedGraph::new(graph))
 	}
 	
-	fn shrink_guided(&self, _limits: HashSet<Limit, RandomState>) -> Box<dyn Iterator<Item=Self>> {
-		unimplemented!()
+	fn shrink_guided(&self, limits: HashSet<Limit>) -> Box<dyn Iterator<Item=Self>>
+	{
+		let mut result = Vec::new();
+		let graph = self.0.clone().unconstrain_single();
+		
+		// Shrink by removing any edge that isn't critical for unilateralism
+		graph.shrink_by_removing_edge(&limits, &mut result,	is_unilateral);
+		
+		graph.shrink_by_replacing_vertex_with_edges(&limits, &mut result);
+		
+		graph.shrink_values(&limits, &mut result);
+		
+		Box::new(result.into_iter().map(|g| Self(UnilaterallyConnectedGraph::new(g))))
 	}
 }
 
@@ -113,6 +145,7 @@ impl Arbitrary for ArbUnilatralGraph
 {
 	fn arbitrary<G: Gen>(g: &mut G) -> Self {
 		let graph = Self::arbitrary_guided(g, .., ..).0.unconstrain_single();
+//		assert!(is_unilateral(&graph));
 		Self(UnilaterallyConnectedGraph::new(graph))
 	}
 	

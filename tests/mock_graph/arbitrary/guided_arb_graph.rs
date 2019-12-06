@@ -4,7 +4,7 @@ use std::collections::HashSet;
 use crate::mock_graph::MockVertex;
 
 #[allow(dead_code)]
-#[derive(PartialEq, Eq, Hash)]
+#[derive(PartialEq, Eq, Hash, Copy, Clone)]
 pub enum Limit {
 	/// Shrinkages shouldn't remove any vertices
 	VertexRemove,

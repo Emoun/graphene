@@ -13,7 +13,7 @@ pub trait ImplGraphMut: ImplGraph {
 /// with fixed constraints that cannot be removed.
 ///
 /// This can be further constrained, but cannot be unconstrained.
-/// `Constrainer` is automatically implemented for any graph that implments this trait,
+/// `Constrainer` is automatically implemented for any graph that implements this trait,
 /// however `Constrainer`'s methods do nothing, returning the same object.
 /// Conceptually, a base graph is its own constrainer.
 ///
