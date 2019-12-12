@@ -1,5 +1,6 @@
 use crate::core::{Directed, Graph, Constrainer, ImplGraph, ImplGraphMut, GraphMut, RemoveVertex, AddEdge, EdgeWeighted, RemoveEdge, Directedness};
 use crate::core::constraint::{Connected, Unique};
+use crate::algo::DFS;
 
 ///
 /// A marker trait for graphs that are unilaterally connected.
@@ -61,7 +62,23 @@ impl<C: Constrainer> Constrainer for UnilaterallyConnectedGraph<C>
 	type Constrained = C;
 	
 	fn constrain_single(c: Self::Constrained) -> Result<Self, ()>{
-		unimplemented!()
+		// TODO: An efficient algorithm: https://stackoverflow.com/questions/30642383/determine-if-a-graph-is-semi-connected-or-not
+		
+		let graph = c.graph();
+		
+		let verts = graph.all_vertices().collect::<Vec<_>>();
+		let mut iter = verts.iter();
+		
+		while let Some(&v1) = iter.next() {
+			let iter_rest = iter.clone();
+			for &v2 in iter_rest {
+				if !DFS::new(graph, v1).any(|v| v == v2) && !DFS::new(graph, v2).any(|v| v == v1) {
+					return Err(())
+				}
+			}
+		}
+		
+		Ok(Self::new(c))
 	}
 	
 	fn unconstrain_single(self) -> Self::Constrained{

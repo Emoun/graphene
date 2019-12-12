@@ -154,6 +154,109 @@ impl Arbitrary for ArbUnilatralGraph
 	}
 }
 
+///
+/// An arbitrary graph that is not unilaterally connected
+///
+#[derive(Clone, Debug)]
+pub struct ArbNonUnilatralGraph(pub MockGraph<Directed>);
+
+impl ImplGraph for ArbNonUnilatralGraph
+{
+	type Graph = MockGraph<Directed>;
+	
+	fn graph(&self) -> &Self::Graph {
+		&self.0
+	}
+}
+impl ImplGraphMut for ArbNonUnilatralGraph
+{
+	fn graph_mut(&mut self) -> &mut Self::Graph {
+		&mut self.0
+	}
+}
+
+impl GuidedArbGraph for ArbNonUnilatralGraph
+{
+	fn arbitrary_guided<G: Gen>(g: &mut G, v_range: impl RangeBounds<usize>,
+								e_range: impl RangeBounds<usize>) -> Self
+	{
+		let (v_min, v_max, e_min, e_max) = Self::validate_ranges(g, v_range, e_range);
+		// If we are asked to make the empty or singleton graph, we cant do that (as its trivially unilateral)
+		if v_max <= 2{
+			panic!("Cannot make a non-unilateral graph with at most '{}' vertices (its trivially unilateral).", v_max-1);
+		}
+		
+		// If the exact size of the graph hasn't been decided yet, do so.
+		if (v_min + 1) != v_max {
+			let v_count = g.gen_range(v_min, v_max);
+			return Self::arbitrary_guided(g, v_count..v_count + 1, e_min..e_max)
+		}
+		
+		let mut graph;
+		// If we are asked to make a graph with 2 vertices, we do so directly
+		if v_min == 2 {
+			graph = MockGraph::<Directed>::arbitrary_guided(g, 1..2, e_min/2..e_max/2);
+			let g2 = MockGraph::<Directed>::arbitrary_guided(g, 1..2, e_min/2..e_max/2);
+			graph.join(&g2);
+		} else {
+			// Create two unilateral graphs
+			let g1_count = g.gen_range(1, v_min-1);
+			let g2_count = (v_min-1)-g1_count;
+			
+			let ArbVertexIn(g1, v1) = ArbVertexIn::<ArbUnilatralGraph>
+				::arbitrary_guided(g, g1_count..g1_count+1, e_min/2..e_max/2);
+			let ArbVertexIn(g2, v2) = ArbVertexIn::<ArbUnilatralGraph>
+				::arbitrary_guided(g, g2_count..g2_count+1, e_min/2..e_max/2);
+			graph = g1.0.unconstrain_single();
+			let g2 = g2.0.unconstrain_single();
+			
+			// Join them and add a vertex that is reachable from or can reach both,
+			// but doesn't have a path through it, ensuring the two components can't reach each other.
+			let map = graph.join(&g2);
+			
+			let v = graph.new_vertex_weighted(MockVertexWeight::arbitrary(g)).unwrap();
+			
+			if g.gen_bool(0.5) {
+				graph.add_edge_weighted((v, v1, MockEdgeWeight::arbitrary(g))).unwrap();
+				if g.gen_bool(0.8) {
+					graph.add_edge_weighted((v, map[&v2], MockEdgeWeight::arbitrary(g))).unwrap();
+				}
+			} else {
+				graph.add_edge_weighted((v1, v, MockEdgeWeight::arbitrary(g))).unwrap();
+				if g.gen_bool(0.8) {
+					graph.add_edge_weighted((map[&v2], v, MockEdgeWeight::arbitrary(g))).unwrap();
+				}
+			}
+		}
+		Self(graph)
+	}
+	
+	fn shrink_guided(&self, limits: HashSet<Limit>) -> Box<dyn Iterator<Item=Self>>
+	{
+		let mut result = Vec::new();
+		
+		// We shrink the MockGraph, keeping only the shrunk graphs that are still non-unilateral
+		result.extend(
+			self.0.shrink_guided(limits).filter( |g| !is_unilateral(&g))
+				.map(|g| Self(g))
+		);
+		
+		Box::new(result.into_iter())
+	}
+}
+
+impl Arbitrary for ArbNonUnilatralGraph
+{
+	fn arbitrary<G: Gen>(g: &mut G) -> Self {
+		let graph = Self::arbitrary_guided(g, 2.., ..).0.unconstrain_single();
+		assert!(!is_unilateral(&graph));
+		Self(graph)
+	}
+	
+	fn shrink(&self) -> Box<dyn Iterator<Item=Self>> {
+		self.shrink_guided(HashSet::new())
+	}
+}
 
 
 

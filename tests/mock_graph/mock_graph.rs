@@ -89,6 +89,12 @@ impl<D: Directedness> MockGraph<D> {
 		self.validate()
 	}
 	
+	///
+	/// Inserts the given graph into this one, creating new vertices and edges
+	/// to match.
+	///
+	/// Returns a mapping from the vertex id's in the given graph to their new counterparts
+	///
 	pub fn join<G>(&mut self, other: &G) -> HashMap<MockVertex, MockVertex>
 		where G: Graph<Vertex=MockVertex, VertexWeight=MockEdgeWeight,
 			EdgeWeight=MockEdgeWeight, Directedness=D>
