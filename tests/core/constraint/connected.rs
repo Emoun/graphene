@@ -33,7 +33,17 @@ duplicate_for_directedness! {
 		ConnectedGraph::constrain_single(g.0).is_err()
 	}
 	
-
+	///
+	/// Tests that a ConnectedGraph always accepts adding an edge.
+	#[quickcheck]
+	fn accept_add_edge_weighted(ArbTwoVerticesIn(mut g,v1,v2):
+		ArbTwoVerticesIn<ArbConnectedGraph<directedness>>,
+		e_weight: MockEdgeWeight)
+		-> bool
+	{
+		g.0.add_edge_weighted((v1,v2, e_weight.clone())).is_ok()
+	}
+	
 	///
 	/// Tests that a ConnectedGraph accepts removing an edge that isn't critical for connectedness
 	///
@@ -98,7 +108,7 @@ duplicate_for_directedness! {
 			graph.add_edge_weighted((v2, v_new, e_weight.clone())).unwrap();
 		}
 		
-		// We add auxiliary graphs from the new vertex to the others
+		// We add auxiliary edges from the new vertex to the others
 		for (idx, v_other) in v_set.into_iter().enumerate() {
 			// just to add some variance
 			if idx%2 == 0 {

@@ -1,7 +1,6 @@
-use crate::core::{Graph, EdgeWeighted, Constrainer, GraphMut, AddEdge, ImplGraph, ImplGraphMut, ReverseGraph, Edge, RemoveVertex, RemoveEdge};
+use crate::core::{Graph, EdgeWeighted, Constrainer, GraphMut, AddEdge, ImplGraph, ImplGraphMut, ReverseGraph, RemoveVertex, RemoveEdge};
 use crate::algo::DFS;
-use crate::core::constraint::{DirectedGraph, UnilaterallyConnected};
-use crate::core::proxy::{EdgeProxyGraph, VertexProxyGraph, ProxyVertex};
+use crate::core::constraint::{DirectedGraph, UnilaterallyConnected, proxy_remove_edge_where, proxy_remove_vertex};
 
 ///
 /// A marker trait for graphs that are connected.
@@ -113,16 +112,7 @@ impl<C: Constrainer + ImplGraphMut> RemoveVertex for ConnectedGraph<C>
 {
 	fn remove_vertex(&mut self, v: Self::Vertex) -> Result<Self::VertexWeight, ()>
 	{
-		let mut proxy = VertexProxyGraph::new(&mut *self);
-		
-		proxy.remove_vertex(ProxyVertex::Underlying(v))
-			.expect("Couldn't remove a vertex from the proxy");
-		
-		if let Ok(_) = ConnectedGraph::constrain_single(proxy) {
-			self.0.graph_mut().remove_vertex(v)
-		} else {
-			Err(())
-		}
+		proxy_remove_vertex::<ConnectedGraph<_>,_>(self.0.graph_mut(), v)
 	}
 }
 
@@ -143,22 +133,7 @@ impl<C: Constrainer + ImplGraphMut> RemoveEdge for ConnectedGraph<C>
 		-> Result<(Self::Vertex, Self::Vertex, Self::EdgeWeight), ()>
 		where F: Fn((Self::Vertex, Self::Vertex, &Self::EdgeWeight)) -> bool
 	{
-		let to_remove = self.all_edges().find(|&e| f(e)).map(|e| (e.source(), e.sink()));
-		let proxy =
-			if let Some(e) = to_remove {
-				// We must create a new &mut, otherwise 'self' is moved and unavailable afterwards
-				let mut proxy = EdgeProxyGraph::new(&mut (*self));
-				proxy.remove_edge((e.source(), e.sink()))?;
-				proxy
-			} else {
-				return Err(())
-			};
-		
-		if ConnectedGraph::constrain_single(proxy).is_ok() {
-			self.0.graph_mut().remove_edge_where(f)
-		} else {
-			Err(())
-		}
+		proxy_remove_edge_where::<ConnectedGraph<_>,_,_>(self.0.graph_mut(), f)
 	}
 }
 

@@ -181,15 +181,22 @@ impl GuidedArbGraph for ArbNonUnilatralGraph
 								e_range: impl RangeBounds<usize>) -> Self
 	{
 		let (v_min, v_max, e_min, e_max) = Self::validate_ranges(g, v_range, e_range);
-		// If we are asked to make the empty or singleton graph, we cant do that (as its trivially unilateral)
-		if v_max <= 2{
-			panic!("Cannot make a non-unilateral graph with at most '{}' vertices (its trivially unilateral).", v_max-1);
-		}
 		
 		// If the exact size of the graph hasn't been decided yet, do so.
 		if (v_min + 1) != v_max {
+			
+			// Ensure we only try to create graphs with 2 <= vertices, as any smaller is trivially
+			// unilateral.
+			let (v_min, v_max) = if v_min >= 2 { (v_min, v_max) }
+				else { (2, if v_max > 2 { v_max } else { 3 } )};
+			
 			let v_count = g.gen_range(v_min, v_max);
 			return Self::arbitrary_guided(g, v_count..v_count + 1, e_min..e_max)
+		}
+		
+		// If we are asked to make the empty or singleton graph, we cant do that (as its trivially unilateral)
+		if v_max <= 2{
+			panic!("Cannot make a non-unilateral graph with at most '{}' vertices (its trivially unilateral).", v_max-1);
 		}
 		
 		let mut graph;
@@ -199,10 +206,11 @@ impl GuidedArbGraph for ArbNonUnilatralGraph
 			let g2 = MockGraph::<Directed>::arbitrary_guided(g, 1..2, e_min/2..e_max/2);
 			graph.join(&g2);
 		} else {
+
 			// Create two unilateral graphs
 			let g1_count = g.gen_range(1, v_min-1);
 			let g2_count = (v_min-1)-g1_count;
-			
+
 			let ArbVertexIn(g1, v1) = ArbVertexIn::<ArbUnilatralGraph>
 				::arbitrary_guided(g, g1_count..g1_count+1, e_min/2..e_max/2);
 			let ArbVertexIn(g2, v2) = ArbVertexIn::<ArbUnilatralGraph>
@@ -248,7 +256,7 @@ impl GuidedArbGraph for ArbNonUnilatralGraph
 impl Arbitrary for ArbNonUnilatralGraph
 {
 	fn arbitrary<G: Gen>(g: &mut G) -> Self {
-		let graph = Self::arbitrary_guided(g, 2.., ..).0.unconstrain_single();
+		let graph = Self::arbitrary_guided(g, .., ..).0.unconstrain_single();
 		assert!(!is_unilateral(&graph));
 		Self(graph)
 	}

@@ -1,5 +1,5 @@
-use crate::core::{Directed, Graph, Constrainer, ImplGraph, ImplGraphMut, GraphMut, RemoveVertex, AddEdge, EdgeWeighted, RemoveEdge, Directedness};
-use crate::core::constraint::{Connected, Unique};
+use crate::core::{Directed, Graph, Constrainer, ImplGraph, ImplGraphMut, GraphMut, RemoveVertex, AddEdge, EdgeWeighted, RemoveEdge};
+use crate::core::constraint::{proxy_remove_edge_where, proxy_remove_vertex};
 use crate::algo::DFS;
 
 ///
@@ -125,11 +125,11 @@ impl<C: Constrainer + ImplGraphMut> GraphMut for UnilaterallyConnectedGraph<C>
 }
 
 impl<C: Constrainer + ImplGraphMut> RemoveVertex for UnilaterallyConnectedGraph<C>
-	where C::Graph: Graph<Directedness=Directed>
+	where C::Graph: RemoveVertex<Directedness=Directed>
 {
 	fn remove_vertex(&mut self, v: Self::Vertex) -> Result<Self::VertexWeight, ()>
 	{
-		unimplemented!()
+		proxy_remove_vertex::<UnilaterallyConnectedGraph<_>,_>(self.0.graph_mut(), v)
 	}
 }
 
@@ -147,10 +147,10 @@ impl<C: Constrainer + ImplGraphMut> RemoveEdge for UnilaterallyConnectedGraph<C>
 	where C::Graph: RemoveEdge<Directedness=Directed>
 {
 	fn remove_edge_where<F>(&mut self, f: F)
-							-> Result<(Self::Vertex, Self::Vertex, Self::EdgeWeight), ()>
+		-> Result<(Self::Vertex, Self::Vertex, Self::EdgeWeight), ()>
 		where F: Fn((Self::Vertex, Self::Vertex, &Self::EdgeWeight)) -> bool
 	{
-		unimplemented!()
+		proxy_remove_edge_where::<UnilaterallyConnectedGraph<_>,_,_>(self.0.graph_mut(), f)
 	}
 }
 
