@@ -167,7 +167,3 @@ impl<C: Constrainer> Unique for UniqueGraph<C>{}
 impl_constraints!{
 	UniqueGraph<C>: Unique
 }
-
-//impl<C: Constrainer> UnilaterallyConnected for UniqueGraph<C>
-//	where C::Graph: UnilaterallyConnected
-//{}

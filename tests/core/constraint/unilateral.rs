@@ -5,7 +5,7 @@
 use graphene::core::{
 	Constrainer,AddEdge, RemoveEdge, Edge, Directed, NewVertex, RemoveVertex,
 	constraint::{
-	 UnilaterallyConnectedGraph
+		UnilateralGraph
 	},
 };
 use crate::mock_graph::arbitrary::{ArbUnilatralGraph, ArbNonUnilatralGraph, ArbTwoVerticesIn, ArbVertexIn, ArbConnectedGraph, ArbVerticesIn};
@@ -17,7 +17,7 @@ use crate::mock_graph::{MockEdgeWeight, MockVertexWeight};
 #[quickcheck]
 fn accept_unilateral(g: ArbUnilatralGraph) -> bool
 {
-	UnilaterallyConnectedGraph::constrain_single(g.0.unconstrain()).is_ok()
+	UnilateralGraph::constrain_single(g.0.unconstrain()).is_ok()
 }
 
 ///
@@ -26,7 +26,7 @@ fn accept_unilateral(g: ArbUnilatralGraph) -> bool
 #[quickcheck]
 fn reject_unilateral(g: ArbNonUnilatralGraph) -> bool
 {
-	UnilaterallyConnectedGraph::constrain_single(g.0).is_err()
+	UnilateralGraph::constrain_single(g.0).is_err()
 }
 
 ///
@@ -73,7 +73,7 @@ fn reject_remove_edge_where(
 	// We then connect the two components with 1 edge, making in unilateral.
 	graph.add_edge_weighted((v1,v_map[&v2], e_weight.clone())).unwrap();
 	
-	let mut unilateral = UnilaterallyConnectedGraph::constrain_single(graph).unwrap();
+	let mut unilateral = UnilateralGraph::constrain_single(graph).unwrap();
 	
 	// We now try to remove the the added edge
 	unilateral.remove_edge_where(|e| (e.source() == v1 && e.sink() == v_map[&v2])).is_err()
@@ -112,7 +112,7 @@ fn accept_remove_vertex(
 	}
 	
 	// We then try to remove the vertex again
-	UnilaterallyConnectedGraph::new(graph).remove_vertex(v_new).is_ok()
+	UnilateralGraph::new(graph).remove_vertex(v_new).is_ok()
 }
 
 /// Tests that a UnilateralGraph rejects removing a vertex if it renders the graph non-unilateral
@@ -135,7 +135,7 @@ fn reject_remove_vertex(
 	graph.add_edge_weighted((v1,new_v, e_weight.clone())).unwrap();
 	graph.add_edge_weighted((new_v,v_map[&v2], e_weight.clone())).unwrap();
 	
-	let mut unilateral = UnilaterallyConnectedGraph::constrain_single(graph).unwrap();
+	let mut unilateral = UnilateralGraph::constrain_single(graph).unwrap();
 	
 	// We now try to remove the the added vertex
 	unilateral.remove_vertex(new_v).is_err()

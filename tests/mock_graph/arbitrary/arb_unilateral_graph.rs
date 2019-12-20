@@ -1,4 +1,4 @@
-use graphene::core::constraint::UnilaterallyConnectedGraph;
+use graphene::core::constraint::UnilateralGraph;
 use crate::mock_graph::{MockGraph, MockEdgeWeight, MockVertexWeight};
 use graphene::core::{Directed, ImplGraph, ImplGraphMut, RemoveEdge, Constrainer, Graph, AddEdge, NewVertex, Edge};
 use crate::mock_graph::arbitrary::{GuidedArbGraph, Limit, ArbVertexIn};
@@ -34,11 +34,11 @@ fn is_unilateral(graph: &MockGraph<Directed>) -> bool
 /// An arbitrary graph that is unilaterally connected
 ///
 #[derive(Clone, Debug)]
-pub struct ArbUnilatralGraph(pub UnilaterallyConnectedGraph<MockGraph<Directed>>);
+pub struct ArbUnilatralGraph(pub UnilateralGraph<MockGraph<Directed>>);
 
 impl ImplGraph for ArbUnilatralGraph
 {
-	type Graph = UnilaterallyConnectedGraph<MockGraph<Directed>>;
+	type Graph = UnilateralGraph<MockGraph<Directed>>;
 	
 	fn graph(&self) -> &Self::Graph {
 		&self.0
@@ -59,8 +59,8 @@ impl GuidedArbGraph for ArbUnilatralGraph
 		let (v_min, v_max, e_min, e_max) = Self::validate_ranges(g, v_range, e_range);
 		// If we are asked to make the empty graph, we just do
 		if v_max <= 1{
-			return Self(UnilaterallyConnectedGraph::new(MockGraph::arbitrary_guided(g,
-				v_min..v_max, v_min..v_max)))
+			return Self(UnilateralGraph::new(MockGraph::arbitrary_guided(g,
+																		 v_min..v_max, v_min..v_max)))
 		}
 		
 		// If the exact size of the graph hasn't been decided yet, do so.
@@ -122,7 +122,7 @@ impl GuidedArbGraph for ArbUnilatralGraph
 			}
 		}
 		
-		Self(UnilaterallyConnectedGraph::new(graph))
+		Self(UnilateralGraph::new(graph))
 	}
 	
 	fn shrink_guided(&self, limits: HashSet<Limit>) -> Box<dyn Iterator<Item=Self>>
@@ -137,7 +137,7 @@ impl GuidedArbGraph for ArbUnilatralGraph
 		
 		graph.shrink_values(&limits, &mut result);
 		
-		Box::new(result.into_iter().map(|g| Self(UnilaterallyConnectedGraph::new(g))))
+		Box::new(result.into_iter().map(|g| Self(UnilateralGraph::new(g))))
 	}
 }
 
@@ -146,7 +146,7 @@ impl Arbitrary for ArbUnilatralGraph
 	fn arbitrary<G: Gen>(g: &mut G) -> Self {
 		let graph = Self::arbitrary_guided(g, .., ..).0.unconstrain_single();
 //		assert!(is_unilateral(&graph));
-		Self(UnilaterallyConnectedGraph::new(graph))
+		Self(UnilateralGraph::new(graph))
 	}
 	
 	fn shrink(&self) -> Box<dyn Iterator<Item=Self>> {

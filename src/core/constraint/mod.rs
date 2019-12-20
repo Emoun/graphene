@@ -9,7 +9,7 @@ mod reflexive;
 mod connected;
 mod directed_constraint;
 mod undirected_constraint;
-mod unilaterally_connected;
+mod unilateral;
 
 pub use self::{
 	impl_constraints::*,
@@ -19,7 +19,7 @@ pub use self::{
 	connected::*,
 	directed_constraint::*,
 	undirected_constraint::*,
-	unilaterally_connected::*,
+	unilateral::*,
 };
 use crate::core::{RemoveEdge, Edge, Constrainer, RemoveVertex};
 use crate::core::proxy::{EdgeProxyGraph, VertexProxyGraph, ProxyVertex};

@@ -12,20 +12,20 @@ use crate::algo::DFS;
 ///
 /// The distinction between unilaterally and strongly connected only exists for directed graphs,
 /// for undirected ones, they are equal. For this reason, the companion constrainer graph
-/// `UnilaterallyConnectedGraph` only allows directed graphs. For undirected graph, simply use
+/// `UnilateralGraph` only allows directed graphs. For undirected graph, simply use
 /// `ConnectedGraph`.
 ///
 /// For type safety reasons, the trait itself does not restrict directedness.
 ///
-pub trait UnilaterallyConnected: Graph
+pub trait Unilateral: Graph
 {}
 
 #[derive(Clone, Debug)]
-pub struct UnilaterallyConnectedGraph<C: Constrainer>(C)
+pub struct UnilateralGraph<C: Constrainer>(C)
 	where C::Graph: Graph<Directedness=Directed>
 ;
 
-impl<C: Constrainer> UnilaterallyConnectedGraph<C>
+impl<C: Constrainer> UnilateralGraph<C>
 	where C::Graph: Graph<Directedness=Directed>
 {
 	///
@@ -39,7 +39,7 @@ impl<C: Constrainer> UnilaterallyConnectedGraph<C>
 	}
 }
 
-impl<C: Constrainer> ImplGraph for UnilaterallyConnectedGraph<C>
+impl<C: Constrainer> ImplGraph for UnilateralGraph<C>
 	where C::Graph: Graph<Directedness=Directed>
 {
 	type Graph = Self;
@@ -48,14 +48,14 @@ impl<C: Constrainer> ImplGraph for UnilaterallyConnectedGraph<C>
 		self
 	}
 }
-impl<C: Constrainer> ImplGraphMut for UnilaterallyConnectedGraph<C>
+impl<C: Constrainer> ImplGraphMut for UnilateralGraph<C>
 	where C::Graph: Graph<Directedness=Directed>
 {
 	fn graph_mut(&mut self) -> &mut Self::Graph {
 		self
 	}
 }
-impl<C: Constrainer> Constrainer for UnilaterallyConnectedGraph<C>
+impl<C: Constrainer> Constrainer for UnilateralGraph<C>
 	where C::Graph: Graph<Directedness=Directed>
 {
 	type Base = C::Base;
@@ -86,7 +86,7 @@ impl<C: Constrainer> Constrainer for UnilaterallyConnectedGraph<C>
 	}
 }
 
-impl<C: Constrainer> Graph for UnilaterallyConnectedGraph<C>
+impl<C: Constrainer> Graph for UnilateralGraph<C>
 	where C::Graph: Graph<Directedness=Directed>
 {
 	type Vertex = <C::Graph as Graph>::Vertex;
@@ -107,7 +107,7 @@ impl<C: Constrainer> Graph for UnilaterallyConnectedGraph<C>
 	}
 }
 
-impl<C: Constrainer + ImplGraphMut> GraphMut for UnilaterallyConnectedGraph<C>
+impl<C: Constrainer + ImplGraphMut> GraphMut for UnilateralGraph<C>
 	where C::Graph: GraphMut<Directedness=Directed>
 {
 	fn all_vertices_weighted_mut<'a>(&'a mut self) -> Box<dyn 'a + Iterator<Item=
@@ -124,16 +124,16 @@ impl<C: Constrainer + ImplGraphMut> GraphMut for UnilaterallyConnectedGraph<C>
 	
 }
 
-impl<C: Constrainer + ImplGraphMut> RemoveVertex for UnilaterallyConnectedGraph<C>
+impl<C: Constrainer + ImplGraphMut> RemoveVertex for UnilateralGraph<C>
 	where C::Graph: RemoveVertex<Directedness=Directed>
 {
 	fn remove_vertex(&mut self, v: Self::Vertex) -> Result<Self::VertexWeight, ()>
 	{
-		proxy_remove_vertex::<UnilaterallyConnectedGraph<_>,_>(self.0.graph_mut(), v)
+		proxy_remove_vertex::<UnilateralGraph<_>,_>(self.0.graph_mut(), v)
 	}
 }
 
-impl<C: Constrainer + ImplGraphMut> AddEdge for UnilaterallyConnectedGraph<C>
+impl<C: Constrainer + ImplGraphMut> AddEdge for UnilateralGraph<C>
 	where C::Graph: AddEdge<Directedness=Directed>
 {
 	fn add_edge_weighted<E>(&mut self, e: E) -> Result<(), ()>
@@ -143,23 +143,23 @@ impl<C: Constrainer + ImplGraphMut> AddEdge for UnilaterallyConnectedGraph<C>
 	}
 }
 
-impl<C: Constrainer + ImplGraphMut> RemoveEdge for UnilaterallyConnectedGraph<C>
+impl<C: Constrainer + ImplGraphMut> RemoveEdge for UnilateralGraph<C>
 	where C::Graph: RemoveEdge<Directedness=Directed>
 {
 	fn remove_edge_where<F>(&mut self, f: F)
 		-> Result<(Self::Vertex, Self::Vertex, Self::EdgeWeight), ()>
 		where F: Fn((Self::Vertex, Self::Vertex, &Self::EdgeWeight)) -> bool
 	{
-		proxy_remove_edge_where::<UnilaterallyConnectedGraph<_>,_,_>(self.0.graph_mut(), f)
+		proxy_remove_edge_where::<UnilateralGraph<_>,_,_>(self.0.graph_mut(), f)
 	}
 }
 
-impl<C: Constrainer> UnilaterallyConnected for UnilaterallyConnectedGraph<C>
+impl<C: Constrainer> Unilateral for UnilateralGraph<C>
 	where C::Graph: Graph<Directedness=Directed>
 {}
 
 impl_constraints!{
-	UnilaterallyConnectedGraph<C>: UnilaterallyConnected
+	UnilateralGraph<C>: Unilateral
 	where C::Graph: Graph<Directedness=Directed>
 }
 

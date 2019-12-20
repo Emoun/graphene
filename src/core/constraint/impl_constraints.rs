@@ -6,7 +6,7 @@
 /// name of the trait.
 ///
 /// Supported constraint traits:
-/// Directed, Undirected, Unique, NoLoops, Reflexive, UnilaterallyConnected, Connected
+/// Directed, Undirected, Unique, NoLoops, Reflexive, Unilateral, Connected
 ///
 #[macro_export]
 macro_rules! impl_constraints {
@@ -55,11 +55,11 @@ macro_rules! impl_constraints {
 			Reflexive
 		}
 
-		// UnilaterallyConnected
+		// Unilateral
 		impl_constraints!{
 			@inner
 			$struct<$generic_graph>: [$($trait)*]
-			$([$($bounds)*])? UnilaterallyConnected
+			$([$($bounds)*])? Unilateral
 		}
 
 		// Connected
