@@ -1,5 +1,5 @@
 use crate::core::{Graph, EdgeWeighted, Constrainer, GraphMut, AddEdge, ImplGraph, ImplGraphMut, ReverseGraph, RemoveVertex, RemoveEdge};
-use crate::algo::DFS;
+use crate::algo::{DFS};
 use crate::core::constraint::{DirectedGraph, Unilateral, proxy_remove_edge_where, proxy_remove_vertex};
 
 ///
@@ -49,12 +49,12 @@ impl<C: Constrainer> Constrainer for ConnectedGraph<C>
 		
 		if v_count > 0 {
 			let v = g.all_vertices().next().unwrap();
-			let dfs_count = DFS::new(g, v).count();
+			let dfs_count = DFS::new(g, v, |_|{}).count();
 			if dfs_count == v_count {
 				// If its undirected, no more needs to be done
 				if let Ok(g) = <DirectedGraph<&C::Graph>>::constrain(g) {
 					let reverse = ReverseGraph::new(g);
-					if DFS::new(&reverse, v).count() != v_count {
+					if DFS::new(&reverse, v, |_|{}).count() != v_count {
 						return Err(())
 					}
 				}

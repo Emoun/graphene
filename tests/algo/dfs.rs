@@ -2,11 +2,12 @@
 //! Tests `DFS`
 //!
 
-use crate::mock_graph::{MockGraph, arbitrary::{ArbVertexIn, ArbConnectedGraph}, MockEdgeWeight};
+use crate::mock_graph::{MockGraph, arbitrary::{ArbVertexIn, ArbConnectedGraph}, MockEdgeWeight, MockVertex};
 use graphene::core::{ImplGraph, Graph, Constrainer, AddEdge, Directed};
 use graphene::algo::DFS;
 use std::collections::{ HashSet };
 use crate::mock_graph::arbitrary::ArbVerticesIn;
+use std::cell::Cell;
 
 duplicate_for_directedness!{
 	$directedness
@@ -21,7 +22,7 @@ duplicate_for_directedness!{
 		// Use a set to ensure we only count each vertex once
 		let mut visited = HashSet::new();
 		let mut visited_once = true;
-		DFS::new(mock.graph(), v).for_each(|v|{ visited_once &= visited.insert(v); });
+		DFS::new(mock.graph(), v, |_|{}).for_each(|v|{ visited_once &= visited.insert(v); });
 		
 		// We ensure all vertices were visited, but only once
 		visited.len() == mock.0.all_vertices().count() && visited_once
@@ -42,7 +43,41 @@ duplicate_for_directedness!{
 		let v_map = graph.join(&g2);
 		
 		// Ensure that no visited vertex comes from outside the start component
-		DFS::new(&graph, v).all(|visit| v_map.values().all(|&new_v| visit != new_v))
+		DFS::new(&graph, v, |_|{}).all(|visit| v_map.values().all(|&new_v| visit != new_v))
+	}
+	
+	///
+	/// Tests that the 'on_exit' closure is called in stack order compared to the
+	/// produced vertices.
+	///
+	#[quickcheck]
+	fn on_exit_stack_call_order(
+		ArbVertexIn(mock, v): ArbVertexIn<ArbConnectedGraph<directedness>>)
+		-> bool
+	{
+		let stack: Cell<Vec<MockVertex>> = Cell::new(Vec::new());
+		let mut success = true;
+		DFS::new(mock.graph(), v, |v|{
+				// On exit, check that the same vertex is on top of the stack
+				let mut s = stack.take();
+				if let Some(&v2) = s.last() {
+					if v == v2 {
+						s.pop();
+					} else {
+						success = false;
+					}
+				} else {
+					success = false;
+				}
+				stack.replace(s);
+			})
+			.for_each(|v| {
+				// When a vertex is produced by the DFS, put it on the stack.
+				let mut s = stack.take();
+				s.push(v);
+				stack.replace(s);
+			});
+		success
 	}
 }
 
@@ -75,7 +110,7 @@ fn directed_doesnt_visit_incomming_component(
 	}
 
 	// Ensure that no visited vertex comes from outside the start component
-	DFS::new(&graph, v).all(|visit| v_map.values().all(|&new_v| visit != new_v))
+	DFS::new(&graph, v, |_|{}).all(|visit| v_map.values().all(|&new_v| visit != new_v))
 }
 
 ///
@@ -105,5 +140,5 @@ fn directed_visits_outgoing_component(
 	}
 	
 	// Ensure that all vertices are visited
-	DFS::new(&graph, v).count() == graph.all_vertices().count()
+	DFS::new(&graph, v, |_|{}).count() == graph.all_vertices().count()
 }
