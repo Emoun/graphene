@@ -22,7 +22,7 @@ duplicate_for_directedness!{
 		// Use a set to ensure we only count each vertex once
 		let mut visited = HashSet::new();
 		let mut visited_once = true;
-		DFS::new(mock.graph(), v, |_|{}).for_each(|v|{ visited_once &= visited.insert(v); });
+		DFS::new(mock.graph(), v, &mut |_|{}).for_each(|v|{ visited_once &= visited.insert(v); });
 		
 		// We ensure all vertices were visited, but only once
 		visited.len() == mock.0.all_vertices().count() && visited_once
@@ -43,7 +43,7 @@ duplicate_for_directedness!{
 		let v_map = graph.join(&g2);
 		
 		// Ensure that no visited vertex comes from outside the start component
-		DFS::new(&graph, v, |_|{}).all(|visit| v_map.values().all(|&new_v| visit != new_v))
+		DFS::new(&graph, v, &mut |_|{}).all(|visit| v_map.values().all(|&new_v| visit != new_v))
 	}
 	
 	///
@@ -57,7 +57,7 @@ duplicate_for_directedness!{
 	{
 		let stack: Cell<Vec<MockVertex>> = Cell::new(Vec::new());
 		let mut success = true;
-		DFS::new(mock.graph(), v, |v|{
+		DFS::new(mock.graph(), v, &mut |v|{
 				// On exit, check that the same vertex is on top of the stack
 				let mut s = stack.take();
 				if let Some(&v2) = s.last() {
@@ -110,7 +110,7 @@ fn directed_doesnt_visit_incomming_component(
 	}
 
 	// Ensure that no visited vertex comes from outside the start component
-	DFS::new(&graph, v, |_|{}).all(|visit| v_map.values().all(|&new_v| visit != new_v))
+	DFS::new(&graph, v, &mut |_|{}).all(|visit| v_map.values().all(|&new_v| visit != new_v))
 }
 
 ///
@@ -140,5 +140,5 @@ fn directed_visits_outgoing_component(
 	}
 	
 	// Ensure that all vertices are visited
-	DFS::new(&graph, v, |_|{}).count() == graph.all_vertices().count()
+	DFS::new(&graph, v, &mut |_|{}).count() == graph.all_vertices().count()
 }

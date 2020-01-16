@@ -72,7 +72,7 @@ impl<C: Constrainer> Constrainer for UnilateralGraph<C>
 		while let Some(&v1) = iter.next() {
 			let iter_rest = iter.clone();
 			for &v2 in iter_rest {
-				if !DFS::new(graph, v1, |_|{}).any(|v| v == v2) && !DFS::new(graph, v2, |_|{}).any(|v| v == v1) {
+				if !DFS::new(graph, v1, &mut |_|{}).any(|v| v == v2) && !DFS::new(graph, v2, &mut |_|{}).any(|v| v == v1) {
 					return Err(())
 				}
 			}

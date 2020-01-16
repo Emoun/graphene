@@ -1,9 +1,8 @@
 use crate::core::{Graph, Edge, Directedness};
 
-pub struct DFS<'a, G, F>
+pub struct DFS<'a, G>
 	where
 		G:'a + Graph,
-		F: FnMut(G::Vertex),
 {
 	graph: &'a G,
 	visited: Vec<G::Vertex>,
@@ -12,15 +11,14 @@ pub struct DFS<'a, G, F>
 	/// The vertex on the stack, and whether on_exit should be called upon popping.
 	///
 	stack: Vec<(G::Vertex, bool)>,
-	on_exit: F,
+	on_exit: &'a mut dyn FnMut(G::Vertex),
 }
 
-impl<'a, G, F> DFS<'a,G, F>
+impl<'a, G> DFS<'a,G>
 	where
 		G:'a + Graph,
-		F: FnMut(G::Vertex),
 {
-	pub fn new(g: &'a G, v: G::Vertex, on_exit: F) -> Self
+	pub fn new(g: &'a G, v: G::Vertex, on_exit: &'a mut dyn FnMut(G::Vertex)) -> Self
 	{
 		Self{graph: g, visited: Vec::new(), stack: vec![(v, true)], on_exit }
 	}
@@ -29,12 +27,12 @@ impl<'a, G, F> DFS<'a,G, F>
 	{
 		self.visited.contains(&v)
 	}
+	
 }
 
-impl<'a, G, F> Iterator for DFS<'a,G, F>
+impl<'a, G> Iterator for DFS<'a,G>
 	where
 		G:'a + Graph,
-		F: FnMut(G::Vertex),
 {
 	type Item = G::Vertex;
 	

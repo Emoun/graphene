@@ -49,12 +49,12 @@ impl<C: Constrainer> Constrainer for ConnectedGraph<C>
 		
 		if v_count > 0 {
 			let v = g.all_vertices().next().unwrap();
-			let dfs_count = DFS::new(g, v, |_|{}).count();
+			let dfs_count = DFS::new(g, v, &mut |_|{}).count();
 			if dfs_count == v_count {
 				// If its undirected, no more needs to be done
 				if let Ok(g) = <DirectedGraph<&C::Graph>>::constrain(g) {
 					let reverse = ReverseGraph::new(g);
-					if DFS::new(&reverse, v, |_|{}).count() != v_count {
+					if DFS::new(&reverse, v, &mut |_|{}).count() != v_count {
 						return Err(())
 					}
 				}
