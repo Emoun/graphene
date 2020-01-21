@@ -1,5 +1,30 @@
 use crate::core::{Graph, Edge, Directedness};
 
+///
+/// DFS
+///
+///
+/// ### Notes
+///
+/// _Why isn't `on_exit` a closure?_
+///
+/// There are Three possibilities for an API using closures:
+///
+/// 1. Direct closure : This requires DFS to be generic on the closures type.
+/// this is possible but means DFS cannot be used in places where its explicit type is needed.
+/// I.e. it cannot be a field in a different struct nor be returned by a function.
+///
+/// 2. Referenced closure: If DFS takes a reference to a closure, it no longer needs to be generic
+/// on the closures type. However, it limits where DFS can be used, since its now bound by the
+/// lifetime of the reference. It also doesn't solve the issue with other struct using DFS,
+/// because you can't have the closure anywhere when not using the DFS.
+///
+/// 3. Boxed closure: Technically possible, but requires `std` and imposes allocations.
+///
+/// This solution is as flexible as nr. 1, but solves the issue with naming the closures type.
+/// In essence, we are simulating a closure by have `on_exit` be a function and taking `on_exit_args`,
+/// thats basically what a closure is.
+///
 pub struct DFS<'a, G, F>
 	where
 		G:'a + Graph,

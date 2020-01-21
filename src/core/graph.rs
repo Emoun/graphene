@@ -137,6 +137,12 @@ pub trait Graph
 			DirectednessVariants::Undirected(UndirectedGraph::unchecked(self))
 		}
 	}
+	
+	fn edge_valid<E>(&self, e: E) -> bool
+		where E: Edge<Self::Vertex>
+	{
+		self.contains_vertex(e.source()) && self.contains_vertex(e.sink())
+	}
 }
 
 pub trait GraphMut: Graph
