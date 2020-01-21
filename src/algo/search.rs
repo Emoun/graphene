@@ -1,6 +1,6 @@
 use crate::core::{Graph, Edge, Directedness};
 
-pub struct DFS<'a, G>
+pub struct DFS<'a, G, F>
 	where
 		G:'a + Graph,
 {
@@ -11,16 +11,17 @@ pub struct DFS<'a, G>
 	/// The vertex on the stack, and whether on_exit should be called upon popping.
 	///
 	stack: Vec<(G::Vertex, bool)>,
-	on_exit: &'a mut dyn FnMut(G::Vertex),
+	on_exit: fn(G::Vertex, &mut F),
+	on_exit_arg: F,
 }
 
-impl<'a, G> DFS<'a,G>
+impl<'a, G, F> DFS<'a, G, F>
 	where
 		G:'a + Graph,
 {
-	pub fn new(g: &'a G, v: G::Vertex, on_exit: &'a mut dyn FnMut(G::Vertex)) -> Self
+	pub fn new(g: &'a G, v: G::Vertex, on_exit: fn(G::Vertex, &mut F), on_exit_arg: F) -> Self
 	{
-		Self{graph: g, visited: Vec::new(), stack: vec![(v, true)], on_exit }
+		Self{graph: g, visited: Vec::new(), stack: vec![(v, true)], on_exit, on_exit_arg }
 	}
 	
 	pub fn visited(&self, v: G::Vertex) -> bool
@@ -30,7 +31,18 @@ impl<'a, G> DFS<'a,G>
 	
 }
 
-impl<'a, G> Iterator for DFS<'a,G>
+impl<'a, G> DFS<'a, G, ()>
+	where
+		G:'a + Graph,
+{
+	pub fn new_simple(g: &'a G, v: G::Vertex) -> Self
+	{
+		fn do_nothing<T>(_: T, _: &mut ()){}
+		Self::new(g, v, do_nothing, ())
+	}
+}
+
+impl<'a, G, F> Iterator for DFS<'a, G, F>
 	where
 		G:'a + Graph,
 {
@@ -56,7 +68,7 @@ impl<'a, G> Iterator for DFS<'a,G>
 			
 			// If its exit marked, call the closure on it.
 			if last.1 {
-				(self.on_exit)(last.0);
+				(self.on_exit)(last.0, &mut self.on_exit_arg);
 			}
 		}
 		
