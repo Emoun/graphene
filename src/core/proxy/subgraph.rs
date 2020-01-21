@@ -19,6 +19,16 @@ impl<C: Constrainer> SubGraph<C>
 	{
 		Self{ graph: underlying, verts: Vec::new()}
 	}
+	
+	pub fn expand(&mut self, v: <C::Graph as Graph>::Vertex) -> Result<(),()>
+	{
+		if self.graph.graph().contains_vertex(v) && !self.verts.contains(&v){
+			self.verts.push(v);
+			Ok(())
+		} else {
+			Err(())
+		}
+	}
 }
 
 impl<C: Constrainer> Graph for SubGraph<C>

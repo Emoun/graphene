@@ -23,7 +23,7 @@ use crate::core::{Graph, Edge, Directedness};
 ///
 /// This solution is as flexible as nr. 1, but solves the issue with naming the closures type.
 /// In essence, we are simulating a closure by have `on_exit` be a function and taking `on_exit_args`,
-/// thats basically what a closure is.
+/// that's basically what a closure is.
 ///
 pub struct DFS<'a, G, F>
 	where
@@ -54,6 +54,44 @@ impl<'a, G, F> DFS<'a, G, F>
 		self.visited.contains(&v)
 	}
 	
+	pub fn args_mut(&mut self) -> &mut F
+	{
+		&mut self.on_exit_arg
+	}
+	
+	///
+	/// Pops the next vertex that it is finished visiting off the stack, calling
+	/// `on_exit` on it.
+	///
+	///  If there was nothing to pop and call `on_exit` on, return false, otherwise returns true.
+	///
+	pub fn advance_next_exit(&mut self) -> bool
+	{
+		while let Some(last) = self.stack.last() {
+			if self.visited(last.0.clone()) {
+				let last = self.stack.pop().unwrap();
+				
+				// If its exit marked, call the closure on it.
+				if last.1 {
+					(self.on_exit)(last.0, &mut self.on_exit_arg);
+					return true;
+				}
+			} else {
+				return false;
+			}
+		}
+		false
+	}
+	
+	pub fn continue_from(&mut self, v: G::Vertex) -> bool
+	{
+		if !self.visited(v.clone()) {
+			self.stack.push((v, true));
+			true
+		} else {
+			false
+		}
+	}
 }
 
 impl<'a, G> DFS<'a, G, ()>
@@ -78,24 +116,17 @@ impl<'a, G, F> Iterator for DFS<'a, G, F>
 			If its on the stack it means we are still visiting it or its children.
 			
 			If its exit marked, it means when we are finished visiting it and its children,
-			we will cal the 'on_exit' closure on it, and then pop it.
+			we will call the 'on_exit' closure on it, and then pop it.
 			If its not exit marked, it means this instance of it on the stack was never used for
 			visiting this vertex's children and we just pop it, without calling the closure.
 			
-			If it is marked visited it means it means we are either visiting its children, or we
+			If it is marked visited it means we are either visiting its children, or we
 			are finished doing so. Either way, it shouldn't go on the stack again at any point.
 		 */
 		
 		// Pop any vertices that we are done visiting (and since its on the top of the stack,
 		// we must be done visiting its children).
-		while self.visited(self.stack.last()?.0.clone()) {
-			let last = self.stack.pop()?;
-			
-			// If its exit marked, call the closure on it.
-			if last.1 {
-				(self.on_exit)(last.0, &mut self.on_exit_arg);
-			}
-		}
+		while self.advance_next_exit(){}
 		
 		// Get the top of the stack. This is necessarily a non-visited vertex.
 		// If the stack is empty, then this will return none

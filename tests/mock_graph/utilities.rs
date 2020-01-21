@@ -30,7 +30,7 @@ pub fn _3_tuple_equality<A1,B1,C1,A2,B2,C2>() -> impl Fn(&(A1, B1, C1), &(A2, B2
 ///
 /// Returns whether the first list in an unordered sublist of the second list.
 ///
-/// One list os an unordered sublist of another if all its elements can be found in the
+/// One list is an unordered sublist of another if all its elements can be found in the
 /// other list, without duplications. Examples ( `<` as operator):
 ///
 /// - `[1,2,3] < [3,2,1]`
