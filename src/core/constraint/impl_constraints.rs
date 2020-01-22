@@ -20,6 +20,7 @@ macro_rules! impl_constraints {
 			@inner
 			$struct<$generic_graph>: [$($trait)*]
 			$([$($bounds)*])? DirectedConstraint
+			{}
 		}
 		
 		//Undirected
@@ -27,6 +28,7 @@ macro_rules! impl_constraints {
 			@inner
 			$struct<$generic_graph>: [$($trait)*]
 			$([$($bounds)*])? UndirectedConstraint
+			{}
 		}
 		
 		// Unique
@@ -34,6 +36,7 @@ macro_rules! impl_constraints {
 			@inner
 			$struct<$generic_graph>: [$($trait)*]
 			$([$($bounds)*])? Unique
+			{}
 		}
 
 		// NoLoops
@@ -41,6 +44,7 @@ macro_rules! impl_constraints {
 			@inner
 			$struct<$generic_graph>: [$($trait)*]
 			$([$($bounds)*])? NoLoops
+			{}
 		}
 
 		// Reflexive
@@ -53,6 +57,7 @@ macro_rules! impl_constraints {
 				$($($bounds)*)?
 			]
 			Reflexive
+			{}
 		}
 
 		// Unilateral
@@ -60,6 +65,7 @@ macro_rules! impl_constraints {
 			@inner
 			$struct<$generic_graph>: [$($trait)*]
 			$([$($bounds)*])? Unilateral
+			{}
 		}
 
 		// Connected
@@ -67,6 +73,25 @@ macro_rules! impl_constraints {
 			@inner
 			$struct<$generic_graph>: [$($trait)*]
 			$([$($bounds)*])? Connected
+			{}
+		}
+		
+		// Subgraph
+		impl_constraints!{
+			@inner
+			$struct<$generic_graph>: [$($trait)*]
+			[
+				$generic_graph: $crate::core::constraint::Subgraph<Vertex=Self::Vertex>,
+				$($($bounds)*)?
+			]
+			Subgraph
+			{
+				fn exit_edges<'a>(&'a self) -> Box<dyn 'a + Iterator<Item=
+					(Self::Vertex, Self::Vertex)>>
+				{
+					(self.0).exit_edges()
+				}
+			}
 		}
 	};
 	
@@ -74,6 +99,7 @@ macro_rules! impl_constraints {
 		@inner
 		$struct:ident<$generic_graph:ident>: [ $trait:ident $($trait_rest:ident)* ]
 		$([$($bounds:tt)*])? $constraint:ident
+		{$($impl:tt)*}
 	} => {
 		tt_call::tt_if!{
 			condition = [{tt_equal::tt_equal}]
@@ -84,6 +110,7 @@ macro_rules! impl_constraints {
 					@inner
 					$struct<$generic_graph>: [ $($trait_rest)* ]
 					$([$($bounds)*])? $constraint
+					{$($impl)*}
 				}
 			}]
 		}
@@ -93,12 +120,13 @@ macro_rules! impl_constraints {
 		@inner
 		$struct:ident<$generic_graph:ident>: [ ]
 		$([$($bounds:tt)*])? $constraint:ident
+		{$($impl:tt)*}
 	} => {
 		impl<$generic_graph: $crate::core::Constrainer> $crate::core::constraint::$constraint
 			for $struct<$generic_graph>
 			where
 				$generic_graph: $crate::core::constraint::$constraint,
 				$($($bounds)*)?
-		{}
+		{$($impl)*}
 	}
 }

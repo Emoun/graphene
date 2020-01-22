@@ -1,4 +1,5 @@
-use crate::core::{Constrainer, Graph, ImplGraphMut, GraphMut, AddEdge, EdgeWeighted, RemoveEdge, NewVertex, RemoveVertex, ImplGraph, BaseGraph};
+use crate::core::{Constrainer, Graph, ImplGraphMut, GraphMut, AddEdge, EdgeWeighted, RemoveEdge, NewVertex, RemoveVertex, ImplGraph, BaseGraph, Edge, Directed};
+use crate::core::constraint::Subgraph;
 
 ///
 /// A subgraph of another graph.
@@ -6,24 +7,44 @@ use crate::core::{Constrainer, Graph, ImplGraphMut, GraphMut, AddEdge, EdgeWeigh
 /// This proxy graph will act at if only a specific subset of the underlying graph's vertices
 /// exist, filtering out all other vertices and edges incident on them.
 ///
-pub struct SubGraph<C: Constrainer>{
+pub struct SubgraphProxy<C: Constrainer>{
 	/// The underlying graph
 	graph: C,
 	/// Which vertices are part of this subgraph
 	verts: Vec<<C::Graph as Graph>::Vertex>,
+	///
+	/// Edges who's sources are in this subgraph but who's sinks aren't.
+	///
+	exit_edges: Vec<(<C::Graph as Graph>::Vertex, <C::Graph as Graph>::Vertex)>,
 }
 
-impl<C: Constrainer> SubGraph<C>
+impl<C: Constrainer> SubgraphProxy<C>
 {
 	pub fn new(underlying: C) -> Self
 	{
-		Self{ graph: underlying, verts: Vec::new()}
+		Self{ graph: underlying, verts: Vec::new(), exit_edges: Vec::new()}
 	}
 	
 	pub fn expand(&mut self, v: <C::Graph as Graph>::Vertex) -> Result<(),()>
 	{
-		if self.graph.graph().contains_vertex(v) && !self.verts.contains(&v){
-			self.verts.push(v);
+		if self.graph.graph().contains_vertex(v) {
+			if !self.verts.contains(&v) {
+				self.verts.push(v);
+				
+				// Remove any exit edge that is sinked in the vertex
+				while let Some(idx) = self.exit_edges.iter().position(|e| e.sink() == v) {
+					self.exit_edges.remove(idx);
+				}
+				
+				// Add any exit edge that is sourced in the vertex
+				for e in self.graph.graph().edges_incident_on(v) {
+					if e.source() == v {
+						if !self.verts.contains(&e.sink()) {
+							self.exit_edges.push((v, e.sink()));
+						}
+					}
+				}
+			}
 			Ok(())
 		} else {
 			Err(())
@@ -31,7 +52,7 @@ impl<C: Constrainer> SubGraph<C>
 	}
 }
 
-impl<C: Constrainer> Graph for SubGraph<C>
+impl<C: Constrainer> Graph for SubgraphProxy<C>
 {
 	type Vertex = <C::Graph as Graph>::Vertex;
 	type VertexWeight = <C::Graph as Graph>::VertexWeight;
@@ -53,7 +74,7 @@ impl<C: Constrainer> Graph for SubGraph<C>
 	}
 }
 
-impl<C: Constrainer + ImplGraphMut> GraphMut for SubGraph<C>
+impl<C: Constrainer + ImplGraphMut> GraphMut for SubgraphProxy<C>
 	where C::Graph: GraphMut
 {
 	fn all_vertices_weighted_mut<'a>(&'a mut self) -> Box<dyn 'a + Iterator<Item=
@@ -77,7 +98,7 @@ impl<C: Constrainer + ImplGraphMut> GraphMut for SubGraph<C>
 	}
 }
 
-impl<C: Constrainer + ImplGraphMut> AddEdge for SubGraph<C>
+impl<C: Constrainer + ImplGraphMut> AddEdge for SubgraphProxy<C>
 	where C::Graph: AddEdge
 {
 	fn add_edge_weighted<E>(&mut self, e: E) -> Result<(), ()>
@@ -91,7 +112,7 @@ impl<C: Constrainer + ImplGraphMut> AddEdge for SubGraph<C>
 	}
 }
 
-impl<C: Constrainer + ImplGraphMut> RemoveEdge for SubGraph<C>
+impl<C: Constrainer + ImplGraphMut> RemoveEdge for SubgraphProxy<C>
 	where C::Graph: RemoveEdge
 {
 	fn remove_edge_where<F>(&mut self, f: F)
@@ -104,7 +125,7 @@ impl<C: Constrainer + ImplGraphMut> RemoveEdge for SubGraph<C>
 	}
 }
 
-impl<C: Constrainer + ImplGraphMut> NewVertex for SubGraph<C>
+impl<C: Constrainer + ImplGraphMut> NewVertex for SubgraphProxy<C>
 	where C::Graph: NewVertex
 {
 	fn new_vertex_weighted(&mut self, w: Self::VertexWeight) -> Result<Self::Vertex, ()> {
@@ -114,7 +135,7 @@ impl<C: Constrainer + ImplGraphMut> NewVertex for SubGraph<C>
 	}
 }
 
-impl<C: Constrainer + ImplGraphMut> RemoveVertex for SubGraph<C>
+impl<C: Constrainer + ImplGraphMut> RemoveVertex for SubgraphProxy<C>
 	where C::Graph: RemoveVertex
 {
 	fn remove_vertex(&mut self, v: Self::Vertex) -> Result<Self::VertexWeight, ()> {
@@ -130,7 +151,7 @@ impl<C: Constrainer + ImplGraphMut> RemoveVertex for SubGraph<C>
 	}
 }
 
-impl<C: Constrainer> ImplGraph for SubGraph<C>
+impl<C: Constrainer> ImplGraph for SubgraphProxy<C>
 {
 	type Graph = Self;
 	
@@ -138,10 +159,19 @@ impl<C: Constrainer> ImplGraph for SubGraph<C>
 		self
 	}
 }
-impl<C: Constrainer> ImplGraphMut for SubGraph<C>
+impl<C: Constrainer> ImplGraphMut for SubgraphProxy<C>
 {
 	fn graph_mut(&mut self) -> &mut Self::Graph {
 		self
 	}
 }
-impl<C: Constrainer> BaseGraph for SubGraph<C> {}
+impl<C: Constrainer> BaseGraph for SubgraphProxy<C> {}
+
+impl<C: Constrainer> Subgraph for SubgraphProxy<C>
+{
+	fn exit_edges<'a>(&'a self) -> Box<dyn 'a + Iterator<Item=
+	(Self::Vertex, Self::Vertex)>>
+	{
+		Box::new(self.exit_edges.iter().cloned())
+	}
+}

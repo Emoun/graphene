@@ -10,6 +10,7 @@ mod connected;
 mod directed_constraint;
 mod undirected_constraint;
 mod unilateral;
+mod subgraph;
 
 pub use self::{
 	impl_constraints::*,
@@ -20,6 +21,7 @@ pub use self::{
 	directed_constraint::*,
 	undirected_constraint::*,
 	unilateral::*,
+	subgraph::*,
 };
 use crate::core::{RemoveEdge, Edge, Constrainer, RemoveVertex};
 use crate::core::proxy::{EdgeProxyGraph, VertexProxyGraph, ProxyVertex};

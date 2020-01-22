@@ -1,6 +1,6 @@
 use crate::core::{Graph, Directed, Constrainer};
 use crate::algo::DFS;
-use crate::core::proxy::SubGraph;
+use crate::core::proxy::SubgraphProxy;
 use std::cmp::min;
 use crate::core::constraint::ConnectedGraph;
 use std::mem::replace;
@@ -15,7 +15,7 @@ pub struct TarjanSCC<'a, G>
 		G:'a + Graph<Directedness=Directed>,
 {
 	graph: &'a G,
-	dfs: DFS<'a, G, (&'a G, Vec<(G::Vertex, usize)>, Option<SubGraph<&'a G>>)>,
+	dfs: DFS<'a, G, (&'a G, Vec<(G::Vertex, usize)>, Option<SubgraphProxy<&'a G>>)>,
 }
 
 impl<'a,G> TarjanSCC<'a, G>
@@ -28,7 +28,7 @@ impl<'a,G> TarjanSCC<'a, G>
 		// Each vertex's ID is its index on the stack,
 		// which means low-link values refer to stack indices.
 		fn on_exit<'a, G>(v: G::Vertex, (g,stack, next_scc): &mut
-			(&'a G, Vec<(G::Vertex, usize)>, Option<SubGraph<&'a G>>))
+			(&'a G, Vec<(G::Vertex, usize)>, Option<SubgraphProxy<&'a G>>))
 			where G: Graph<Directedness=Directed>
 		{
 			let index = stack.iter().position(|(v2, _)| *v2 == v).unwrap();
@@ -44,7 +44,7 @@ impl<'a,G> TarjanSCC<'a, G>
 			// Then check whether it needs popping
 			if stack[index].1 == index {
 				// Vertex is root of SCC, pop stack for all before it
-				let mut scc = SubGraph::new(*g);
+				let mut scc = SubgraphProxy::new(*g);
 				
 				while stack.len() > index {
 					scc.expand(stack.pop().unwrap().0).unwrap();
@@ -65,7 +65,7 @@ impl<'a, G> Iterator for TarjanSCC<'a,G>
 	where
 		G:'a + Graph<Directedness=Directed>,
 {
-	type Item = ConnectedGraph<SubGraph<&'a G>>;
+	type Item = ConnectedGraph<SubgraphProxy<&'a G>>;
 	
 	fn next(&mut self) -> Option<Self::Item> {
 		'l:
