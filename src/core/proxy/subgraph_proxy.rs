@@ -1,4 +1,4 @@
-use crate::core::{Constrainer, Graph, ImplGraphMut, GraphMut, AddEdge, EdgeWeighted, RemoveEdge, NewVertex, RemoveVertex, ImplGraph, BaseGraph, Edge, Directed};
+use crate::core::{Constrainer, Graph, ImplGraphMut, GraphMut, AddEdge, EdgeWeighted, RemoveEdge, NewVertex, RemoveVertex, ImplGraph, BaseGraph, Edge};
 use crate::core::constraint::Subgraph;
 
 ///

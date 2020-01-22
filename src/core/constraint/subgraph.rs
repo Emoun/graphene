@@ -1,4 +1,4 @@
-use crate::core::{Graph, Constrainer, Edge};
+use crate::core::{Graph, Edge};
 
 pub trait Subgraph: Graph
 {

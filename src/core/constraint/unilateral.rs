@@ -1,6 +1,6 @@
 use crate::core::{Directed, Graph, Constrainer, ImplGraph, ImplGraphMut, GraphMut, RemoveVertex, AddEdge, EdgeWeighted, RemoveEdge};
-use crate::core::constraint::{proxy_remove_edge_where, proxy_remove_vertex};
-use crate::algo::DFS;
+use crate::core::constraint::{proxy_remove_edge_where, proxy_remove_vertex, Subgraph};
+use crate::algo::{TarjanSCC};
 
 ///
 /// A marker trait for graphs that are unilaterally connected.
@@ -62,22 +62,30 @@ impl<C: Constrainer> Constrainer for UnilateralGraph<C>
 	type Constrained = C;
 	
 	fn constrain_single(c: Self::Constrained) -> Result<Self, ()>{
-		// TODO: An efficient algorithm: https://stackoverflow.com/questions/30642383/determine-if-a-graph-is-semi-connected-or-not
-		
 		let graph = c.graph();
-		
 		let verts = graph.all_vertices().collect::<Vec<_>>();
-		let mut iter = verts.iter();
 		
-		while let Some(&v1) = iter.next() {
-			let iter_rest = iter.clone();
-			for &v2 in iter_rest {
-				if !DFS::new_simple(graph, v1).any(|v| v == v2) && !DFS::new_simple(graph, v2).any(|v| v == v1) {
-					return Err(())
+		if verts.len() != 0 {
+			// Algorithm: First use Tarjan's Strongly Connected Component (SCC) algorithm to find
+			// SCCs and then check whether every component has an edge to the next one in the list.
+			// Note: Tarjan's  algorithm produces SCCs in reverse topological order, so we don't
+			// need to sort, just check the first has an edge to it from the next.
+			
+			let mut tarjan = TarjanSCC::new(graph, verts[0]);
+			
+			let mut scc_current = tarjan.next();
+			
+			while let Some(scc1) = &scc_current {
+				let scc_next = tarjan.next();
+				if let Some(scc2) = &scc_next {
+					if scc2.reaches(scc1).is_none() {
+						return Err(());
+					}
 				}
+				scc_current = scc_next;
 			}
+			
 		}
-		
 		Ok(Self::new(c))
 	}
 	
