@@ -19,7 +19,7 @@ categories = ["data-structures","algorithms"]
 travis-ci = {repository = "Emoun/graphene"}
 
 [dependencies]
-delegate = { git = "https://github.com/chancancode/rust-delegate" }
+delegate = "0.4.0"
 tt-equal = "0.1"
 tt-call = "1.0"
 
