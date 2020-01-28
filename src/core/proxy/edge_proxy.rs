@@ -1,4 +1,5 @@
 use crate::core::{Directedness, Constrainer, Graph, Edge, ImplGraphMut, AddEdge, EdgeWeighted, ImplGraph, BaseGraph, RemoveEdge, NewVertex, RemoveVertex, GraphMut};
+use delegate::delegate;
 
 ///
 /// A wrapper around a graph, that allows for addition and removal
@@ -41,10 +42,11 @@ impl<C: Constrainer> Graph for EdgeProxyGraph<C>
 	type EdgeWeight = ();
 	type Directedness = <C::Graph as Graph>::Directedness;
 	
-	fn all_vertices_weighted<'a>(&'a self) -> Box<dyn 'a + Iterator<Item=
-		(Self::Vertex, &'a Self::VertexWeight)>>
-	{
-		self.graph.graph().all_vertices_weighted()
+	delegate!{
+		to self.graph.graph() {
+			fn all_vertices_weighted<'a>(&'a self) -> Box<dyn 'a + Iterator<Item=
+				(Self::Vertex, &'a Self::VertexWeight)>>;
+		}
 	}
 	
 	fn all_edges<'a>(&'a self) -> Box<dyn 'a + Iterator<Item=
@@ -75,10 +77,11 @@ impl<C: Constrainer> Graph for EdgeProxyGraph<C>
 impl<C: Constrainer + ImplGraphMut> GraphMut for EdgeProxyGraph<C>
 	where C::Graph: GraphMut
 {
-	fn all_vertices_weighted_mut<'a>(&'a mut self) -> Box<dyn 'a + Iterator<Item=
-		(Self::Vertex, &'a mut Self::VertexWeight)>>
-	{
-		self.graph.graph_mut().all_vertices_weighted_mut()
+	delegate! {
+		to self.graph.graph_mut() {
+			fn all_vertices_weighted_mut<'a>(&'a mut self) -> Box<dyn 'a + Iterator<Item=
+				(Self::Vertex, &'a mut Self::VertexWeight)>>;
+		}
 	}
 	
 	fn all_edges_mut<'a>(&'a mut self) -> Box<dyn 'a + Iterator<Item=
@@ -131,8 +134,10 @@ impl<C: Constrainer> RemoveEdge for EdgeProxyGraph<C>
 impl<C: Constrainer + ImplGraphMut> NewVertex for EdgeProxyGraph<C>
 	where C::Graph: NewVertex
 {
-	fn new_vertex_weighted(&mut self, w: Self::VertexWeight) -> Result<Self::Vertex, ()> {
-		self.graph.graph_mut().new_vertex_weighted(w)
+	delegate! {
+		to self.graph.graph_mut() {
+			fn new_vertex_weighted(&mut self, w: Self::VertexWeight) -> Result<Self::Vertex, ()>;
+		}
 	}
 }
 

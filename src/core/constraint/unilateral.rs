@@ -1,6 +1,7 @@
 use crate::core::{Directed, Graph, Constrainer, ImplGraph, ImplGraphMut, GraphMut, RemoveVertex, AddEdge, EdgeWeighted, RemoveEdge};
 use crate::core::constraint::{proxy_remove_edge_where, proxy_remove_vertex, Subgraph};
 use crate::algo::{TarjanSCC};
+use delegate::delegate;
 
 ///
 /// A marker trait for graphs that are unilaterally connected.
@@ -102,34 +103,29 @@ impl<C: Constrainer> Graph for UnilateralGraph<C>
 	type EdgeWeight = <C::Graph as Graph>::EdgeWeight;
 	type Directedness = <C::Graph as Graph>::Directedness;
 	
-	fn all_vertices_weighted<'a>(&'a self) -> Box<dyn 'a + Iterator<Item=
-	(Self::Vertex, &'a Self::VertexWeight)>>
-	{
-		self.0.graph().all_vertices_weighted()
-	}
-	
-	fn all_edges<'a>(&'a self) -> Box<dyn 'a + Iterator<Item=
-	(Self::Vertex, Self::Vertex, &'a Self::EdgeWeight)>>
-	{
-		self.0.graph().all_edges()
+	delegate!{
+		to self.0.graph() {
+			fn all_vertices_weighted<'a>(&'a self) -> Box<dyn 'a + Iterator<Item=
+				(Self::Vertex, &'a Self::VertexWeight)>>;
+				
+			fn all_edges<'a>(&'a self) -> Box<dyn 'a + Iterator<Item=
+				(Self::Vertex, Self::Vertex, &'a Self::EdgeWeight)>>;
+		}
 	}
 }
 
 impl<C: Constrainer + ImplGraphMut> GraphMut for UnilateralGraph<C>
 	where C::Graph: GraphMut<Directedness=Directed>
 {
-	fn all_vertices_weighted_mut<'a>(&'a mut self) -> Box<dyn 'a + Iterator<Item=
-	(Self::Vertex, &'a mut Self::VertexWeight)>>
-	{
-		self.0.graph_mut().all_vertices_weighted_mut()
+	delegate! {
+		to self.0.graph_mut() {
+			fn all_vertices_weighted_mut<'a>(&'a mut self) -> Box<dyn 'a + Iterator<Item=
+				(Self::Vertex, &'a mut Self::VertexWeight)>>;
+				
+			fn all_edges_mut<'a>(&'a mut self) -> Box<dyn 'a + Iterator<Item=
+				(Self::Vertex, Self::Vertex, &'a mut Self::EdgeWeight)>>;
+		}
 	}
-	
-	fn all_edges_mut<'a>(&'a mut self) -> Box<dyn 'a + Iterator<Item=
-	(Self::Vertex, Self::Vertex, &'a mut Self::EdgeWeight)>>
-	{
-		self.0.graph_mut().all_edges_mut()
-	}
-	
 }
 
 impl<C: Constrainer + ImplGraphMut> RemoveVertex for UnilateralGraph<C>
@@ -144,10 +140,11 @@ impl<C: Constrainer + ImplGraphMut> RemoveVertex for UnilateralGraph<C>
 impl<C: Constrainer + ImplGraphMut> AddEdge for UnilateralGraph<C>
 	where C::Graph: AddEdge<Directedness=Directed>
 {
-	fn add_edge_weighted<E>(&mut self, e: E) -> Result<(), ()>
-		where E: EdgeWeighted<Self::Vertex, Self::EdgeWeight>
-	{
-		self.0.graph_mut().add_edge_weighted(e)
+	delegate! {
+		to self.0.graph_mut() {
+			fn add_edge_weighted<E>(&mut self, e: E) -> Result<(), ()>
+				where E: EdgeWeighted<Self::Vertex, Self::EdgeWeight>;
+		}
 	}
 }
 

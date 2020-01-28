@@ -89,7 +89,7 @@ macro_rules! impl_constraints {
 				fn exit_edges<'a>(&'a self) -> Box<dyn 'a + Iterator<Item=
 					(Self::Vertex, Self::Vertex)>>
 				{
-					(self.0).exit_edges()
+					self.0.exit_edges()
 				}
 			}
 		}

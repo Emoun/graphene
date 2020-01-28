@@ -1,10 +1,6 @@
 //!
 //! Contains the basic traits and structs needed to define graphs and work on them.
 //!
-//!
-//!
-#[macro_use]
-mod delegate_graph;
 pub mod constraint;
 pub mod trait_aliases;
 mod graph;

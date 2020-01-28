@@ -1,4 +1,5 @@
 use crate::core::{Graph, Constrainer, ImplGraph, ImplGraphMut, GraphMut, NewVertex, AddEdge, EdgeWeighted, Directedness, Undirected, RemoveVertex, RemoveEdge};
+use delegate::delegate;
 
 ///
 /// A marker trait for graphs who's esges are directed.
@@ -60,70 +61,71 @@ impl<C: Constrainer> Graph for UndirectedGraph<C>
 	type EdgeWeight = <C::Graph as Graph>::EdgeWeight;
 	type Directedness = Undirected;
 	
-	fn all_vertices_weighted<'a>(&'a self) -> Box<dyn 'a + Iterator<Item=
-	(Self::Vertex, &'a Self::VertexWeight)>>
-	{
-		self.0.graph().all_vertices_weighted()
-	}
-	
-	fn all_edges<'a>(&'a self) -> Box<dyn 'a + Iterator<Item=
-	(Self::Vertex, Self::Vertex, &'a Self::EdgeWeight)>>
-	{
-		self.0.graph().all_edges()
+	delegate!{
+		to self.0.graph() {
+			fn all_vertices_weighted<'a>(&'a self) -> Box<dyn 'a + Iterator<Item=
+				(Self::Vertex, &'a Self::VertexWeight)>>;
+				
+			fn all_edges<'a>(&'a self) -> Box<dyn 'a + Iterator<Item=
+				(Self::Vertex, Self::Vertex, &'a Self::EdgeWeight)>>;
+		}
 	}
 }
 
 impl<C: Constrainer + ImplGraphMut>  GraphMut for UndirectedGraph<C>
 	where C::Graph: GraphMut
 {
-	fn all_vertices_weighted_mut<'a>(&'a mut self) -> Box<dyn 'a + Iterator<Item=
-	(Self::Vertex, &'a mut Self::VertexWeight)>>
-	{
-		self.0.graph_mut().all_vertices_weighted_mut()
-	}
-	
-	fn all_edges_mut<'a>(&'a mut self) -> Box<dyn 'a + Iterator<Item=
-	(Self::Vertex, Self::Vertex, &'a mut Self::EdgeWeight)>>
-	{
-		self.0.graph_mut().all_edges_mut()
+	delegate! {
+		to self.0.graph_mut() {
+			fn all_vertices_weighted_mut<'a>(&'a mut self) -> Box<dyn 'a + Iterator<Item=
+				(Self::Vertex, &'a mut Self::VertexWeight)>>;
+				
+			fn all_edges_mut<'a>(&'a mut self) -> Box<dyn 'a + Iterator<Item=
+				(Self::Vertex, Self::Vertex, &'a mut Self::EdgeWeight)>>;
+		}
 	}
 }
 
 impl<C: Constrainer + ImplGraphMut> NewVertex for UndirectedGraph<C>
 	where C::Graph: NewVertex
 {
-	fn new_vertex_weighted(&mut self, w: Self::VertexWeight) -> Result<Self::Vertex, ()>
-	{
-		self.0.graph_mut().new_vertex_weighted(w)
+	delegate! {
+		to self.0.graph_mut() {
+			fn new_vertex_weighted(&mut self, w: Self::VertexWeight) -> Result<Self::Vertex, ()>;
+		}
 	}
 }
 
 impl<C: Constrainer + ImplGraphMut> RemoveVertex for UndirectedGraph<C>
 	where C::Graph: RemoveVertex
 {
-	fn remove_vertex(&mut self, v: Self::Vertex) -> Result<Self::VertexWeight, ()>
-	{
-		self.0.graph_mut().remove_vertex(v)
+	delegate! {
+		to self.0.graph_mut() {
+			fn remove_vertex(&mut self, v: Self::Vertex) -> Result<Self::VertexWeight, ()>;
+		}
 	}
 }
 
 impl<C: Constrainer + ImplGraphMut> AddEdge for UndirectedGraph<C>
 	where C::Graph: AddEdge
 {
-	fn add_edge_weighted<E>(&mut self, e: E) -> Result<(), ()>
-		where E: EdgeWeighted<Self::Vertex, Self::EdgeWeight>
-	{
-		self.0.graph_mut().add_edge_weighted(e)
+	delegate! {
+		to self.0.graph_mut() {
+			fn add_edge_weighted<E>(&mut self, e: E) -> Result<(), ()>
+				where E: EdgeWeighted<Self::Vertex, Self::EdgeWeight>;
+		}
 	}
 }
 
 impl<C: Constrainer + ImplGraphMut> RemoveEdge for UndirectedGraph<C>
 	where C::Graph: RemoveEdge
 {
-	fn remove_edge_where<F>(&mut self, f: F) -> Result<(Self::Vertex, Self::Vertex, Self::EdgeWeight), ()>
-		where F: Fn((Self::Vertex, Self::Vertex, &Self::EdgeWeight)) -> bool
-	{
-		self.0.graph_mut().remove_edge_where(f)
+	delegate! {
+		to self.0.graph_mut() {
+			fn remove_edge_where<F>(&mut self, f: F)
+				-> Result<(Self::Vertex, Self::Vertex, Self::EdgeWeight), ()>
+				where F: Fn((Self::Vertex, Self::Vertex, &Self::EdgeWeight)) -> bool;
+		}
 	}
 }
 

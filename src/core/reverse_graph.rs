@@ -1,4 +1,5 @@
 use crate::core::{Graph, Directed, Edge, GraphMut, NewVertex, AddEdge, EdgeWeighted, EdgeDeref, Constrainer, ImplGraphMut, ImplGraph, BaseGraph, RemoveVertex, RemoveEdge};
+use delegate::delegate;
 
 #[derive(Debug)]
 pub struct ReverseGraph<C: Constrainer>(C)
@@ -24,10 +25,11 @@ impl<C: Constrainer> Graph for ReverseGraph<C>
 	type EdgeWeight = <C::Graph as Graph>::EdgeWeight;
 	type Directedness = Directed;
 	
-	fn all_vertices_weighted<'a>(&'a self)
-		-> Box<dyn 'a + Iterator<Item=(Self::Vertex, &'a Self::VertexWeight)>>
-	{
-		self.0.graph().all_vertices_weighted()
+	delegate!{
+		to self.0.graph() {
+			fn all_vertices_weighted<'a>(&'a self) -> Box<dyn 'a + Iterator<Item=
+				(Self::Vertex, &'a Self::VertexWeight)>>;
+		}
 	}
 	
 	fn all_edges<'a>(&'a self)
@@ -41,12 +43,12 @@ impl<C: Constrainer> Graph for ReverseGraph<C>
 impl<C: Constrainer + ImplGraphMut> GraphMut for ReverseGraph<C>
 	where C::Graph: GraphMut<Directedness=Directed>
 {
-	fn all_vertices_weighted_mut<'a>(&'a mut self)
-		-> Box<dyn 'a +Iterator<Item=(Self::Vertex, &'a mut Self::VertexWeight)>>
-	{
-		self.0.graph_mut().all_vertices_weighted_mut()
+	delegate! {
+		to self.0.graph_mut() {
+			fn all_vertices_weighted_mut<'a>(&'a mut self) -> Box<dyn 'a + Iterator<Item=
+				(Self::Vertex, &'a mut Self::VertexWeight)>>;
+		}
 	}
-
 	
 	fn all_edges_mut<'a>(&'a mut self) -> Box<dyn 'a + Iterator<Item=
 	(Self::Vertex, Self::Vertex, &'a mut Self::EdgeWeight)>>
@@ -58,17 +60,19 @@ impl<C: Constrainer + ImplGraphMut> GraphMut for ReverseGraph<C>
 impl<C: Constrainer + ImplGraphMut> NewVertex for ReverseGraph<C>
 	where C::Graph: NewVertex<Directedness=Directed>
 {
-	fn new_vertex_weighted(&mut self, w: Self::VertexWeight) -> Result<Self::Vertex, ()>
-	{
-		self.0.graph_mut().new_vertex_weighted(w)
+	delegate! {
+		to self.0.graph_mut() {
+			fn new_vertex_weighted(&mut self, w: Self::VertexWeight) -> Result<Self::Vertex, ()>;
+		}
 	}
 }
 impl<C: Constrainer + ImplGraphMut> RemoveVertex for ReverseGraph<C>
 	where C::Graph: RemoveVertex<Directedness=Directed>
 {
-	fn remove_vertex(&mut self, v: Self::Vertex) -> Result<Self::VertexWeight, ()>
-	{
-		self.0.graph_mut().remove_vertex(v)
+	delegate! {
+		to self.0.graph_mut() {
+			fn remove_vertex(&mut self, v: Self::Vertex) -> Result<Self::VertexWeight, ()>;
+		}
 	}
 }
 
