@@ -1,6 +1,6 @@
 use crate::core::{Graph, EdgeWeighted, Constrainer, GraphMut, AddEdge, ImplGraph, ImplGraphMut, ReverseGraph, RemoveVertex, RemoveEdge};
 use crate::algo::{DFS};
-use crate::core::constraint::{DirectedGraph, Unilateral, proxy_remove_edge_where, proxy_remove_vertex};
+use crate::core::constraint::{DirectedGraph, Unilateral, proxy_remove_edge_where, proxy_remove_vertex, Weak};
 use delegate::delegate;
 
 ///
@@ -134,10 +134,11 @@ impl<C: Constrainer + ImplGraphMut> RemoveEdge for ConnectedGraph<C>
 	}
 }
 
+impl<C: Constrainer> Weak for ConnectedGraph<C>{}
 impl<C: Constrainer> Unilateral for ConnectedGraph<C>{}
 impl<C: Constrainer> Connected for ConnectedGraph<C>{}
 
 impl_constraints!{
-	ConnectedGraph<C>: Connected, Unilateral
+	ConnectedGraph<C>: Connected, Unilateral, Weak
 }
 

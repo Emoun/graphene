@@ -3,5 +3,4 @@
 //!
 
 mod unique;
-mod connected;
-mod unilateral;
+mod connectedness;

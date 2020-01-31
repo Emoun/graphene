@@ -6,7 +6,7 @@
 /// name of the trait.
 ///
 /// Supported constraint traits:
-/// Directed, Undirected, Unique, NoLoops, Reflexive, Unilateral, Connected
+/// Directed, Undirected, Unique, NoLoops, Reflexive, Weak, Unilateral, Connected, Subgraph
 ///
 #[macro_export]
 macro_rules! impl_constraints {
@@ -57,6 +57,14 @@ macro_rules! impl_constraints {
 				$($($bounds)*)?
 			]
 			Reflexive
+			{}
+		}
+
+		// Weak
+		impl_constraints!{
+			@inner
+			$struct<$generic_graph>: [$($trait)*]
+			$([$($bounds)*])? Weak
 			{}
 		}
 

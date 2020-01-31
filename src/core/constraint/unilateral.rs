@@ -1,5 +1,5 @@
 use crate::core::{Directed, Graph, Constrainer, ImplGraph, ImplGraphMut, GraphMut, RemoveVertex, AddEdge, EdgeWeighted, RemoveEdge};
-use crate::core::constraint::{proxy_remove_edge_where, proxy_remove_vertex, Subgraph};
+use crate::core::constraint::{proxy_remove_edge_where, proxy_remove_vertex, Subgraph, Weak};
 use crate::algo::{TarjanSCC};
 use delegate::delegate;
 
@@ -18,7 +18,7 @@ use delegate::delegate;
 ///
 /// For type safety reasons, the trait itself does not restrict directedness.
 ///
-pub trait Unilateral: Graph
+pub trait Unilateral: Weak
 {}
 
 #[derive(Clone, Debug)]
@@ -159,12 +159,15 @@ impl<C: Constrainer + ImplGraphMut> RemoveEdge for UnilateralGraph<C>
 	}
 }
 
+impl<C: Constrainer> Weak for UnilateralGraph<C>
+	where C::Graph: Graph<Directedness=Directed>
+{}
 impl<C: Constrainer> Unilateral for UnilateralGraph<C>
 	where C::Graph: Graph<Directedness=Directed>
 {}
 
 impl_constraints!{
-	UnilateralGraph<C>: Unilateral
+	UnilateralGraph<C>: Unilateral, Weak
 	where C::Graph: Graph<Directedness=Directed>
 }
 
