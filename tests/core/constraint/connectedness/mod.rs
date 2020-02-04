@@ -1,10 +1,8 @@
+use crate::mock_graph::{MockDirectedness, MockGraph};
 use graphene::core::{
+	constraint::{Connected, ConnectedGraph, Unilateral, UnilateralGraph, Weak},
 	Directed,
-	constraint::{
-		ConnectedGraph, UnilateralGraph, Connected, Unilateral, Weak
-	}
 };
-use crate::mock_graph::{MockGraph, MockDirectedness};
 use static_assertions::assert_impl_all;
 
 mod connected;

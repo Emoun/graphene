@@ -1,21 +1,19 @@
 //#![feature(trace_macros)] //trace_macros!(true);
-#![recursion_limit="8192"]
+#![recursion_limit = "8192"]
 #[macro_use(quickcheck)]
 extern crate quickcheck_macros;
 
-///
 /// Makes two versions of the given code for each directedness.
 ///
-/// The input must start with a '$' followed by a identifier which is used as a placeholder
-/// for directedness.
-/// Everthing after the identifier will then be duplicated, with the first version using
-/// 'graphene::core::Directed' anywhere the placeholder is found, and the second version
-/// using 'graphene::core::Undirected'.
+/// The input must start with a '$' followed by a identifier which is used as a
+/// placeholder for directedness.
+/// Everthing after the identifier will then be duplicated, with the first
+/// version using 'graphene::core::Directed' anywhere the placeholder is found,
+/// and the second version using 'graphene::core::Undirected'.
 ///
-/// The two version are put in modules called 'directed' and 'undirected', so shouldn't
-/// interfere with each other or any code surrounding the macro call. The modules
-/// use the super-module's imports.
-///
+/// The two version are put in modules called 'directed' and 'undirected', so
+/// shouldn't interfere with each other or any code surrounding the macro call.
+/// The modules use the super-module's imports.
 macro_rules! duplicate_for_directedness{
 
 	{
@@ -56,6 +54,6 @@ macro_rules! duplicate_for_directedness{
 
 #[macro_use]
 mod mock_graph;
-mod core;
-mod common;
 mod algo;
+mod common;
+mod core;

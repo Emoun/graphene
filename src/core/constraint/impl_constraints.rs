@@ -1,13 +1,11 @@
-
-///
 /// Implements constraints for the given struct.
 ///
-/// Doesn't implement the constraint given after the struct. That constraint must use the original
-/// name of the trait.
+/// Doesn't implement the constraint given after the struct. That constraint
+/// must use the original name of the trait.
 ///
 /// Supported constraint traits:
-/// Directed, Undirected, Unique, NoLoops, Reflexive, Weak, Unilateral, Connected, Subgraph
-///
+/// Directed, Undirected, Unique, NoLoops, Reflexive, Weak, Unilateral,
+/// Connected, Subgraph
 #[macro_export]
 macro_rules! impl_constraints {
 
@@ -22,7 +20,7 @@ macro_rules! impl_constraints {
 			$([$($bounds)*])? DirectedConstraint
 			{}
 		}
-		
+
 		//Undirected
 		impl_constraints!{
 			@inner
@@ -30,7 +28,7 @@ macro_rules! impl_constraints {
 			$([$($bounds)*])? UndirectedConstraint
 			{}
 		}
-		
+
 		// Unique
 		impl_constraints!{
 			@inner
@@ -83,7 +81,7 @@ macro_rules! impl_constraints {
 			$([$($bounds)*])? Connected
 			{}
 		}
-		
+
 		// Subgraph
 		impl_constraints!{
 			@inner
@@ -102,7 +100,7 @@ macro_rules! impl_constraints {
 			}
 		}
 	};
-	
+
 	{
 		@inner
 		$struct:ident<$generic_graph:ident>: [ $trait:ident $($trait_rest:ident)* ]
@@ -123,7 +121,7 @@ macro_rules! impl_constraints {
 			}]
 		}
 	};
-	
+
 	{
 		@inner
 		$struct:ident<$generic_graph:ident>: [ ]

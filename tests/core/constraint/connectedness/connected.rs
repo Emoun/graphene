@@ -1,20 +1,21 @@
-//!
-//! Tests the `core::Connected` trait and its constrainer `core::ConnectedGraph`.
+//! Tests the `core::Connected` trait and its constrainer
+//! `core::ConnectedGraph`.
 //!
 
-use graphene::{
-	core::{Constrainer, AddEdge, RemoveEdge, Edge, constraint::ConnectedGraph, Directedness },
-};
 use crate::mock_graph::{
+	arbitrary::{
+		ArbConnectedGraph, ArbTwoVerticesIn, ArbUnconnectedGraph, ArbVertexIn, ArbVerticesIn,
+	},
 	MockEdgeWeight, MockVertexWeight,
-	arbitrary::{ArbConnectedGraph, ArbUnconnectedGraph, ArbTwoVerticesIn, ArbVertexIn}
 };
-use crate::mock_graph::arbitrary::ArbVerticesIn;
-use graphene::core::{NewVertex, RemoveVertex};
+use graphene::core::{
+	constraint::ConnectedGraph, AddEdge, Constrainer, Directedness, Edge, NewVertex, RemoveEdge,
+	RemoveVertex,
+};
 
 duplicate_for_directedness! {
 	$directedness
-	
+
 	///
 	/// Tests that Connected Graph correctly identifies connected graphs.
 	///
@@ -32,7 +33,7 @@ duplicate_for_directedness! {
 	{
 		ConnectedGraph::constrain_single(g.0).is_err()
 	}
-	
+
 	///
 	/// Tests that a ConnectedGraph always accepts adding an edge.
 	#[quickcheck]
@@ -43,7 +44,7 @@ duplicate_for_directedness! {
 	{
 		g.0.add_edge_weighted((v1,v2, e_weight.clone())).is_ok()
 	}
-	
+
 	///
 	/// Tests that a ConnectedGraph accepts removing an edge that isn't critical for connectedness
 	///
@@ -55,10 +56,10 @@ duplicate_for_directedness! {
 	{
 		// To ensure we can remove an edge, we first create an edge to remove
 		g.0.add_edge_weighted((v1,v2, e_weight.clone())).unwrap();
-		
+
 		g.0.remove_edge_where(|e| (e.source() == v1 && e.sink() == v2)).is_ok()
 	}
-	
+
 	///
 	/// Tests that a ConnectedGraph rejects removing an edge that is critical for connectedness
 	///
@@ -83,7 +84,7 @@ duplicate_for_directedness! {
 		// We now try to remove the the added edge
 		connected.remove_edge_where(|e| (e.source() == v1 && e.sink() == v_map[&v2])).is_err()
 	}
-	
+
 	/// Tests that a ConnectedGraph accepts removing a vertex if the remaining graph is still
 	/// connected.
 	#[quickcheck]
@@ -98,16 +99,16 @@ duplicate_for_directedness! {
 		let v2 = (mock.0).2;
 		// It is only acceptable to remove a vertex (and any edge incident on it)
 		// if after doing so, the rest of the vertices are still connected.
-	
+
 		// We take a connected graph and add new vertex to it.
 		let v_new = graph.new_vertex_weighted(v_weight).unwrap();
-	
+
 		// We then connect it to the other vertices, making the whole graph connected again
 		graph.add_edge_weighted((v_new, v1, e_weight.clone())).unwrap();
 		if directedness::directed() {
 			graph.add_edge_weighted((v2, v_new, e_weight.clone())).unwrap();
 		}
-		
+
 		// We add auxiliary edges from the new vertex to the others
 		for (idx, v_other) in v_set.into_iter().enumerate() {
 			// just to add some variance
@@ -117,11 +118,11 @@ duplicate_for_directedness! {
 				graph.add_edge_weighted((v_new, v_other, e_weight.clone())).unwrap();
 			}
 		}
-	
+
 		// We then try to remove the vertex again
 		ConnectedGraph::new(graph).remove_vertex(v_new).is_ok()
 	}
-	
+
 	/// Tests that a ConnectedGraph rejects removing a vertex if it renders the graph unconnected
 	#[quickcheck]
 	fn reject_remove_vertex(
@@ -133,7 +134,7 @@ duplicate_for_directedness! {
 		let mut graph = g1.0.unconstrain();
 		// We start by joining 2 connected graphs into a unconnected graph with the 2 components
 		let v_map = graph.join(&g2.0);
-		
+
 		// We then connect the two components through a vertex
 		let new_v = graph.new_vertex_weighted(v_weight.clone()).unwrap();
 		graph.add_edge_weighted((v11,new_v, e_weight.clone())).unwrap();
@@ -144,7 +145,7 @@ duplicate_for_directedness! {
 			graph.add_edge_weighted((new_v, v12, e_weight.clone())).unwrap();
 		}
 		let mut connected = ConnectedGraph::constrain_single(graph).unwrap();
-		
+
 		// We now try to remove the the added vertex
 		connected.remove_vertex(new_v).is_err()
 	}

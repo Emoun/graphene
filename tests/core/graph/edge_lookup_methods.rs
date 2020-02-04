@@ -1,19 +1,12 @@
-//!
 //! Tests the edge lookup methods of `graphene::core::Graph`
 //!
 use crate::mock_graph::{
-	MockGraph, MockVertex, MockDirectedness,
-	arbitrary::{
-		ArbVertexIn, ArbVertexOutside,
-		ArbTwoVerticesIn, ArbEdgeOutside
-	},
+	arbitrary::{ArbEdgeOutside, ArbTwoVerticesIn, ArbVertexIn, ArbVertexOutside},
 	utilities::*,
+	MockDirectedness, MockGraph, MockVertex,
 };
-use graphene::core::{
-	Graph, Edge, Directed, GraphMut
-};
+use graphene::core::{Directed, Edge, Graph, GraphMut};
 
-///
 /// Creates quickcheck tests for an edge lookup method and its `_mut` version.
 ///
 /// Creates 4 tests:
@@ -23,12 +16,11 @@ use graphene::core::{
 /// 4. That the mutable version of the method always returns the same edge set.
 ///
 /// Arguments:
-/// First it takes the name of the method to test and the name of its mutable version.
-/// Then it takes a set of vertex names that are used as input to the methods.
-/// Then it takes a closure that given an edge, checks whether that edge is a correct output
-/// of the method (the names of the vertices given before can be used here).
-///
-///
+/// First it takes the name of the method to test and the name of its mutable
+/// version. Then it takes a set of vertex names that are used as input to the
+/// methods. Then it takes a closure that given an edge, checks whether that
+/// edge is a correct output of the method (the names of the vertices given
+/// before can be used here).
 macro_rules! edge_lookup_method_tests {
 	{
 		$func:ident // The name of the method to test
@@ -48,12 +40,12 @@ macro_rules! edge_lookup_method_tests {
 			fn returns_valid_edges($arb_graph(g, $($vertex_ids),*): $arb_graph<$base_graph>) -> bool
 			{
 				let edges_len = g.$func($($vertex_ids),*).count();
-				
+
 				let valid_edges_len = g.$func($($vertex_ids),*).filter($($correct)*).count();
-				
+
 				edges_len == valid_edges_len
 			}
-			
+
 			///
 			/// Ensures that all edges are returned.
 			///
@@ -62,10 +54,10 @@ macro_rules! edge_lookup_method_tests {
 			{
 				let edges = g.$func($($vertex_ids),*).collect();
 				let expected = g.all_edges().filter($($correct)*).collect();
-				
+
 				unordered_equivalent_lists_equal(&edges, &expected)
 			}
-			
+
 			///
 			/// Ensures that when the vertex is not in the graph, no edges are returned.
 			///
@@ -74,7 +66,7 @@ macro_rules! edge_lookup_method_tests {
 			{
 				g.$func($($vertex_ids),*).next().is_none()
 			}
-			
+
 			///
 			/// Ensures that the mutable version returns the same edges as the original.
 			///
@@ -84,7 +76,7 @@ macro_rules! edge_lookup_method_tests {
 				let mut clone = g.clone();
 				let edges_mut = clone.$func_mut($($vertex_ids),*).collect();
 				let edges= g.$func($($vertex_ids),*).collect();
-				
+
 				unordered_equivalent_lists(&edges, &edges_mut,
 					_3_tuple_equality(), _3_tuple_equality())
 			}

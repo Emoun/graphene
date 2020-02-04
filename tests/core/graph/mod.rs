@@ -1,4 +1,3 @@
-//!
 //! Test the default methods of BaseGraph.
 //!
 

@@ -1,18 +1,15 @@
-//!
 //! Tests the `core::Unique` trait and its constrainer `core::UniqueGraph`.
 //!
 
-use graphene::core::{Constrainer, Graph, Edge, NewVertex, AddEdge, constraint::UniqueGraph};
 use crate::mock_graph::{
+	arbitrary::{ArbEdgeIn, ArbNonUniqueGraph, ArbUniqueGraph, ArbVertexIn},
 	MockEdgeWeight, MockVertexWeight,
-	arbitrary::{
-		ArbUniqueGraph, ArbNonUniqueGraph, ArbEdgeIn, ArbVertexIn
-	}
 };
+use graphene::core::{constraint::UniqueGraph, AddEdge, Constrainer, Edge, Graph, NewVertex};
 
-duplicate_for_directedness!{
+duplicate_for_directedness! {
 	$directedness
-	
+
 	///
 	/// Tests that UniqueGraph correctly identifies unique graphs.
 	///
@@ -21,7 +18,7 @@ duplicate_for_directedness!{
 	{
 		UniqueGraph::constrain_single(g.0.unconstrain()).is_ok()
 	}
-	
+
 	///
 	/// Tests that UniqueGraph correctly rejects non-unique graphs.
 	///
@@ -30,7 +27,7 @@ duplicate_for_directedness!{
 	{
 		UniqueGraph::constrain_single(g.0).is_err()
 	}
-	
+
 	///
 	/// Tests that a UniqueGraph accepts adding a non-duplicate edge
 	///
@@ -45,7 +42,7 @@ duplicate_for_directedness!{
 		let accepted = g.0.add_edge_weighted((v, v2, e_weight)).is_ok();
 			accepted && g.0.edges_between(v,v2).count() == 1
 	}
-	
+
 	///
 	/// Tests that a UniqueGraph rejects adding a duplicate edge
 	///
