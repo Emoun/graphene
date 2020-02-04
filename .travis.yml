@@ -8,11 +8,16 @@ script:
   - cargo build --verbose
   - cargo test --verbose
   - cargo doc
-  - rustup component add rustfmt
-  - cargo +nightly fmt -- --check
 env:
   - QUICKCHECK_GENERATOR_SIZE=50 QUICKCHECK_TESTS=1000
 
 matrix:
   allow_failures:
     - rust: nightly
+      env: QUICKCHECK_GENERATOR_SIZE=50 QUICKCHECK_TESTS=1000
+  include:
+    - rust: nightly
+      script:
+        - rustup component add rustfmt
+        - cargo +nightly fmt -- --check
+      env:
