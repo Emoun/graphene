@@ -16,6 +16,7 @@ matrix:
     - rust: nightly
       env: QUICKCHECK_GENERATOR_SIZE=50 QUICKCHECK_TESTS=1000
   include:
+    # An additional job specifically to check formatting
     - rust: nightly
       script:
         - rustup component add rustfmt

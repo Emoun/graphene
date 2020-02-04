@@ -13,6 +13,21 @@ where
 	{
 		self.source() == self.sink()
 	}
+
+	/// Returns the other vertex than the one given.
+	///
+	/// If the one given is not in this edge, the sink is returned.
+	fn other(&self, v: V) -> V
+	{
+		if self.sink() == v
+		{
+			self.source()
+		}
+		else
+		{
+			self.sink()
+		}
+	}
 }
 
 pub trait EdgeWeighted<V, W>: Edge<V> + Sized
@@ -28,21 +43,6 @@ where
 	fn split(self) -> ((V, V), W)
 	{
 		((self.source(), self.sink()), self.weight_owned())
-	}
-
-	/// Returns the other vertex than the one given.
-	///
-	/// If the one given is not in this edge, the sink is returned.
-	fn other(&self, v: V) -> V
-	{
-		if self.sink() == v
-		{
-			self.source()
-		}
-		else
-		{
-			self.sink()
-		}
 	}
 }
 

@@ -4,7 +4,7 @@ use crate::mock_graph::{
 };
 use graphene::core::{
 	constraint::{ConnectedGraph, DirectedGraph, WeakGraph},
-	AddEdge, Constrainer, Directed, Directedness, EdgeWeighted, Graph, ImplGraph, ImplGraphMut,
+	AddEdge, Constrainer, Directed, Directedness, Edge, Graph, ImplGraph, ImplGraphMut,
 };
 use quickcheck::{Arbitrary, Gen};
 use rand::Rng;
