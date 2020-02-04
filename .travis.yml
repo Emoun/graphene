@@ -9,7 +9,7 @@ script:
   - cargo test --verbose
   - cargo doc
   - rustup component add rustfmt
-  - cargo fmt -- --check
+  - cargo +nightly fmt -- --check
 env:
   - QUICKCHECK_GENERATOR_SIZE=50 QUICKCHECK_TESTS=1000
 
