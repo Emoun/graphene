@@ -130,7 +130,6 @@ impl<'a, G> Iterator for TarjanSCC<'a,G>
 	fn next(&mut self) -> Option<Self::Item> {
 		
 		// Repeat until either an SCC is found or all vertices have been visited.
-		'l:
 		loop {
 			// If we have already found an scc, return it.
 			while self.dfs.advance_next_exit() {
