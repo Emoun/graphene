@@ -41,7 +41,7 @@ where
 		.map(|e| (e.source(), e.sink()));
 	let proxy = if let Some(e) = to_remove
 	{
-		// 	We use the unsafe block here to allow us to use 'g' again later.
+		// We use the unsafe block here to allow us to use 'g' again later.
 		// Currently, the compiler can't see when 'proxy' is no longer used,
 		// and therefore 'g' is free to be used again.
 		// I think this is caused by: https://github.com/rust-lang/rust/issues/53528

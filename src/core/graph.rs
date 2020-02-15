@@ -238,26 +238,6 @@ pub trait GraphMut: Graph
 	}
 }
 
-/// Graph that at all times has a finite set of vertices and edges.
-///
-/// TODO: redesign. What about edges? even through there are less than
-/// usize::MAX vertices there can easily be be more than usize::MAX edges. Maybe
-/// this should be 2 traits.
-pub trait ExactGraph: Graph
-{
-	/// Returns the number of vertices in the graph.
-	fn vertex_count(&self) -> usize
-	{
-		self.all_vertices().count()
-	}
-
-	/// Returns the number of edges in the graph.
-	fn edge_count(&self) -> usize
-	{
-		self.all_edges().count()
-	}
-}
-
 pub enum DirectednessVariants<C: Constrainer>
 {
 	Directed(DirectedGraph<C>),

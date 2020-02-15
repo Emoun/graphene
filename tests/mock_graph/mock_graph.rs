@@ -1,7 +1,7 @@
 use crate::mock_graph::{MockEdgeWeight, MockVertex, MockVertexWeight};
 use graphene::core::{
 	constraint::{AddEdge, NewVertex, RemoveEdge, RemoveVertex},
-	BaseGraph, Directedness, Edge, EdgeWeighted, ExactGraph, Graph, GraphMut, ImplGraph,
+	BaseGraph, Directedness, Edge, EdgeWeighted, Graph, GraphMut, ImplGraph,
 	ImplGraphMut,
 };
 use std::{
@@ -292,8 +292,6 @@ impl<D: Directedness> RemoveEdge for MockGraph<D>
 		}
 	}
 }
-
-impl<D: Directedness> ExactGraph for MockGraph<D> {}
 
 impl<D: Directedness> ImplGraph for MockGraph<D>
 {
