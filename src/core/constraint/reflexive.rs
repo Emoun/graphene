@@ -143,40 +143,9 @@ where
 	}
 }
 
-impl<C: Constrainer + ImplGraphMut> AddEdge for ReflexiveGraph<C>
-where
-	C::Graph: AddEdge,
-	<C::Graph as Graph>::EdgeWeight: Default,
-{
-	delegate! {
-		to self.0.graph_mut() {
-			fn add_edge_weighted<E>(&mut self, e: E) -> Result<(), ()>
-			where
-				E: EdgeWeighted<Self::Vertex, Self::EdgeWeight>;
-		}
-	}
-}
-
-impl<C: Constrainer + ImplGraphMut> RemoveEdge for ReflexiveGraph<C>
-where
-	C::Graph: RemoveEdge,
-	<C::Graph as Graph>::EdgeWeight: Default,
-{
-	delegate! {
-		to self.0.graph_mut() {
-			fn remove_edge_where<F>(
-				&mut self,
-				f: F,
-			) -> Result<(Self::Vertex, Self::Vertex, Self::EdgeWeight), ()>
-			where
-				F: Fn((Self::Vertex, Self::Vertex, &Self::EdgeWeight)) -> bool;
-		}
-	}
-}
-
 impl<C: Constrainer> Reflexive for ReflexiveGraph<C> where <C::Graph as Graph>::EdgeWeight: Default {}
 
 impl_constraints! {
-	ReflexiveGraph<C>: Reflexive
+	ReflexiveGraph<C>: NewVertex, RemoveVertex, Reflexive
 	where <C::Graph as Graph>::EdgeWeight: Default,
 }

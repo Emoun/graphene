@@ -1,6 +1,6 @@
 use crate::core::{
-	constraint::{AddEdge, NewVertex, RemoveEdge, RemoveVertex},
-	Constrainer, Directedness, Edge, EdgeWeighted, Graph, GraphMut, ImplGraph, ImplGraphMut,
+	constraint::AddEdge, Constrainer, Directedness, Edge, EdgeWeighted, Graph, GraphMut, ImplGraph,
+	ImplGraphMut,
 };
 use delegate::delegate;
 
@@ -123,28 +123,6 @@ where
 	}
 }
 
-impl<C: Constrainer + ImplGraphMut> NewVertex for UniqueGraph<C>
-where
-	C::Graph: NewVertex,
-{
-	delegate! {
-		to self.0.graph_mut() {
-			fn new_vertex_weighted(&mut self, w: Self::VertexWeight) -> Result<Self::Vertex, ()>;
-		}
-	}
-}
-
-impl<C: Constrainer + ImplGraphMut> RemoveVertex for UniqueGraph<C>
-where
-	C::Graph: RemoveVertex,
-{
-	delegate! {
-		to self.0.graph_mut() {
-			fn remove_vertex(&mut self, v: Self::Vertex) -> Result<Self::VertexWeight, ()>;
-		}
-	}
-}
-
 impl<C: Constrainer + ImplGraphMut> AddEdge for UniqueGraph<C>
 where
 	C::Graph: AddEdge,
@@ -173,24 +151,8 @@ where
 	}
 }
 
-impl<C: Constrainer + ImplGraphMut> RemoveEdge for UniqueGraph<C>
-where
-	C::Graph: RemoveEdge,
-{
-	delegate! {
-		to self.0.graph_mut() {
-			fn remove_edge_where<F>(
-				&mut self,
-				f: F,
-			) -> Result<(Self::Vertex, Self::Vertex, Self::EdgeWeight), ()>
-			where
-				F: Fn((Self::Vertex, Self::Vertex, &Self::EdgeWeight)) -> bool;
-		}
-	}
-}
-
 impl<C: Constrainer> Unique for UniqueGraph<C> {}
 
 impl_constraints! {
-	UniqueGraph<C>: Unique
+	UniqueGraph<C>: Unique, AddEdge
 }

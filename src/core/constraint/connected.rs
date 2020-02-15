@@ -2,8 +2,8 @@ use crate::{
 	algo::DFS,
 	core::{
 		constraint::{
-			proxy_remove_edge_where, proxy_remove_vertex, AddEdge, DirectedGraph, RemoveEdge,
-			RemoveVertex, Unilateral, Weak,
+			proxy_remove_edge_where, proxy_remove_vertex, DirectedGraph, RemoveEdge, RemoveVertex,
+			Unilateral, Weak,
 		},
 		Constrainer, EdgeWeighted, Graph, GraphMut, ImplGraph, ImplGraphMut, ReverseGraph,
 	},
@@ -134,19 +134,6 @@ where
 	}
 }
 
-impl<C: Constrainer + ImplGraphMut> AddEdge for ConnectedGraph<C>
-where
-	C::Graph: AddEdge,
-{
-	delegate! {
-		to self.0.graph_mut() {
-			fn add_edge_weighted<E>(&mut self, e: E) -> Result<(), ()>
-			where
-				E: EdgeWeighted<Self::Vertex, Self::EdgeWeight>;
-		}
-	}
-}
-
 impl<C: Constrainer + ImplGraphMut> RemoveEdge for ConnectedGraph<C>
 where
 	C::Graph: RemoveEdge,
@@ -167,5 +154,7 @@ impl<C: Constrainer> Unilateral for ConnectedGraph<C> {}
 impl<C: Constrainer> Connected for ConnectedGraph<C> {}
 
 impl_constraints! {
-	ConnectedGraph<C>: Connected, Unilateral, Weak
+	ConnectedGraph<C>: Connected, Unilateral, Weak, RemoveVertex, RemoveEdge,
+	// A new vertex wouldn't be connected to the rest of the graph
+	NewVertex
 }

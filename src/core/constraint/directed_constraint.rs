@@ -1,5 +1,4 @@
 use crate::core::{
-	constraint::{AddEdge, NewVertex, RemoveEdge, RemoveVertex},
 	Constrainer, Directed, Directedness, EdgeWeighted, Graph, GraphMut, ImplGraph, ImplGraphMut,
 };
 use delegate::delegate;
@@ -97,57 +96,6 @@ where
 			) -> Box<
 				dyn 'a + Iterator<Item = (Self::Vertex, Self::Vertex, &'a mut Self::EdgeWeight)>
 			>;
-		}
-	}
-}
-
-impl<C: Constrainer + ImplGraphMut> NewVertex for DirectedGraph<C>
-where
-	C::Graph: NewVertex,
-{
-	delegate! {
-		to self.0.graph_mut() {
-			fn new_vertex_weighted(&mut self, w: Self::VertexWeight) -> Result<Self::Vertex, ()>;
-		}
-	}
-}
-
-impl<C: Constrainer + ImplGraphMut> RemoveVertex for DirectedGraph<C>
-where
-	C::Graph: RemoveVertex,
-{
-	delegate! {
-		to self.0.graph_mut() {
-			fn remove_vertex(&mut self, v: Self::Vertex) -> Result<Self::VertexWeight, ()>;
-		}
-	}
-}
-
-impl<C: Constrainer + ImplGraphMut> AddEdge for DirectedGraph<C>
-where
-	C::Graph: AddEdge,
-{
-	delegate! {
-		to self.0.graph_mut() {
-			fn add_edge_weighted<E>(&mut self, e: E) -> Result<(), ()>
-			where
-				E: EdgeWeighted<Self::Vertex, Self::EdgeWeight>;
-		}
-	}
-}
-
-impl<C: Constrainer + ImplGraphMut> RemoveEdge for DirectedGraph<C>
-where
-	C::Graph: RemoveEdge,
-{
-	delegate! {
-		to self.0.graph_mut() {
-			fn remove_edge_where<F>(
-				&mut self,
-				f: F,
-			) -> Result<(Self::Vertex, Self::Vertex, Self::EdgeWeight), ()>
-			where
-				F: Fn((Self::Vertex, Self::Vertex, &Self::EdgeWeight)) -> bool;
 		}
 	}
 }

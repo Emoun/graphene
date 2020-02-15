@@ -1,7 +1,6 @@
 use crate::core::{
 	constraint::{
-		proxy_remove_edge_where, proxy_remove_vertex, AddEdge, ConnectedGraph, RemoveEdge,
-		RemoveVertex,
+		proxy_remove_edge_where, proxy_remove_vertex, ConnectedGraph, RemoveEdge, RemoveVertex,
 	},
 	proxy::UndirectedProxy,
 	Constrainer, Directed, EdgeWeighted, Graph, GraphMut, ImplGraph, ImplGraphMut,
@@ -139,19 +138,6 @@ where
 	}
 }
 
-impl<C: Constrainer + ImplGraphMut> AddEdge for WeakGraph<C>
-where
-	C::Graph: AddEdge<Directedness = Directed>,
-{
-	delegate! {
-		to self.0.graph_mut() {
-			fn add_edge_weighted<E>(&mut self, e: E) -> Result<(), ()>
-			where
-				E: EdgeWeighted<Self::Vertex, Self::EdgeWeight>;
-		}
-	}
-}
-
 impl<C: Constrainer + ImplGraphMut> RemoveEdge for WeakGraph<C>
 where
 	C::Graph: RemoveEdge<Directedness = Directed>,
@@ -170,6 +156,8 @@ where
 impl<C: Constrainer> Weak for WeakGraph<C> where C::Graph: Graph<Directedness = Directed> {}
 
 impl_constraints! {
-	WeakGraph<C>: Weak
+	WeakGraph<C>: Weak, RemoveVertex, RemoveEdge,
+	// A new vertex wouldn't be connected to the rest of the graph
+	NewVertex
 	where C::Graph: Graph<Directedness=Directed>
 }

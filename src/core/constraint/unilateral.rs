@@ -2,8 +2,7 @@ use crate::{
 	algo::TarjanSCC,
 	core::{
 		constraint::{
-			proxy_remove_edge_where, proxy_remove_vertex, AddEdge, RemoveEdge, RemoveVertex,
-			Subgraph, Weak,
+			proxy_remove_edge_where, proxy_remove_vertex, RemoveEdge, RemoveVertex, Subgraph, Weak,
 		},
 		Constrainer, Directed, EdgeWeighted, Graph, GraphMut, ImplGraph, ImplGraphMut,
 	},
@@ -162,19 +161,6 @@ where
 	}
 }
 
-impl<C: Constrainer + ImplGraphMut> AddEdge for UnilateralGraph<C>
-where
-	C::Graph: AddEdge<Directedness = Directed>,
-{
-	delegate! {
-		to self.0.graph_mut() {
-			fn add_edge_weighted<E>(&mut self, e: E) -> Result<(), ()>
-			where
-				E: EdgeWeighted<Self::Vertex, Self::EdgeWeight>;
-		}
-	}
-}
-
 impl<C: Constrainer + ImplGraphMut> RemoveEdge for UnilateralGraph<C>
 where
 	C::Graph: RemoveEdge<Directedness = Directed>,
@@ -195,6 +181,8 @@ impl<C: Constrainer> Unilateral for UnilateralGraph<C> where C::Graph: Graph<Dir
 {}
 
 impl_constraints! {
-	UnilateralGraph<C>: Unilateral, Weak
+	UnilateralGraph<C>: Unilateral, Weak, RemoveVertex, RemoveEdge,
+	// A new vertex would be unconnected to the rest of the graph
+	NewVertex
 	where C::Graph: Graph<Directedness=Directed>
 }

@@ -29,6 +29,91 @@ macro_rules! impl_constraints {
 			{}
 		}
 
+		// NewVertex
+		impl_constraints!{
+			@inner
+			$struct<$generic_graph>: [$($trait)*]
+			[
+				$generic_graph: $crate::core::ImplGraphMut,
+				$generic_graph::Graph: $crate::core::constraint::NewVertex,
+				$($($bounds)*)?
+			]
+			NewVertex
+			{
+				delegate! {
+					to self.0.graph_mut() {
+						fn new_vertex_weighted(&mut self, w: Self::VertexWeight)
+							-> Result<Self::Vertex, ()>;
+					}
+				}
+			}
+		}
+
+		// RemoveVertex
+		impl_constraints!{
+			@inner
+			$struct<$generic_graph>: [$($trait)*]
+			[
+				$generic_graph: $crate::core::ImplGraphMut,
+				$generic_graph::Graph: $crate::core::constraint::RemoveVertex,
+				$($($bounds)*)?
+			]
+			RemoveVertex
+			{
+				delegate! {
+					to self.0.graph_mut() {
+						fn remove_vertex(&mut self, v: Self::Vertex)
+							-> Result<Self::VertexWeight, ()>;
+					}
+				}
+			}
+		}
+
+		// AddEdge
+		impl_constraints!{
+			@inner
+			$struct<$generic_graph>: [$($trait)*]
+			[
+				$generic_graph: $crate::core::ImplGraphMut,
+				$generic_graph::Graph: $crate::core::constraint::AddEdge,
+				$($($bounds)*)?
+			]
+			AddEdge
+			{
+				delegate! {
+					to self.0.graph_mut() {
+						fn add_edge_weighted<E>(&mut self, e: E) -> Result<(), ()>
+						where
+							E: EdgeWeighted<Self::Vertex, Self::EdgeWeight>;
+					}
+				}
+			}
+		}
+
+		// RemoveEdge
+		impl_constraints!{
+			@inner
+			$struct<$generic_graph>: [$($trait)*]
+			[
+				$generic_graph: $crate::core::ImplGraphMut,
+				$generic_graph::Graph: $crate::core::constraint::RemoveEdge,
+				$($($bounds)*)?
+			]
+			RemoveEdge
+			{
+				delegate! {
+					to self.0.graph_mut() {
+						fn remove_edge_where<F>(
+							&mut self,
+							f: F,
+						) -> Result<(Self::Vertex, Self::Vertex, Self::EdgeWeight), ()>
+						where
+							F: Fn((Self::Vertex, Self::Vertex, &Self::EdgeWeight)) -> bool;
+					}
+				}
+			}
+		}
+
 		// Unique
 		impl_constraints!{
 			@inner
