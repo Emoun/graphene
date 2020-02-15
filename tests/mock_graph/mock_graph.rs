@@ -1,8 +1,7 @@
 use crate::mock_graph::{MockEdgeWeight, MockVertex, MockVertexWeight};
 use graphene::core::{
 	constraint::{AddEdge, NewVertex, RemoveEdge, RemoveVertex},
-	BaseGraph, Directedness, Edge, EdgeWeighted, Graph, GraphMut, ImplGraph,
-	ImplGraphMut,
+	BaseGraph, Directedness, Edge, EdgeWeighted, Graph, GraphMut, ImplGraph, ImplGraphMut,
 };
 use std::{
 	collections::HashMap,

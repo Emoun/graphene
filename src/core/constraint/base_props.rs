@@ -1,7 +1,5 @@
 use crate::core::{Directedness, Edge, EdgeWeighted, Graph};
-use num_traits::{
-	Unsigned, Zero, One, PrimInt
-};
+use num_traits::{One, PrimInt, Unsigned, Zero};
 
 /// A graph where new vertices can be added
 pub trait NewVertex: Graph
@@ -142,13 +140,14 @@ pub trait RemoveEdge: Graph
 pub trait VertexCount: Graph
 {
 	type Count: PrimInt + Unsigned;
-	
+
 	/// Returns the number of vertices in the graph.
 	fn vertex_count(&self) -> Self::Count
 	{
 		let mut count = Self::Count::zero();
 		let mut verts = self.all_vertices();
-		while let Some(_) = verts.next() {
+		while let Some(_) = verts.next()
+		{
 			count = count + Self::Count::one();
 		}
 		count
@@ -159,13 +158,14 @@ pub trait VertexCount: Graph
 pub trait EdgeCount: Graph
 {
 	type Count: PrimInt + Unsigned;
-	
+
 	/// Returns the number of vertices in the graph.
 	fn edge_count(&self) -> Self::Count
 	{
 		let mut count = Self::Count::zero();
 		let mut edges = self.all_edges();
-		while let Some(_) = edges.next() {
+		while let Some(_) = edges.next()
+		{
 			count = count + Self::Count::one();
 		}
 		count

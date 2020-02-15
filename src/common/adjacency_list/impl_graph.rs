@@ -1,12 +1,10 @@
 use crate::{
 	common::AdjListGraph,
 	core::{
-		constraint::{AddEdge, NewVertex, RemoveEdge, RemoveVertex},
-		BaseGraph, Directedness, Edge, EdgeWeighted, Graph, GraphMut, ImplGraph,
-		ImplGraphMut,
+		constraint::{AddEdge, NewVertex, RemoveEdge, RemoveVertex, VertexCount},
+		BaseGraph, Directedness, Edge, EdgeWeighted, Graph, GraphMut, ImplGraph, ImplGraphMut,
 	},
 };
-use crate::core::constraint::VertexCount;
 
 impl<Vw, Ew, D> Graph for AdjListGraph<Vw, Ew, D>
 where
@@ -164,10 +162,10 @@ where
 
 impl<Vw, Ew, D> VertexCount for AdjListGraph<Vw, Ew, D>
 where
-	D: Directedness
+	D: Directedness,
 {
 	type Count = usize;
-	
+
 	fn vertex_count(&self) -> Self::Count
 	{
 		self.vertices.len()

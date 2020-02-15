@@ -1,23 +1,25 @@
 //! Tests the `Constrainer` and `BaseGraph` combination for constraining graphs.
 //!
 
-use crate::mock_graph::{MockDirectedness, MockEdgeWeight, MockGraph, MockVertexWeight};
-use graphene::core::{
-	constraint::{AddEdge, NewVertex, RemoveEdge, RemoveVertex},
-	BaseGraph, Constrainer, EdgeWeighted, Graph, GraphMut, ImplGraph, ImplGraphMut,
-};
+use crate::mock_graph::{MockDirectedness, MockGraph, MockVertexWeight};
+use graphene::core::{BaseGraph, Constrainer, Graph, GraphMut, ImplGraph, ImplGraphMut};
 
-/// A mock constraint simply to test.
+/// A mock constraint that doesn't use mutability.
 ///
-/// To have it do something, we'll say this trait ensures the graph doesn't have
-/// 5 or more vertices.
+/// Its requirement is that the graph has exactly 1 vertex with a weight
 trait MockConstraint: Graph
 {
-	fn mock_constraint_count(&self) -> usize
-	{
-		self.all_vertices().count()
-	}
+	/// Return the value of the vertex weight
+	fn mock_weight_value(&self) -> &Self::VertexWeight;
 }
+/// A mock constraint that uses mutability.
+trait MockConstraintMut: MockConstraint
+{
+	/// Set the value of the vertex weight
+	fn mock_set_weight(&mut self, w: Self::VertexWeight);
+}
+
+/// A mock constrainer.
 struct MockConstrainer<C: Constrainer>(pub C);
 
 impl<C: Constrainer> ImplGraph for MockConstrainer<C>
@@ -43,7 +45,7 @@ impl<C: Constrainer> Constrainer for MockConstrainer<C>
 
 	fn constrain_single(g: Self::Constrained) -> Result<Self, ()>
 	{
-		if g.graph().all_vertices().count() < 5
+		if g.graph().all_vertices().count() == 1
 		{
 			Ok(Self(g))
 		}
@@ -100,60 +102,50 @@ where
 	}
 }
 
-impl<C: Constrainer + ImplGraphMut> NewVertex for MockConstrainer<C>
-where
-	C::Graph: NewVertex,
+impl<C: Constrainer> MockConstraint for MockConstrainer<C>
 {
-	fn new_vertex_weighted(&mut self, w: Self::VertexWeight) -> Result<Self::Vertex, ()>
+	fn mock_weight_value(&self) -> &Self::VertexWeight
 	{
-		if self.0.graph().all_vertices().count() < 4
+		self.all_vertices_weighted().next().unwrap().1
+	}
+}
+
+impl<C: Constrainer + ImplGraphMut> MockConstraintMut for MockConstrainer<C>
+where
+	C::Graph: GraphMut,
+{
+	fn mock_set_weight(&mut self, w: Self::VertexWeight)
+	{
+		*self.all_vertices_weighted_mut().next().unwrap().1 = w;
+	}
+}
+
+/// Creates a graph that can be constrainted by MockConstrainer.
+macro_rules! constrainable_graph {
+	{} =>{
 		{
-			self.0.graph_mut().new_vertex_weighted(w)
+			let mut g = MockGraph::empty();
+			g.vertices.insert(0, MockVertexWeight{value: 0});
+			g.next_id += 1;
+			g
 		}
-		else
-		{
-			Err(())
-		}
 	}
 }
-impl<C: Constrainer + ImplGraphMut> RemoveVertex for MockConstrainer<C>
-where
-	C::Graph: RemoveVertex,
-{
-	fn remove_vertex(&mut self, v: Self::Vertex) -> Result<Self::VertexWeight, ()>
-	{
-		self.0.graph_mut().remove_vertex(v)
+/// Test given graph implements MockConstraint by calling its method.
+macro_rules! assert_implements_mock_constraint {
+	{$graph:ident} =>{
+		assert_eq!($graph.mock_weight_value().value, $graph.mock_weight_value().value);
 	}
 }
-
-impl<C: Constrainer + ImplGraphMut> AddEdge for MockConstrainer<C>
-where
-	C::Graph: AddEdge,
-{
-	fn add_edge_weighted<E>(&mut self, e: E) -> Result<(), ()>
-	where
-		E: EdgeWeighted<Self::Vertex, Self::EdgeWeight>,
-	{
-		self.0.graph_mut().add_edge_weighted(e)
+/// Test given graph implements MockConstraintMut by using its method to
+/// increment the weight and afterwards test that it was incremented.
+macro_rules! assert_implements_mock_constraint_mut {
+	{$graph:ident} =>{
+		let old_weight = $graph.mock_weight_value().value;
+		$graph.mock_set_weight(MockVertexWeight{value: old_weight + 1});
+		assert_eq!(old_weight + 1, $graph.mock_weight_value().value);
 	}
 }
-
-impl<C: Constrainer + ImplGraphMut> RemoveEdge for MockConstrainer<C>
-where
-	C::Graph: RemoveEdge,
-{
-	fn remove_edge_where<F>(
-		&mut self,
-		f: F,
-	) -> Result<(Self::Vertex, Self::Vertex, Self::EdgeWeight), ()>
-	where
-		F: Fn((Self::Vertex, Self::Vertex, &Self::EdgeWeight)) -> bool,
-	{
-		self.0.graph_mut().remove_edge_where(f)
-	}
-}
-
-impl<C: Constrainer> MockConstraint for MockConstrainer<C> {}
 
 /// Test that defining a type alias allows for easy constraining of a base graph
 #[test]
@@ -163,12 +155,12 @@ fn pretyped_constraining()
 
 	// Test can use `Constrainer.constrain` on a base graph without needing type
 	// annotation
-	let g = ConstrainedGraph::constrain(MockGraph::empty()).unwrap();
+	let g = ConstrainedGraph::constrain(constrainable_graph!()).unwrap();
 
 	// Test that `BaseGraph.constrain` can be used where the constraint is defined
 	// elsewhere (in this case by an annotation, but could also be elsewhere and
 	// then solved by type inference)
-	let g2: ConstrainedGraph = MockGraph::empty().constrain().unwrap();
+	let g2: ConstrainedGraph = constrainable_graph!().constrain().unwrap();
 
 	// Test can remove 1 constraint
 	let _: MockConstrainer<MockGraph<MockDirectedness>> = g.unconstrain_single();
@@ -183,7 +175,7 @@ fn inline_constraining()
 {
 	// Test can use `Constrainer.constrain` on a base graph using inline constraints
 	let g = <MockConstrainer<MockConstrainer<MockGraph<MockDirectedness>>>>::constrain(
-		MockGraph::empty(),
+		constrainable_graph!(),
 	)
 	.unwrap();
 
@@ -191,7 +183,7 @@ fn inline_constraining()
 	// elsewhere (in this case by an annotation, but could also be elsewhere and
 	// then solved by type inference)
 	let g2: MockConstrainer<MockConstrainer<MockGraph<MockDirectedness>>> =
-		MockGraph::empty().constrain().unwrap();
+		constrainable_graph!().constrain().unwrap();
 
 	// Test can remove 1 constraint
 	let _: MockConstrainer<MockGraph<MockDirectedness>> = g.unconstrain_single();
@@ -206,116 +198,65 @@ fn constrainer_constraining_base()
 	type ConstrainedGraphRef<'a> =
 		MockConstrainer<MockConstrainer<&'a MockGraph<MockDirectedness>>>;
 
-	let mut g = MockGraph::empty();
-	assert_eq!(g.all_vertices().count(), 0);
+	let mut g = constrainable_graph!();
 
 	// Test constraining reference to graph
 	let c_ref = ConstrainedGraphRef::constrain(&g).unwrap();
-	assert_eq!(c_ref.mock_constraint_count(), 0);
-	assert_eq!(c_ref.all_vertices().count(), 0);
+	assert_implements_mock_constraint!(c_ref);
 
 	// Test still is a MockConstrainer after 1 unconstrain
 	let c_ref_uncon = c_ref.unconstrain_single();
-	assert_eq!(c_ref_uncon.mock_constraint_count(), 0);
+	assert_implements_mock_constraint!(c_ref_uncon);
 
-	// By reusing 'g' below, we test that the previous constraint is dropped when
-	// the it in no longer used.
+	// By reusing 'g' below, we test that the previous constraint
+	// is dropped when it i no longer used.
 
 	type ConstrainedGraphMut<'a> =
 		MockConstrainer<MockConstrainer<&'a mut MockGraph<MockDirectedness>>>;
 
 	// Test constraining mutable reference to graph
 	let mut c_ref_mut = ConstrainedGraphMut::constrain(&mut g).unwrap();
-	let vertex = c_ref_mut
-		.new_vertex_weighted(MockVertexWeight { value: 32 })
-		.unwrap();
-	c_ref_mut
-		.add_edge_weighted((vertex, vertex, MockEdgeWeight { value: 32 }))
-		.unwrap();
-	assert_eq!(c_ref_mut.mock_constraint_count(), 1);
+	assert_implements_mock_constraint_mut!(c_ref_mut);
 
 	// Test still is a MockConstrainer after 1 unconstrain
 	let mut c_ref_mut_uncon = c_ref_mut.unconstrain_single();
-	let vertex = c_ref_mut_uncon
-		.new_vertex_weighted(MockVertexWeight { value: 32 })
-		.unwrap();
-	c_ref_mut_uncon
-		.add_edge_weighted((vertex, vertex, MockEdgeWeight { value: 32 }))
-		.unwrap();
-	assert_eq!(c_ref_mut_uncon.mock_constraint_count(), 2);
+	assert_implements_mock_constraint_mut!(c_ref_mut_uncon);
 
-	// We don't test unconstraint, because it happens automatically when constrainer
-	// is no longer used and the reference is freed.
+	// We don't test unconstrain() explicitly now, because it happens automatically
+	// when constrainer is no longer used and the reference is freed.
 
 	type ConstrainedGraph<'a> =
 		MockConstrainer<MockConstrainer<MockConstrainer<MockGraph<MockDirectedness>>>>;
 
 	// Test constraining graph directly
 	let mut c_owned = ConstrainedGraph::constrain(g).unwrap();
-	let vertex = c_owned
-		.new_vertex_weighted(MockVertexWeight { value: 32 })
-		.unwrap();
-	c_owned
-		.add_edge_weighted((vertex, vertex, MockEdgeWeight { value: 32 }))
-		.unwrap();
-	assert_eq!(c_owned.mock_constraint_count(), 3);
-	assert_eq!(c_owned.all_vertices().count(), 3);
-	assert_eq!(c_owned.all_edges().count(), 3);
+	assert_implements_mock_constraint_mut!(c_owned);
 
 	// Test still is a MockConstrainer after 1 unconstrain
 	let mut c_owned_uncon = c_owned.unconstrain_single();
-	let vertex = c_owned_uncon
-		.new_vertex_weighted(MockVertexWeight { value: 32 })
-		.unwrap();
-	c_owned_uncon
-		.add_edge_weighted((vertex, vertex, MockEdgeWeight { value: 32 }))
-		.unwrap();
-	assert_eq!(c_owned_uncon.mock_constraint_count(), 4);
-	assert_eq!(c_owned_uncon.all_edges().count(), 4);
-
-	// Test that the constraint is upheld (less than 5 vertices)
-	assert!(c_owned_uncon
-		.new_vertex_weighted(MockVertexWeight { value: 32 })
-		.is_err());
+	assert_implements_mock_constraint_mut!(c_owned_uncon);
 
 	// Test all constraints can be removed at once
-	let mut g = c_owned_uncon.unconstrain();
-	let vertex = g
-		.new_vertex_weighted(MockVertexWeight { value: 32 })
-		.unwrap();
-	g.add_edge_weighted((vertex, vertex, MockEdgeWeight { value: 32 }))
-		.unwrap();
-	assert_eq!(g.all_vertices().count(), 5);
-	assert_eq!(g.all_edges().count(), 5);
-
-	// Test can no longer constrain it
-	assert!(ConstrainedGraph::constrain(g).is_err());
+	c_owned_uncon.unconstrain().validate();
 }
 
 #[test]
 fn inline_constrainer_constraining_base()
 {
-	let mut g = MockGraph::empty();
-	assert_eq!(g.all_vertices().count(), 0);
+	let mut g = constrainable_graph!();
 
 	let c_ref =
 		<MockConstrainer<MockConstrainer<&MockGraph<MockDirectedness>>>>::constrain(&g).unwrap();
-	assert_eq!(c_ref.all_vertices().count(), 0);
+	assert_implements_mock_constraint!(c_ref);
 
 	let mut c_ref_mut =
 		<MockConstrainer<MockConstrainer<&mut MockGraph<MockDirectedness>>>>::constrain(&mut g)
 			.unwrap();
-	c_ref_mut
-		.new_vertex_weighted(MockVertexWeight { value: 10 })
-		.unwrap();
-	assert_eq!(c_ref_mut.all_vertices().count(), 1);
+	assert_implements_mock_constraint_mut!(c_ref_mut);
 
 	let mut c_owned =
 		<MockConstrainer<MockConstrainer<MockGraph<MockDirectedness>>>>::constrain(g).unwrap();
-	c_owned
-		.new_vertex_weighted(MockVertexWeight { value: 10 })
-		.unwrap();
-	assert_eq!(c_owned.all_vertices().count(), 2);
+	assert_implements_mock_constraint_mut!(c_owned);
 }
 
 #[test]
@@ -323,60 +264,43 @@ fn base_constrains_self_by_constraint_inference()
 {
 	type ConstrainedGraph<G> = MockConstrainer<MockConstrainer<G>>;
 
-	let mut g = MockGraph::empty();
-	assert_eq!(g.all_vertices().count(), 0);
+	let mut g = constrainable_graph!();
 
 	let c_ref: ConstrainedGraph<&MockGraph<MockDirectedness>> = (&g).constrain().unwrap();
-	assert_eq!(c_ref.all_vertices().count(), 0);
+	assert_implements_mock_constraint!(c_ref);
 	let c_ref_unc = c_ref.unconstrain_single();
-	assert_eq!(c_ref_unc.all_vertices().count(), 0);
+	assert_implements_mock_constraint!(c_ref_unc);
 
 	let mut c_ref_mut: ConstrainedGraph<&mut MockGraph<MockDirectedness>> =
 		(&mut g).constrain().unwrap();
-	c_ref_mut
-		.new_vertex_weighted(MockVertexWeight { value: 10 })
-		.unwrap();
-	assert_eq!(c_ref_mut.all_vertices().count(), 1);
+	assert_implements_mock_constraint_mut!(c_ref_mut);
 
 	let mut c_owned: ConstrainedGraph<MockGraph<MockDirectedness>> = g.constrain().unwrap();
-	c_owned
-		.new_vertex_weighted(MockVertexWeight { value: 10 })
-		.unwrap();
-	assert_eq!(c_owned.all_vertices().count(), 2);
+	assert_implements_mock_constraint_mut!(c_owned);
 }
 
 #[test]
 fn base_constrains_self_by_inline_constraint_inference()
 {
-	let mut g = MockGraph::empty();
-	assert_eq!(g.all_vertices().count(), 0);
+	let mut g = constrainable_graph!();
 
 	let c_ref: MockConstrainer<MockConstrainer<&MockGraph<MockDirectedness>>> =
 		(&g).constrain().unwrap();
-	assert_eq!(c_ref.all_vertices().count(), 0);
+	assert_implements_mock_constraint!(c_ref);
 	let c_ref_unc = c_ref.unconstrain_single();
-	assert_eq!(c_ref_unc.all_vertices().count(), 0);
+	assert_implements_mock_constraint!(c_ref_unc);
 
 	let mut c_ref_mut: MockConstrainer<MockConstrainer<&mut MockGraph<MockDirectedness>>> =
 		(&mut g).constrain().unwrap();
-	c_ref_mut
-		.new_vertex_weighted(MockVertexWeight { value: 10 })
-		.unwrap();
-	assert_eq!(c_ref_mut.all_vertices().count(), 1);
+	assert_implements_mock_constraint_mut!(c_ref_mut);
 	let mut c_ref_mut_unc = c_ref_mut.unconstrain_single();
-	c_ref_mut_unc
-		.new_vertex_weighted(MockVertexWeight { value: 10 })
-		.unwrap();
-	assert_eq!(c_ref_mut_unc.all_vertices().count(), 2);
+	assert_implements_mock_constraint_mut!(c_ref_mut_unc);
 
 	let c_owned: MockConstrainer<MockConstrainer<MockGraph<MockDirectedness>>> =
 		g.constrain().unwrap();
-	assert_eq!(c_owned.all_vertices().count(), 2);
+	assert_implements_mock_constraint!(c_owned);
 	let mut c_owned_unc = c_owned.unconstrain_single();
-	c_owned_unc
-		.new_vertex_weighted(MockVertexWeight { value: 10 })
-		.unwrap();
-	assert_eq!(c_owned_unc.all_vertices().count(), 3);
-	let g2 = c_owned_unc.unconstrain();
-	assert_eq!(g2.all_vertices().count(), 3);
+	assert_implements_mock_constraint_mut!(c_owned_unc);
+
+	c_owned_unc.unconstrain().validate()
 }
