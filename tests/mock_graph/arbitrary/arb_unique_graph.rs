@@ -3,8 +3,8 @@ use crate::mock_graph::{
 	MockEdgeWeight, MockGraph,
 };
 use graphene::core::{
-	constraint::{DirectedGraph, UniqueGraph},
-	AddEdge, Constrainer, Directedness, Edge, Graph, ImplGraph, ImplGraphMut, RemoveEdge,
+	constraint::{AddEdge, DirectedGraph, RemoveEdge, UniqueGraph},
+	Constrainer, Directedness, Edge, Graph, ImplGraph, ImplGraphMut,
 };
 use quickcheck::{Arbitrary, Gen};
 use rand::Rng;

@@ -1,8 +1,10 @@
 use crate::core::{
-	constraint::{proxy_remove_edge_where, proxy_remove_vertex, ConnectedGraph},
+	constraint::{
+		proxy_remove_edge_where, proxy_remove_vertex, AddEdge, ConnectedGraph, RemoveEdge,
+		RemoveVertex,
+	},
 	proxy::UndirectedProxy,
-	AddEdge, Constrainer, Directed, EdgeWeighted, Graph, GraphMut, ImplGraph, ImplGraphMut,
-	RemoveEdge, RemoveVertex,
+	Constrainer, Directed, EdgeWeighted, Graph, GraphMut, ImplGraph, ImplGraphMut,
 };
 use delegate::delegate;
 

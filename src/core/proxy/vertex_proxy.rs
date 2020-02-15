@@ -1,6 +1,7 @@
 use crate::core::{
-	trait_aliases::Id, BaseGraph, Constrainer, Graph, ImplGraph, ImplGraphMut, NewVertex,
-	RemoveVertex,
+	constraint::{NewVertex, RemoveVertex},
+	trait_aliases::Id,
+	BaseGraph, Constrainer, Graph, ImplGraph, ImplGraphMut,
 };
 
 #[derive(Copy, Clone, PartialEq, Eq)]

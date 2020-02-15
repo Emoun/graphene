@@ -9,7 +9,10 @@ use crate::{
 		MockDirectedness, MockGraph,
 	},
 };
-use graphene::core::{Edge, EdgeWeighted, Graph, GraphMut, RemoveEdge, RemoveVertex};
+use graphene::core::{
+	constraint::{RemoveEdge, RemoveVertex},
+	Edge, EdgeWeighted, Graph, GraphMut,
+};
 
 /// Tests that adding vertices to the graph results in the same vertices being
 /// output by `all_vertices_weighted`

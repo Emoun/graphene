@@ -2,10 +2,10 @@ use crate::{
 	algo::DFS,
 	core::{
 		constraint::{
-			proxy_remove_edge_where, proxy_remove_vertex, DirectedGraph, Unilateral, Weak,
+			proxy_remove_edge_where, proxy_remove_vertex, AddEdge, DirectedGraph, RemoveEdge,
+			RemoveVertex, Unilateral, Weak,
 		},
-		AddEdge, Constrainer, EdgeWeighted, Graph, GraphMut, ImplGraph, ImplGraphMut, RemoveEdge,
-		RemoveVertex, ReverseGraph,
+		Constrainer, EdgeWeighted, Graph, GraphMut, ImplGraph, ImplGraphMut, ReverseGraph,
 	},
 };
 use delegate::delegate;

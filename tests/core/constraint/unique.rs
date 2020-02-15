@@ -5,7 +5,10 @@ use crate::mock_graph::{
 	arbitrary::{ArbEdgeIn, ArbNonUniqueGraph, ArbUniqueGraph, ArbVertexIn},
 	MockEdgeWeight, MockVertexWeight,
 };
-use graphene::core::{constraint::UniqueGraph, AddEdge, Constrainer, Edge, Graph, NewVertex};
+use graphene::core::{
+	constraint::{AddEdge, NewVertex, UniqueGraph},
+	Constrainer, Edge, Graph,
+};
 
 duplicate_for_directedness! {
 	$directedness

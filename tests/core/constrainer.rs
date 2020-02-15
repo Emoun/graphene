@@ -3,8 +3,8 @@
 
 use crate::mock_graph::{MockDirectedness, MockEdgeWeight, MockGraph, MockVertexWeight};
 use graphene::core::{
-	AddEdge, BaseGraph, Constrainer, EdgeWeighted, Graph, GraphMut, ImplGraph, ImplGraphMut,
-	NewVertex, RemoveEdge, RemoveVertex,
+	constraint::{AddEdge, NewVertex, RemoveEdge, RemoveVertex},
+	BaseGraph, Constrainer, EdgeWeighted, Graph, GraphMut, ImplGraph, ImplGraphMut,
 };
 
 /// A mock constraint simply to test.

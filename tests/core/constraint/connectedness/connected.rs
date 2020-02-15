@@ -9,8 +9,8 @@ use crate::mock_graph::{
 	MockEdgeWeight, MockVertexWeight,
 };
 use graphene::core::{
-	constraint::ConnectedGraph, AddEdge, Constrainer, Directedness, Edge, NewVertex, RemoveEdge,
-	RemoveVertex,
+	constraint::{AddEdge, ConnectedGraph, NewVertex, RemoveEdge, RemoveVertex},
+	Constrainer, Directedness, Edge,
 };
 
 duplicate_for_directedness! {

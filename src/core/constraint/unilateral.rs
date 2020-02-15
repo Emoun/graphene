@@ -1,9 +1,11 @@
 use crate::{
 	algo::TarjanSCC,
 	core::{
-		constraint::{proxy_remove_edge_where, proxy_remove_vertex, Subgraph, Weak},
-		AddEdge, Constrainer, Directed, EdgeWeighted, Graph, GraphMut, ImplGraph, ImplGraphMut,
-		RemoveEdge, RemoveVertex,
+		constraint::{
+			proxy_remove_edge_where, proxy_remove_vertex, AddEdge, RemoveEdge, RemoveVertex,
+			Subgraph, Weak,
+		},
+		Constrainer, Directed, EdgeWeighted, Graph, GraphMut, ImplGraph, ImplGraphMut,
 	},
 };
 use delegate::delegate;

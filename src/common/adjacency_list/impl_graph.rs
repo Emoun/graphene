@@ -1,8 +1,9 @@
 use crate::{
 	common::AdjListGraph,
 	core::{
-		AddEdge, BaseGraph, Directedness, Edge, EdgeWeighted, ExactGraph, Graph, GraphMut,
-		ImplGraph, ImplGraphMut, NewVertex, RemoveEdge, RemoveVertex,
+		constraint::{AddEdge, NewVertex, RemoveEdge, RemoveVertex},
+		BaseGraph, Directedness, Edge, EdgeWeighted, ExactGraph, Graph, GraphMut, ImplGraph,
+		ImplGraphMut,
 	},
 };
 

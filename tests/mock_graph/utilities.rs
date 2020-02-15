@@ -1,5 +1,8 @@
 use crate::mock_graph::{MockEdgeWeight, MockGraph, MockVertex, MockVertexWeight};
-use graphene::core::{AddEdge, Directedness, Edge, EdgeDeref, Graph, NewVertex};
+use graphene::core::{
+	constraint::{AddEdge, NewVertex},
+	Directedness, Edge, EdgeDeref, Graph,
+};
 use std::collections::HashMap;
 #[macro_export]
 macro_rules! holds_if{

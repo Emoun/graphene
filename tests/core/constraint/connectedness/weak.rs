@@ -6,8 +6,8 @@ use crate::mock_graph::{
 	MockEdgeWeight, MockVertexWeight,
 };
 use graphene::core::{
-	constraint::WeakGraph, AddEdge, Constrainer, Directed, Edge, NewVertex, RemoveEdge,
-	RemoveVertex,
+	constraint::{AddEdge, NewVertex, RemoveEdge, RemoveVertex, WeakGraph},
+	Constrainer, Directed, Edge,
 };
 
 /// Tests that WeakGraph correctly identifies weak graphs.

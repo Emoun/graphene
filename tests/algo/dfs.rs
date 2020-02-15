@@ -7,7 +7,7 @@ use crate::mock_graph::{
 };
 use graphene::{
 	algo::DFS,
-	core::{AddEdge, Constrainer, Directed, Graph, ImplGraph},
+	core::{constraint::AddEdge, Constrainer, Directed, Graph, ImplGraph},
 };
 use std::{cell::Cell, collections::HashSet};
 

@@ -1,6 +1,6 @@
 use crate::core::{
-	constraint::Subgraph, AddEdge, BaseGraph, Constrainer, Edge, EdgeWeighted, Graph, GraphMut,
-	ImplGraph, ImplGraphMut, NewVertex, RemoveEdge, RemoveVertex,
+	constraint::{AddEdge, NewVertex, RemoveEdge, RemoveVertex, Subgraph},
+	BaseGraph, Constrainer, Edge, EdgeWeighted, Graph, GraphMut, ImplGraph, ImplGraphMut,
 };
 
 /// A subgraph of another graph.

@@ -1,5 +1,6 @@
 #[macro_use]
 mod impl_constraints;
+mod base_props;
 mod connected;
 mod directed_constraint;
 mod no_loops;
@@ -11,12 +12,12 @@ mod unique;
 mod weak;
 
 pub use self::{
-	connected::*, directed_constraint::*, impl_constraints::*, no_loops::*, reflexive::*,
-	subgraph::*, undirected_constraint::*, unilateral::*, unique::*, weak::*,
+	base_props::*, connected::*, directed_constraint::*, impl_constraints::*, no_loops::*,
+	reflexive::*, subgraph::*, undirected_constraint::*, unilateral::*, unique::*, weak::*,
 };
 use crate::core::{
 	proxy::{EdgeProxyGraph, ProxyVertex, VertexProxyGraph},
-	Constrainer, Edge, RemoveEdge, RemoveVertex,
+	Constrainer, Edge,
 };
 
 /// Will try to remove an edge from the graph that holds for the given function.

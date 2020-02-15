@@ -10,8 +10,8 @@ use crate::mock_graph::{
 	MockEdgeWeight, MockVertexWeight,
 };
 use graphene::core::{
-	constraint::UnilateralGraph, AddEdge, Constrainer, Directed, Edge, NewVertex, RemoveEdge,
-	RemoveVertex,
+	constraint::{AddEdge, NewVertex, RemoveEdge, RemoveVertex, UnilateralGraph},
+	Constrainer, Directed, Edge,
 };
 
 /// Tests that UnilateralGraph correctly identifies unilateral graphs.
