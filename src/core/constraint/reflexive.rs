@@ -1,6 +1,6 @@
 use crate::core::{
 	constraint::{AddEdge, NewVertex, RemoveEdge, RemoveVertex},
-	Constrainer, EdgeWeighted, Graph, GraphMut, ImplGraph, ImplGraphMut,
+	Constrainer, Graph, GraphMut, ImplGraph, ImplGraphMut,
 };
 use delegate::delegate;
 

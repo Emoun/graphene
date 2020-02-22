@@ -1,9 +1,9 @@
 use crate::core::{
-	Constrainer, Directedness, EdgeWeighted, Graph, GraphMut, ImplGraph, ImplGraphMut, Undirected,
+	Constrainer, Directedness, Graph, GraphMut, ImplGraph, ImplGraphMut, Undirected,
 };
 use delegate::delegate;
 
-/// A marker trait for graphs who's esges are directed.
+/// A marker trait for graphs who's edges are undirected.
 pub trait UndirectedConstraint: Graph
 {
 }

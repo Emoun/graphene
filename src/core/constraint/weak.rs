@@ -3,7 +3,7 @@ use crate::core::{
 		proxy_remove_edge_where, proxy_remove_vertex, ConnectedGraph, RemoveEdge, RemoveVertex,
 	},
 	proxy::UndirectedProxy,
-	Constrainer, Directed, EdgeWeighted, Graph, GraphMut, ImplGraph, ImplGraphMut,
+	Constrainer, Directed, Graph, GraphMut, ImplGraph, ImplGraphMut,
 };
 use delegate::delegate;
 

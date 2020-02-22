@@ -84,7 +84,7 @@ macro_rules! impl_constraints {
 					to self.0.graph_mut() {
 						fn add_edge_weighted<E>(&mut self, e: E) -> Result<(), ()>
 						where
-							E: EdgeWeighted<Self::Vertex, Self::EdgeWeight>;
+							E: $crate::core::EdgeWeighted<Self::Vertex, Self::EdgeWeight>;
 					}
 				}
 			}
@@ -183,6 +183,14 @@ macro_rules! impl_constraints {
 					self.0.exit_edges()
 				}
 			}
+		}
+
+		// NonNull
+		impl_constraints!{
+			@inner
+			$struct<$generic_graph>: [$($trait)*]
+			$([$($bounds)*])? NonNull
+			{}
 		}
 	};
 

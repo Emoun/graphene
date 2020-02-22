@@ -5,7 +5,7 @@ use crate::{
 			proxy_remove_edge_where, proxy_remove_vertex, DirectedGraph, RemoveEdge, RemoveVertex,
 			Unilateral, Weak,
 		},
-		Constrainer, EdgeWeighted, Graph, GraphMut, ImplGraph, ImplGraphMut, ReverseGraph,
+		Constrainer, Graph, GraphMut, ImplGraph, ImplGraphMut, ReverseGraph,
 	},
 };
 use delegate::delegate;

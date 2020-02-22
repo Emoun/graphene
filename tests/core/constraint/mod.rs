@@ -2,4 +2,5 @@
 //!
 
 mod connectedness;
+mod non_null;
 mod unique;

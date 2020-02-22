@@ -4,6 +4,7 @@ mod base_props;
 mod connected;
 mod directed_constraint;
 mod no_loops;
+mod non_null;
 mod reflexive;
 mod subgraph;
 mod undirected_constraint;
@@ -13,7 +14,8 @@ mod weak;
 
 pub use self::{
 	base_props::*, connected::*, directed_constraint::*, impl_constraints::*, no_loops::*,
-	reflexive::*, subgraph::*, undirected_constraint::*, unilateral::*, unique::*, weak::*,
+	non_null::*, reflexive::*, subgraph::*, undirected_constraint::*, unilateral::*, unique::*,
+	weak::*,
 };
 use crate::core::{
 	proxy::{EdgeProxyGraph, ProxyVertex, VertexProxyGraph},
