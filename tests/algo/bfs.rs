@@ -6,7 +6,7 @@ use graphene::{
 use std::collections::HashSet;
 
 duplicate_for_directedness! {
-		$directedness
+	$directedness
 
 	///
 	/// Tests that each produced vertex has an equal or higher depth than the previous

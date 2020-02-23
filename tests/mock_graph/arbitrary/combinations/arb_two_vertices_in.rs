@@ -58,16 +58,16 @@ where
 		ArbTwoVerticesIn(graph, v1, v2)
 	}
 
-	fn shrink_guided(&self, limits: HashSet<Limit>) -> Box<dyn Iterator<Item = Self>>
+	fn shrink_guided(&self, mut limits: HashSet<Limit>) -> Box<dyn Iterator<Item = Self>>
 	{
+		// Don't let it shrink to less than 1 vertex, can happen if self.1 and self.2 are equal
+		limits.insert(Limit::VertexMin(1));
 		Box::new(
 			ArbVerticesIn(
                 self.0.clone(),
                 HashSet::from_iter([self.1, self.2].iter().cloned()),
             )
             .shrink_guided(limits)
-            // Don't let it shrink to less than 1 vertex, can happen if self.1 and self.2 are equal
-            .filter(|g| g.1.len() > 0)
             .map(|g| {
                 // we cycle, such that when the set only contains 1 vertex, we can use the same
                 // one for both positions.

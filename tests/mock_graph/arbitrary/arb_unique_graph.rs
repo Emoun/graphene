@@ -104,13 +104,13 @@ impl<D: Directedness> GuidedArbGraph for ArbUniqueGraph<D>
 		Self(UniqueGraph::unchecked(graph))
 	}
 
-	fn shrink_guided(&self, _limits: HashSet<Limit>) -> Box<dyn Iterator<Item = Self>>
+	fn shrink_guided(&self, limits: HashSet<Limit>) -> Box<dyn Iterator<Item = Self>>
 	{
 		Box::new(
 			self.0
 				.clone()
 				.unconstrain()
-				.shrink()
+				.shrink_guided(limits)
 				.map(|g| Self(UniqueGraph::unchecked(g))),
 		)
 	}

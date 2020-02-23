@@ -28,6 +28,27 @@ pub enum Limit
 	EdgeMin(usize),
 }
 
+impl Limit {
+	pub fn min_vertices(limits: &HashSet<Limit>) -> usize
+	{
+		let mut min_vert = std::usize::MAX;
+		// in case no min is give, MAX shouldn't be used.
+		let mut any_min = false;
+		for l in limits.iter() {
+			if let Limit::VertexMin(min) = l {
+				min_vert = std::cmp::min(min_vert, *min);
+				any_min = true;
+			}
+		}
+		
+		if !any_min {
+			0
+		} else {
+			min_vert
+		}
+	}
+}
+
 /// A vertion of `quickcheck::Arbitrary` for Graphs that can be guided how to
 /// make the graph
 pub trait GuidedArbGraph: Arbitrary

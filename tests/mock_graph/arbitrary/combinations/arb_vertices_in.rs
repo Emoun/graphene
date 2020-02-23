@@ -6,7 +6,7 @@ use graphene::core::{Graph, ImplGraph, ImplGraphMut};
 use quickcheck::{Arbitrary, Gen};
 use rand::Rng;
 use std::{
-	collections::{hash_map::RandomState, HashSet},
+	collections::{HashSet},
 	ops::RangeBounds,
 };
 
@@ -67,7 +67,7 @@ where
 
 	fn shrink_guided(
 		&self,
-		mut limits: HashSet<Limit, RandomState>,
+		mut limits: HashSet<Limit>,
 	) -> Box<dyn Iterator<Item = Self>>
 	{
 		let mut result = Vec::new();
@@ -80,16 +80,18 @@ where
 		}
 		result.extend(
 			arb_graph
-				.shrink_guided(limits)
+				.shrink_guided(limits.clone())
 				.map(|g| Self(g, self.1.clone())),
 		);
 
 		// The we simply remove one of the vertices and keep the rest
-		for v in self.1.iter()
-		{
-			let mut new_set = self.1.clone();
-			new_set.remove(v);
-			result.push(Self(self.0.clone(), new_set));
+		if Limit::min_vertices(&limits) < self.0.graph().all_vertices().count() {
+			for v in self.1.iter()
+			{
+				let mut new_set = self.1.clone();
+				new_set.remove(v);
+				result.push(Self(self.0.clone(), new_set));
+			}
 		}
 		Box::new(result.into_iter())
 	}
