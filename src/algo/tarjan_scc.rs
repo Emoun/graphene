@@ -52,14 +52,14 @@ use crate::{
 	algo::DFS,
 	core::{constraint::ConnectedGraph, proxy::SubgraphProxy, Constrainer, Directed, Graph},
 };
-use std::{cmp::min, mem::replace};
+use std::{cmp::min};
 
 /// Implements Tarjan's Strongly Connected Components Algorithm.
 pub struct TarjanSCC<'a, G>
 where
 	G: 'a + Graph<Directedness = Directed>,
 {
-	dfs: DFS<'a, G, (&'a G, Vec<(G::Vertex, usize)>, Option<SubgraphProxy<&'a G>>)>,
+	dfs: DFS<'a, G, Vec<(G::Vertex, usize)>>,
 
 	/// We use this to keep track of which vertices we have check for
 	/// whether they have been visited.
@@ -74,16 +74,10 @@ where
 	{
 		/// Implements part of Tarjan's algorithm, namely what happens when we
 		/// are finished visiting a vertex.
-		///
-		/// In addition to the vertex that we are finished visiting(`v`), we
-		/// also use the following DFS arguments:
-		/// * `g`: A reference to the graph being analyzed.
-		/// * `stack`: the stack of vertices and lowlink values.
-		/// * `next_scc`: A value that should always be `None` when
-		/// 	this function is called, where any SCC that is found is put.
-		fn on_exit<'a, G>(
+		fn on_exit<G>(
+			g: &G,
 			v: G::Vertex,
-			(g, stack, scc): &mut (&'a G, Vec<(G::Vertex, usize)>, Option<SubgraphProxy<&'a G>>),
+			stack: &mut Vec<(G::Vertex, usize)>,
 		) where
 			G: Graph<Directedness = Directed>,
 		{
@@ -107,27 +101,9 @@ where
 					stack[index].1 = min(stack[index].1, lowlink);
 				}
 			}
-
-			// Then check whether it needs popping
-			if stack[index].1 == index
-			{
-				// Vertex is root of SCC, pop stack for all before it
-
-				let mut new_scc = SubgraphProxy::new(*g);
-				while stack.len() > index
-				{
-					new_scc.expand(stack.pop().unwrap().0).unwrap();
-				}
-
-				*scc = Some(new_scc)
-			}
-			else
-			{
-				// Vertex is part of SCC but not root, keep it on stack.
-			}
 		}
 
-		let dfs = DFS::new(graph, start, on_exit, (graph, Vec::new(), None));
+		let dfs = DFS::new(graph, start, on_exit, Vec::new());
 		Self {
 			dfs,
 			unchecked: graph.all_vertices(),
@@ -146,24 +122,38 @@ where
 		// Repeat until either an SCC is found or all vertices have been visited.
 		loop
 		{
-			// If we have already found an scc, return it.
-			while self.dfs.advance_next_exit()
+			// For each vertex we are finished visiting, check if its the root of a SCC.
+			while let Some(v) = self.dfs.advance_next_exit()
 			{
-				if let Some(scc) = replace(&mut self.dfs.args_mut().2, None)
+				let stack = &mut self.dfs.payload;
+				
+				// Find the index of the vertex
+				let index = stack.iter().position(|(v2, _)| *v2 == v).unwrap();
+				
+				if stack[index].1 == index
 				{
+					// Vertex is root of SCC, pop stack for all before it
+					
+					let mut scc = SubgraphProxy::new(self.dfs.graph);
+					while stack.len() > index
+					{
+						scc.expand(stack.pop().unwrap().0).unwrap();
+					}
+					
 					return Some(
 						ConnectedGraph::constrain_single(scc)
 							.expect("Tarjans algorithm produced non-strongly-connected subgraph"),
 					);
 					// return Some(ConnectedGraph::new(scc));
 				}
+				// Vertex is part of SCC but not root, keep it on stack.
 			}
 
-			// Otherwise, let the DFS run once
+			// No SCCs found, let the DFS run once
 			if let Some(v) = self.dfs.next()
 			{
 				// First push vertex onto stack, with lowlink value equal to its index
-				let stack = &mut self.dfs.args_mut().1;
+				let stack = &mut self.dfs.payload;
 				stack.push((v.clone(), stack.len()));
 			}
 			else

@@ -7,6 +7,7 @@ use crate::mock_graph::{
 };
 use graphene::{algo::DFS, core::ImplGraph};
 use std::cell::Cell;
+use graphene::core::Directed;
 
 duplicate_for_directedness! {
 	$directedness
@@ -23,7 +24,7 @@ duplicate_for_directedness! {
 		let stack: Cell<Vec<MockVertex>> = Cell::new(Vec::new());
 		let mut success = true;
 
-		fn on_exit(v: MockVertex, (stack, success): &mut (&Cell<Vec<MockVertex>>, &mut bool)){
+		fn on_exit<G>(_:&G, v: MockVertex, (stack, success): &mut (&Cell<Vec<MockVertex>>, &mut bool)){
 			// On exit, check that the same vertex is on top of the stack
 			let mut s = stack.take();
 			if let Some(&v2) = s.last() {
