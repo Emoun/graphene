@@ -1,5 +1,5 @@
 use crate::core::{
-	constraint::RemoveVertex, Constrainer, Graph, GraphMut, ImplGraph, ImplGraphMut,
+	constraint::RemoveVertex, Constrainer, Graph, GraphDeref, GraphDerefMut, GraphMut,
 };
 use delegate::delegate;
 
@@ -32,7 +32,7 @@ impl<C: Constrainer> NonNullGraph<C>
 	}
 }
 
-impl<C: Constrainer> ImplGraph for NonNullGraph<C>
+impl<C: Constrainer> GraphDeref for NonNullGraph<C>
 {
 	type Graph = Self;
 
@@ -41,7 +41,7 @@ impl<C: Constrainer> ImplGraph for NonNullGraph<C>
 		self
 	}
 }
-impl<C: Constrainer> ImplGraphMut for NonNullGraph<C>
+impl<C: Constrainer> GraphDerefMut for NonNullGraph<C>
 {
 	fn graph_mut(&mut self) -> &mut Self::Graph
 	{
@@ -91,7 +91,7 @@ impl<C: Constrainer> Graph for NonNullGraph<C>
 	}
 }
 
-impl<C: Constrainer + ImplGraphMut> GraphMut for NonNullGraph<C>
+impl<C: Constrainer + GraphDerefMut> GraphMut for NonNullGraph<C>
 where
 	C::Graph: GraphMut,
 {
@@ -110,7 +110,7 @@ where
 	}
 }
 
-impl<C: Constrainer + ImplGraphMut> RemoveVertex for NonNullGraph<C>
+impl<C: Constrainer + GraphDerefMut> RemoveVertex for NonNullGraph<C>
 where
 	C::Graph: RemoveVertex,
 {

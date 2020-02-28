@@ -32,7 +32,7 @@ where
 {
 	/// The graph being traversed.
 	pub graph: &'a G,
-	
+
 	/// A custom payload, available to the function called upon a vertex exit.
 	pub payload: F,
 	visited: Vec<G::Vertex>,
@@ -40,7 +40,7 @@ where
 	/// The vertex on the stack, and whether on_exit should be called upon
 	/// popping.
 	stack: Vec<(G::Vertex, bool)>,
-	
+
 	/// Function to call when exiting a vertex.
 	///
 	/// Provices a reference to the graph, the vertex that is exiting,
@@ -59,10 +59,10 @@ where
 			visited: Vec::new(),
 			stack: vec![(v, true)],
 			on_exit,
-			payload: payload,
+			payload,
 		}
 	}
-	
+
 	pub fn visited(&self, v: G::Vertex) -> bool
 	{
 		self.visited.contains(&v)
@@ -116,7 +116,7 @@ where
 {
 	pub fn new_simple(g: &'a G, v: G::Vertex) -> Self
 	{
-		fn do_nothing<G,T>(_: &G, _: T, _: &mut ()) {}
+		fn do_nothing<G, T>(_: &G, _: T, _: &mut ()) {}
 		Self::new(g, v, do_nothing, ())
 	}
 }

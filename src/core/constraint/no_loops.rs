@@ -1,5 +1,5 @@
 use crate::core::{
-	constraint::AddEdge, Constrainer, EdgeWeighted, Graph, GraphMut, ImplGraph, ImplGraphMut,
+	constraint::AddEdge, Constrainer, EdgeWeighted, Graph, GraphDeref, GraphDerefMut, GraphMut,
 };
 use delegate::delegate;
 
@@ -15,7 +15,7 @@ pub trait NoLoops: Graph
 
 pub struct NoLoopsGraph<C: Constrainer>(C);
 
-impl<C: Constrainer> ImplGraph for NoLoopsGraph<C>
+impl<C: Constrainer> GraphDeref for NoLoopsGraph<C>
 {
 	type Graph = Self;
 
@@ -24,7 +24,7 @@ impl<C: Constrainer> ImplGraph for NoLoopsGraph<C>
 		self
 	}
 }
-impl<C: Constrainer> ImplGraphMut for NoLoopsGraph<C>
+impl<C: Constrainer> GraphDerefMut for NoLoopsGraph<C>
 {
 	fn graph_mut(&mut self) -> &mut Self::Graph
 	{
@@ -76,7 +76,7 @@ impl<C: Constrainer> Graph for NoLoopsGraph<C>
 	}
 }
 
-impl<C: Constrainer + ImplGraphMut> GraphMut for NoLoopsGraph<C>
+impl<C: Constrainer + GraphDerefMut> GraphMut for NoLoopsGraph<C>
 where
 	C::Graph: GraphMut,
 {
@@ -95,7 +95,7 @@ where
 	}
 }
 
-impl<C: Constrainer + ImplGraphMut> AddEdge for NoLoopsGraph<C>
+impl<C: Constrainer + GraphDerefMut> AddEdge for NoLoopsGraph<C>
 where
 	C::Graph: AddEdge,
 {

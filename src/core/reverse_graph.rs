@@ -1,7 +1,7 @@
 use crate::core::{
 	constraint::{AddEdge, NewVertex, RemoveEdge, RemoveVertex},
-	BaseGraph, Constrainer, Directed, Edge, EdgeDeref, EdgeWeighted, Graph, GraphMut, ImplGraph,
-	ImplGraphMut,
+	BaseGraph, Constrainer, Directed, Edge, EdgeDeref, EdgeWeighted, Graph, GraphDeref,
+	GraphDerefMut, GraphMut,
 };
 use delegate::delegate;
 
@@ -50,7 +50,7 @@ where
 	}
 }
 
-impl<C: Constrainer + ImplGraphMut> GraphMut for ReverseGraph<C>
+impl<C: Constrainer + GraphDerefMut> GraphMut for ReverseGraph<C>
 where
 	C::Graph: GraphMut<Directedness = Directed>,
 {
@@ -74,7 +74,7 @@ where
 	}
 }
 
-impl<C: Constrainer + ImplGraphMut> NewVertex for ReverseGraph<C>
+impl<C: Constrainer + GraphDerefMut> NewVertex for ReverseGraph<C>
 where
 	C::Graph: NewVertex<Directedness = Directed>,
 {
@@ -84,7 +84,7 @@ where
 		}
 	}
 }
-impl<C: Constrainer + ImplGraphMut> RemoveVertex for ReverseGraph<C>
+impl<C: Constrainer + GraphDerefMut> RemoveVertex for ReverseGraph<C>
 where
 	C::Graph: RemoveVertex<Directedness = Directed>,
 {
@@ -95,7 +95,7 @@ where
 	}
 }
 
-impl<C: Constrainer + ImplGraphMut> AddEdge for ReverseGraph<C>
+impl<C: Constrainer + GraphDerefMut> AddEdge for ReverseGraph<C>
 where
 	C::Graph: AddEdge<Directedness = Directed>,
 {
@@ -109,7 +109,7 @@ where
 	}
 }
 
-impl<C: Constrainer + ImplGraphMut> RemoveEdge for ReverseGraph<C>
+impl<C: Constrainer + GraphDerefMut> RemoveEdge for ReverseGraph<C>
 where
 	C::Graph: RemoveEdge<Directedness = Directed>,
 {
@@ -126,7 +126,7 @@ where
 	}
 }
 
-impl<C: Constrainer> ImplGraph for ReverseGraph<C>
+impl<C: Constrainer> GraphDeref for ReverseGraph<C>
 where
 	C::Graph: Graph<Directedness = Directed>,
 {
@@ -137,7 +137,7 @@ where
 		self
 	}
 }
-impl<C: Constrainer + ImplGraphMut> ImplGraphMut for ReverseGraph<C>
+impl<C: Constrainer + GraphDerefMut> GraphDerefMut for ReverseGraph<C>
 where
 	C::Graph: Graph<Directedness = Directed>,
 {

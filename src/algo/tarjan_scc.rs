@@ -52,7 +52,7 @@ use crate::{
 	algo::DFS,
 	core::{constraint::ConnectedGraph, proxy::SubgraphProxy, Constrainer, Directed, Graph},
 };
-use std::{cmp::min};
+use std::cmp::min;
 
 /// Implements Tarjan's Strongly Connected Components Algorithm.
 pub struct TarjanSCC<'a, G>
@@ -74,11 +74,8 @@ where
 	{
 		/// Implements part of Tarjan's algorithm, namely what happens when we
 		/// are finished visiting a vertex.
-		fn on_exit<G>(
-			g: &G,
-			v: G::Vertex,
-			stack: &mut Vec<(G::Vertex, usize)>,
-		) where
+		fn on_exit<G>(g: &G, v: G::Vertex, stack: &mut Vec<(G::Vertex, usize)>)
+		where
 			G: Graph<Directedness = Directed>,
 		{
 			// Find the index of the vertex
@@ -126,20 +123,20 @@ where
 			while let Some(v) = self.dfs.advance_next_exit()
 			{
 				let stack = &mut self.dfs.payload;
-				
+
 				// Find the index of the vertex
 				let index = stack.iter().position(|(v2, _)| *v2 == v).unwrap();
-				
+
 				if stack[index].1 == index
 				{
 					// Vertex is root of SCC, pop stack for all before it
-					
+
 					let mut scc = SubgraphProxy::new(self.dfs.graph);
 					while stack.len() > index
 					{
 						scc.expand(stack.pop().unwrap().0).unwrap();
 					}
-					
+
 					return Some(
 						ConnectedGraph::constrain_single(scc)
 							.expect("Tarjans algorithm produced non-strongly-connected subgraph"),

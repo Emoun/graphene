@@ -1,7 +1,7 @@
 use crate::core::{
 	constraint::{NewVertex, RemoveVertex},
 	trait_aliases::Id,
-	BaseGraph, Constrainer, Graph, ImplGraph, ImplGraphMut,
+	BaseGraph, Constrainer, Graph, GraphDeref, GraphDerefMut,
 };
 
 #[derive(Copy, Clone, PartialEq, Eq)]
@@ -117,7 +117,7 @@ impl<C: Constrainer> RemoveVertex for VertexProxyGraph<C>
 	}
 }
 
-impl<C: Constrainer> ImplGraph for VertexProxyGraph<C>
+impl<C: Constrainer> GraphDeref for VertexProxyGraph<C>
 {
 	type Graph = Self;
 
@@ -126,7 +126,7 @@ impl<C: Constrainer> ImplGraph for VertexProxyGraph<C>
 		self
 	}
 }
-impl<C: Constrainer> ImplGraphMut for VertexProxyGraph<C>
+impl<C: Constrainer> GraphDerefMut for VertexProxyGraph<C>
 {
 	fn graph_mut(&mut self) -> &mut Self::Graph
 	{

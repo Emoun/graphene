@@ -1,7 +1,7 @@
 use crate::core::{
 	constraint::{AddEdge, NewVertex, RemoveEdge, RemoveVertex},
-	BaseGraph, Constrainer, Directedness, Edge, EdgeWeighted, Graph, GraphMut, ImplGraph,
-	ImplGraphMut,
+	BaseGraph, Constrainer, Directedness, Edge, EdgeWeighted, Graph, GraphDeref, GraphDerefMut,
+	GraphMut,
 };
 use delegate::delegate;
 
@@ -96,7 +96,7 @@ impl<C: Constrainer> Graph for EdgeProxyGraph<C>
 	}
 }
 
-impl<C: Constrainer + ImplGraphMut> GraphMut for EdgeProxyGraph<C>
+impl<C: Constrainer + GraphDerefMut> GraphMut for EdgeProxyGraph<C>
 where
 	C::Graph: GraphMut,
 {
@@ -176,7 +176,7 @@ impl<C: Constrainer> RemoveEdge for EdgeProxyGraph<C>
 	}
 }
 
-impl<C: Constrainer + ImplGraphMut> NewVertex for EdgeProxyGraph<C>
+impl<C: Constrainer + GraphDerefMut> NewVertex for EdgeProxyGraph<C>
 where
 	C::Graph: NewVertex,
 {
@@ -187,7 +187,7 @@ where
 	}
 }
 
-impl<C: Constrainer + ImplGraphMut> RemoveVertex for EdgeProxyGraph<C>
+impl<C: Constrainer + GraphDerefMut> RemoveVertex for EdgeProxyGraph<C>
 where
 	C::Graph: RemoveVertex,
 {
@@ -198,7 +198,7 @@ where
 	}
 }
 
-impl<C: Constrainer> ImplGraph for EdgeProxyGraph<C>
+impl<C: Constrainer> GraphDeref for EdgeProxyGraph<C>
 {
 	type Graph = Self;
 
@@ -207,7 +207,7 @@ impl<C: Constrainer> ImplGraph for EdgeProxyGraph<C>
 		self
 	}
 }
-impl<C: Constrainer> ImplGraphMut for EdgeProxyGraph<C>
+impl<C: Constrainer> GraphDerefMut for EdgeProxyGraph<C>
 {
 	fn graph_mut(&mut self) -> &mut Self::Graph
 	{

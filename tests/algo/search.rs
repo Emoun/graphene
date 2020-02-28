@@ -5,7 +5,7 @@ use crate::mock_graph::{
 };
 use graphene::{
 	algo::{Bfs, DFS},
-	core::{constraint::AddEdge, Constrainer, Directed, Graph, ImplGraph},
+	core::{constraint::AddEdge, Constrainer, Directed, Graph, GraphDeref},
 };
 use std::collections::HashSet;
 

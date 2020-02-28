@@ -4,7 +4,7 @@ use crate::mock_graph::{
 };
 use graphene::core::{
 	constraint::{AddEdge, ConnectedGraph, DirectedGraph, WeakGraph},
-	Constrainer, Directed, Directedness, Edge, Graph, ImplGraph, ImplGraphMut,
+	Constrainer, Directed, Directedness, Edge, Graph, GraphDeref, GraphDerefMut,
 };
 use quickcheck::{Arbitrary, Gen};
 use rand::Rng;
@@ -74,7 +74,7 @@ fn is_weak(graph: &MockGraph<Directed>) -> bool
 #[derive(Clone, Debug)]
 pub struct ArbConnectedGraph<D: Directedness>(pub ConnectedGraph<MockGraph<D>>);
 
-impl<D: Directedness> ImplGraph for ArbConnectedGraph<D>
+impl<D: Directedness> GraphDeref for ArbConnectedGraph<D>
 {
 	type Graph = ConnectedGraph<MockGraph<D>>;
 
@@ -83,7 +83,7 @@ impl<D: Directedness> ImplGraph for ArbConnectedGraph<D>
 		&self.0
 	}
 }
-impl<D: Directedness> ImplGraphMut for ArbConnectedGraph<D>
+impl<D: Directedness> GraphDerefMut for ArbConnectedGraph<D>
 {
 	fn graph_mut(&mut self) -> &mut Self::Graph
 	{
@@ -200,7 +200,7 @@ impl<D: Directedness> Arbitrary for ArbConnectedGraph<D>
 #[derive(Clone, Debug)]
 pub struct ArbUnconnectedGraph<D: Directedness>(pub MockGraph<D>);
 
-impl<D: Directedness> ImplGraph for ArbUnconnectedGraph<D>
+impl<D: Directedness> GraphDeref for ArbUnconnectedGraph<D>
 {
 	type Graph = MockGraph<D>;
 
@@ -209,7 +209,7 @@ impl<D: Directedness> ImplGraph for ArbUnconnectedGraph<D>
 		&self.0
 	}
 }
-impl<D: Directedness> ImplGraphMut for ArbUnconnectedGraph<D>
+impl<D: Directedness> GraphDerefMut for ArbUnconnectedGraph<D>
 {
 	fn graph_mut(&mut self) -> &mut Self::Graph
 	{
@@ -255,7 +255,7 @@ impl<D: Directedness> Arbitrary for ArbUnconnectedGraph<D>
 #[derive(Clone, Debug)]
 pub struct ArbWeakGraph(pub WeakGraph<MockGraph<Directed>>);
 
-impl ImplGraph for ArbWeakGraph
+impl GraphDeref for ArbWeakGraph
 {
 	type Graph = WeakGraph<MockGraph<Directed>>;
 
@@ -264,7 +264,7 @@ impl ImplGraph for ArbWeakGraph
 		&self.0
 	}
 }
-impl ImplGraphMut for ArbWeakGraph
+impl GraphDerefMut for ArbWeakGraph
 {
 	fn graph_mut(&mut self) -> &mut Self::Graph
 	{

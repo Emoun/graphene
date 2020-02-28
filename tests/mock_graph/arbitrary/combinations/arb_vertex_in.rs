@@ -2,7 +2,7 @@ use crate::mock_graph::{
 	arbitrary::{ArbTwoVerticesIn, GuidedArbGraph, Limit},
 	MockEdgeWeight, MockVertex, MockVertexWeight,
 };
-use graphene::core::{Graph, ImplGraph, ImplGraphMut};
+use graphene::core::{Graph, GraphDeref, GraphDerefMut};
 use quickcheck::{Arbitrary, Gen};
 use std::{
 	collections::{hash_map::RandomState, HashSet},
@@ -16,12 +16,12 @@ use std::{
 #[derive(Clone, Debug)]
 pub struct ArbVertexIn<G>(pub G, pub MockVertex)
 where
-	G: Arbitrary + ImplGraph,
+	G: Arbitrary + GraphDeref,
 	G::Graph:
 		Graph<Vertex = MockVertex, VertexWeight = MockVertexWeight, EdgeWeight = MockEdgeWeight>;
 impl<Gr> Arbitrary for ArbVertexIn<Gr>
 where
-	Gr: GuidedArbGraph + ImplGraphMut,
+	Gr: GuidedArbGraph + GraphDerefMut,
 	Gr::Graph:
 		Graph<Vertex = MockVertex, VertexWeight = MockVertexWeight, EdgeWeight = MockEdgeWeight>,
 {
@@ -37,7 +37,7 @@ where
 }
 impl<Gr> GuidedArbGraph for ArbVertexIn<Gr>
 where
-	Gr: GuidedArbGraph + ImplGraphMut,
+	Gr: GuidedArbGraph + GraphDerefMut,
 	Gr::Graph:
 		Graph<Vertex = MockVertex, VertexWeight = MockVertexWeight, EdgeWeight = MockEdgeWeight>,
 {
@@ -61,9 +61,9 @@ where
 	}
 }
 
-impl<G> ImplGraph for ArbVertexIn<G>
+impl<G> GraphDeref for ArbVertexIn<G>
 where
-	G: Arbitrary + ImplGraph,
+	G: Arbitrary + GraphDeref,
 	G::Graph:
 		Graph<Vertex = MockVertex, VertexWeight = MockVertexWeight, EdgeWeight = MockEdgeWeight>,
 {
@@ -74,9 +74,9 @@ where
 		self.0.graph()
 	}
 }
-impl<G> ImplGraphMut for ArbVertexIn<G>
+impl<G> GraphDerefMut for ArbVertexIn<G>
 where
-	G: Arbitrary + ImplGraphMut,
+	G: Arbitrary + GraphDerefMut,
 	G::Graph:
 		Graph<Vertex = MockVertex, VertexWeight = MockVertexWeight, EdgeWeight = MockEdgeWeight>,
 {

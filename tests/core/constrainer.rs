@@ -2,7 +2,7 @@
 //!
 
 use crate::mock_graph::{MockDirectedness, MockGraph, MockVertexWeight};
-use graphene::core::{BaseGraph, Constrainer, Graph, GraphMut, ImplGraph, ImplGraphMut};
+use graphene::core::{BaseGraph, Constrainer, Graph, GraphDeref, GraphDerefMut, GraphMut};
 
 /// A mock constraint that doesn't use mutability.
 ///
@@ -22,7 +22,7 @@ trait MockConstraintMut: MockConstraint
 /// A mock constrainer.
 struct MockConstrainer<C: Constrainer>(pub C);
 
-impl<C: Constrainer> ImplGraph for MockConstrainer<C>
+impl<C: Constrainer> GraphDeref for MockConstrainer<C>
 {
 	type Graph = Self;
 
@@ -31,7 +31,7 @@ impl<C: Constrainer> ImplGraph for MockConstrainer<C>
 		self
 	}
 }
-impl<C: Constrainer> ImplGraphMut for MockConstrainer<C>
+impl<C: Constrainer> GraphDerefMut for MockConstrainer<C>
 {
 	fn graph_mut(&mut self) -> &mut Self::Graph
 	{
@@ -83,7 +83,7 @@ impl<C: Constrainer> Graph for MockConstrainer<C>
 	}
 }
 
-impl<C: Constrainer + ImplGraphMut> GraphMut for MockConstrainer<C>
+impl<C: Constrainer + GraphDerefMut> GraphMut for MockConstrainer<C>
 where
 	C::Graph: GraphMut,
 {
@@ -110,7 +110,7 @@ impl<C: Constrainer> MockConstraint for MockConstrainer<C>
 	}
 }
 
-impl<C: Constrainer + ImplGraphMut> MockConstraintMut for MockConstrainer<C>
+impl<C: Constrainer + GraphDerefMut> MockConstraintMut for MockConstrainer<C>
 where
 	C::Graph: GraphMut,
 {

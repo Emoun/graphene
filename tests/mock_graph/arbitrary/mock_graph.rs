@@ -139,7 +139,8 @@ impl<D: Directedness> GuidedArbGraph for MockGraph<D>
 		// We don't remove any edges in this step (to be able to remove a vertex)
 		// because we are already shrinking by removing edges, which means, there
 		// should be a set of edge shrinkages that result in a removable vertex.
-		if Limit::min_vertices(&limits) < self.all_vertices().count() {
+		if Limit::min_vertices(&limits) < self.all_vertices().count()
+		{
 			for v in self
 				.all_vertices()
 				// Dont touch untouchable vertices
@@ -153,7 +154,7 @@ impl<D: Directedness> GuidedArbGraph for MockGraph<D>
 				}
 			}
 		}
-		
+
 		Box::new(result.into_iter())
 	}
 }

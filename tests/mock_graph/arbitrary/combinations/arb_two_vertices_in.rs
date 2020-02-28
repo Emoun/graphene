@@ -2,7 +2,7 @@ use crate::mock_graph::{
 	arbitrary::{ArbVerticesIn, GuidedArbGraph, Limit},
 	MockEdgeWeight, MockVertex, MockVertexWeight,
 };
-use graphene::core::{Graph, ImplGraph, ImplGraphMut};
+use graphene::core::{Graph, GraphDeref, GraphDerefMut};
 use quickcheck::{Arbitrary, Gen};
 use rand::Rng;
 use std::{collections::HashSet, iter::FromIterator, ops::RangeBounds};
@@ -14,13 +14,13 @@ use std::{collections::HashSet, iter::FromIterator, ops::RangeBounds};
 #[derive(Clone, Debug)]
 pub struct ArbTwoVerticesIn<G>(pub G, pub MockVertex, pub MockVertex)
 where
-	G: Arbitrary + ImplGraph,
+	G: Arbitrary + GraphDeref,
 	G::Graph:
 		Graph<Vertex = MockVertex, VertexWeight = MockVertexWeight, EdgeWeight = MockEdgeWeight>;
 
 impl<Gr> Arbitrary for ArbTwoVerticesIn<Gr>
 where
-	Gr: GuidedArbGraph + ImplGraphMut,
+	Gr: GuidedArbGraph + GraphDerefMut,
 	Gr::Graph:
 		Graph<Vertex = MockVertex, VertexWeight = MockVertexWeight, EdgeWeight = MockEdgeWeight>,
 {
@@ -36,7 +36,7 @@ where
 }
 impl<Gr> GuidedArbGraph for ArbTwoVerticesIn<Gr>
 where
-	Gr: GuidedArbGraph + ImplGraphMut,
+	Gr: GuidedArbGraph + GraphDerefMut,
 	Gr::Graph:
 		Graph<Vertex = MockVertex, VertexWeight = MockVertexWeight, EdgeWeight = MockEdgeWeight>,
 {
@@ -60,27 +60,28 @@ where
 
 	fn shrink_guided(&self, mut limits: HashSet<Limit>) -> Box<dyn Iterator<Item = Self>>
 	{
-		// Don't let it shrink to less than 1 vertex, can happen if self.1 and self.2 are equal
+		// Don't let it shrink to less than 1 vertex, can happen if self.1 and self.2
+		// are equal
 		limits.insert(Limit::VertexMin(1));
 		Box::new(
 			ArbVerticesIn(
-                self.0.clone(),
-                HashSet::from_iter([self.1, self.2].iter().cloned()),
-            )
-            .shrink_guided(limits)
-            .map(|g| {
-                // we cycle, such that when the set only contains 1 vertex, we can use the same
-                // one for both positions.
-                let mut set = g.1.iter().cycle();
-                Self(g.0, *set.next().unwrap(), *set.next().unwrap())
-            }),
+				self.0.clone(),
+				HashSet::from_iter([self.1, self.2].iter().cloned()),
+			)
+			.shrink_guided(limits)
+			.map(|g| {
+				// we cycle, such that when the set only contains 1 vertex, we can use the same
+				// one for both positions.
+				let mut set = g.1.iter().cycle();
+				Self(g.0, *set.next().unwrap(), *set.next().unwrap())
+			}),
 		)
 	}
 }
 
-impl<G> ImplGraph for ArbTwoVerticesIn<G>
+impl<G> GraphDeref for ArbTwoVerticesIn<G>
 where
-	G: Arbitrary + ImplGraph,
+	G: Arbitrary + GraphDeref,
 	G::Graph:
 		Graph<Vertex = MockVertex, VertexWeight = MockVertexWeight, EdgeWeight = MockEdgeWeight>,
 {
@@ -91,9 +92,9 @@ where
 		self.0.graph()
 	}
 }
-impl<G> ImplGraphMut for ArbTwoVerticesIn<G>
+impl<G> GraphDerefMut for ArbTwoVerticesIn<G>
 where
-	G: Arbitrary + ImplGraphMut,
+	G: Arbitrary + GraphDerefMut,
 	G::Graph:
 		Graph<Vertex = MockVertex, VertexWeight = MockVertexWeight, EdgeWeight = MockEdgeWeight>,
 {

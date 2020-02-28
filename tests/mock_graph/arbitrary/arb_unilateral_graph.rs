@@ -4,7 +4,7 @@ use crate::mock_graph::{
 };
 use graphene::core::{
 	constraint::{AddEdge, NewVertex, RemoveEdge, UnilateralGraph},
-	Constrainer, Directed, Edge, Graph, ImplGraph, ImplGraphMut,
+	Constrainer, Directed, Edge, Graph, GraphDeref, GraphDerefMut,
 };
 use quickcheck::{Arbitrary, Gen};
 use rand::Rng;
@@ -41,7 +41,7 @@ fn is_unilateral(graph: &MockGraph<Directed>) -> bool
 #[derive(Clone, Debug)]
 pub struct ArbUnilatralGraph(pub UnilateralGraph<MockGraph<Directed>>);
 
-impl ImplGraph for ArbUnilatralGraph
+impl GraphDeref for ArbUnilatralGraph
 {
 	type Graph = UnilateralGraph<MockGraph<Directed>>;
 
@@ -50,7 +50,7 @@ impl ImplGraph for ArbUnilatralGraph
 		&self.0
 	}
 }
-impl ImplGraphMut for ArbUnilatralGraph
+impl GraphDerefMut for ArbUnilatralGraph
 {
 	fn graph_mut(&mut self) -> &mut Self::Graph
 	{
@@ -202,7 +202,7 @@ impl Arbitrary for ArbUnilatralGraph
 #[derive(Clone, Debug)]
 pub struct ArbNonUnilatralGraph(pub MockGraph<Directed>);
 
-impl ImplGraph for ArbNonUnilatralGraph
+impl GraphDeref for ArbNonUnilatralGraph
 {
 	type Graph = MockGraph<Directed>;
 
@@ -211,7 +211,7 @@ impl ImplGraph for ArbNonUnilatralGraph
 		&self.0
 	}
 }
-impl ImplGraphMut for ArbNonUnilatralGraph
+impl GraphDerefMut for ArbNonUnilatralGraph
 {
 	fn graph_mut(&mut self) -> &mut Self::Graph
 	{

@@ -34,7 +34,7 @@ macro_rules! impl_constraints {
 			@inner
 			$struct<$generic_graph>: [$($trait)*]
 			[
-				$generic_graph: $crate::core::ImplGraphMut,
+				$generic_graph: $crate::core::GraphDerefMut,
 				$generic_graph::Graph: $crate::core::constraint::NewVertex,
 				$($($bounds)*)?
 			]
@@ -54,7 +54,7 @@ macro_rules! impl_constraints {
 			@inner
 			$struct<$generic_graph>: [$($trait)*]
 			[
-				$generic_graph: $crate::core::ImplGraphMut,
+				$generic_graph: $crate::core::GraphDerefMut,
 				$generic_graph::Graph: $crate::core::constraint::RemoveVertex,
 				$($($bounds)*)?
 			]
@@ -74,7 +74,7 @@ macro_rules! impl_constraints {
 			@inner
 			$struct<$generic_graph>: [$($trait)*]
 			[
-				$generic_graph: $crate::core::ImplGraphMut,
+				$generic_graph: $crate::core::GraphDerefMut,
 				$generic_graph::Graph: $crate::core::constraint::AddEdge,
 				$($($bounds)*)?
 			]
@@ -95,7 +95,7 @@ macro_rules! impl_constraints {
 			@inner
 			$struct<$generic_graph>: [$($trait)*]
 			[
-				$generic_graph: $crate::core::ImplGraphMut,
+				$generic_graph: $crate::core::GraphDerefMut,
 				$generic_graph::Graph: $crate::core::constraint::RemoveEdge,
 				$($($bounds)*)?
 			]

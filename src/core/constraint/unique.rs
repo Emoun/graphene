@@ -1,6 +1,6 @@
 use crate::core::{
-	constraint::AddEdge, Constrainer, Directedness, Edge, EdgeWeighted, Graph, GraphMut, ImplGraph,
-	ImplGraphMut,
+	constraint::AddEdge, Constrainer, Directedness, Edge, EdgeWeighted, Graph, GraphDeref,
+	GraphDerefMut, GraphMut,
 };
 use delegate::delegate;
 
@@ -36,7 +36,7 @@ impl<C: Constrainer> UniqueGraph<C>
 	}
 }
 
-impl<C: Constrainer> ImplGraph for UniqueGraph<C>
+impl<C: Constrainer> GraphDeref for UniqueGraph<C>
 {
 	type Graph = Self;
 
@@ -45,7 +45,7 @@ impl<C: Constrainer> ImplGraph for UniqueGraph<C>
 		self
 	}
 }
-impl<C: Constrainer> ImplGraphMut for UniqueGraph<C>
+impl<C: Constrainer> GraphDerefMut for UniqueGraph<C>
 {
 	fn graph_mut(&mut self) -> &mut Self::Graph
 	{
@@ -104,7 +104,7 @@ impl<C: Constrainer> Graph for UniqueGraph<C>
 	}
 }
 
-impl<C: Constrainer + ImplGraphMut> GraphMut for UniqueGraph<C>
+impl<C: Constrainer + GraphDerefMut> GraphMut for UniqueGraph<C>
 where
 	C::Graph: GraphMut,
 {
@@ -123,7 +123,7 @@ where
 	}
 }
 
-impl<C: Constrainer + ImplGraphMut> AddEdge for UniqueGraph<C>
+impl<C: Constrainer + GraphDerefMut> AddEdge for UniqueGraph<C>
 where
 	C::Graph: AddEdge,
 {

@@ -4,7 +4,7 @@ use crate::{
 		constraint::{
 			proxy_remove_edge_where, proxy_remove_vertex, RemoveEdge, RemoveVertex, Subgraph, Weak,
 		},
-		Constrainer, Directed, Graph, GraphMut, ImplGraph, ImplGraphMut,
+		Constrainer, Directed, Graph, GraphDeref, GraphDerefMut, GraphMut,
 	},
 };
 use delegate::delegate;
@@ -44,7 +44,7 @@ where
 	}
 }
 
-impl<C: Constrainer> ImplGraph for UnilateralGraph<C>
+impl<C: Constrainer> GraphDeref for UnilateralGraph<C>
 where
 	C::Graph: Graph<Directedness = Directed>,
 {
@@ -55,7 +55,7 @@ where
 		self
 	}
 }
-impl<C: Constrainer> ImplGraphMut for UnilateralGraph<C>
+impl<C: Constrainer> GraphDerefMut for UnilateralGraph<C>
 where
 	C::Graph: Graph<Directedness = Directed>,
 {
@@ -132,7 +132,7 @@ where
 	}
 }
 
-impl<C: Constrainer + ImplGraphMut> GraphMut for UnilateralGraph<C>
+impl<C: Constrainer + GraphDerefMut> GraphMut for UnilateralGraph<C>
 where
 	C::Graph: GraphMut<Directedness = Directed>,
 {
@@ -151,7 +151,7 @@ where
 	}
 }
 
-impl<C: Constrainer + ImplGraphMut> RemoveVertex for UnilateralGraph<C>
+impl<C: Constrainer + GraphDerefMut> RemoveVertex for UnilateralGraph<C>
 where
 	C::Graph: RemoveVertex<Directedness = Directed>,
 {
@@ -161,7 +161,7 @@ where
 	}
 }
 
-impl<C: Constrainer + ImplGraphMut> RemoveEdge for UnilateralGraph<C>
+impl<C: Constrainer + GraphDerefMut> RemoveEdge for UnilateralGraph<C>
 where
 	C::Graph: RemoveEdge<Directedness = Directed>,
 {

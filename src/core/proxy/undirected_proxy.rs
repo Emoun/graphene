@@ -1,6 +1,6 @@
 use crate::core::{
 	constraint::{NewVertex, RemoveVertex},
-	BaseGraph, Constrainer, Directed, Graph, GraphMut, ImplGraph, ImplGraphMut, Undirected,
+	BaseGraph, Constrainer, Directed, Graph, GraphDeref, GraphDerefMut, GraphMut, Undirected,
 };
 use delegate::delegate;
 
@@ -41,7 +41,7 @@ where
 	}
 }
 
-impl<C: Constrainer + ImplGraphMut> GraphMut for UndirectedProxy<C>
+impl<C: Constrainer + GraphDerefMut> GraphMut for UndirectedProxy<C>
 where
 	C::Graph: GraphMut<Directedness = Directed>,
 {
@@ -60,7 +60,7 @@ where
 	}
 }
 
-impl<C: Constrainer + ImplGraphMut> NewVertex for UndirectedProxy<C>
+impl<C: Constrainer + GraphDerefMut> NewVertex for UndirectedProxy<C>
 where
 	C::Graph: NewVertex<Directedness = Directed>,
 {
@@ -71,7 +71,7 @@ where
 	}
 }
 
-impl<C: Constrainer + ImplGraphMut> RemoveVertex for UndirectedProxy<C>
+impl<C: Constrainer + GraphDerefMut> RemoveVertex for UndirectedProxy<C>
 where
 	C::Graph: RemoveVertex<Directedness = Directed>,
 {
@@ -82,7 +82,7 @@ where
 	}
 }
 
-impl<C: Constrainer> ImplGraph for UndirectedProxy<C>
+impl<C: Constrainer> GraphDeref for UndirectedProxy<C>
 where
 	C::Graph: Graph<Directedness = Directed>,
 {
@@ -93,7 +93,7 @@ where
 		self
 	}
 }
-impl<C: Constrainer> ImplGraphMut for UndirectedProxy<C>
+impl<C: Constrainer> GraphDerefMut for UndirectedProxy<C>
 where
 	C::Graph: Graph<Directedness = Directed>,
 {

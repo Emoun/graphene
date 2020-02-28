@@ -1,7 +1,7 @@
 use crate::mock_graph::arbitrary::{ArbConnectedGraph, ArbVertexIn};
 use graphene::{
 	algo::Bfs,
-	core::{Directed, ImplGraph},
+	core::{Directed, GraphDeref},
 };
 use std::collections::HashSet;
 

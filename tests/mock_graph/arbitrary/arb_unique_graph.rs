@@ -4,7 +4,7 @@ use crate::mock_graph::{
 };
 use graphene::core::{
 	constraint::{AddEdge, DirectedGraph, RemoveEdge, UniqueGraph},
-	Constrainer, Directedness, Edge, Graph, ImplGraph, ImplGraphMut,
+	Constrainer, Directedness, Edge, Graph, GraphDeref, GraphDerefMut,
 };
 use quickcheck::{Arbitrary, Gen};
 use rand::Rng;
@@ -14,7 +14,7 @@ use std::{collections::HashSet, ops::RangeBounds};
 #[derive(Clone, Debug)]
 pub struct ArbUniqueGraph<D: Directedness>(pub UniqueGraph<MockGraph<D>>);
 
-impl<D: Directedness> ImplGraph for ArbUniqueGraph<D>
+impl<D: Directedness> GraphDeref for ArbUniqueGraph<D>
 {
 	type Graph = UniqueGraph<MockGraph<D>>;
 
@@ -23,7 +23,7 @@ impl<D: Directedness> ImplGraph for ArbUniqueGraph<D>
 		&self.0
 	}
 }
-impl<D: Directedness> ImplGraphMut for ArbUniqueGraph<D>
+impl<D: Directedness> GraphDerefMut for ArbUniqueGraph<D>
 {
 	fn graph_mut(&mut self) -> &mut Self::Graph
 	{
@@ -232,7 +232,7 @@ impl<D: Directedness> Arbitrary for ArbNonUniqueGraph<D>
 	}
 }
 
-impl<D: Directedness> ImplGraph for ArbNonUniqueGraph<D>
+impl<D: Directedness> GraphDeref for ArbNonUniqueGraph<D>
 {
 	type Graph = MockGraph<D>;
 
@@ -241,7 +241,7 @@ impl<D: Directedness> ImplGraph for ArbNonUniqueGraph<D>
 		&self.0
 	}
 }
-impl<D: Directedness> ImplGraphMut for ArbNonUniqueGraph<D>
+impl<D: Directedness> GraphDerefMut for ArbNonUniqueGraph<D>
 {
 	fn graph_mut(&mut self) -> &mut Self::Graph
 	{

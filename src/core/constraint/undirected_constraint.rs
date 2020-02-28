@@ -1,5 +1,5 @@
 use crate::core::{
-	Constrainer, Directedness, Graph, GraphMut, ImplGraph, ImplGraphMut, Undirected,
+	Constrainer, Directedness, Graph, GraphDeref, GraphDerefMut, GraphMut, Undirected,
 };
 use delegate::delegate;
 
@@ -22,7 +22,7 @@ impl<C: Constrainer> UndirectedGraph<C>
 	}
 }
 
-impl<C: Constrainer> ImplGraph for UndirectedGraph<C>
+impl<C: Constrainer> GraphDeref for UndirectedGraph<C>
 {
 	type Graph = Self;
 
@@ -31,7 +31,7 @@ impl<C: Constrainer> ImplGraph for UndirectedGraph<C>
 		self
 	}
 }
-impl<C: Constrainer> ImplGraphMut for UndirectedGraph<C>
+impl<C: Constrainer> GraphDerefMut for UndirectedGraph<C>
 {
 	fn graph_mut(&mut self) -> &mut Self::Graph
 	{
@@ -81,7 +81,7 @@ impl<C: Constrainer> Graph for UndirectedGraph<C>
 	}
 }
 
-impl<C: Constrainer + ImplGraphMut> GraphMut for UndirectedGraph<C>
+impl<C: Constrainer + GraphDerefMut> GraphMut for UndirectedGraph<C>
 where
 	C::Graph: GraphMut,
 {

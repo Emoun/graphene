@@ -1,7 +1,7 @@
 use crate::mock_graph::{MockEdgeWeight, MockVertex, MockVertexWeight};
 use graphene::core::{
 	constraint::{AddEdge, NewVertex, RemoveEdge, RemoveVertex},
-	BaseGraph, Directedness, Edge, EdgeWeighted, Graph, GraphMut, ImplGraph, ImplGraphMut,
+	BaseGraph, Directedness, Edge, EdgeWeighted, Graph, GraphDeref, GraphDerefMut, GraphMut,
 };
 use std::{
 	collections::HashMap,
@@ -292,7 +292,7 @@ impl<D: Directedness> RemoveEdge for MockGraph<D>
 	}
 }
 
-impl<D: Directedness> ImplGraph for MockGraph<D>
+impl<D: Directedness> GraphDeref for MockGraph<D>
 {
 	type Graph = Self;
 
@@ -301,7 +301,7 @@ impl<D: Directedness> ImplGraph for MockGraph<D>
 		self
 	}
 }
-impl<D: Directedness> ImplGraphMut for MockGraph<D>
+impl<D: Directedness> GraphDerefMut for MockGraph<D>
 {
 	fn graph_mut(&mut self) -> &mut Self::Graph
 	{

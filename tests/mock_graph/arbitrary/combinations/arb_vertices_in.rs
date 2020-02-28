@@ -2,24 +2,21 @@ use crate::mock_graph::{
 	arbitrary::{GuidedArbGraph, Limit},
 	MockEdgeWeight, MockVertex, MockVertexWeight,
 };
-use graphene::core::{Graph, ImplGraph, ImplGraphMut};
+use graphene::core::{Graph, GraphDeref, GraphDerefMut};
 use quickcheck::{Arbitrary, Gen};
 use rand::Rng;
-use std::{
-	collections::{HashSet},
-	ops::RangeBounds,
-};
+use std::{collections::HashSet, ops::RangeBounds};
 
 /// An arbitrary graph and an arbitrary set of vertices in it.
 #[derive(Clone, Debug)]
 pub struct ArbVerticesIn<G>(pub G, pub HashSet<MockVertex>)
 where
-	G: Arbitrary + ImplGraph,
+	G: Arbitrary + GraphDeref,
 	G::Graph:
 		Graph<Vertex = MockVertex, VertexWeight = MockVertexWeight, EdgeWeight = MockEdgeWeight>;
 impl<Gr> Arbitrary for ArbVerticesIn<Gr>
 where
-	Gr: GuidedArbGraph + ImplGraphMut,
+	Gr: GuidedArbGraph + GraphDerefMut,
 	Gr::Graph:
 		Graph<Vertex = MockVertex, VertexWeight = MockVertexWeight, EdgeWeight = MockEdgeWeight>,
 {
@@ -35,7 +32,7 @@ where
 }
 impl<Gr> GuidedArbGraph for ArbVerticesIn<Gr>
 where
-	Gr: GuidedArbGraph + ImplGraphMut,
+	Gr: GuidedArbGraph + GraphDerefMut,
 	Gr::Graph:
 		Graph<Vertex = MockVertex, VertexWeight = MockVertexWeight, EdgeWeight = MockEdgeWeight>,
 {
@@ -65,10 +62,7 @@ where
 		Self(graph, set)
 	}
 
-	fn shrink_guided(
-		&self,
-		mut limits: HashSet<Limit>,
-	) -> Box<dyn Iterator<Item = Self>>
+	fn shrink_guided(&self, mut limits: HashSet<Limit>) -> Box<dyn Iterator<Item = Self>>
 	{
 		let mut result = Vec::new();
 		let arb_graph = &self.0;
@@ -85,7 +79,8 @@ where
 		);
 
 		// The we simply remove one of the vertices and keep the rest
-		if Limit::min_vertices(&limits) < self.0.graph().all_vertices().count() {
+		if Limit::min_vertices(&limits) < self.0.graph().all_vertices().count()
+		{
 			for v in self.1.iter()
 			{
 				let mut new_set = self.1.clone();

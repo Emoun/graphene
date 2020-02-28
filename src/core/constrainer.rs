@@ -1,15 +1,6 @@
-use crate::core::Graph;
+use crate::core::{Graph, GraphDeref};
 use std::ops::{Deref, DerefMut};
 
-pub trait ImplGraph
-{
-	type Graph: Graph;
-	fn graph(&self) -> &Self::Graph;
-}
-pub trait ImplGraphMut: ImplGraph
-{
-	fn graph_mut(&mut self) -> &mut Self::Graph;
-}
 /// A marker trait that specifies that the type is a base implementation of a
 /// graph with fixed constraints that cannot be removed.
 ///
@@ -22,7 +13,7 @@ pub trait ImplGraphMut: ImplGraph
 /// implemented for any type implementing `BaseGraph`. (currently not possible,
 /// since it will result in multiple implementations. Specialization will make
 /// it possible.)
-pub trait BaseGraph: Sized + ImplGraph
+pub trait BaseGraph: Sized + GraphDeref
 {
 	fn constrain<G>(self) -> Result<G, ()>
 	where
@@ -34,7 +25,7 @@ pub trait BaseGraph: Sized + ImplGraph
 /// An implementing type constrains a base graph implementation.
 ///
 /// Multiple levels of constrainers are supported.
-pub trait Constrainer: Sized + ImplGraph
+pub trait Constrainer: Sized + GraphDeref
 {
 	/// The base graph implementation being constrained
 	type Base: BaseGraph;
@@ -64,22 +55,6 @@ pub trait Constrainer: Sized + ImplGraph
 	}
 }
 
-impl<G: Graph, D: Deref<Target = G>> ImplGraph for D
-{
-	type Graph = G;
-
-	fn graph(&self) -> &Self::Graph
-	{
-		&**self
-	}
-}
-impl<G: Graph, D: DerefMut<Target = G>> ImplGraphMut for D
-{
-	fn graph_mut(&mut self) -> &mut Self::Graph
-	{
-		&mut **self
-	}
-}
 impl<G: Graph, D: Deref<Target = G>> BaseGraph for D {}
 impl<B: BaseGraph> Constrainer for B
 {

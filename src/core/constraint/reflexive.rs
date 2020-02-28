@@ -1,6 +1,6 @@
 use crate::core::{
 	constraint::{AddEdge, NewVertex, RemoveEdge, RemoveVertex},
-	Constrainer, Graph, GraphMut, ImplGraph, ImplGraphMut,
+	Constrainer, Graph, GraphDeref, GraphDerefMut, GraphMut,
 };
 use delegate::delegate;
 
@@ -20,7 +20,7 @@ pub struct ReflexiveGraph<C: Constrainer>(C)
 where
 	<C::Graph as Graph>::EdgeWeight: Default;
 
-impl<C: Constrainer> ImplGraph for ReflexiveGraph<C>
+impl<C: Constrainer> GraphDeref for ReflexiveGraph<C>
 where
 	<C::Graph as Graph>::EdgeWeight: Default,
 {
@@ -31,7 +31,7 @@ where
 		self
 	}
 }
-impl<C: Constrainer> ImplGraphMut for ReflexiveGraph<C>
+impl<C: Constrainer> GraphDerefMut for ReflexiveGraph<C>
 where
 	<C::Graph as Graph>::EdgeWeight: Default,
 {
@@ -98,7 +98,7 @@ where
 	}
 }
 
-impl<C: Constrainer + ImplGraphMut> GraphMut for ReflexiveGraph<C>
+impl<C: Constrainer + GraphDerefMut> GraphMut for ReflexiveGraph<C>
 where
 	<C::Graph as Graph>::EdgeWeight: Default,
 	C::Graph: GraphMut,
@@ -118,7 +118,7 @@ where
 	}
 }
 
-impl<C: Constrainer + ImplGraphMut> NewVertex for ReflexiveGraph<C>
+impl<C: Constrainer + GraphDerefMut> NewVertex for ReflexiveGraph<C>
 where
 	C::Graph: NewVertex + AddEdge,
 	<C::Graph as Graph>::EdgeWeight: Default,
@@ -131,7 +131,7 @@ where
 	}
 }
 
-impl<C: Constrainer + ImplGraphMut> RemoveVertex for ReflexiveGraph<C>
+impl<C: Constrainer + GraphDerefMut> RemoveVertex for ReflexiveGraph<C>
 where
 	C::Graph: RemoveVertex + RemoveEdge,
 	<C::Graph as Graph>::EdgeWeight: Default,

@@ -1,4 +1,6 @@
-use crate::core::{Constrainer, Directed, Directedness, Graph, GraphMut, ImplGraph, ImplGraphMut};
+use crate::core::{
+	Constrainer, Directed, Directedness, Graph, GraphDeref, GraphDerefMut, GraphMut,
+};
 use delegate::delegate;
 
 /// A marker trait for graphs who's edges are directed.
@@ -20,7 +22,7 @@ impl<C: Constrainer> DirectedGraph<C>
 	}
 }
 
-impl<C: Constrainer> ImplGraph for DirectedGraph<C>
+impl<C: Constrainer> GraphDeref for DirectedGraph<C>
 {
 	type Graph = Self;
 
@@ -29,7 +31,7 @@ impl<C: Constrainer> ImplGraph for DirectedGraph<C>
 		self
 	}
 }
-impl<C: Constrainer> ImplGraphMut for DirectedGraph<C>
+impl<C: Constrainer> GraphDerefMut for DirectedGraph<C>
 {
 	fn graph_mut(&mut self) -> &mut Self::Graph
 	{
@@ -79,7 +81,7 @@ impl<C: Constrainer> Graph for DirectedGraph<C>
 	}
 }
 
-impl<C: Constrainer + ImplGraphMut> GraphMut for DirectedGraph<C>
+impl<C: Constrainer + GraphDerefMut> GraphMut for DirectedGraph<C>
 where
 	C::Graph: GraphMut,
 {

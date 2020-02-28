@@ -3,7 +3,7 @@ use crate::core::{
 		proxy_remove_edge_where, proxy_remove_vertex, ConnectedGraph, RemoveEdge, RemoveVertex,
 	},
 	proxy::UndirectedProxy,
-	Constrainer, Directed, Graph, GraphMut, ImplGraph, ImplGraphMut,
+	Constrainer, Directed, Graph, GraphDeref, GraphDerefMut, GraphMut,
 };
 use delegate::delegate;
 
@@ -40,7 +40,7 @@ where
 	}
 }
 
-impl<C: Constrainer> ImplGraph for WeakGraph<C>
+impl<C: Constrainer> GraphDeref for WeakGraph<C>
 where
 	C::Graph: Graph<Directedness = Directed>,
 {
@@ -51,7 +51,7 @@ where
 		self
 	}
 }
-impl<C: Constrainer> ImplGraphMut for WeakGraph<C>
+impl<C: Constrainer> GraphDerefMut for WeakGraph<C>
 where
 	C::Graph: Graph<Directedness = Directed>,
 {
@@ -109,7 +109,7 @@ where
 	}
 }
 
-impl<C: Constrainer + ImplGraphMut> GraphMut for WeakGraph<C>
+impl<C: Constrainer + GraphDerefMut> GraphMut for WeakGraph<C>
 where
 	C::Graph: GraphMut<Directedness = Directed>,
 {
@@ -128,7 +128,7 @@ where
 	}
 }
 
-impl<C: Constrainer + ImplGraphMut> RemoveVertex for WeakGraph<C>
+impl<C: Constrainer + GraphDerefMut> RemoveVertex for WeakGraph<C>
 where
 	C::Graph: RemoveVertex<Directedness = Directed>,
 {
@@ -138,7 +138,7 @@ where
 	}
 }
 
-impl<C: Constrainer + ImplGraphMut> RemoveEdge for WeakGraph<C>
+impl<C: Constrainer + GraphDerefMut> RemoveEdge for WeakGraph<C>
 where
 	C::Graph: RemoveEdge<Directedness = Directed>,
 {

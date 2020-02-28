@@ -4,7 +4,7 @@ use crate::mock_graph::{
 };
 use graphene::core::{
 	constraint::{AddEdge, RemoveEdge},
-	Edge, EdgeDeref, EdgeWeighted, Graph, GraphMut, ImplGraph, ImplGraphMut,
+	Edge, EdgeDeref, EdgeWeighted, Graph, GraphDeref, GraphDerefMut, GraphMut,
 };
 use quickcheck::{Arbitrary, Gen};
 use rand::Rng;
@@ -15,12 +15,12 @@ use std::{collections::HashSet, ops::RangeBounds};
 #[derive(Clone, Debug)]
 pub struct ArbEdgeIn<G>(pub G, pub (MockVertex, MockVertex, MockEdgeWeight))
 where
-	G: Arbitrary + ImplGraph,
+	G: Arbitrary + GraphDeref,
 	G::Graph:
 		Graph<Vertex = MockVertex, VertexWeight = MockVertexWeight, EdgeWeight = MockEdgeWeight>;
 impl<Gr> GuidedArbGraph for ArbEdgeIn<Gr>
 where
-	Gr: GuidedArbGraph + ImplGraphMut,
+	Gr: GuidedArbGraph + GraphDerefMut,
 	Gr::Graph: GraphMut<Vertex = MockVertex, VertexWeight = MockVertexWeight, EdgeWeight = MockEdgeWeight>
 		+ AddEdge
 		+ RemoveEdge,
@@ -89,7 +89,7 @@ where
 }
 impl<Gr> Arbitrary for ArbEdgeIn<Gr>
 where
-	Gr: GuidedArbGraph + ImplGraphMut,
+	Gr: GuidedArbGraph + GraphDerefMut,
 	Gr::Graph: GraphMut<Vertex = MockVertex, VertexWeight = MockVertexWeight, EdgeWeight = MockEdgeWeight>
 		+ AddEdge
 		+ RemoveEdge,

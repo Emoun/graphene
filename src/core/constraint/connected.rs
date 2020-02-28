@@ -5,7 +5,7 @@ use crate::{
 			proxy_remove_edge_where, proxy_remove_vertex, DirectedGraph, RemoveEdge, RemoveVertex,
 			Unilateral, Weak,
 		},
-		Constrainer, Graph, GraphMut, ImplGraph, ImplGraphMut, ReverseGraph,
+		Constrainer, Graph, GraphDeref, GraphDerefMut, GraphMut, ReverseGraph,
 	},
 };
 use delegate::delegate;
@@ -31,7 +31,7 @@ impl<C: Constrainer> ConnectedGraph<C>
 	}
 }
 
-impl<C: Constrainer> ImplGraph for ConnectedGraph<C>
+impl<C: Constrainer> GraphDeref for ConnectedGraph<C>
 {
 	type Graph = Self;
 
@@ -40,7 +40,7 @@ impl<C: Constrainer> ImplGraph for ConnectedGraph<C>
 		self
 	}
 }
-impl<C: Constrainer> ImplGraphMut for ConnectedGraph<C>
+impl<C: Constrainer> GraphDerefMut for ConnectedGraph<C>
 {
 	fn graph_mut(&mut self) -> &mut Self::Graph
 	{
@@ -105,7 +105,7 @@ impl<C: Constrainer> Graph for ConnectedGraph<C>
 	}
 }
 
-impl<C: Constrainer + ImplGraphMut> GraphMut for ConnectedGraph<C>
+impl<C: Constrainer + GraphDerefMut> GraphMut for ConnectedGraph<C>
 where
 	C::Graph: GraphMut,
 {
@@ -124,7 +124,7 @@ where
 	}
 }
 
-impl<C: Constrainer + ImplGraphMut> RemoveVertex for ConnectedGraph<C>
+impl<C: Constrainer + GraphDerefMut> RemoveVertex for ConnectedGraph<C>
 where
 	C::Graph: RemoveVertex,
 {
@@ -134,7 +134,7 @@ where
 	}
 }
 
-impl<C: Constrainer + ImplGraphMut> RemoveEdge for ConnectedGraph<C>
+impl<C: Constrainer + GraphDerefMut> RemoveEdge for ConnectedGraph<C>
 where
 	C::Graph: RemoveEdge,
 {
