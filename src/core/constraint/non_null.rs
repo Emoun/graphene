@@ -1,6 +1,4 @@
-use crate::core::{
-	constraint::RemoveVertex, Constrainer, Graph, GraphDeref, GraphDerefMut, GraphMut,
-};
+use crate::core::{constraint::RemoveVertex, Constrainer, Graph, GraphDeref, GraphDerefMut};
 use delegate::delegate;
 
 /// A marker trait for graphs with at least 1 vertex.
@@ -87,25 +85,6 @@ impl<C: Constrainer> Graph for NonNullGraph<C>
 			fn all_edges<'a>(
 				&'a self,
 			) -> Box<dyn 'a + Iterator<Item = (Self::Vertex, Self::Vertex, &'a Self::EdgeWeight)>>;
-		}
-	}
-}
-
-impl<C: Constrainer + GraphDerefMut> GraphMut for NonNullGraph<C>
-where
-	C::Graph: GraphMut,
-{
-	delegate! {
-		to self.0.graph_mut() {
-			fn all_vertices_weighted_mut<'a>(
-				&'a mut self,
-			) -> Box<dyn 'a + Iterator<Item = (Self::Vertex, &'a mut Self::VertexWeight)>>;
-
-			fn all_edges_mut<'a>(
-				&'a mut self,
-			) -> Box<
-				dyn 'a + Iterator<Item = (Self::Vertex, Self::Vertex, &'a mut Self::EdgeWeight)>
-			>;
 		}
 	}
 }

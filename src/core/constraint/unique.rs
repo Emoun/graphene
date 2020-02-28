@@ -1,6 +1,6 @@
 use crate::core::{
 	constraint::AddEdge, Constrainer, Directedness, Edge, EdgeWeighted, Graph, GraphDeref,
-	GraphDerefMut, GraphMut,
+	GraphDerefMut,
 };
 use delegate::delegate;
 
@@ -100,25 +100,6 @@ impl<C: Constrainer> Graph for UniqueGraph<C>
 			fn all_edges<'a>(
 				&'a self,
 			) -> Box<dyn 'a + Iterator<Item = (Self::Vertex, Self::Vertex, &'a Self::EdgeWeight)>>;
-		}
-	}
-}
-
-impl<C: Constrainer + GraphDerefMut> GraphMut for UniqueGraph<C>
-where
-	C::Graph: GraphMut,
-{
-	delegate! {
-		to self.0.graph_mut() {
-			fn all_vertices_weighted_mut<'a>(
-				&'a mut self,
-			) -> Box<dyn 'a + Iterator<Item = (Self::Vertex, &'a mut Self::VertexWeight)>>;
-
-			fn all_edges_mut<'a>(
-				&'a mut self,
-			) -> Box<
-				dyn 'a + Iterator<Item = (Self::Vertex, Self::Vertex, &'a mut Self::EdgeWeight)>
-			>;
 		}
 	}
 }

@@ -1,7 +1,6 @@
 use crate::core::Graph;
 use std::ops::{Deref, DerefMut};
 
-///
 pub trait GraphDeref
 {
 	type Graph: Graph;

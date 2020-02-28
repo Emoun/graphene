@@ -5,10 +5,7 @@ use crate::mock_graph::{
 	arbitrary::{ArbConnectedGraph, ArbVertexIn},
 	MockVertex,
 };
-use graphene::{
-	algo::DFS,
-	core::{Directed, GraphDeref},
-};
+use graphene::{algo::DFS, core::GraphDeref};
 use std::cell::Cell;
 
 duplicate_for_directedness! {

@@ -1,5 +1,5 @@
 use crate::core::{Graph, GraphDeref};
-use std::ops::{Deref, DerefMut};
+use std::ops::Deref;
 
 /// A marker trait that specifies that the type is a base implementation of a
 /// graph with fixed constraints that cannot be removed.

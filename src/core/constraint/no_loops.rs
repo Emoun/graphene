@@ -1,5 +1,5 @@
 use crate::core::{
-	constraint::AddEdge, Constrainer, EdgeWeighted, Graph, GraphDeref, GraphDerefMut, GraphMut,
+	constraint::AddEdge, Constrainer, EdgeWeighted, Graph, GraphDeref, GraphDerefMut,
 };
 use delegate::delegate;
 
@@ -72,25 +72,6 @@ impl<C: Constrainer> Graph for NoLoopsGraph<C>
 			fn all_edges<'a>(
 				&'a self,
 			) -> Box<dyn 'a + Iterator<Item = (Self::Vertex, Self::Vertex, &'a Self::EdgeWeight)>>;
-		}
-	}
-}
-
-impl<C: Constrainer + GraphDerefMut> GraphMut for NoLoopsGraph<C>
-where
-	C::Graph: GraphMut,
-{
-	delegate! {
-		to self.0.graph_mut() {
-			fn all_vertices_weighted_mut<'a>(
-				&'a mut self,
-			) -> Box<dyn 'a + Iterator<Item = (Self::Vertex, &'a mut Self::VertexWeight)>>;
-
-			fn all_edges_mut<'a>(
-				&'a mut self,
-			) -> Box<
-				dyn 'a + Iterator<Item = (Self::Vertex, Self::Vertex, &'a mut Self::EdgeWeight)>
-			>;
 		}
 	}
 }

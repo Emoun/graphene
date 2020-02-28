@@ -1,6 +1,4 @@
-use crate::core::{
-	Constrainer, Directedness, Graph, GraphDeref, GraphDerefMut, GraphMut, Undirected,
-};
+use crate::core::{Constrainer, Directedness, Graph, GraphDeref, GraphDerefMut, Undirected};
 use delegate::delegate;
 
 /// A marker trait for graphs who's edges are undirected.
@@ -77,25 +75,6 @@ impl<C: Constrainer> Graph for UndirectedGraph<C>
 			fn all_edges<'a>(
 				&'a self,
 			) -> Box<dyn 'a + Iterator<Item = (Self::Vertex, Self::Vertex, &'a Self::EdgeWeight)>>;
-		}
-	}
-}
-
-impl<C: Constrainer + GraphDerefMut> GraphMut for UndirectedGraph<C>
-where
-	C::Graph: GraphMut,
-{
-	delegate! {
-		to self.0.graph_mut() {
-			fn all_vertices_weighted_mut<'a>(
-				&'a mut self,
-			) -> Box<dyn 'a + Iterator<Item = (Self::Vertex, &'a mut Self::VertexWeight)>>;
-
-			fn all_edges_mut<'a>(
-				&'a mut self,
-			) -> Box<
-				dyn 'a + Iterator<Item = (Self::Vertex, Self::Vertex, &'a mut Self::EdgeWeight)>
-			>;
 		}
 	}
 }
