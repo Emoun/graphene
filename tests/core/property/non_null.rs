@@ -2,8 +2,8 @@
 use crate::mock_graph::arbitrary::ArbVertexIn;
 use crate::mock_graph::{MockDirectedness, MockGraph, MockVertexWeight};
 use graphene::core::{
-	constraint::{NewVertex, NonNull, NonNullGraph, RemoveVertex},
-	Constrainer, Graph,
+	property::{NewVertex, NonNull, NonNullGraph, RemoveVertex},
+	Graph, Insure,
 };
 
 duplicate_for_directedness! {
@@ -15,14 +15,14 @@ duplicate_for_directedness! {
 	{
 		let null_graph = MockGraph::<directedness>::empty();
 
-		assert!(NonNullGraph::constrain_single(null_graph).is_err());
+		assert!(!NonNullGraph::validate(&null_graph));
 	}
 
 	/// Tests that graphs with at least 1 vertex are accepted.
 	#[quickcheck]
 	fn accept_non_null(ArbVertexIn(g,_): ArbVertexIn<MockGraph<directedness>>) -> bool
 	{
-		NonNullGraph::constrain_single(g).is_ok()
+		NonNullGraph::validate(&g)
 	}
 
 	/// Tests that can remove a vertex if there are at least 2.
@@ -32,7 +32,7 @@ duplicate_for_directedness! {
 		w: MockVertexWeight
 	) -> bool
 	{
-		let mut g = NonNullGraph::constrain_single(g).unwrap();
+		let mut g = NonNullGraph::insure(g).unwrap();
 		g.new_vertex_weighted(w).unwrap();
 
 		g.remove_vertex(v).is_ok()
@@ -46,7 +46,7 @@ duplicate_for_directedness! {
 		let mut g = MockGraph::<directedness>::empty();
 		let v = g.new_vertex_weighted(MockVertexWeight{value: 0}).unwrap();
 
-		let mut g = NonNullGraph::constrain_single(g).unwrap();
+		let mut g = NonNullGraph::insure(g).unwrap();
 
 		assert!(g.remove_vertex(v).is_err())
 	}
@@ -57,7 +57,7 @@ duplicate_for_directedness! {
 		ArbVertexIn(g,_): ArbVertexIn<MockGraph<MockDirectedness>>
 	) -> bool
 	{
-		let g = NonNullGraph::constrain_single(g).unwrap();
+		let g = NonNullGraph::insure(g).unwrap();
 
 		g.contains_vertex(g.get_vertex())
 	}

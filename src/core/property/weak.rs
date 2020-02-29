@@ -1,9 +1,9 @@
 use crate::core::{
-	constraint::{
+	property::{
 		proxy_remove_edge_where, proxy_remove_vertex, ConnectedGraph, RemoveEdge, RemoveVertex,
 	},
 	proxy::UndirectedProxy,
-	Constrainer, Directed, Graph, GraphDerefMut,
+	Directed, Graph, GraphDerefMut, Insure,
 };
 use delegate::delegate;
 
@@ -14,7 +14,7 @@ use delegate::delegate;
 ///
 /// The distinction between weakly and strongly connected only exists for
 /// directed graphs, for undirected ones, they are equal. For this reason, the
-/// companion constrainer graph `WeakGraph` only allows directed graphs. For
+/// companion insurer graph `WeakGraph` only allows directed graphs. For
 /// undirected graph, simply use `ConnectedGraph`.
 ///
 /// For type safety reasons, the trait itself does not restrict directedness.
@@ -23,11 +23,11 @@ pub trait Weak: Graph
 }
 
 #[derive(Clone, Debug)]
-pub struct WeakGraph<C: Constrainer>(C)
+pub struct WeakGraph<C: Insure>(C)
 where
 	C::Graph: Graph<Directedness = Directed>;
 
-impl<C: Constrainer> WeakGraph<C>
+impl<C: Insure> WeakGraph<C>
 where
 	C::Graph: Graph<Directedness = Directed>,
 {
@@ -40,34 +40,24 @@ where
 	}
 }
 
-impl<C: Constrainer> Constrainer for WeakGraph<C>
+impl<C: Insure> Insure for WeakGraph<C>
 where
 	C::Graph: Graph<Directedness = Directed>,
 {
-	type Base = C::Base;
-	type Constrained = C;
+	fn insure_unvalidated(c: Self::Insured) -> Self
+	{
+		Self(c)
+	}
 
-	fn constrain_single(c: Self::Constrained) -> Result<Self, ()>
+	fn validate(c: &Self::Insured) -> bool
 	{
 		let undirected = UndirectedProxy::new(c.graph());
 
-		if ConnectedGraph::constrain_single(undirected).is_ok()
-		{
-			Ok(WeakGraph::new(c))
-		}
-		else
-		{
-			Err(())
-		}
-	}
-
-	fn unconstrain_single(self) -> Self::Constrained
-	{
-		self.0
+		ConnectedGraph::validate(&undirected)
 	}
 }
 
-impl<C: Constrainer + GraphDerefMut> RemoveVertex for WeakGraph<C>
+impl<C: Insure + GraphDerefMut> RemoveVertex for WeakGraph<C>
 where
 	C::Graph: RemoveVertex<Directedness = Directed>,
 {
@@ -77,7 +67,7 @@ where
 	}
 }
 
-impl<C: Constrainer + GraphDerefMut> RemoveEdge for WeakGraph<C>
+impl<C: Insure + GraphDerefMut> RemoveEdge for WeakGraph<C>
 where
 	C::Graph: RemoveEdge<Directedness = Directed>,
 {
@@ -92,9 +82,9 @@ where
 	}
 }
 
-impl<C: Constrainer> Weak for WeakGraph<C> where C::Graph: Graph<Directedness = Directed> {}
+impl<C: Insure> Weak for WeakGraph<C> where C::Graph: Graph<Directedness = Directed> {}
 
-impl_constraints! {
+impl_insurer! {
 	WeakGraph<C>: Weak, RemoveVertex, RemoveEdge,
 	// A new vertex wouldn't be connected to the rest of the graph
 	NewVertex

@@ -1,6 +1,6 @@
 use crate::mock_graph::{MockDirectedness, MockGraph};
 use graphene::core::{
-	constraint::{Connected, ConnectedGraph, Unilateral, UnilateralGraph, Weak},
+	property::{Connected, ConnectedGraph, Unilateral, UnilateralGraph, Weak},
 	Directed,
 };
 use static_assertions::assert_impl_all;

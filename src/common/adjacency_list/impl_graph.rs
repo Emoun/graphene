@@ -1,7 +1,7 @@
 use crate::{
 	common::AdjListGraph,
 	core::{
-		constraint::{AddEdge, NewVertex, RemoveEdge, RemoveVertex, VertexCount},
+		property::{AddEdge, NewVertex, RemoveEdge, RemoveVertex, VertexCount},
 		BaseGraph, Directedness, Edge, EdgeWeighted, Graph, GraphDeref, GraphDerefMut, GraphMut,
 	},
 };

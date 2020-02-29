@@ -3,8 +3,8 @@ use crate::mock_graph::{
 	MockEdgeWeight, MockGraph,
 };
 use graphene::core::{
-	constraint::{AddEdge, DirectedGraph, RemoveEdge, UniqueGraph},
-	Constrainer, Directedness, Edge, Graph, GraphDeref, GraphDerefMut,
+	property::{AddEdge, DirectedGraph, RemoveEdge, UniqueGraph},
+	Directedness, Edge, Graph, GraphDeref, GraphDerefMut, Insure, Release,
 };
 use quickcheck::{Arbitrary, Gen};
 use rand::Rng;
@@ -109,7 +109,7 @@ impl<D: Directedness> GuidedArbGraph for ArbUniqueGraph<D>
 		Box::new(
 			self.0
 				.clone()
-				.unconstrain()
+				.release_all()
 				.shrink_guided(limits)
 				.map(|g| Self(UniqueGraph::unchecked(g))),
 		)
@@ -138,7 +138,7 @@ impl<D: Directedness> Arbitrary for ArbNonUniqueGraph<D>
 	fn arbitrary<G: Gen>(g: &mut G) -> Self
 	{
 		// Ensure there are at least 1 edge (so that we can duplicate)
-		let mut graph = ArbUniqueGraph::arbitrary_guided(g, .., 1..).0.unconstrain();
+		let mut graph = ArbUniqueGraph::arbitrary_guided(g, .., 1..).0.release_all();
 
 		// Duplicate a arbitrary number of additional edges (at least 1)
 		let original_edges: Vec<_> = graph.all_edges().map(|e| (e.source(), e.sink())).collect();
@@ -177,7 +177,7 @@ impl<D: Directedness> Arbitrary for ArbNonUniqueGraph<D>
 				// without the edge
 				let mut shrunk_graph = self.0.clone();
 				let mut shrunk_dup_count = self.1;
-				if let Ok(g) = <DirectedGraph<&MockGraph<D>>>::constrain(&self.0)
+				if let Ok(g) = <DirectedGraph<&MockGraph<D>>>::insure_all(&self.0)
 				{
 					if g.edges_sourced_in(e.source()).count() > 1
 					{

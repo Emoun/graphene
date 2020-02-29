@@ -5,7 +5,7 @@ use crate::mock_graph::{
 };
 use graphene::{
 	algo::{Bfs, DFS},
-	core::{constraint::AddEdge, Constrainer, Directed, Graph, GraphDeref},
+	core::{property::AddEdge, Directed, Graph, GraphDeref, Release},
 };
 use std::collections::HashSet;
 
@@ -25,12 +25,12 @@ duplicate_for! {
 		fn visits_component_once(ArbVertexIn(mock, v): ArbVertexIn<ArbConnectedGraph<directedness>>)
 				 -> bool
 		{
-			// Use a set to ensure we only count each vertex once
+			// Use a set to insure we only count each vertex once
 			let mut visited = HashSet::new();
 			let mut visited_once = true;
 			search_algo_new(mock.graph(), v).for_each(|v|{ visited_once &= visited.insert(v); });
 
-			// We ensure all vertices were visited, but only once
+			// We insure all vertices were visited, but only once
 			visited.len() == mock.0.all_vertices().count() && visited_once
 		}
 
@@ -44,7 +44,7 @@ duplicate_for! {
 			 -> bool
 		{
 			// Our starting connected component
-			let mut graph = g1.0.unconstrain();
+			let mut graph = g1.0.release_all();
 
 			// First join the two graphs
 			let v_map = graph.join(&g2);
@@ -60,7 +60,7 @@ duplicate_for! {
 	///
 	/// This is different from `visits_none_outside_component` because in that case
 	/// the components are completely unconnected with no edges between them
-	/// (incoming or outgoing). This test therefore ensures edges aren't taken the
+	/// (incoming or outgoing). This test therefore insures edges aren't taken the
 	/// wrong directed.
 	#[quickcheck]
 	fn directed_doesnt_visit_incoming_component(
@@ -69,7 +69,7 @@ duplicate_for! {
 		weight: MockEdgeWeight,
 	) -> bool
 	{
-		let mut graph = ((component.0).0).0.unconstrain();
+		let mut graph = ((component.0).0).0.release_all();
 		let comp_set = component.1;
 		let v = (component.0).1;
 		let g2 = rest.0;
@@ -99,7 +99,7 @@ duplicate_for! {
 		weight: MockEdgeWeight,
 	) -> bool
 	{
-		let mut graph = ((comp1.0).0).0.unconstrain();
+		let mut graph = ((comp1.0).0).0.release_all();
 		let comp1_set = comp1.1;
 		let v = (comp1.0).1;
 		let g2 = ((comp2.0).0).0;

@@ -4,8 +4,8 @@ use crate::mock_graph::{arbitrary::ArbVertexIn, MockGraph};
 use graphene::{
 	algo::TarjanSCC,
 	core::{
-		constraint::{ConnectedGraph, Subgraph},
-		Constrainer, Directed, Graph,
+		property::{ConnectedGraph, Subgraph},
+		Directed, Graph, Insure,
 	},
 };
 
@@ -29,7 +29,7 @@ fn produces_connected_components(ArbVertexIn(graph, v): ArbVertexIn<MockGraph<Di
 {
 	for scc in TarjanSCC::new(&graph, v)
 	{
-		if ConnectedGraph::constrain_single(scc).is_err()
+		if !ConnectedGraph::validate(&scc)
 		{
 			return false;
 		}

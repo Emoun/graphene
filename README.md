@@ -25,9 +25,9 @@ custom_graph!{
 	// The BaseGraph implementation to base the new graph on.
 	as AdjListGraph<V,W>
 	// The graph wrappers that will constrain the BaseGraph implementation so that
-	// it upholds the constraint traits.
+	// it upholds the property traits.
 	use UniqueGraph,UndirectedGraph
-	// The constraint traits the new graph implements
+	// The property traits the new graph implements
 	impl Unique,Undirected
 	// The generic bounds
 	where V: Vertex, W: Weight

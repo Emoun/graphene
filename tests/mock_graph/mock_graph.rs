@@ -1,6 +1,6 @@
 use crate::mock_graph::{MockEdgeWeight, MockVertex, MockVertexWeight};
 use graphene::core::{
-	constraint::{AddEdge, NewVertex, RemoveEdge, RemoveVertex},
+	property::{AddEdge, NewVertex, RemoveEdge, RemoveVertex},
 	BaseGraph, Directedness, Edge, EdgeWeighted, Graph, GraphDeref, GraphDerefMut, GraphMut,
 };
 use std::{
@@ -36,7 +36,7 @@ impl<D: Directedness> MockGraph<D>
 	/// * All edges are incident on currently vertices that are still in the
 	///   graph.
 	/// * All vertex ids are less that the next id to be used
-	pub fn validate(&self)
+	pub fn validate_is_graph(&self)
 	{
 		if let Some(v) = self.vertices.keys().find(|&&v| v >= self.next_id)
 		{
@@ -95,7 +95,7 @@ impl<D: Directedness> MockGraph<D>
 			e.1 = vert_map[&e.1];
 		}
 
-		self.validate()
+		self.validate_is_graph()
 	}
 
 	/// Inserts the given graph into this one, creating new vertices and edges
@@ -157,7 +157,7 @@ impl<D: Directedness> Graph for MockGraph<D>
 {
 	type Directedness = D;
 	type EdgeWeight = MockEdgeWeight;
-	/// We hide u32 behind a struct to ensure our tests aren't dependent
+	/// We hide u32 behind a struct to insure our tests aren't dependent
 	/// on graphs using usize as ids
 	type Vertex = MockVertex;
 	type VertexWeight = MockVertexWeight;
@@ -221,7 +221,7 @@ impl<D: Directedness> NewVertex for MockGraph<D>
 		else
 		{
 			self.next_id += 1;
-			self.validate();
+			self.validate_is_graph();
 			Ok(MockVertex {
 				value: self.next_id - 1,
 			})
@@ -236,7 +236,7 @@ impl<D: Directedness> RemoveVertex for MockGraph<D>
 		if let Some(weight) = self.vertices.remove(&v)
 		{
 			self.edges.retain(|e| e.source() != v && e.sink() != v);
-			self.validate();
+			self.validate_is_graph();
 			Ok(weight)
 		}
 		else
@@ -257,7 +257,7 @@ impl<D: Directedness> AddEdge for MockGraph<D>
 		{
 			self.edges
 				.push((e.source().value, e.sink().value, e.weight_owned()));
-			self.validate();
+			self.validate_is_graph();
 			Ok(())
 		}
 		else
@@ -282,7 +282,7 @@ impl<D: Directedness> RemoveEdge for MockGraph<D>
 			})
 		{
 			let (so, si, w) = self.edges.remove(idx);
-			self.validate();
+			self.validate_is_graph();
 			Ok((MockVertex { value: so }, MockVertex { value: si }, w))
 		}
 		else

@@ -1,11 +1,11 @@
 use crate::{
 	algo::DFS,
 	core::{
-		constraint::{
+		property::{
 			proxy_remove_edge_where, proxy_remove_vertex, DirectedGraph, RemoveEdge, RemoveVertex,
 			Unilateral, Weak,
 		},
-		Constrainer, Graph, GraphDerefMut, ReverseGraph,
+		Graph, GraphDerefMut, Insure, ReverseGraph,
 	},
 };
 use delegate::delegate;
@@ -19,9 +19,9 @@ pub trait Connected: Unilateral
 }
 
 #[derive(Clone, Debug)]
-pub struct ConnectedGraph<C: Constrainer>(C);
+pub struct ConnectedGraph<C: Insure>(C);
 
-impl<C: Constrainer> ConnectedGraph<C>
+impl<C: Insure> ConnectedGraph<C>
 {
 	/// Creates a new connected graph. The given graph *must* be connected.
 	/// This method does not check for this!!
@@ -31,12 +31,14 @@ impl<C: Constrainer> ConnectedGraph<C>
 	}
 }
 
-impl<C: Constrainer> Constrainer for ConnectedGraph<C>
+impl<C: Insure> Insure for ConnectedGraph<C>
 {
-	type Base = C::Base;
-	type Constrained = C;
+	fn insure_unvalidated(c: Self::Insured) -> Self
+	{
+		Self(c)
+	}
 
-	fn constrain_single(c: Self::Constrained) -> Result<Self, ()>
+	fn validate(c: &Self::Insured) -> bool
 	{
 		let g = c.graph();
 		let v_count = g.all_vertices().count();
@@ -48,28 +50,23 @@ impl<C: Constrainer> Constrainer for ConnectedGraph<C>
 			if dfs_count == v_count
 			{
 				// If its undirected, no more needs to be done
-				if let Ok(g) = <DirectedGraph<&C::Graph>>::constrain(g)
+				if let Ok(g) = <DirectedGraph<&C::Graph>>::insure_all(g)
 				{
 					let reverse = ReverseGraph::new(g);
 					if DFS::new_simple(&reverse, v).count() != v_count
 					{
-						return Err(());
+						return false;
 					}
 				}
-				return Ok(Self(c));
+				return true;
 			}
-			return Err(());
+			return false;
 		}
-		Ok(Self(c))
-	}
-
-	fn unconstrain_single(self) -> Self::Constrained
-	{
-		self.0
+		true
 	}
 }
 
-impl<C: Constrainer + GraphDerefMut> RemoveVertex for ConnectedGraph<C>
+impl<C: Insure + GraphDerefMut> RemoveVertex for ConnectedGraph<C>
 where
 	C::Graph: RemoveVertex,
 {
@@ -79,7 +76,7 @@ where
 	}
 }
 
-impl<C: Constrainer + GraphDerefMut> RemoveEdge for ConnectedGraph<C>
+impl<C: Insure + GraphDerefMut> RemoveEdge for ConnectedGraph<C>
 where
 	C::Graph: RemoveEdge,
 {
@@ -94,11 +91,11 @@ where
 	}
 }
 
-impl<C: Constrainer> Weak for ConnectedGraph<C> {}
-impl<C: Constrainer> Unilateral for ConnectedGraph<C> {}
-impl<C: Constrainer> Connected for ConnectedGraph<C> {}
+impl<C: Insure> Weak for ConnectedGraph<C> {}
+impl<C: Insure> Unilateral for ConnectedGraph<C> {}
+impl<C: Insure> Connected for ConnectedGraph<C> {}
 
-impl_constraints! {
+impl_insurer! {
 	ConnectedGraph<C>: Connected, Unilateral, Weak, RemoveVertex, RemoveEdge,
 	// A new vertex wouldn't be connected to the rest of the graph
 	NewVertex

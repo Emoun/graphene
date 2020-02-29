@@ -16,7 +16,7 @@ fn edge_test()
 	let _: MockVertex = no_weight_edge.sink();
 	no_weight_edge.weight_ref() == &();
 	no_weight_edge.weight_owned() == ();
-	no_weight_edge.weight_owned() == (); // Twice to ensure 'no_weight_edge' wasn't moved
+	no_weight_edge.weight_owned() == (); // Twice to insure 'no_weight_edge' wasn't moved
 
 	let mut weight_edge = (
 		MockVertex { value: 0 },
@@ -33,9 +33,9 @@ fn edge_test()
 	let _: MockVertex = weight_ref_edge.source();
 	let _: MockVertex = weight_ref_edge.sink();
 	weight_ref_edge.weight() == &weight;
-	weight_ref_edge.weight() == &weight; // Twice to ensure 'weight_ref_edge' wasn't consumed
+	weight_ref_edge.weight() == &weight; // Twice to insure 'weight_ref_edge' wasn't consumed
 	(&weight_ref_edge).weight() == &weight;
-	(&weight_ref_edge).weight() == &weight; // Twice to ensure 'weight_ref_edge' wasn't consumed
+	(&weight_ref_edge).weight() == &weight; // Twice to insure 'weight_ref_edge' wasn't consumed
 
 	let mut weight_ref_mut_edge = (
 		MockVertex { value: 0 },

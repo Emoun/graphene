@@ -33,7 +33,7 @@
 // extern crate graphene;
 // use graphene::{
 // 	common::AdjListGraph,
-// 	core::{constraint::*, *},
+// 	core::{property::*, *},
 // 	};
 //
 // custom_graph! {
@@ -42,9 +42,9 @@
 // // The BaseGraph implementation to base the new graph on.
 // as AdjListGraph<V,W>
 // // The graph wrappers that will constrain the BaseGraph implementation so that
-// // it upholds the constraint traits.
+// // it upholds the property traits.
 // use UniqueGraph,UndirectedGraph
-// // The constraint traits the new graph implements
+// // The property traits the new graph implements
 // impl Unique,Undirected
 // // The generic bounds
 // where V: Vertex, W: Weight
@@ -126,10 +126,10 @@
 // # Directionality
 //
 // By default, edges in any graph are directed. If an undirected graph is
-// needed, the `core` provides an `Undirected` constraint trait which can be
+// needed, the `core` provides an `Undirected` property trait which can be
 // implemented for a given graph. However, behind the scenes, any `Undirected`
 // graph is a directed graph with edges in both directions. Therefore, given
-// that any BaseGraph may be `Undirected`, an additional constraint trait,
+// that any BaseGraph may be `Undirected`, an additional property trait,
 // `Directed` is provided (**TODO**) which defines a graph as being specifically
 // directed.
 //
@@ -195,18 +195,18 @@
 //
 // ### Directionality example
 //
-// Consider the constraint trait `Unique`. A graph is unique if for all edges,
+// Consider the property trait `Unique`. A graph is unique if for all edges,
 // no two edges are incident on the same two vertices in the same direction.
 // Consequently, for undirected graphs this means that only one undirected edge
 // is allowed between any two vertices, while an edge in each direction is
 // allowed for directed graphs.
 //
 // The `graphene::core::constaint` module is able to simply implement this
-// constraint by iterating over all the directed edges a graph has, and reject
+// property by iterating over all the directed edges a graph has, and reject
 // it if any two edges have the same source and sink. This implementation is
 // directionality agnostic since undirected graphs return a directed pair, which
 // is allowed of a directed unique graph. Had `Undirected` graphs returned only
-// one undirected edge, two constraint traits `UniqueDirection` and
+// one undirected edge, two property traits `UniqueDirection` and
 // `UniqueUndirected` would have been needed. This is because the following two
 // edges, (1,2) and (2,1), would be invalid for undirected graphs, as the edges
 // are identical when disregarding direction (which undirected graphs do). For
@@ -214,7 +214,7 @@
 // directions.
 //
 // Therefore, the `graphene`'s directionality design allows for a single
-// implementation for the `Unique` constraint that works for both directed and
+// implementation for the `Unique` property that works for both directed and
 // undirected graphs.
 //
 //

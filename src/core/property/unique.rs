@@ -1,5 +1,5 @@
 use crate::core::{
-	constraint::AddEdge, Constrainer, Directedness, Edge, EdgeWeighted, Graph, GraphDerefMut,
+	property::AddEdge, Directedness, Edge, EdgeWeighted, Graph, GraphDerefMut, Insure,
 };
 use delegate::delegate;
 
@@ -22,9 +22,9 @@ pub trait Unique: Graph
 }
 
 #[derive(Clone, Debug)]
-pub struct UniqueGraph<C: Constrainer>(C);
+pub struct UniqueGraph<C: Insure>(C);
 
-impl<C: Constrainer> UniqueGraph<C>
+impl<C: Insure> UniqueGraph<C>
 {
 	/// Constrains the given graph.
 	///
@@ -35,14 +35,16 @@ impl<C: Constrainer> UniqueGraph<C>
 	}
 }
 
-impl<C: Constrainer> Constrainer for UniqueGraph<C>
+impl<C: Insure> Insure for UniqueGraph<C>
 {
-	type Base = C::Base;
-	type Constrained = C;
-
-	fn constrain_single(g: Self::Constrained) -> Result<Self, ()>
+	fn insure_unvalidated(c: Self::Insured) -> Self
 	{
-		let edges: Vec<_> = g.graph().all_edges().collect();
+		Self(c)
+	}
+
+	fn validate(c: &Self::Insured) -> bool
+	{
+		let edges: Vec<_> = c.graph().all_edges().collect();
 		let mut iter = edges.iter();
 		while let Some(e) = iter.next()
 		{
@@ -53,21 +55,15 @@ impl<C: Constrainer> Constrainer for UniqueGraph<C>
 						&& e.sink() == e2.source()
 						&& !<C::Graph as Graph>::Directedness::directed())
 				{
-					return Err(());
+					return false;
 				}
 			}
 		}
-
-		Ok(UniqueGraph(g))
-	}
-
-	fn unconstrain_single(self) -> Self::Constrained
-	{
-		self.0
+		true
 	}
 }
 
-impl<C: Constrainer + GraphDerefMut> AddEdge for UniqueGraph<C>
+impl<C: Insure + GraphDerefMut> AddEdge for UniqueGraph<C>
 where
 	C::Graph: AddEdge,
 {
@@ -95,8 +91,8 @@ where
 	}
 }
 
-impl<C: Constrainer> Unique for UniqueGraph<C> {}
+impl<C: Insure> Unique for UniqueGraph<C> {}
 
-impl_constraints! {
+impl_insurer! {
 	UniqueGraph<C>: Unique, AddEdge
 }

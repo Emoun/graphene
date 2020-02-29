@@ -1,15 +1,15 @@
 use crate::core::{
-	constraint::{NewVertex, RemoveVertex},
-	BaseGraph, Constrainer, Directed, Graph, GraphDeref, GraphDerefMut, GraphMut, Undirected,
+	property::{NewVertex, RemoveVertex},
+	BaseGraph, Directed, Graph, GraphDeref, GraphDerefMut, GraphMut, Insure, Undirected,
 };
 use delegate::delegate;
 
 /// A proxy that acts as an undirected version of the underlying directed graph
-pub struct UndirectedProxy<C: Constrainer>(C)
+pub struct UndirectedProxy<C: Insure>(C)
 where
 	C::Graph: Graph<Directedness = Directed>;
 
-impl<C: Constrainer> UndirectedProxy<C>
+impl<C: Insure> UndirectedProxy<C>
 where
 	C::Graph: Graph<Directedness = Directed>,
 {
@@ -19,7 +19,7 @@ where
 	}
 }
 
-impl<C: Constrainer> Graph for UndirectedProxy<C>
+impl<C: Insure> Graph for UndirectedProxy<C>
 where
 	C::Graph: Graph<Directedness = Directed>,
 {
@@ -41,7 +41,7 @@ where
 	}
 }
 
-impl<C: Constrainer + GraphDerefMut> GraphMut for UndirectedProxy<C>
+impl<C: Insure + GraphDerefMut> GraphMut for UndirectedProxy<C>
 where
 	C::Graph: GraphMut<Directedness = Directed>,
 {
@@ -60,7 +60,7 @@ where
 	}
 }
 
-impl<C: Constrainer + GraphDerefMut> NewVertex for UndirectedProxy<C>
+impl<C: Insure + GraphDerefMut> NewVertex for UndirectedProxy<C>
 where
 	C::Graph: NewVertex<Directedness = Directed>,
 {
@@ -71,7 +71,7 @@ where
 	}
 }
 
-impl<C: Constrainer + GraphDerefMut> RemoveVertex for UndirectedProxy<C>
+impl<C: Insure + GraphDerefMut> RemoveVertex for UndirectedProxy<C>
 where
 	C::Graph: RemoveVertex<Directedness = Directed>,
 {
@@ -82,7 +82,7 @@ where
 	}
 }
 
-impl<C: Constrainer> GraphDeref for UndirectedProxy<C>
+impl<C: Insure> GraphDeref for UndirectedProxy<C>
 where
 	C::Graph: Graph<Directedness = Directed>,
 {
@@ -93,7 +93,7 @@ where
 		self
 	}
 }
-impl<C: Constrainer> GraphDerefMut for UndirectedProxy<C>
+impl<C: Insure> GraphDerefMut for UndirectedProxy<C>
 where
 	C::Graph: Graph<Directedness = Directed>,
 {
@@ -102,4 +102,4 @@ where
 		self
 	}
 }
-impl<C: Constrainer> BaseGraph for UndirectedProxy<C> where C::Graph: Graph<Directedness = Directed> {}
+impl<C: Insure> BaseGraph for UndirectedProxy<C> where C::Graph: Graph<Directedness = Directed> {}

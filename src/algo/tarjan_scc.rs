@@ -50,7 +50,7 @@
 //! the DFS is done, check for any unvisited vertices.
 use crate::{
 	algo::DFS,
-	core::{constraint::ConnectedGraph, proxy::SubgraphProxy, Constrainer, Directed, Graph},
+	core::{property::ConnectedGraph, proxy::SubgraphProxy, Directed, Graph, Insure},
 };
 use std::cmp::min;
 
@@ -138,7 +138,7 @@ where
 					}
 
 					return Some(
-						ConnectedGraph::constrain_single(scc)
+						ConnectedGraph::insure(scc)
 							.expect("Tarjans algorithm produced non-strongly-connected subgraph"),
 					);
 					// return Some(ConnectedGraph::new(scc));

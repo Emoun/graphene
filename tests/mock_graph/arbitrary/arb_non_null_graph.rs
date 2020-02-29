@@ -3,7 +3,7 @@ use crate::mock_graph::{
 	MockGraph,
 };
 use graphene::core::{
-	constraint::NonNullGraph, BaseGraph, Constrainer, Directedness, GraphDeref, GraphDerefMut,
+	property::NonNullGraph, BaseGraph, Directedness, GraphDeref, GraphDerefMut, Insure, Release,
 };
 use quickcheck::{Arbitrary, Gen};
 use static_assertions::_core::ops::RangeBounds;
@@ -44,7 +44,7 @@ impl<D: Directedness> GuidedArbGraph for ArbNonNullGraph<D>
 		let v_min_max = if 1 < v_min { v_min } else { 1 };
 		let graph = MockGraph::arbitrary_guided(g, v_min_max..v_max, e_min..e_max);
 
-		Self(graph.constrain().expect("Graph is null."))
+		Self(graph.insure_all().expect("Graph is null."))
 	}
 
 	fn shrink_guided(&self, mut limits: HashSet<Limit>) -> Box<dyn Iterator<Item = Self>>
@@ -55,9 +55,9 @@ impl<D: Directedness> GuidedArbGraph for ArbNonNullGraph<D>
 		Box::new(
 			self.0
 				.clone()
-				.unconstrain()
+				.release_all()
 				.shrink_guided(limits)
-				.map(|g| Self(NonNullGraph::constrain_single(g).unwrap())),
+				.map(|g| Self(NonNullGraph::insure(g).unwrap())),
 		)
 	}
 }

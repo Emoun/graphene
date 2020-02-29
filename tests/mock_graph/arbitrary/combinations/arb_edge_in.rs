@@ -3,7 +3,7 @@ use crate::mock_graph::{
 	MockEdgeWeight, MockVertex, MockVertexWeight,
 };
 use graphene::core::{
-	constraint::{AddEdge, RemoveEdge},
+	property::{AddEdge, RemoveEdge},
 	Edge, EdgeDeref, EdgeWeighted, Graph, GraphDeref, GraphDerefMut, GraphMut,
 };
 use quickcheck::{Arbitrary, Gen};

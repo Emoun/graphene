@@ -3,8 +3,8 @@ use crate::mock_graph::{
 	MockEdgeWeight, MockGraph, MockT, MockVertex, MockVertexWeight,
 };
 use graphene::core::{
-	constraint::{AddEdge, DirectedGraph, NewVertex, RemoveEdge, RemoveVertex},
-	Constrainer, Directedness, Edge, EdgeDeref, EdgeWeighted, Graph,
+	property::{AddEdge, DirectedGraph, NewVertex, RemoveEdge, RemoveVertex},
+	Directedness, Edge, EdgeDeref, EdgeWeighted, Graph, Insure,
 };
 use quickcheck::{Arbitrary, Gen};
 use rand::Rng;
@@ -274,7 +274,7 @@ impl<D: Directedness> MockGraph<D>
 			{
 				let mut clone = self.clone();
 				clone.remove_vertex(v).unwrap();
-				if let Ok(g) = DirectedGraph::constrain_single(self)
+				if let Ok(g) = DirectedGraph::insure(self)
 				{
 					for (sink, w1) in g.edges_sourced_in(v).map(|e| (e.sink(), e.weight_owned()))
 					{

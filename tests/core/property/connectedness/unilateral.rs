@@ -1,4 +1,4 @@
-//! Tests the `core::Unilateral` trait and its constrainer
+//! Tests the `core::Unilateral` trait and its insurer
 //! `core::UnilateralGraph`.
 //!
 
@@ -10,22 +10,22 @@ use crate::mock_graph::{
 	MockEdgeWeight, MockVertexWeight,
 };
 use graphene::core::{
-	constraint::{AddEdge, NewVertex, RemoveEdge, RemoveVertex, UnilateralGraph},
-	Constrainer, Directed, Edge,
+	property::{AddEdge, NewVertex, RemoveEdge, RemoveVertex, UnilateralGraph},
+	Directed, Edge, Insure, Release,
 };
 
 /// Tests that UnilateralGraph correctly identifies unilateral graphs.
 #[quickcheck]
 fn accept_unilateral(g: ArbUnilatralGraph) -> bool
 {
-	UnilateralGraph::constrain_single(g.0.unconstrain()).is_ok()
+	UnilateralGraph::validate(&g.0.release_all())
 }
 
 /// Tests that UnilateralGraph correctly rejects non-unilateral graphs.
 #[quickcheck]
 fn reject_unilateral(g: ArbNonUnilatralGraph) -> bool
 {
-	UnilateralGraph::constrain_single(g.0).is_err()
+	!UnilateralGraph::validate(&g.0)
 }
 
 /// Tests that UnilateralGraph always accepts adding an edge
@@ -46,7 +46,7 @@ fn accept_remove_edge_where(
 	e_weight: MockEdgeWeight,
 ) -> bool
 {
-	// To ensure we can remove an edge, we first create an edge to remove
+	// To insure we can remove an edge, we first create an edge to remove
 	g.0.add_edge_weighted((v1, v2, e_weight.clone())).unwrap();
 
 	g.0.remove_edge_where(|e| (e.source() == v1 && e.sink() == v2))
@@ -66,7 +66,7 @@ fn reject_remove_edge_where(
 	e_weight: MockEdgeWeight,
 ) -> bool
 {
-	let mut graph = g1.0.unconstrain();
+	let mut graph = g1.0.release_all();
 	// We start by joining 2 connected graphs into a unconnected graph with the 2
 	// components
 	let v_map = graph.join(&g2.0);
@@ -76,7 +76,7 @@ fn reject_remove_edge_where(
 		.add_edge_weighted((v1, v_map[&v2], e_weight.clone()))
 		.unwrap();
 
-	let mut unilateral = UnilateralGraph::constrain_single(graph).unwrap();
+	let mut unilateral = UnilateralGraph::insure(graph).unwrap();
 
 	// We now try to remove the the added edge
 	unilateral
@@ -94,7 +94,7 @@ fn accept_remove_vertex(
 ) -> bool
 {
 	let v_set = mock.1;
-	let mut graph = ((mock.0).0).0.unconstrain();
+	let mut graph = ((mock.0).0).0.release_all();
 	let v1 = (mock.0).1;
 	let v2 = (mock.0).2;
 	// It is only acceptable to remove a vertex (and any edge incident on it)
@@ -131,7 +131,9 @@ fn accept_remove_vertex(
 	}
 
 	// We then try to remove the vertex again
-	UnilateralGraph::new(graph).remove_vertex(v_new).is_ok()
+	UnilateralGraph::insure_unvalidated(graph)
+		.remove_vertex(v_new)
+		.is_ok()
 }
 
 /// Tests that a UnilateralGraph rejects removing a vertex if it renders the
@@ -148,7 +150,7 @@ fn reject_remove_vertex(
 	v_weight: MockVertexWeight,
 ) -> bool
 {
-	let mut graph = g1.0.unconstrain();
+	let mut graph = g1.0.release_all();
 	// We start by joining 2 connected graphs into a unconnected graph with the 2
 	// components
 	let v_map = graph.join(&g2.0);
@@ -162,7 +164,7 @@ fn reject_remove_vertex(
 		.add_edge_weighted((new_v, v_map[&v2], e_weight.clone()))
 		.unwrap();
 
-	let mut unilateral = UnilateralGraph::constrain_single(graph).unwrap();
+	let mut unilateral = UnilateralGraph::insure(graph).unwrap();
 
 	// We now try to remove the the added vertex
 	unilateral.remove_vertex(new_v).is_err()

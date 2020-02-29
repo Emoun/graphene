@@ -1,7 +1,7 @@
 use crate::core::{
-	constraint::{AddEdge, NewVertex, RemoveEdge, RemoveVertex},
-	BaseGraph, Constrainer, Directedness, Edge, EdgeWeighted, Graph, GraphDeref, GraphDerefMut,
-	GraphMut,
+	property::{AddEdge, NewVertex, RemoveEdge, RemoveVertex},
+	BaseGraph, Directedness, Edge, EdgeWeighted, Graph, GraphDeref, GraphDerefMut, GraphMut,
+	Insure,
 };
 use delegate::delegate;
 
@@ -18,12 +18,12 @@ use delegate::delegate;
 /// addition and removal trait. The proxy can then simulate how the graph would
 /// look regardless.
 ///
-/// If the underlying graph is mutable from the constrainer, then the edge proxy
+/// If the underlying graph is mutable from the insurer, then the edge proxy
 /// can also be used to mutate vertices, however, this is done directly on the
 /// underlying graph and not simulated as edge mutations are.
 /// To also simulate vertex mutations, first wrap the underlying graph in
 /// VertexProxy.
-pub struct EdgeProxyGraph<C: Constrainer>
+pub struct EdgeProxyGraph<C: Insure>
 {
 	/// The underlying graph
 	graph: C,
@@ -34,7 +34,7 @@ pub struct EdgeProxyGraph<C: Constrainer>
 	removed: Vec<(<C::Graph as Graph>::Vertex, <C::Graph as Graph>::Vertex)>,
 }
 
-impl<C: Constrainer> EdgeProxyGraph<C>
+impl<C: Insure> EdgeProxyGraph<C>
 {
 	pub fn new(underlying: C) -> Self
 	{
@@ -46,7 +46,7 @@ impl<C: Constrainer> EdgeProxyGraph<C>
 	}
 }
 
-impl<C: Constrainer> Graph for EdgeProxyGraph<C>
+impl<C: Insure> Graph for EdgeProxyGraph<C>
 {
 	type Directedness = <C::Graph as Graph>::Directedness;
 	type EdgeWeight = ();
@@ -96,7 +96,7 @@ impl<C: Constrainer> Graph for EdgeProxyGraph<C>
 	}
 }
 
-impl<C: Constrainer + GraphDerefMut> GraphMut for EdgeProxyGraph<C>
+impl<C: Insure + GraphDerefMut> GraphMut for EdgeProxyGraph<C>
 where
 	C::Graph: GraphMut,
 {
@@ -116,7 +116,7 @@ where
 	}
 }
 
-impl<C: Constrainer> AddEdge for EdgeProxyGraph<C>
+impl<C: Insure> AddEdge for EdgeProxyGraph<C>
 {
 	fn add_edge_weighted<E>(&mut self, e: E) -> Result<(), ()>
 	where
@@ -134,7 +134,7 @@ impl<C: Constrainer> AddEdge for EdgeProxyGraph<C>
 	}
 }
 
-impl<C: Constrainer> RemoveEdge for EdgeProxyGraph<C>
+impl<C: Insure> RemoveEdge for EdgeProxyGraph<C>
 {
 	fn remove_edge_where<F>(
 		&mut self,
@@ -176,7 +176,7 @@ impl<C: Constrainer> RemoveEdge for EdgeProxyGraph<C>
 	}
 }
 
-impl<C: Constrainer + GraphDerefMut> NewVertex for EdgeProxyGraph<C>
+impl<C: Insure + GraphDerefMut> NewVertex for EdgeProxyGraph<C>
 where
 	C::Graph: NewVertex,
 {
@@ -187,7 +187,7 @@ where
 	}
 }
 
-impl<C: Constrainer + GraphDerefMut> RemoveVertex for EdgeProxyGraph<C>
+impl<C: Insure + GraphDerefMut> RemoveVertex for EdgeProxyGraph<C>
 where
 	C::Graph: RemoveVertex,
 {
@@ -198,7 +198,7 @@ where
 	}
 }
 
-impl<C: Constrainer> GraphDeref for EdgeProxyGraph<C>
+impl<C: Insure> GraphDeref for EdgeProxyGraph<C>
 {
 	type Graph = Self;
 
@@ -207,11 +207,11 @@ impl<C: Constrainer> GraphDeref for EdgeProxyGraph<C>
 		self
 	}
 }
-impl<C: Constrainer> GraphDerefMut for EdgeProxyGraph<C>
+impl<C: Insure> GraphDerefMut for EdgeProxyGraph<C>
 {
 	fn graph_mut(&mut self) -> &mut Self::Graph
 	{
 		self
 	}
 }
-impl<C: Constrainer> BaseGraph for EdgeProxyGraph<C> {}
+impl<C: Insure> BaseGraph for EdgeProxyGraph<C> {}

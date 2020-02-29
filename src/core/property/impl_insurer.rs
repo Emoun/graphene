@@ -1,13 +1,13 @@
-/// Implements constraints for the given struct.
+/// Implements properties for the given struct.
 ///
-/// Doesn't implement the constraint given after the struct. That constraint
+/// Doesn't implement the property given after the struct. That property
 /// must use the original name of the trait.
 ///
-/// Supported constraint traits:
+/// Supported property traits:
 /// Directed, Undirected, Unique, NoLoops, Reflexive, Weak, Unilateral,
 /// Connected, Subgraph
 #[macro_export]
-macro_rules! impl_constraints {
+macro_rules! impl_insurer {
 
 	{
 		$struct:ident<$generic_graph:ident>: $($trait:ident),*
@@ -15,7 +15,7 @@ macro_rules! impl_constraints {
 	} => {
 
 		//GraphDeref
-		impl_constraints!{
+		impl_insurer!{
 			@inner
 			@struct_id $struct
 			@generic $generic_graph
@@ -33,7 +33,7 @@ macro_rules! impl_constraints {
 		}
 
 		//GraphDerefMut
-		impl_constraints!{
+		impl_insurer!{
 			@inner
 			@struct_id $struct
 			@generic $generic_graph
@@ -48,8 +48,27 @@ macro_rules! impl_constraints {
 			}
 		}
 
+		//Release
+		impl_insurer!{
+			@inner
+			@struct_id $struct
+			@generic $generic_graph
+			@exclude [ $($trait)* ]
+			@bounds [ $($($bounds)*)? ]
+			@trait_id Release [$crate::core]
+			@implement {
+				type Base = $generic_graph::Base;
+				type Insured = $generic_graph;
+
+				fn release(self) -> Self::Insured
+				{
+					self.0
+				}
+			}
+		}
+
 		//Graph
-		impl_constraints!{
+		impl_insurer!{
 			@inner
 			@struct_id $struct
 			@generic $generic_graph
@@ -77,7 +96,7 @@ macro_rules! impl_constraints {
 		}
 
 		//GraphMut
-		impl_constraints!{
+		impl_insurer!{
 			@inner
 			@struct_id $struct
 			@generic $generic_graph
@@ -108,45 +127,45 @@ macro_rules! impl_constraints {
 		}
 
 		//Directed
-		impl_constraints!{
+		impl_insurer!{
 			@inner
 			@struct_id $struct
 			@generic $generic_graph
 			@exclude [ $($trait)* ]
 			@bounds [
-				$generic_graph: $crate::core::constraint::DirectedConstraint,
+				$generic_graph: $crate::core::property::DirectedConstraint,
 				$($($bounds)*)?
 			]
-			@trait_id DirectedConstraint [$crate::core::constraint]
+			@trait_id DirectedConstraint [$crate::core::property]
 			@implement {}
 		}
 
 		//Undirected
-		impl_constraints!{
+		impl_insurer!{
 			@inner
 			@struct_id $struct
 			@generic $generic_graph
 			@exclude [ $($trait)* ]
 			@bounds [
-				$generic_graph: $crate::core::constraint::UndirectedConstraint,
+				$generic_graph: $crate::core::property::UndirectedConstraint,
 				$($($bounds)*)?
 			]
-			@trait_id UndirectedConstraint [$crate::core::constraint]
+			@trait_id UndirectedConstraint [$crate::core::property]
 			@implement {}
 		}
 
 		// NewVertex
-		impl_constraints!{
+		impl_insurer!{
 			@inner
 			@struct_id $struct
 			@generic $generic_graph
 			@exclude [ $($trait)* ]
 			@bounds [
-				$generic_graph: $crate::core::GraphDerefMut + $crate::core::constraint::NewVertex,
-				$generic_graph::Graph: $crate::core::constraint::NewVertex,
+				$generic_graph: $crate::core::GraphDerefMut + $crate::core::property::NewVertex,
+				$generic_graph::Graph: $crate::core::property::NewVertex,
 				$($($bounds)*)?
 			]
-			@trait_id NewVertex [$crate::core::constraint]
+			@trait_id NewVertex [$crate::core::property]
 			@implement {
 				delegate! {
 					to self.0.graph_mut() {
@@ -158,17 +177,17 @@ macro_rules! impl_constraints {
 		}
 
 		// RemoveVertex
-		impl_constraints!{
+		impl_insurer!{
 			@inner
 			@struct_id $struct
 			@generic $generic_graph
 			@exclude [ $($trait)* ]
 			@bounds [
-				$generic_graph: $crate::core::GraphDerefMut + $crate::core::constraint::RemoveVertex,
-				$generic_graph::Graph: $crate::core::constraint::RemoveVertex,
+				$generic_graph: $crate::core::GraphDerefMut + $crate::core::property::RemoveVertex,
+				$generic_graph::Graph: $crate::core::property::RemoveVertex,
 				$($($bounds)*)?
 			]
-			@trait_id RemoveVertex [$crate::core::constraint]
+			@trait_id RemoveVertex [$crate::core::property]
 			@implement {
 				delegate! {
 					to self.0.graph_mut() {
@@ -180,17 +199,17 @@ macro_rules! impl_constraints {
 		}
 
 		// AddEdge
-		impl_constraints!{
+		impl_insurer!{
 			@inner
 			@struct_id $struct
 			@generic $generic_graph
 			@exclude [ $($trait)* ]
 			@bounds [
-				$generic_graph: $crate::core::GraphDerefMut + $crate::core::constraint::AddEdge,
-				$generic_graph::Graph: $crate::core::constraint::AddEdge,
+				$generic_graph: $crate::core::GraphDerefMut + $crate::core::property::AddEdge,
+				$generic_graph::Graph: $crate::core::property::AddEdge,
 				$($($bounds)*)?
 			]
-			@trait_id AddEdge [$crate::core::constraint]
+			@trait_id AddEdge [$crate::core::property]
 			@implement {
 				delegate! {
 					to self.0.graph_mut() {
@@ -203,17 +222,17 @@ macro_rules! impl_constraints {
 		}
 
 		// RemoveEdge
-		impl_constraints!{
+		impl_insurer!{
 			@inner
 			@struct_id $struct
 			@generic $generic_graph
 			@exclude [ $($trait)* ]
 			@bounds [
-				$generic_graph: $crate::core::GraphDerefMut + $crate::core::constraint::RemoveEdge,
-				$generic_graph::Graph: $crate::core::constraint::RemoveEdge,
+				$generic_graph: $crate::core::GraphDerefMut + $crate::core::property::RemoveEdge,
+				$generic_graph::Graph: $crate::core::property::RemoveEdge,
 				$($($bounds)*)?
 			]
-			@trait_id RemoveEdge [$crate::core::constraint]
+			@trait_id RemoveEdge [$crate::core::property]
 			@implement {
 				delegate! {
 					to self.0.graph_mut() {
@@ -229,87 +248,87 @@ macro_rules! impl_constraints {
 		}
 
 		// Unique
-		impl_constraints!{
+		impl_insurer!{
 			@inner
 			@struct_id $struct
 			@generic $generic_graph
 			@exclude [ $($trait)* ]
-			@bounds [$generic_graph: $crate::core::constraint::Unique,$($($bounds)*)?]
-			@trait_id Unique [$crate::core::constraint]
+			@bounds [$generic_graph: $crate::core::property::Unique,$($($bounds)*)?]
+			@trait_id Unique [$crate::core::property]
 			@implement {}
 		}
 
 		// NoLoops
-		impl_constraints!{
+		impl_insurer!{
 			@inner
 			@struct_id $struct
 			@generic $generic_graph
 			@exclude [ $($trait)* ]
-			@bounds [$generic_graph: $crate::core::constraint::NoLoops, $($($bounds)*)?]
-			@trait_id NoLoops [$crate::core::constraint]
+			@bounds [$generic_graph: $crate::core::property::NoLoops, $($($bounds)*)?]
+			@trait_id NoLoops [$crate::core::property]
 			@implement {}
 		}
 
 		// Reflexive
-		impl_constraints!{
+		impl_insurer!{
 			@inner
 			@struct_id $struct
 			@generic $generic_graph
 			@exclude [ $($trait)* ]
 			@bounds [
-				$generic_graph: $crate::core::constraint::Reflexive,
+				$generic_graph: $crate::core::property::Reflexive,
 				$generic_graph::EdgeWeight: Default,
 				<$generic_graph::Graph as Graph>::EdgeWeight: Default,
 				$($($bounds)*)?
 			]
-			@trait_id Reflexive [$crate::core::constraint]
+			@trait_id Reflexive [$crate::core::property]
 			@implement {}
 		}
 
 		// Weak
-		impl_constraints!{
+		impl_insurer!{
 			@inner
 			@struct_id $struct
 			@generic $generic_graph
 			@exclude [ $($trait)* ]
-			@bounds [$generic_graph: $crate::core::constraint::Weak, $($($bounds)*)?]
-			@trait_id Weak [$crate::core::constraint]
+			@bounds [$generic_graph: $crate::core::property::Weak, $($($bounds)*)?]
+			@trait_id Weak [$crate::core::property]
 			@implement {}
 		}
 
 		// Unilateral
-		impl_constraints!{
+		impl_insurer!{
 			@inner
 			@struct_id $struct
 			@generic $generic_graph
 			@exclude [ $($trait)* ]
-			@bounds [$generic_graph: $crate::core::constraint::Unilateral, $($($bounds)*)?]
-			@trait_id Unilateral [$crate::core::constraint]
+			@bounds [$generic_graph: $crate::core::property::Unilateral, $($($bounds)*)?]
+			@trait_id Unilateral [$crate::core::property]
 			@implement {}
 		}
 
 		// Connected
-		impl_constraints!{
+		impl_insurer!{
 			@inner
 			@struct_id $struct
 			@generic $generic_graph
 			@exclude [ $($trait)* ]
-			@bounds [$generic_graph: $crate::core::constraint::Connected, $($($bounds)*)?]
-			@trait_id Connected [$crate::core::constraint]
+			@bounds [$generic_graph: $crate::core::property::Connected, $($($bounds)*)?]
+			@trait_id Connected [$crate::core::property]
 			@implement {}
 		}
 
 		// Subgraph
-		impl_constraints!{
+		impl_insurer!{
 			@inner
 			@struct_id $struct
 			@generic $generic_graph
 			@exclude [ $($trait)* ]
 			@bounds [
-				$generic_graph: $crate::core::constraint::Subgraph<Vertex=Self::Vertex>,
+				$generic_graph: $crate::core::property::Subgraph<Vertex=Self::Vertex>,
 				$($($bounds)*)?
 			]
-			@trait_id Subgraph [$crate::core::constraint]
+			@trait_id Subgraph [$crate::core::property]
 			@implement {
 				fn exit_edges<'a>(&'a self) -> Box<dyn 'a + Iterator<Item=
 					(Self::Vertex, Self::Vertex)>>
@@ -320,13 +339,13 @@ macro_rules! impl_constraints {
 		}
 
 		// NonNull
-		impl_constraints!{
+		impl_insurer!{
 			@inner
 			@struct_id $struct
 			@generic $generic_graph
 			@exclude [ $($trait)* ]
-			@bounds [$generic_graph: $crate::core::constraint::NonNull, $($($bounds)*)?]
-			@trait_id NonNull [$crate::core::constraint]
+			@bounds [$generic_graph: $crate::core::property::NonNull, $($($bounds)*)?]
+			@trait_id NonNull [$crate::core::property]
 			@implement {}
 		}
 	};
@@ -345,7 +364,7 @@ macro_rules! impl_constraints {
 			input = [{$trait $trait_id}]
 			true = [{}]
 			false = [{
-				impl_constraints!{
+				impl_insurer!{
 					@inner
 					@struct_id $struct
 					@generic $generic_graph
@@ -367,7 +386,7 @@ macro_rules! impl_constraints {
 		@trait_id $trait_id:ident [ $($trait_path:tt)* ]
 		@implement {$($impl:tt)*}
 	} => {
-		impl<$generic_graph: $crate::core::Constrainer> $($trait_path)*::$trait_id
+		impl<$generic_graph: $crate::core::Insure> $($trait_path)*::$trait_id
 			for $struct<$generic_graph>
 			where
 				$($bounds)*

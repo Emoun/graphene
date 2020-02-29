@@ -1,6 +1,6 @@
 use crate::core::{
-	constraint::{AddEdge, NewVertex, RemoveEdge, RemoveVertex},
-	Constrainer, Graph, GraphDerefMut,
+	property::{AddEdge, NewVertex, RemoveEdge, RemoveVertex},
+	Graph, GraphDerefMut, Insure,
 };
 use delegate::delegate;
 
@@ -16,21 +16,23 @@ where
 {
 }
 
-pub struct ReflexiveGraph<C: Constrainer>(C)
+pub struct ReflexiveGraph<C: Insure>(C)
 where
 	<C::Graph as Graph>::EdgeWeight: Default;
 
-impl<C: Constrainer> Constrainer for ReflexiveGraph<C>
+impl<C: Insure> Insure for ReflexiveGraph<C>
 where
 	<C::Graph as Graph>::EdgeWeight: Default,
 {
-	type Base = C::Base;
-	type Constrained = C;
+	fn insure_unvalidated(c: Self::Insured) -> Self
+	{
+		Self(c)
+	}
 
-	fn constrain_single(c: Self::Constrained) -> Result<Self, ()>
+	fn validate(c: &Self::Insured) -> bool
 	{
 		let g = c.graph();
-		if g.all_vertices().all(|v| {
+		g.all_vertices().all(|v| {
 			let mut between = g.edges_between(v, v);
 			if let Some(_) = between.next()
 			{
@@ -41,22 +43,10 @@ where
 				false
 			}
 		})
-		{
-			Ok(ReflexiveGraph(c))
-		}
-		else
-		{
-			Err(())
-		}
-	}
-
-	fn unconstrain_single(self) -> Self::Constrained
-	{
-		self.0
 	}
 }
 
-impl<C: Constrainer + GraphDerefMut> NewVertex for ReflexiveGraph<C>
+impl<C: Insure + GraphDerefMut> NewVertex for ReflexiveGraph<C>
 where
 	C::Graph: NewVertex + AddEdge,
 	<C::Graph as Graph>::EdgeWeight: Default,
@@ -69,7 +59,7 @@ where
 	}
 }
 
-impl<C: Constrainer + GraphDerefMut> RemoveVertex for ReflexiveGraph<C>
+impl<C: Insure + GraphDerefMut> RemoveVertex for ReflexiveGraph<C>
 where
 	C::Graph: RemoveVertex + RemoveEdge,
 	<C::Graph as Graph>::EdgeWeight: Default,
@@ -81,9 +71,9 @@ where
 	}
 }
 
-impl<C: Constrainer> Reflexive for ReflexiveGraph<C> where <C::Graph as Graph>::EdgeWeight: Default {}
+impl<C: Insure> Reflexive for ReflexiveGraph<C> where <C::Graph as Graph>::EdgeWeight: Default {}
 
-impl_constraints! {
+impl_insurer! {
 	ReflexiveGraph<C>: NewVertex, RemoveVertex, Reflexive
 	where <C::Graph as Graph>::EdgeWeight: Default,
 }

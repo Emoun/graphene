@@ -1,6 +1,6 @@
 use crate::core::{
-	constraint::{AddEdge, NewVertex, RemoveEdge, RemoveVertex, Subgraph},
-	BaseGraph, Constrainer, Edge, EdgeWeighted, Graph, GraphDeref, GraphDerefMut, GraphMut,
+	property::{AddEdge, NewVertex, RemoveEdge, RemoveVertex, Subgraph},
+	BaseGraph, Edge, EdgeWeighted, Graph, GraphDeref, GraphDerefMut, GraphMut, Insure,
 };
 
 /// A subgraph of another graph.
@@ -8,7 +8,7 @@ use crate::core::{
 /// This proxy graph will act at if only a specific subset of the underlying
 /// graph's vertices exist, filtering out all other vertices and edges incident
 /// on them.
-pub struct SubgraphProxy<C: Constrainer>
+pub struct SubgraphProxy<C: Insure>
 {
 	/// The underlying graph
 	graph: C,
@@ -18,7 +18,7 @@ pub struct SubgraphProxy<C: Constrainer>
 	exit_edges: Vec<(<C::Graph as Graph>::Vertex, <C::Graph as Graph>::Vertex)>,
 }
 
-impl<C: Constrainer> SubgraphProxy<C>
+impl<C: Insure> SubgraphProxy<C>
 {
 	pub fn new(underlying: C) -> Self
 	{
@@ -64,7 +64,7 @@ impl<C: Constrainer> SubgraphProxy<C>
 	}
 }
 
-impl<C: Constrainer> Graph for SubgraphProxy<C>
+impl<C: Insure> Graph for SubgraphProxy<C>
 {
 	type Directedness = <C::Graph as Graph>::Directedness;
 	type EdgeWeight = <C::Graph as Graph>::EdgeWeight;
@@ -96,7 +96,7 @@ impl<C: Constrainer> Graph for SubgraphProxy<C>
 	}
 }
 
-impl<C: Constrainer + GraphDerefMut> GraphMut for SubgraphProxy<C>
+impl<C: Insure + GraphDerefMut> GraphMut for SubgraphProxy<C>
 where
 	C::Graph: GraphMut,
 {
@@ -129,7 +129,7 @@ where
 	}
 }
 
-impl<C: Constrainer + GraphDerefMut> AddEdge for SubgraphProxy<C>
+impl<C: Insure + GraphDerefMut> AddEdge for SubgraphProxy<C>
 where
 	C::Graph: AddEdge,
 {
@@ -148,7 +148,7 @@ where
 	}
 }
 
-impl<C: Constrainer + GraphDerefMut> RemoveEdge for SubgraphProxy<C>
+impl<C: Insure + GraphDerefMut> RemoveEdge for SubgraphProxy<C>
 where
 	C::Graph: RemoveEdge,
 {
@@ -166,7 +166,7 @@ where
 	}
 }
 
-impl<C: Constrainer + GraphDerefMut> NewVertex for SubgraphProxy<C>
+impl<C: Insure + GraphDerefMut> NewVertex for SubgraphProxy<C>
 where
 	C::Graph: NewVertex,
 {
@@ -178,7 +178,7 @@ where
 	}
 }
 
-impl<C: Constrainer + GraphDerefMut> RemoveVertex for SubgraphProxy<C>
+impl<C: Insure + GraphDerefMut> RemoveVertex for SubgraphProxy<C>
 where
 	C::Graph: RemoveVertex,
 {
@@ -202,7 +202,7 @@ where
 	}
 }
 
-impl<C: Constrainer> GraphDeref for SubgraphProxy<C>
+impl<C: Insure> GraphDeref for SubgraphProxy<C>
 {
 	type Graph = Self;
 
@@ -211,16 +211,16 @@ impl<C: Constrainer> GraphDeref for SubgraphProxy<C>
 		self
 	}
 }
-impl<C: Constrainer> GraphDerefMut for SubgraphProxy<C>
+impl<C: Insure> GraphDerefMut for SubgraphProxy<C>
 {
 	fn graph_mut(&mut self) -> &mut Self::Graph
 	{
 		self
 	}
 }
-impl<C: Constrainer> BaseGraph for SubgraphProxy<C> {}
+impl<C: Insure> BaseGraph for SubgraphProxy<C> {}
 
-impl<C: Constrainer> Subgraph for SubgraphProxy<C>
+impl<C: Insure> Subgraph for SubgraphProxy<C>
 {
 	fn exit_edges<'a>(&'a self) -> Box<dyn 'a + Iterator<Item = (Self::Vertex, Self::Vertex)>>
 	{

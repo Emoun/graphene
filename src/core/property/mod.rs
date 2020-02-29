@@ -1,33 +1,32 @@
 #[macro_use]
-mod impl_constraints;
+mod impl_insurer;
 mod base_props;
 mod connected;
-mod directed_constraint;
+mod directed_property;
 mod no_loops;
 mod non_null;
 mod reflexive;
 mod subgraph;
-mod undirected_constraint;
+mod undirected_property;
 mod unilateral;
 mod unique;
 mod weak;
 
 pub use self::{
-	base_props::*, connected::*, directed_constraint::*, impl_constraints::*, no_loops::*,
-	non_null::*, reflexive::*, subgraph::*, undirected_constraint::*, unilateral::*, unique::*,
-	weak::*,
+	base_props::*, connected::*, directed_property::*, impl_insurer::*, no_loops::*, non_null::*,
+	reflexive::*, subgraph::*, undirected_property::*, unilateral::*, unique::*, weak::*,
 };
 use crate::core::{
 	proxy::{EdgeProxyGraph, ProxyVertex, VertexProxyGraph},
-	Constrainer, Edge,
+	Edge, Insure,
 };
 
 /// Will try to remove an edge from the graph that holds for the given function.
 ///
-/// If after removing the edge, the given Constrainer ('C') doesn't hold, then
+/// If after removing the edge, the given Insure ('C') doesn't hold, then
 /// the edge isn't removed in the first place.
 ///
-/// Will always need a type annotation for the Constrainer 'C'.
+/// Will always need a type annotation for the Insure 'C'.
 pub fn proxy_remove_edge_where<'a, C, G, F>(
 	g: &'a mut G,
 	f: F,
@@ -35,7 +34,7 @@ pub fn proxy_remove_edge_where<'a, C, G, F>(
 where
 	G: RemoveEdge,
 	F: Fn((G::Vertex, G::Vertex, &G::EdgeWeight)) -> bool,
-	C: Constrainer<Constrained = EdgeProxyGraph<&'a G>, Base = EdgeProxyGraph<&'a G>>,
+	C: Insure<Insured = EdgeProxyGraph<&'a G>, Base = EdgeProxyGraph<&'a G>>,
 {
 	let to_remove = g
 		.all_edges()
@@ -59,7 +58,7 @@ where
 		return Err(());
 	};
 
-	if C::constrain_single(proxy).is_ok()
+	if C::validate(&proxy)
 	{
 		// 	Here we use 'g' again since 'proxy' is no longer used.
 		// The compiler doesn't recognize that 'proxy' isn't used in this blocks,
@@ -74,14 +73,14 @@ where
 
 /// Will try to remove the given vertex from the graph.
 ///
-/// If after removing the vertex, the given Constrainer ('C') doesn't hold, then
+/// If after removing the vertex, the given Insure ('C') doesn't hold, then
 /// the vertex isn't removed in the first place.
 ///
-/// Will always need a type annotation for the Constrainer 'C'.
+/// Will always need a type annotation for the Insure 'C'.
 pub fn proxy_remove_vertex<'a, C, G>(g: &'a mut G, v: G::Vertex) -> Result<G::VertexWeight, ()>
 where
 	G: RemoveVertex,
-	C: Constrainer<Constrained = VertexProxyGraph<&'a G>, Base = VertexProxyGraph<&'a G>>,
+	C: Insure<Insured = VertexProxyGraph<&'a G>, Base = VertexProxyGraph<&'a G>>,
 {
 	// 	We use the unsafe block here to allow us to use 'g' again later.
 	// Currently, the compiler can't see when 'proxy' is no longer used,
@@ -95,7 +94,7 @@ where
 		.remove_vertex(ProxyVertex::Underlying(v))
 		.expect("Couldn't remove a vertex from the proxy");
 
-	if C::constrain_single(proxy).is_ok()
+	if C::validate(&proxy)
 	{
 		g.remove_vertex(v)
 	}

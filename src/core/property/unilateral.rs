@@ -1,10 +1,10 @@
 use crate::{
 	algo::TarjanSCC,
 	core::{
-		constraint::{
+		property::{
 			proxy_remove_edge_where, proxy_remove_vertex, RemoveEdge, RemoveVertex, Subgraph, Weak,
 		},
-		Constrainer, Directed, Graph, GraphDerefMut,
+		Directed, Graph, GraphDerefMut, Insure,
 	},
 };
 use delegate::delegate;
@@ -18,7 +18,7 @@ use delegate::delegate;
 ///
 /// The distinction between unilaterally and strongly connected only exists for
 /// directed graphs, for undirected ones, they are equal. For this reason, the
-/// companion constrainer graph `UnilateralGraph` only allows directed graphs.
+/// companion insurer graph `UnilateralGraph` only allows directed graphs.
 /// For undirected graph, simply use `ConnectedGraph`.
 ///
 /// For type safety reasons, the trait itself does not restrict directedness.
@@ -27,31 +27,20 @@ pub trait Unilateral: Weak
 }
 
 #[derive(Clone, Debug)]
-pub struct UnilateralGraph<C: Constrainer>(C)
+pub struct UnilateralGraph<C: Insure>(C)
 where
 	C::Graph: Graph<Directedness = Directed>;
 
-impl<C: Constrainer> UnilateralGraph<C>
+impl<C: Insure> Insure for UnilateralGraph<C>
 where
 	C::Graph: Graph<Directedness = Directed>,
 {
-	/// Creates a new unilaterally connected graph.
-	/// The given graph *must* be unilaterally connected.
-	/// This method does not check for this!!
-	pub fn new(c: C) -> Self
+	fn insure_unvalidated(c: Self::Insured) -> Self
 	{
 		Self(c)
 	}
-}
 
-impl<C: Constrainer> Constrainer for UnilateralGraph<C>
-where
-	C::Graph: Graph<Directedness = Directed>,
-{
-	type Base = C::Base;
-	type Constrained = C;
-
-	fn constrain_single(c: Self::Constrained) -> Result<Self, ()>
+	fn validate(c: &Self::Insured) -> bool
 	{
 		let graph = c.graph();
 		let verts = graph.all_vertices().collect::<Vec<_>>();
@@ -75,22 +64,17 @@ where
 				{
 					if scc2.reaches(scc1).is_none()
 					{
-						return Err(());
+						return false;
 					}
 				}
 				scc_current = scc_next;
 			}
 		}
-		Ok(Self::new(c))
-	}
-
-	fn unconstrain_single(self) -> Self::Constrained
-	{
-		self.0
+		true
 	}
 }
 
-impl<C: Constrainer + GraphDerefMut> RemoveVertex for UnilateralGraph<C>
+impl<C: Insure + GraphDerefMut> RemoveVertex for UnilateralGraph<C>
 where
 	C::Graph: RemoveVertex<Directedness = Directed>,
 {
@@ -100,7 +84,7 @@ where
 	}
 }
 
-impl<C: Constrainer + GraphDerefMut> RemoveEdge for UnilateralGraph<C>
+impl<C: Insure + GraphDerefMut> RemoveEdge for UnilateralGraph<C>
 where
 	C::Graph: RemoveEdge<Directedness = Directed>,
 {
@@ -115,11 +99,10 @@ where
 	}
 }
 
-impl<C: Constrainer> Weak for UnilateralGraph<C> where C::Graph: Graph<Directedness = Directed> {}
-impl<C: Constrainer> Unilateral for UnilateralGraph<C> where C::Graph: Graph<Directedness = Directed>
-{}
+impl<C: Insure> Weak for UnilateralGraph<C> where C::Graph: Graph<Directedness = Directed> {}
+impl<C: Insure> Unilateral for UnilateralGraph<C> where C::Graph: Graph<Directedness = Directed> {}
 
-impl_constraints! {
+impl_insurer! {
 	UnilateralGraph<C>: Unilateral, Weak, RemoveVertex, RemoveEdge,
 	// A new vertex would be unconnected to the rest of the graph
 	NewVertex

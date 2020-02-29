@@ -1,4 +1,4 @@
-//! Tests the `core::Unique` trait and its constrainer `core::UniqueGraph`.
+//! Tests the `core::Unique` trait and its insurer `core::UniqueGraph`.
 //!
 
 use crate::mock_graph::{
@@ -6,8 +6,8 @@ use crate::mock_graph::{
 	MockEdgeWeight, MockVertexWeight,
 };
 use graphene::core::{
-	constraint::{AddEdge, NewVertex, UniqueGraph},
-	Constrainer, Edge, Graph,
+	property::{AddEdge, NewVertex, UniqueGraph},
+	Edge, Graph, Insure, Release,
 };
 
 duplicate_for_directedness! {
@@ -19,7 +19,7 @@ duplicate_for_directedness! {
 	#[quickcheck]
 	fn accept_unique(g: ArbUniqueGraph<directedness>) -> bool
 	{
-		UniqueGraph::constrain_single(g.0.unconstrain()).is_ok()
+		UniqueGraph::validate(&g.0.release_all())
 	}
 
 	///
@@ -28,7 +28,7 @@ duplicate_for_directedness! {
 	#[quickcheck]
 	fn reject_non_unique(g: ArbNonUniqueGraph<directedness>) -> bool
 	{
-		UniqueGraph::constrain_single(g.0).is_err()
+		!UniqueGraph::validate(&g.0)
 	}
 
 	///
@@ -39,7 +39,7 @@ duplicate_for_directedness! {
 		v_weight: MockVertexWeight, e_weight: MockEdgeWeight)
 		-> bool
 	{
-		// To ensure we add a non-duplicate edge,
+		// To insure we add a non-duplicate edge,
 		// we create a new vertex and add an edge to it from an existing one.
 		let v2 = g.0.new_vertex_weighted(v_weight).unwrap();
 		let accepted = g.0.add_edge_weighted((v, v2, e_weight)).is_ok();

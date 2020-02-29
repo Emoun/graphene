@@ -2,7 +2,7 @@
 //!
 //!
 
-mod constrainer;
-mod constraint;
 mod edge;
 mod graph;
+mod insure;
+mod property;

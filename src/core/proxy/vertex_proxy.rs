@@ -1,7 +1,7 @@
 use crate::core::{
-	constraint::{NewVertex, RemoveVertex},
+	property::{NewVertex, RemoveVertex},
 	trait_aliases::Id,
-	BaseGraph, Constrainer, Graph, GraphDeref, GraphDerefMut,
+	BaseGraph, Graph, GraphDeref, GraphDerefMut, Insure,
 };
 
 #[derive(Copy, Clone, PartialEq, Eq)]
@@ -15,7 +15,7 @@ pub enum ProxyVertex<V: Id>
 /// vertices.
 ///
 /// It does not handle addition or removal of edges in any way.
-pub struct VertexProxyGraph<C: Constrainer>
+pub struct VertexProxyGraph<C: Insure>
 {
 	/// The underlying graph
 	graph: C,
@@ -31,7 +31,7 @@ pub struct VertexProxyGraph<C: Constrainer>
 	removed: Vec<<C::Graph as Graph>::Vertex>,
 }
 
-impl<C: Constrainer> VertexProxyGraph<C>
+impl<C: Insure> VertexProxyGraph<C>
 {
 	pub fn new(underlying: C) -> Self
 	{
@@ -43,7 +43,7 @@ impl<C: Constrainer> VertexProxyGraph<C>
 	}
 }
 
-impl<C: Constrainer> Graph for VertexProxyGraph<C>
+impl<C: Insure> Graph for VertexProxyGraph<C>
 {
 	type Directedness = <C::Graph as Graph>::Directedness;
 	type EdgeWeight = <C::Graph as Graph>::EdgeWeight;
@@ -80,7 +80,7 @@ impl<C: Constrainer> Graph for VertexProxyGraph<C>
 	}
 }
 
-impl<C: Constrainer> NewVertex for VertexProxyGraph<C>
+impl<C: Insure> NewVertex for VertexProxyGraph<C>
 {
 	fn new_vertex_weighted(&mut self, _: Self::VertexWeight) -> Result<Self::Vertex, ()>
 	{
@@ -90,7 +90,7 @@ impl<C: Constrainer> NewVertex for VertexProxyGraph<C>
 	}
 }
 
-impl<C: Constrainer> RemoveVertex for VertexProxyGraph<C>
+impl<C: Insure> RemoveVertex for VertexProxyGraph<C>
 {
 	fn remove_vertex(&mut self, v: Self::Vertex) -> Result<Self::VertexWeight, ()>
 	{
@@ -117,7 +117,7 @@ impl<C: Constrainer> RemoveVertex for VertexProxyGraph<C>
 	}
 }
 
-impl<C: Constrainer> GraphDeref for VertexProxyGraph<C>
+impl<C: Insure> GraphDeref for VertexProxyGraph<C>
 {
 	type Graph = Self;
 
@@ -126,11 +126,11 @@ impl<C: Constrainer> GraphDeref for VertexProxyGraph<C>
 		self
 	}
 }
-impl<C: Constrainer> GraphDerefMut for VertexProxyGraph<C>
+impl<C: Insure> GraphDerefMut for VertexProxyGraph<C>
 {
 	fn graph_mut(&mut self) -> &mut Self::Graph
 	{
 		self
 	}
 }
-impl<C: Constrainer> BaseGraph for VertexProxyGraph<C> {}
+impl<C: Insure> BaseGraph for VertexProxyGraph<C> {}

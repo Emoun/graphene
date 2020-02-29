@@ -3,8 +3,8 @@ use crate::mock_graph::{
 	MockEdgeWeight, MockGraph, MockVertexWeight,
 };
 use graphene::core::{
-	constraint::{AddEdge, NewVertex, RemoveEdge, UnilateralGraph},
-	Constrainer, Directed, Edge, Graph, GraphDeref, GraphDerefMut,
+	property::{AddEdge, NewVertex, RemoveEdge, UnilateralGraph},
+	Directed, Edge, Graph, GraphDeref, GraphDerefMut, Insure, Release,
 };
 use quickcheck::{Arbitrary, Gen};
 use rand::Rng;
@@ -70,11 +70,9 @@ impl GuidedArbGraph for ArbUnilatralGraph
 		// If we are asked to make the empty graph, we just do
 		if v_max <= 1
 		{
-			return Self(UnilateralGraph::new(MockGraph::arbitrary_guided(
-				g,
-				v_min..v_max,
-				v_min..v_max,
-			)));
+			return Self(UnilateralGraph::insure_unvalidated(
+				MockGraph::arbitrary_guided(g, v_min..v_max, v_min..v_max),
+			));
 		}
 
 		// If the exact size of the graph hasn't been decided yet, do so.
@@ -99,7 +97,7 @@ impl GuidedArbGraph for ArbUnilatralGraph
 			// For larger graphs, we start by making a unilateral graph with 1 less vertex
 			// and get an edge
 			let arb = ArbVertexIn::<Self>::arbitrary_guided(g, v_min - 1..v_min, e_min..e_max);
-			graph = (arb.0).0.unconstrain_single();
+			graph = (arb.0).0.release();
 			let v_original = arb.1;
 
 			// Add a new vertex to the graph
@@ -110,7 +108,7 @@ impl GuidedArbGraph for ArbUnilatralGraph
 			// Add an edge to/from the new and old vertices
 			if g.gen_bool(0.5)
 			{
-				// To ensure unilateralism, take all outgoing edges from the original vertex
+				// To insure unilateralism, take all outgoing edges from the original vertex
 				// and move them to the new one.
 				let outgoing_sinks = graph
 					.edges_sourced_in(v_original)
@@ -128,7 +126,7 @@ impl GuidedArbGraph for ArbUnilatralGraph
 			}
 			else
 			{
-				// To ensure unilateralism, take all the incoming edges from the original vertex
+				// To insure unilateralism, take all the incoming edges from the original vertex
 				// and move them to the new one.
 				let sources = graph
 					.edges_sinked_in(v_original)
@@ -164,13 +162,13 @@ impl GuidedArbGraph for ArbUnilatralGraph
 			}
 		}
 
-		Self(UnilateralGraph::new(graph))
+		Self(UnilateralGraph::insure_unvalidated(graph))
 	}
 
 	fn shrink_guided(&self, limits: HashSet<Limit>) -> Box<dyn Iterator<Item = Self>>
 	{
 		let mut result = Vec::new();
-		let graph = self.0.clone().unconstrain_single();
+		let graph = self.0.clone().release();
 
 		// Shrink by removing any edge that isn't critical for unilateralism
 		graph.shrink_by_removing_edge(&limits, &mut result, is_unilateral);
@@ -179,7 +177,11 @@ impl GuidedArbGraph for ArbUnilatralGraph
 
 		graph.shrink_values(&limits, &mut result);
 
-		Box::new(result.into_iter().map(|g| Self(UnilateralGraph::new(g))))
+		Box::new(
+			result
+				.into_iter()
+				.map(|g| Self(UnilateralGraph::insure_unvalidated(g))),
+		)
 	}
 }
 
@@ -187,9 +189,9 @@ impl Arbitrary for ArbUnilatralGraph
 {
 	fn arbitrary<G: Gen>(g: &mut G) -> Self
 	{
-		let graph = Self::arbitrary_guided(g, .., ..).0.unconstrain_single();
+		let graph = Self::arbitrary_guided(g, .., ..).0.release();
 		// 		assert!(is_unilateral(&graph));
-		Self(UnilateralGraph::new(graph))
+		Self(UnilateralGraph::insure_unvalidated(graph))
 	}
 
 	fn shrink(&self) -> Box<dyn Iterator<Item = Self>>
@@ -282,8 +284,8 @@ impl GuidedArbGraph for ArbNonUnilatralGraph
 				g2_count..g2_count + 1,
 				e_min / 2..e_max / 2,
 			);
-			graph = g1.0.unconstrain_single();
-			let g2 = g2.0.unconstrain_single();
+			graph = g1.0.release();
+			let g2 = g2.0.release();
 
 			// Join them and add a vertex that is reachable from or can reach both,
 			// but doesn't have a path through it, ensuring the two components can't reach
@@ -343,7 +345,7 @@ impl Arbitrary for ArbNonUnilatralGraph
 {
 	fn arbitrary<G: Gen>(g: &mut G) -> Self
 	{
-		let graph = Self::arbitrary_guided(g, .., ..).0.unconstrain_single();
+		let graph = Self::arbitrary_guided(g, .., ..).0.release();
 		assert!(!is_unilateral(&graph));
 		Self(graph)
 	}
