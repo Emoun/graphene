@@ -5,7 +5,7 @@ use crate::{
 			proxy_remove_edge_where, proxy_remove_vertex, DirectedGraph, RemoveEdge, RemoveVertex,
 			Unilateral, Weak,
 		},
-		Constrainer, Graph, GraphDeref, GraphDerefMut, ReverseGraph,
+		Constrainer, Graph, GraphDerefMut, ReverseGraph,
 	},
 };
 use delegate::delegate;
@@ -31,22 +31,6 @@ impl<C: Constrainer> ConnectedGraph<C>
 	}
 }
 
-impl<C: Constrainer> GraphDeref for ConnectedGraph<C>
-{
-	type Graph = Self;
-
-	fn graph(&self) -> &Self::Graph
-	{
-		self
-	}
-}
-impl<C: Constrainer> GraphDerefMut for ConnectedGraph<C>
-{
-	fn graph_mut(&mut self) -> &mut Self::Graph
-	{
-		self
-	}
-}
 impl<C: Constrainer> Constrainer for ConnectedGraph<C>
 {
 	type Base = C::Base;

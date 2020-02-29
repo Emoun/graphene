@@ -1,6 +1,4 @@
-use crate::core::{
-	constraint::AddEdge, Constrainer, EdgeWeighted, Graph, GraphDeref, GraphDerefMut,
-};
+use crate::core::{constraint::AddEdge, Constrainer, EdgeWeighted, Graph, GraphDerefMut};
 use delegate::delegate;
 
 /// A marker trait for graphs containing no graph loops.
@@ -15,22 +13,6 @@ pub trait NoLoops: Graph
 
 pub struct NoLoopsGraph<C: Constrainer>(C);
 
-impl<C: Constrainer> GraphDeref for NoLoopsGraph<C>
-{
-	type Graph = Self;
-
-	fn graph(&self) -> &Self::Graph
-	{
-		self
-	}
-}
-impl<C: Constrainer> GraphDerefMut for NoLoopsGraph<C>
-{
-	fn graph_mut(&mut self) -> &mut Self::Graph
-	{
-		self
-	}
-}
 impl<C: Constrainer> Constrainer for NoLoopsGraph<C>
 {
 	type Base = C::Base;

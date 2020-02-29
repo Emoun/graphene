@@ -1,4 +1,4 @@
-use crate::core::{Constrainer, Directedness, Graph, GraphDeref, GraphDerefMut, Undirected};
+use crate::core::{Constrainer, Directedness, Graph, Undirected};
 use delegate::delegate;
 
 /// A marker trait for graphs who's edges are undirected.
@@ -20,22 +20,6 @@ impl<C: Constrainer> UndirectedGraph<C>
 	}
 }
 
-impl<C: Constrainer> GraphDeref for UndirectedGraph<C>
-{
-	type Graph = Self;
-
-	fn graph(&self) -> &Self::Graph
-	{
-		self
-	}
-}
-impl<C: Constrainer> GraphDerefMut for UndirectedGraph<C>
-{
-	fn graph_mut(&mut self) -> &mut Self::Graph
-	{
-		self
-	}
-}
 impl<C: Constrainer> Constrainer for UndirectedGraph<C>
 {
 	type Base = C::Base;

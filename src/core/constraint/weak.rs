@@ -3,7 +3,7 @@ use crate::core::{
 		proxy_remove_edge_where, proxy_remove_vertex, ConnectedGraph, RemoveEdge, RemoveVertex,
 	},
 	proxy::UndirectedProxy,
-	Constrainer, Directed, Graph, GraphDeref, GraphDerefMut,
+	Constrainer, Directed, Graph, GraphDerefMut,
 };
 use delegate::delegate;
 
@@ -40,26 +40,6 @@ where
 	}
 }
 
-impl<C: Constrainer> GraphDeref for WeakGraph<C>
-where
-	C::Graph: Graph<Directedness = Directed>,
-{
-	type Graph = Self;
-
-	fn graph(&self) -> &Self::Graph
-	{
-		self
-	}
-}
-impl<C: Constrainer> GraphDerefMut for WeakGraph<C>
-where
-	C::Graph: Graph<Directedness = Directed>,
-{
-	fn graph_mut(&mut self) -> &mut Self::Graph
-	{
-		self
-	}
-}
 impl<C: Constrainer> Constrainer for WeakGraph<C>
 where
 	C::Graph: Graph<Directedness = Directed>,

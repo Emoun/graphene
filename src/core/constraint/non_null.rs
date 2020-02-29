@@ -1,4 +1,4 @@
-use crate::core::{constraint::RemoveVertex, Constrainer, Graph, GraphDeref, GraphDerefMut};
+use crate::core::{constraint::RemoveVertex, Constrainer, Graph, GraphDerefMut};
 use delegate::delegate;
 
 /// A marker trait for graphs with at least 1 vertex.
@@ -30,22 +30,6 @@ impl<C: Constrainer> NonNullGraph<C>
 	}
 }
 
-impl<C: Constrainer> GraphDeref for NonNullGraph<C>
-{
-	type Graph = Self;
-
-	fn graph(&self) -> &Self::Graph
-	{
-		self
-	}
-}
-impl<C: Constrainer> GraphDerefMut for NonNullGraph<C>
-{
-	fn graph_mut(&mut self) -> &mut Self::Graph
-	{
-		self
-	}
-}
 impl<C: Constrainer> Constrainer for NonNullGraph<C>
 {
 	type Base = C::Base;

@@ -1,6 +1,6 @@
 use crate::core::{
 	constraint::{AddEdge, NewVertex, RemoveEdge, RemoveVertex},
-	Constrainer, Graph, GraphDeref, GraphDerefMut,
+	Constrainer, Graph, GraphDerefMut,
 };
 use delegate::delegate;
 
@@ -20,26 +20,6 @@ pub struct ReflexiveGraph<C: Constrainer>(C)
 where
 	<C::Graph as Graph>::EdgeWeight: Default;
 
-impl<C: Constrainer> GraphDeref for ReflexiveGraph<C>
-where
-	<C::Graph as Graph>::EdgeWeight: Default,
-{
-	type Graph = Self;
-
-	fn graph(&self) -> &Self::Graph
-	{
-		self
-	}
-}
-impl<C: Constrainer> GraphDerefMut for ReflexiveGraph<C>
-where
-	<C::Graph as Graph>::EdgeWeight: Default,
-{
-	fn graph_mut(&mut self) -> &mut Self::Graph
-	{
-		self
-	}
-}
 impl<C: Constrainer> Constrainer for ReflexiveGraph<C>
 where
 	<C::Graph as Graph>::EdgeWeight: Default,

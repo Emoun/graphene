@@ -13,6 +13,41 @@ macro_rules! impl_constraints {
 		$struct:ident<$generic_graph:ident>: $($trait:ident),*
 		$(where $($bounds:tt)*)?
 	} => {
+
+		//GraphDeref
+		impl_constraints!{
+			@inner
+			@struct_id $struct
+			@generic $generic_graph
+			@exclude [ $($trait)* ]
+			@bounds [ $($($bounds)*)? ]
+			@trait_id GraphDeref [$crate::core]
+			@implement {
+				type Graph = Self;
+
+				fn graph(&self) -> &Self::Graph
+				{
+					self
+				}
+			}
+		}
+
+		//GraphDerefMut
+		impl_constraints!{
+			@inner
+			@struct_id $struct
+			@generic $generic_graph
+			@exclude [ $($trait)* ]
+			@bounds [ $($($bounds)*)? ]
+			@trait_id GraphDerefMut [$crate::core]
+			@implement {
+				fn graph_mut(&mut self) -> &mut Self::Graph
+				{
+					self
+				}
+			}
+		}
+
 		//Graph
 		impl_constraints!{
 			@inner

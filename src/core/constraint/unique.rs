@@ -1,6 +1,5 @@
 use crate::core::{
-	constraint::AddEdge, Constrainer, Directedness, Edge, EdgeWeighted, Graph, GraphDeref,
-	GraphDerefMut,
+	constraint::AddEdge, Constrainer, Directedness, Edge, EdgeWeighted, Graph, GraphDerefMut,
 };
 use delegate::delegate;
 
@@ -36,22 +35,6 @@ impl<C: Constrainer> UniqueGraph<C>
 	}
 }
 
-impl<C: Constrainer> GraphDeref for UniqueGraph<C>
-{
-	type Graph = Self;
-
-	fn graph(&self) -> &Self::Graph
-	{
-		self
-	}
-}
-impl<C: Constrainer> GraphDerefMut for UniqueGraph<C>
-{
-	fn graph_mut(&mut self) -> &mut Self::Graph
-	{
-		self
-	}
-}
 impl<C: Constrainer> Constrainer for UniqueGraph<C>
 {
 	type Base = C::Base;
