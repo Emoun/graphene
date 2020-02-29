@@ -82,5 +82,5 @@ impl<C: Constrainer> Graph for UndirectedGraph<C>
 impl<C: Constrainer> UndirectedConstraint for UndirectedGraph<C> {}
 
 impl_constraints! {
-	UndirectedGraph<C>: UndirectedConstraint
+	UndirectedGraph<C>: Graph, UndirectedConstraint
 }

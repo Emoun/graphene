@@ -76,28 +76,6 @@ where
 	}
 }
 
-impl<C: Constrainer> Graph for ReflexiveGraph<C>
-where
-	<C::Graph as Graph>::EdgeWeight: Default,
-{
-	type Directedness = <C::Graph as Graph>::Directedness;
-	type EdgeWeight = <C::Graph as Graph>::EdgeWeight;
-	type Vertex = <C::Graph as Graph>::Vertex;
-	type VertexWeight = <C::Graph as Graph>::VertexWeight;
-
-	delegate! {
-		to self.0.graph() {
-			fn all_vertices_weighted<'a>(
-				&'a self,
-			) -> Box<dyn 'a + Iterator<Item = (Self::Vertex, &'a Self::VertexWeight)>>;
-
-			fn all_edges<'a>(
-				&'a self,
-			) -> Box<dyn 'a + Iterator<Item = (Self::Vertex, Self::Vertex, &'a Self::EdgeWeight)>>;
-		}
-	}
-}
-
 impl<C: Constrainer + GraphDerefMut> NewVertex for ReflexiveGraph<C>
 where
 	C::Graph: NewVertex + AddEdge,

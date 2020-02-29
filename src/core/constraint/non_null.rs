@@ -69,26 +69,6 @@ impl<C: Constrainer> Constrainer for NonNullGraph<C>
 	}
 }
 
-impl<C: Constrainer> Graph for NonNullGraph<C>
-{
-	type Directedness = <C::Graph as Graph>::Directedness;
-	type EdgeWeight = <C::Graph as Graph>::EdgeWeight;
-	type Vertex = <C::Graph as Graph>::Vertex;
-	type VertexWeight = <C::Graph as Graph>::VertexWeight;
-
-	delegate! {
-		to self.0.graph() {
-			fn all_vertices_weighted<'a>(
-				&'a self,
-			) -> Box<dyn 'a + Iterator<Item = (Self::Vertex, &'a Self::VertexWeight)>>;
-
-			fn all_edges<'a>(
-				&'a self,
-			) -> Box<dyn 'a + Iterator<Item = (Self::Vertex, Self::Vertex, &'a Self::EdgeWeight)>>;
-		}
-	}
-}
-
 impl<C: Constrainer + GraphDerefMut> RemoveVertex for NonNullGraph<C>
 where
 	C::Graph: RemoveVertex,

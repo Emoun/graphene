@@ -82,5 +82,5 @@ impl<C: Constrainer> Graph for DirectedGraph<C>
 impl<C: Constrainer> DirectedConstraint for DirectedGraph<C> {}
 
 impl_constraints! {
-	DirectedGraph<C>: DirectedConstraint
+	DirectedGraph<C>: Graph, DirectedConstraint
 }
