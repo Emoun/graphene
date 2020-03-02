@@ -2,7 +2,8 @@ use crate::{
 	algo::TarjanSCC,
 	core::{
 		property::{
-			proxy_remove_edge_where, proxy_remove_vertex, RemoveEdge, RemoveVertex, Subgraph, Weak,
+			proxy_remove_edge_where, proxy_remove_vertex, NonNullGraph, RemoveEdge, RemoveVertex,
+			Subgraph, Weak,
 		},
 		Directed, Graph, GraphDerefMut, Insure,
 	},
@@ -42,10 +43,7 @@ where
 
 	fn validate(c: &Self::Insured) -> bool
 	{
-		let graph = c.graph();
-		let verts = graph.all_vertices().collect::<Vec<_>>();
-
-		if verts.len() != 0
+		if let Ok(graph) = NonNullGraph::insure(c.graph())
 		{
 			// Algorithm: First use Tarjan's Strongly Connected Component (SCC) algorithm to
 			// find SCCs and then check whether every component has an edge to the next one
@@ -53,7 +51,7 @@ where
 			// order, so we don't need to sort, just check the first has an edge to it from
 			// the next.
 
-			let mut tarjan = TarjanSCC::new(graph, verts[0]);
+			let mut tarjan = TarjanSCC::new(&graph);
 
 			let mut scc_current = tarjan.next();
 

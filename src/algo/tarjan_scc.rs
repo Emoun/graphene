@@ -50,7 +50,11 @@
 //! the DFS is done, check for any unvisited vertices.
 use crate::{
 	algo::DFS,
-	core::{property::ConnectedGraph, proxy::SubgraphProxy, Directed, Graph, Insure},
+	core::{
+		property::{ConnectedGraph, NonNull},
+		proxy::SubgraphProxy,
+		Directed, Graph, Insure,
+	},
 };
 use std::cmp::min;
 
@@ -68,9 +72,9 @@ where
 
 impl<'a, G> TarjanSCC<'a, G>
 where
-	G: 'a + Graph<Directedness = Directed>,
+	G: 'a + Graph<Directedness = Directed> + NonNull,
 {
-	pub fn new(graph: &'a G, start: G::Vertex) -> Self
+	pub fn new(graph: &'a G) -> Self
 	{
 		/// Implements part of Tarjan's algorithm, namely what happens when we
 		/// are finished visiting a vertex.
@@ -100,7 +104,7 @@ where
 			}
 		}
 
-		let dfs = DFS::new(graph, start, on_exit, Vec::new());
+		let dfs = DFS::new(graph, graph.get_vertex(), on_exit, Vec::new());
 		Self {
 			dfs,
 			unchecked: graph.all_vertices(),
