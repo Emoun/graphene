@@ -344,9 +344,19 @@ macro_rules! impl_insurer {
 			@struct_id $struct
 			@generic $generic_graph
 			@exclude [ $($trait)* ]
-			@bounds [$generic_graph: $crate::core::property::NonNull, $($($bounds)*)?]
+			@bounds [
+				$generic_graph: $crate::core::property::NonNull,
+				$generic_graph::Graph: $crate::core::property::NonNull,
+				$($($bounds)*)?
+			]
 			@trait_id NonNull [$crate::core::property]
-			@implement {}
+			@implement {
+				delegate! {
+					to self.0.graph() {
+						fn get_vertex(&self) -> Self::Vertex;
+					}
+				}
+			}
 		}
 	};
 
