@@ -55,7 +55,7 @@ impl Limit
 	}
 }
 
-/// A vertion of `quickcheck::Arbitrary` for Graphs that can be guided how to
+/// A version of `quickcheck::Arbitrary` for Graphs that can be guided how to
 /// make the graph
 pub trait GuidedArbGraph: Arbitrary
 {

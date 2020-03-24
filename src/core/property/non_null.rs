@@ -1,5 +1,4 @@
 use crate::core::{property::RemoveVertex, Graph, GraphDerefMut, Insure};
-use delegate::delegate;
 
 /// A marker trait for graphs with at least 1 vertex.
 pub trait NonNull: Graph
@@ -14,15 +13,12 @@ pub trait NonNull: Graph
 	/// of actively delegating to the inner class, who might have its own
 	/// implementation.
 	fn get_vertex(&self) -> Self::Vertex;
-	
 }
 
-///
 /// Ensures the underlying graph has at least 1 vertex.
 ///
-/// Gives no guarantees on which vertex is returned by any given call to `get_vertex` if the
-/// the graph has multiple vertices.
-///
+/// Gives no guarantees on which vertex is returned by any given call to
+/// `get_vertex` if the the graph has multiple vertices.
 #[derive(Clone, Debug)]
 pub struct NonNullGraph<C: Insure>(C);
 
@@ -56,7 +52,8 @@ where
 	}
 }
 
-impl<C: Insure> NonNull for NonNullGraph<C> {
+impl<C: Insure> NonNull for NonNullGraph<C>
+{
 	fn get_vertex(&self) -> Self::Vertex
 	{
 		self.all_vertices()
@@ -67,21 +64,21 @@ impl<C: Insure> NonNull for NonNullGraph<C> {
 
 impl_insurer! {
 	NonNullGraph<C>: NonNull, RemoveVertex
+	for C as (self.0)
 }
 
-///
 /// Ensures a specific vertex is in the underlying graph.
 ///
-/// That vertex is guaranteed to be returned by any call to `get_vertex` and cannot be removed
-/// from the graph.
+/// That vertex is guaranteed to be returned by any call to `get_vertex` and
+/// cannot be removed from the graph.
 ///
-/// Which vertex is guaranteed by this type depends on how an instance was created:
+/// Which vertex is guaranteed by this type depends on how an instance was
+/// created:
 ///
 /// 1. If `new` was used, the vertex it was given is guaranteed.
-/// 2. If an instance was created as an insurer (using `insure_unvalidated` or `insure` etc.)
-/// then an arbitrary vertex in the graph is chosen, with no guarantees as to how this choice
-/// is made.
-///
+/// 2. If an instance was created as an insurer (using `insure_unvalidated` or
+/// `insure` etc.) then an arbitrary vertex in the graph is chosen, with no
+/// guarantees as to how this choice is made.
 #[derive(Clone)]
 pub struct VertexInGraph<C: Insure>(C, <C::Graph as Graph>::Vertex);
 
@@ -89,11 +86,19 @@ impl<C: Insure> VertexInGraph<C>
 {
 	pub fn new(graph: C, v: <C::Graph as Graph>::Vertex) -> Option<Self>
 	{
-		if graph.graph().contains_vertex(v) {
+		if graph.graph().contains_vertex(v)
+		{
 			Some(Self(graph, v))
-		} else {
+		}
+		else
+		{
 			None
 		}
+	}
+
+	pub fn new_unvalidated(graph: C, v: <C::Graph as Graph>::Vertex) -> Self
+	{
+		Self(graph, v)
 	}
 }
 
@@ -104,7 +109,7 @@ impl<C: Insure> Insure for VertexInGraph<C>
 		let v = c.graph().all_vertices().next().unwrap();
 		Self(c, v)
 	}
-	
+
 	fn validate(c: &Self::Insured) -> bool
 	{
 		NonNullGraph::validate(c)
@@ -112,8 +117,8 @@ impl<C: Insure> Insure for VertexInGraph<C>
 }
 
 impl<C: Insure + GraphDerefMut> RemoveVertex for VertexInGraph<C>
-	where
-		C::Graph: RemoveVertex,
+where
+	C::Graph: RemoveVertex,
 {
 	fn remove_vertex(&mut self, v: Self::Vertex) -> Result<Self::VertexWeight, ()>
 	{
@@ -128,7 +133,8 @@ impl<C: Insure + GraphDerefMut> RemoveVertex for VertexInGraph<C>
 	}
 }
 
-impl<C: Insure> NonNull for VertexInGraph<C> {
+impl<C: Insure> NonNull for VertexInGraph<C>
+{
 	fn get_vertex(&self) -> Self::Vertex
 	{
 		self.1
@@ -137,4 +143,5 @@ impl<C: Insure> NonNull for VertexInGraph<C> {
 
 impl_insurer! {
 	VertexInGraph<C>: NonNull, RemoveVertex
+	for C as (self.0)
 }

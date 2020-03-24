@@ -8,7 +8,6 @@ use crate::{
 		Graph, GraphDerefMut, Insure, ReverseGraph,
 	},
 };
-use delegate::delegate;
 
 /// A marker trait for graphs that are connected.
 ///
@@ -99,4 +98,5 @@ impl_insurer! {
 	ConnectedGraph<C>: Connected, Unilateral, Weak, RemoveVertex, RemoveEdge,
 	// A new vertex wouldn't be connected to the rest of the graph
 	NewVertex
+	for C as (self.0)
 }

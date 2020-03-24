@@ -111,31 +111,31 @@ where
 /// Note: All graphs will have at least 2 vertices.
 #[derive(Clone, Debug)]
 pub struct ArbTwoUniqueVerticesIn<G>(pub G, pub MockVertex, pub MockVertex)
-	where
-		G: Arbitrary + GraphDeref,
-		G::Graph:
+where
+	G: Arbitrary + GraphDeref,
+	G::Graph:
 		Graph<Vertex = MockVertex, VertexWeight = MockVertexWeight, EdgeWeight = MockEdgeWeight>;
 
 impl<Gr> Arbitrary for ArbTwoUniqueVerticesIn<Gr>
-	where
-		Gr: GuidedArbGraph + GraphDerefMut,
-		Gr::Graph:
+where
+	Gr: GuidedArbGraph + GraphDerefMut,
+	Gr::Graph:
 		Graph<Vertex = MockVertex, VertexWeight = MockVertexWeight, EdgeWeight = MockEdgeWeight>,
 {
 	fn arbitrary<G: Gen>(g: &mut G) -> Self
 	{
 		Self::arbitrary_guided(g, .., ..)
 	}
-	
+
 	fn shrink(&self) -> Box<dyn Iterator<Item = Self>>
 	{
 		self.shrink_guided(HashSet::new())
 	}
 }
 impl<Gr> GuidedArbGraph for ArbTwoUniqueVerticesIn<Gr>
-	where
-		Gr: GuidedArbGraph + GraphDerefMut,
-		Gr::Graph:
+where
+	Gr: GuidedArbGraph + GraphDerefMut,
+	Gr::Graph:
 		Graph<Vertex = MockVertex, VertexWeight = MockVertexWeight, EdgeWeight = MockEdgeWeight>,
 {
 	fn arbitrary_guided<G: Gen>(
@@ -145,22 +145,24 @@ impl<Gr> GuidedArbGraph for ArbTwoUniqueVerticesIn<Gr>
 	) -> Self
 	{
 		let (v_min, v_max, e_min, e_max) = Self::validate_ranges(g, v_range, e_range);
-		
+
 		// Create a graph with at least 1 vertex
 		let v_min_max = if 2 < v_min { v_min } else { 2 };
 		let graph = Gr::arbitrary_guided(g, v_min_max..v_max, e_min..e_max);
 		let verts: Vec<_> = graph.graph().all_vertices().collect();
 		let v1 = verts[g.gen_range(0, verts.len())];
-		let v2 = loop {
+		let v2 = loop
+		{
 			let candidate = verts[g.gen_range(0, verts.len())];
-			if candidate != v1 {
+			if candidate != v1
+			{
 				break candidate;
 			}
 		};
-		
+
 		Self(graph, v1, v2)
 	}
-	
+
 	fn shrink_guided(&self, mut limits: HashSet<Limit>) -> Box<dyn Iterator<Item = Self>>
 	{
 		// Don't let it shrink to less than 2 vertices
@@ -170,32 +172,32 @@ impl<Gr> GuidedArbGraph for ArbTwoUniqueVerticesIn<Gr>
 				self.0.clone(),
 				HashSet::from_iter([self.1, self.2].iter().cloned()),
 			)
-				.shrink_guided(limits)
-				.map(|g| {
-					let mut set = g.1.iter();
-					Self(g.0, *set.next().unwrap(), *set.next().unwrap())
-				}),
+			.shrink_guided(limits)
+			.map(|g| {
+				let mut set = g.1.iter();
+				Self(g.0, *set.next().unwrap(), *set.next().unwrap())
+			}),
 		)
 	}
 }
 
 impl<G> GraphDeref for ArbTwoUniqueVerticesIn<G>
-	where
-		G: Arbitrary + GraphDeref,
-		G::Graph:
+where
+	G: Arbitrary + GraphDeref,
+	G::Graph:
 		Graph<Vertex = MockVertex, VertexWeight = MockVertexWeight, EdgeWeight = MockEdgeWeight>,
 {
 	type Graph = G::Graph;
-	
+
 	fn graph(&self) -> &Self::Graph
 	{
 		self.0.graph()
 	}
 }
 impl<G> GraphDerefMut for ArbTwoUniqueVerticesIn<G>
-	where
-		G: Arbitrary + GraphDerefMut,
-		G::Graph:
+where
+	G: Arbitrary + GraphDerefMut,
+	G::Graph:
 		Graph<Vertex = MockVertex, VertexWeight = MockVertexWeight, EdgeWeight = MockEdgeWeight>,
 {
 	fn graph_mut(&mut self) -> &mut Self::Graph

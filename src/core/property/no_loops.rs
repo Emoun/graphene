@@ -1,5 +1,4 @@
 use crate::core::{property::AddEdge, EdgeWeighted, Graph, GraphDerefMut, Insure};
-use delegate::delegate;
 
 /// A marker trait for graphs containing no graph loops.
 ///
@@ -51,4 +50,5 @@ impl<C: Insure> NoLoops for NoLoopsGraph<C> {}
 
 impl_insurer! {
 	NoLoopsGraph<C>: NoLoops, AddEdge
+	for C as (self.0)
 }

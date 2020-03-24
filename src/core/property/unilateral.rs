@@ -8,7 +8,6 @@ use crate::{
 		Directed, Graph, GraphDerefMut, Insure,
 	},
 };
-use delegate::delegate;
 
 /// A marker trait for graphs that are unilaterally connected.
 ///
@@ -104,5 +103,6 @@ impl_insurer! {
 	UnilateralGraph<C>: Unilateral, Weak, RemoveVertex, RemoveEdge,
 	// A new vertex would be unconnected to the rest of the graph
 	NewVertex
+	for C as (self.0)
 	where C::Graph: Graph<Directedness=Directed>
 }

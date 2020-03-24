@@ -1,7 +1,6 @@
 use crate::core::{
 	property::AddEdge, Directedness, Edge, EdgeWeighted, Graph, GraphDerefMut, Insure,
 };
-use delegate::delegate;
 
 /// A marker trait for graphs containing only unique edges.
 ///
@@ -95,4 +94,6 @@ impl<C: Insure> Unique for UniqueGraph<C> {}
 
 impl_insurer! {
 	UniqueGraph<C>: Unique, AddEdge
+	for C as (self.0)
+	where C: Insure
 }

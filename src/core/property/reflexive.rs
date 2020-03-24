@@ -2,7 +2,6 @@ use crate::core::{
 	property::{AddEdge, NewVertex, RemoveEdge, RemoveVertex},
 	Graph, GraphDerefMut, Insure,
 };
-use delegate::delegate;
 
 /// A marker trait for a reflexive graph.
 ///
@@ -75,5 +74,6 @@ impl<C: Insure> Reflexive for ReflexiveGraph<C> where <C::Graph as Graph>::EdgeW
 
 impl_insurer! {
 	ReflexiveGraph<C>: NewVertex, RemoveVertex, Reflexive
+	for C as (self.0)
 	where <C::Graph as Graph>::EdgeWeight: Default,
 }
