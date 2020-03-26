@@ -93,7 +93,7 @@ where
 impl<C: Insure> Unique for UniqueGraph<C> {}
 
 impl_insurer! {
-	UniqueGraph<C>: Unique, AddEdge
-	for C as (self.0)
+	UniqueGraph<C>: Insure, Unique, AddEdge
+	for <C> as (self.0)
 	where C: Insure
 }

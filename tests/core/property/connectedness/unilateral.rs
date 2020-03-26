@@ -10,7 +10,7 @@ use crate::mock_graph::{
 	MockEdgeWeight, MockVertexWeight,
 };
 use graphene::core::{
-	property::{AddEdge, NewVertex, RemoveEdge, RemoveVertex, UnilateralGraph},
+	property::{AddEdge, NewVertex, NonNull, RemoveEdge, RemoveVertex, UnilateralGraph},
 	Directed, Edge, Insure, Release,
 };
 
@@ -61,15 +61,17 @@ fn accept_remove_edge_where(
 /// find a critical edge.
 #[quickcheck]
 fn reject_remove_edge_where(
-	ArbVertexIn(g1, v1): ArbVertexIn<ArbConnectedGraph<Directed>>,
-	ArbVertexIn(g2, v2): ArbVertexIn<ArbConnectedGraph<Directed>>,
+	g1: ArbVertexIn<ArbConnectedGraph<Directed>>,
+	g2: ArbVertexIn<ArbConnectedGraph<Directed>>,
 	e_weight: MockEdgeWeight,
 ) -> bool
 {
-	let mut graph = g1.0.release_all();
+	let v1 = g1.get_vertex();
+	let v2 = g2.get_vertex();
+	let mut graph = g1.release_all();
 	// We start by joining 2 connected graphs into a unconnected graph with the 2
 	// components
-	let v_map = graph.join(&g2.0);
+	let v_map = graph.join(&g2);
 
 	// We then connect the two components with 1 edge, making in unilateral.
 	graph
@@ -144,16 +146,18 @@ fn accept_remove_vertex(
 /// create a critical vertex.
 #[quickcheck]
 fn reject_remove_vertex(
-	ArbVertexIn(g1, v1): ArbVertexIn<ArbConnectedGraph<Directed>>,
-	ArbVertexIn(g2, v2): ArbVertexIn<ArbConnectedGraph<Directed>>,
+	g1: ArbVertexIn<ArbConnectedGraph<Directed>>,
+	g2: ArbVertexIn<ArbConnectedGraph<Directed>>,
 	e_weight: MockEdgeWeight,
 	v_weight: MockVertexWeight,
 ) -> bool
 {
-	let mut graph = g1.0.release_all();
+	let v1 = g1.get_vertex();
+	let v2 = g2.get_vertex();
+	let mut graph = g1.release_all();
 	// We start by joining 2 connected graphs into a unconnected graph with the 2
 	// components
-	let v_map = graph.join(&g2.0);
+	let v_map = graph.join(&g2);
 
 	// We then connect the two components through a vertex, making it unilateral
 	let new_v = graph.new_vertex_weighted(v_weight.clone()).unwrap();

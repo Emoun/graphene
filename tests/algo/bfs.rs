@@ -1,7 +1,7 @@
 use crate::mock_graph::arbitrary::{ArbConnectedGraph, ArbVertexIn};
 use graphene::{
 	algo::Bfs,
-	core::{Directed, GraphDeref},
+	core::{property::NonNull, Directed},
 };
 use std::collections::HashSet;
 
@@ -14,11 +14,12 @@ duplicate_for_directedness! {
 	///
 	#[quickcheck]
 	fn increasing_depth(
-		ArbVertexIn(mock, v): ArbVertexIn<ArbConnectedGraph<directedness>>
+		graph: ArbVertexIn<ArbConnectedGraph<directedness>>
 	) -> bool
 	{
+		let v = graph.get_vertex();
 		let mut depth = 0;
-		let mut bfs = Bfs::new(mock.graph(), v);
+		let mut bfs = Bfs::new(&graph, v);
 
 		while let Some(v) = bfs.next() {
 			if bfs.depth(v) < depth {
@@ -34,11 +35,12 @@ duplicate_for_directedness! {
 	///
 	#[quickcheck]
 	fn predecessor_already_seen(
-		ArbVertexIn(mock, v): ArbVertexIn<ArbConnectedGraph<directedness>>
+		graph: ArbVertexIn<ArbConnectedGraph<directedness>>
 	) -> bool
 	{
+		let v = graph.get_vertex();
 		let mut seen = HashSet::new();
-		let mut bfs = Bfs::new(mock.graph(), v);
+		let mut bfs = Bfs::new(&graph, v);
 
 		while let Some(v) = bfs.next() {
 			if let Some(p) = bfs.predecessor(v) {
@@ -56,10 +58,11 @@ duplicate_for_directedness! {
 	///
 	#[quickcheck]
 	fn predecessor_shallower(
-		ArbVertexIn(mock, v): ArbVertexIn<ArbConnectedGraph<directedness>>
+		graph: ArbVertexIn<ArbConnectedGraph<directedness>>
 	) -> bool
 	{
-		let mut bfs = Bfs::new(mock.graph(), v);
+		let v = graph.get_vertex();
+		let mut bfs = Bfs::new(&graph, v);
 
 		while let Some(v) = bfs.next() {
 			if let Some(p) = bfs.predecessor(v) {
@@ -76,10 +79,11 @@ duplicate_for_directedness! {
 	///
 	#[quickcheck]
 	fn has_predecessor(
-		ArbVertexIn(mock, v): ArbVertexIn<ArbConnectedGraph<directedness>>
+		graph: ArbVertexIn<ArbConnectedGraph<directedness>>
 	) -> bool
 	{
-		let mut bfs = Bfs::new(mock.graph(), v);
+		let v = graph.get_vertex();
+		let mut bfs = Bfs::new(&graph, v);
 
 		while let Some(v) = bfs.next() {
 			if bfs.depth(v) > 0{
@@ -96,10 +100,11 @@ duplicate_for_directedness! {
 	///
 	#[quickcheck]
 	fn predecessor_path_reaches_root(
-		ArbVertexIn(mock, root): ArbVertexIn<ArbConnectedGraph<directedness>>
+		graph: ArbVertexIn<ArbConnectedGraph<directedness>>
 	) -> bool
 	{
-		let mut bfs = Bfs::new(mock.graph(), root);
+		let root = graph.get_vertex();
+		let mut bfs = Bfs::new(&graph, root);
 
 		while let Some(v) = bfs.next() {
 			let mut current = v;
@@ -116,11 +121,10 @@ duplicate_for_directedness! {
 
 /// Tests that following the predecessors will reach the root.
 #[quickcheck]
-fn predecessor_path_reaches_root(
-	ArbVertexIn(mock, root): ArbVertexIn<ArbConnectedGraph<Directed>>,
-) -> bool
+fn predecessor_path_reaches_root(graph: ArbVertexIn<ArbConnectedGraph<Directed>>) -> bool
 {
-	let mut bfs = Bfs::new(mock.graph(), root);
+	let root = graph.get_vertex();
+	let mut bfs = Bfs::new(&graph, root);
 
 	while let Some(v) = bfs.next()
 	{

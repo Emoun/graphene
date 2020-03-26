@@ -2,9 +2,12 @@ use crate::mock_graph::{
 	arbitrary::{ArbVertexIn, GuidedArbGraph, Limit},
 	MockEdgeWeight, MockGraph, MockVertexWeight,
 };
-use graphene::core::{
-	property::{AddEdge, NewVertex, RemoveEdge, UnilateralGraph},
-	Directed, Edge, Graph, GraphDeref, GraphDerefMut, Insure, Release,
+use graphene::{
+	core::{
+		property::{AddEdge, NewVertex, NonNull, RemoveEdge, UnilateralGraph},
+		Directed, Edge, Graph, GraphDeref, GraphDerefMut, Insure, Release,
+	},
+	impl_insurer,
 };
 use quickcheck::{Arbitrary, Gen};
 use rand::Rng;
@@ -40,23 +43,6 @@ fn is_unilateral(graph: &MockGraph<Directed>) -> bool
 /// An arbitrary graph that is unilaterally connected
 #[derive(Clone, Debug)]
 pub struct ArbUnilatralGraph(pub UnilateralGraph<MockGraph<Directed>>);
-
-impl GraphDeref for ArbUnilatralGraph
-{
-	type Graph = UnilateralGraph<MockGraph<Directed>>;
-
-	fn graph(&self) -> &Self::Graph
-	{
-		&self.0
-	}
-}
-impl GraphDerefMut for ArbUnilatralGraph
-{
-	fn graph_mut(&mut self) -> &mut Self::Graph
-	{
-		&mut self.0
-	}
-}
 
 impl GuidedArbGraph for ArbUnilatralGraph
 {
@@ -97,8 +83,8 @@ impl GuidedArbGraph for ArbUnilatralGraph
 			// For larger graphs, we start by making a unilateral graph with 1 less vertex
 			// and get an edge
 			let arb = ArbVertexIn::<Self>::arbitrary_guided(g, v_min - 1..v_min, e_min..e_max);
-			graph = (arb.0).0.release();
-			let v_original = arb.1;
+			let v_original = arb.get_vertex();
+			graph = (arb.0).release().0.release();
 
 			// Add a new vertex to the graph
 			v = graph
@@ -200,6 +186,15 @@ impl Arbitrary for ArbUnilatralGraph
 	}
 }
 
+impl_insurer! {
+	ArbUnilatralGraph:
+	// A new vertex wouldn't be connected to the rest of the graph
+	NewVertex,
+	// Can never impl the following
+	Subgraph, NonNull
+	for UnilateralGraph<MockGraph<Directed>> as (self.0)
+}
+
 /// An arbitrary graph that is not unilaterally connected
 #[derive(Clone, Debug)]
 pub struct ArbNonUnilatralGraph(pub MockGraph<Directed>);
@@ -274,18 +269,21 @@ impl GuidedArbGraph for ArbNonUnilatralGraph
 			let g1_count = g.gen_range(1, v_min - 1);
 			let g2_count = (v_min - 1) - g1_count;
 
-			let ArbVertexIn(g1, v1) = ArbVertexIn::<ArbUnilatralGraph>::arbitrary_guided(
+			let g1 = ArbVertexIn::<ArbUnilatralGraph>::arbitrary_guided(
 				g,
 				g1_count..g1_count + 1,
 				e_min / 2..e_max / 2,
 			);
-			let ArbVertexIn(g2, v2) = ArbVertexIn::<ArbUnilatralGraph>::arbitrary_guided(
+			let g2 = ArbVertexIn::<ArbUnilatralGraph>::arbitrary_guided(
 				g,
 				g2_count..g2_count + 1,
 				e_min / 2..e_max / 2,
 			);
-			graph = g1.0.release();
-			let g2 = g2.0.release();
+
+			let v1 = g1.get_vertex();
+			let v2 = g2.get_vertex();
+			graph = g1.0.release().0.release();
+			let g2 = g2.0.release().0.release();
 
 			// Join them and add a vertex that is reachable from or can reach both,
 			// but doesn't have a path through it, ensuring the two components can't reach

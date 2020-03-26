@@ -10,8 +10,8 @@ use crate::{
 	},
 };
 use graphene::core::{
-	property::{RemoveEdge, RemoveVertex},
-	Edge, EdgeWeighted, Graph, GraphMut,
+	property::{NonNull, RemoveEdge, RemoveVertex},
+	Edge, EdgeWeighted, Graph, GraphMut, Release,
 };
 
 /// Tests that adding vertices to the graph results in the same vertices being
@@ -62,9 +62,10 @@ fn same_vertex_weight(mock: MockGraph<MockDirectedness>) -> bool
 /// Tests that the reference to vertex weights is the same regardless of
 /// mutability
 #[quickcheck]
-fn same_vertex_weight_mut(ArbVertexIn(mock, v): ArbVertexIn<MockGraph<MockDirectedness>>) -> bool
+fn same_vertex_weight_mut(mock: ArbVertexIn<MockGraph<MockDirectedness>>) -> bool
 {
-	let (mut g, v_map) = adj_list_from_mock(&mock);
+	let v = mock.get_vertex();
+	let (mut g, v_map) = adj_list_from_mock(&mock.release_all());
 
 	g.vertex_weight(v_map[&v]).map(|w| w as *const _)
 		== g.vertex_weight_mut(v_map[&v]).map(|w| w as *const _)
@@ -88,8 +89,10 @@ fn same_edge_weight_mut(mut mock: MockGraph<MockDirectedness>) -> bool
 
 /// Tests that removing a vertex works as expected
 #[quickcheck]
-fn remove_vertex(ArbVertexIn(mock, v_remove): ArbVertexIn<MockGraph<MockDirectedness>>) -> bool
+fn remove_vertex(mock: ArbVertexIn<MockGraph<MockDirectedness>>) -> bool
 {
+	let v_remove = mock.get_vertex();
+	let mock = mock.release_all();
 	let (mut g, v_map) = adj_list_from_mock(&mock);
 
 	if g.remove_vertex(v_map[&v_remove]).is_err()

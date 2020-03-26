@@ -2,9 +2,12 @@ use crate::mock_graph::{
 	arbitrary::{GuidedArbGraph, Limit},
 	MockEdgeWeight, MockGraph,
 };
-use graphene::core::{
-	property::{AddEdge, DirectedGraph, RemoveEdge, UniqueGraph},
-	Directedness, Edge, Graph, GraphDeref, GraphDerefMut, Insure, Release,
+use graphene::{
+	core::{
+		property::{AddEdge, DirectedGraph, RemoveEdge, UniqueGraph},
+		Directedness, Edge, Graph, GraphDeref, GraphDerefMut, Insure, Release,
+	},
+	impl_insurer,
 };
 use quickcheck::{Arbitrary, Gen};
 use rand::Rng;
@@ -13,23 +16,6 @@ use std::{collections::HashSet, ops::RangeBounds};
 /// An arbitrary graph that is unique
 #[derive(Clone, Debug)]
 pub struct ArbUniqueGraph<D: Directedness>(pub UniqueGraph<MockGraph<D>>);
-
-impl<D: Directedness> GraphDeref for ArbUniqueGraph<D>
-{
-	type Graph = UniqueGraph<MockGraph<D>>;
-
-	fn graph(&self) -> &Self::Graph
-	{
-		&self.0
-	}
-}
-impl<D: Directedness> GraphDerefMut for ArbUniqueGraph<D>
-{
-	fn graph_mut(&mut self) -> &mut Self::Graph
-	{
-		&mut self.0
-	}
-}
 
 impl<D: Directedness> GuidedArbGraph for ArbUniqueGraph<D>
 {
@@ -127,6 +113,12 @@ impl<D: Directedness> Arbitrary for ArbUniqueGraph<D>
 	{
 		self.shrink_guided(HashSet::new())
 	}
+}
+
+impl_insurer! {
+	ArbUniqueGraph<D>
+	for UniqueGraph<MockGraph<D>> as (self.0)
+	where D: Directedness
 }
 
 /// An arbitrary graph that is __not__ unique

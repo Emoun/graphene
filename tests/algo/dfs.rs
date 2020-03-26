@@ -5,7 +5,7 @@ use crate::mock_graph::{
 	arbitrary::{ArbConnectedGraph, ArbVertexIn},
 	MockVertex,
 };
-use graphene::{algo::DFS, core::GraphDeref};
+use graphene::{algo::DFS, core::property::NonNull};
 use std::cell::Cell;
 
 duplicate_for_directedness! {
@@ -17,9 +17,10 @@ duplicate_for_directedness! {
 	///
 	#[quickcheck]
 	fn on_exit_stack_call_order(
-		ArbVertexIn(mock, v): ArbVertexIn<ArbConnectedGraph<directedness>>)
+		mock: ArbVertexIn<ArbConnectedGraph<directedness>>)
 		-> bool
 	{
+		let v = mock.get_vertex();
 		let stack: Cell<Vec<MockVertex>> = Cell::new(Vec::new());
 		let mut success = true;
 
@@ -38,7 +39,7 @@ duplicate_for_directedness! {
 			stack.replace(s);
 		}
 
-		DFS::new(mock.graph(), v, on_exit, (&stack, &mut success))
+		DFS::new(&mock, v, on_exit, (&stack, &mut success))
 			.for_each(|v| {
 				// When a vertex is produced by the DFS, put it on the stack.
 				let mut s = stack.take();

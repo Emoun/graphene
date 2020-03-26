@@ -6,7 +6,7 @@ use crate::mock_graph::{
 	MockEdgeWeight, MockVertexWeight,
 };
 use graphene::core::{
-	property::{AddEdge, NewVertex, RemoveEdge, RemoveVertex, WeakGraph},
+	property::{AddEdge, NewVertex, NonNull, RemoveEdge, RemoveVertex, WeakGraph},
 	Directed, Edge, Insure, Release,
 };
 
@@ -53,15 +53,17 @@ fn accept_remove_edge_where(
 /// connectivity.
 #[quickcheck]
 fn reject_remove_edge_where(
-	ArbVertexIn(g1, v1): ArbVertexIn<ArbWeakGraph>,
-	ArbVertexIn(g2, v2): ArbVertexIn<ArbWeakGraph>,
+	g1: ArbVertexIn<ArbWeakGraph>,
+	g2: ArbVertexIn<ArbWeakGraph>,
 	e_weight: MockEdgeWeight,
 ) -> bool
 {
-	let mut graph = g1.0.release_all();
+	let v1 = g1.get_vertex();
+	let v2 = g2.get_vertex();
+	let mut graph = g1.release_all();
 	// We start by joining 2 connected graphs into a unconnected graph with the 2
 	// components
-	let v_map = graph.join(&g2.0);
+	let v_map = graph.join(&g2);
 
 	// We then connect the two components with 1 edge, making in unilateral.
 	graph
@@ -134,16 +136,18 @@ fn accept_remove_vertex(
 /// unconnected
 #[quickcheck]
 fn reject_remove_vertex(
-	ArbVertexIn(g1, v1): ArbVertexIn<ArbWeakGraph>,
-	ArbVertexIn(g2, v2): ArbVertexIn<ArbWeakGraph>,
+	g1: ArbVertexIn<ArbWeakGraph>,
+	g2: ArbVertexIn<ArbWeakGraph>,
 	e_weight: MockEdgeWeight,
 	v_weight: MockVertexWeight,
 ) -> bool
 {
-	let mut graph = g1.0.release_all();
+	let v1 = g1.get_vertex();
+	let v2 = g2.get_vertex();
+	let mut graph = g1.release_all();
 	// We start by joining 2 connected graphs into a unconnected graph with the 2
 	// components
-	let v_map = graph.join(&g2.0);
+	let v_map = graph.join(&g2);
 
 	// We then connect the two components through a vertex, making it weakly
 	// connected

@@ -45,6 +45,6 @@ impl<C: Insure> Graph for DirectedGraph<C>
 impl<C: Insure> DirectedConstraint for DirectedGraph<C> {}
 
 impl_insurer! {
-	DirectedGraph<C>: Graph, DirectedConstraint
-	for C as (self.0)
+	DirectedGraph<C>: Insure, Graph, DirectedConstraint
+	for <C> as (self.0)
 }

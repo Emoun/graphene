@@ -6,6 +6,7 @@ mod directedness;
 mod edge;
 mod graph;
 mod insure;
+#[macro_use]
 pub mod property;
 pub mod proxy;
 mod reverse_graph;

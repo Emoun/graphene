@@ -1,4 +1,5 @@
 use crate::core::{property::RemoveVertex, Graph, GraphDerefMut, Insure};
+use std::fmt::{Debug, Error, Formatter};
 
 /// A marker trait for graphs with at least 1 vertex.
 pub trait NonNull: Graph
@@ -63,8 +64,8 @@ impl<C: Insure> NonNull for NonNullGraph<C>
 }
 
 impl_insurer! {
-	NonNullGraph<C>: NonNull, RemoveVertex
-	for C as (self.0)
+	NonNullGraph<C>: Insure, NonNull, RemoveVertex
+	for <C> as (self.0)
 }
 
 /// Ensures a specific vertex is in the underlying graph.
@@ -81,6 +82,16 @@ impl_insurer! {
 /// guarantees as to how this choice is made.
 #[derive(Clone)]
 pub struct VertexInGraph<C: Insure>(C, <C::Graph as Graph>::Vertex);
+
+impl<C: Insure> Debug for VertexInGraph<C>
+where
+	<C::Graph as Graph>::Vertex: Debug,
+{
+	fn fmt(&self, f: &mut Formatter<'_>) -> Result<(), Error>
+	{
+		f.debug_tuple("VertexInGraph").field(&self.1).finish()
+	}
+}
 
 impl<C: Insure> VertexInGraph<C>
 {
@@ -142,6 +153,6 @@ impl<C: Insure> NonNull for VertexInGraph<C>
 }
 
 impl_insurer! {
-	VertexInGraph<C>: NonNull, RemoveVertex
-	for C as (self.0)
+	VertexInGraph<C>: Insure, NonNull, RemoveVertex
+	for <C> as (self.0)
 }

@@ -6,7 +6,7 @@ use crate::mock_graph::{
 	MockEdgeWeight, MockVertexWeight,
 };
 use graphene::core::{
-	property::{AddEdge, NewVertex, UniqueGraph},
+	property::{AddEdge, NewVertex, NonNull, UniqueGraph},
 	Edge, Graph, Insure, Release,
 };
 
@@ -35,15 +35,16 @@ duplicate_for_directedness! {
 	/// Tests that a UniqueGraph accepts adding a non-duplicate edge
 	///
 	#[quickcheck]
-	fn accept_add_edge(ArbVertexIn(mut g,v): ArbVertexIn<ArbUniqueGraph<directedness>>,
+	fn accept_add_edge(mut g: ArbVertexIn<ArbUniqueGraph<directedness>>,
 		v_weight: MockVertexWeight, e_weight: MockEdgeWeight)
 		-> bool
 	{
+		let v = g.get_vertex();
 		// To insure we add a non-duplicate edge,
 		// we create a new vertex and add an edge to it from an existing one.
-		let v2 = g.0.new_vertex_weighted(v_weight).unwrap();
-		let accepted = g.0.add_edge_weighted((v, v2, e_weight)).is_ok();
-			accepted && g.0.edges_between(v,v2).count() == 1
+		let v2 = g.new_vertex_weighted(v_weight).unwrap();
+		let accepted = g.add_edge_weighted((v, v2, e_weight)).is_ok();
+			accepted && g.edges_between(v,v2).count() == 1
 	}
 
 	///

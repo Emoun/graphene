@@ -5,7 +5,10 @@ use crate::mock_graph::{
 };
 use graphene::{
 	algo::{Bfs, DFS},
-	core::{property::AddEdge, Directed, Graph, GraphDeref, Release},
+	core::{
+		property::{AddEdge, NonNull},
+		Directed, Graph, GraphDeref, Release,
+	},
 };
 use std::collections::HashSet;
 
@@ -22,16 +25,17 @@ duplicate_for! {
 		/// Tests that all vertices in a connected component are produced exactly once.
 		///
 		#[quickcheck]
-		fn visits_component_once(ArbVertexIn(mock, v): ArbVertexIn<ArbConnectedGraph<directedness>>)
+		fn visits_component_once(mock: ArbVertexIn<ArbConnectedGraph<directedness>>)
 				 -> bool
 		{
+			let v = mock.get_vertex();
 			// Use a set to insure we only count each vertex once
 			let mut visited = HashSet::new();
 			let mut visited_once = true;
 			search_algo_new(mock.graph(), v).for_each(|v|{ visited_once &= visited.insert(v); });
 
 			// We insure all vertices were visited, but only once
-			visited.len() == mock.0.all_vertices().count() && visited_once
+			visited.len() == mock.all_vertices().count() && visited_once
 		}
 
 		///
@@ -39,12 +43,13 @@ duplicate_for! {
 		///
 		#[quickcheck]
 		fn visits_none_outside_component(
-			ArbVertexIn(g1, v): ArbVertexIn<ArbConnectedGraph<directedness>>,
+			g1: ArbVertexIn<ArbConnectedGraph<directedness>>,
 			g2: MockGraph<directedness>)
 			 -> bool
 		{
+			let v = g1.get_vertex();
 			// Our starting connected component
-			let mut graph = g1.0.release_all();
+			let mut graph = g1.release_all();
 
 			// First join the two graphs
 			let v_map = graph.join(&g2);
@@ -69,9 +74,9 @@ duplicate_for! {
 		weight: MockEdgeWeight,
 	) -> bool
 	{
-		let mut graph = ((component.0).0).0.release_all();
 		let comp_set = component.1;
-		let v = (component.0).1;
+		let v = component.0.get_vertex();
+		let mut graph = component.0.release_all();
 		let g2 = rest.0;
 		let g2_set = rest.1;
 
@@ -99,12 +104,13 @@ duplicate_for! {
 		weight: MockEdgeWeight,
 	) -> bool
 	{
-		let mut graph = ((comp1.0).0).0.release_all();
 		let comp1_set = comp1.1;
-		let v = (comp1.0).1;
-		let g2 = ((comp2.0).0).0;
+		let v = comp1.0.get_vertex();
+		let mut graph = comp1.0.release_all();
+
 		let comp2_set = comp2.1;
-		let v2 = (comp2.0).1;
+		let v2 = comp2.0.get_vertex();
+		let g2 = comp2.0.release_all();
 
 		// First join the two graphs
 		let v_map = graph.join(&g2);

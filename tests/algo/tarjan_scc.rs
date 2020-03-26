@@ -12,7 +12,7 @@ use graphene::{
 
 /// Tests that no produced SCC is empty
 #[quickcheck]
-fn produces_non_empty_components(ArbVertexIn(graph, _): ArbVertexIn<MockGraph<Directed>>) -> bool
+fn produces_non_empty_components(graph: ArbVertexIn<MockGraph<Directed>>) -> bool
 {
 	let graph = NonNullGraph::insure(graph).unwrap();
 	for scc in TarjanSCC::new(&graph)
@@ -27,7 +27,7 @@ fn produces_non_empty_components(ArbVertexIn(graph, _): ArbVertexIn<MockGraph<Di
 
 /// Tests that any SCC returned is actually strongly connected.
 #[quickcheck]
-fn produces_connected_components(ArbVertexIn(graph, _): ArbVertexIn<MockGraph<Directed>>) -> bool
+fn produces_connected_components(graph: ArbVertexIn<MockGraph<Directed>>) -> bool
 {
 	for scc in TarjanSCC::new(&NonNullGraph::insure(graph).unwrap())
 	{
@@ -41,8 +41,7 @@ fn produces_connected_components(ArbVertexIn(graph, _): ArbVertexIn<MockGraph<Di
 
 /// Tests that for any SCC pair produced, they are not strongly connected.
 #[quickcheck]
-fn produces_disconnected_components(ArbVertexIn(graph, _): ArbVertexIn<MockGraph<Directed>>)
-	-> bool
+fn produces_disconnected_components(graph: ArbVertexIn<MockGraph<Directed>>) -> bool
 {
 	let graph = NonNullGraph::insure(graph).unwrap();
 	let sccs = TarjanSCC::new(&graph).collect::<Vec<_>>();
@@ -66,7 +65,7 @@ fn produces_disconnected_components(ArbVertexIn(graph, _): ArbVertexIn<MockGraph
 
 /// Tests that all vertices are put inside some produced SCC.
 #[quickcheck]
-fn produces_all_vertices(ArbVertexIn(graph, _): ArbVertexIn<MockGraph<Directed>>) -> bool
+fn produces_all_vertices(graph: ArbVertexIn<MockGraph<Directed>>) -> bool
 {
 	let graph = NonNullGraph::insure(graph).unwrap();
 
@@ -82,7 +81,7 @@ fn produces_all_vertices(ArbVertexIn(graph, _): ArbVertexIn<MockGraph<Directed>>
 
 /// Tests that all vertices in the components are from the original graph.
 #[quickcheck]
-fn produces_only_valid_vertices(ArbVertexIn(graph, _): ArbVertexIn<MockGraph<Directed>>) -> bool
+fn produces_only_valid_vertices(graph: ArbVertexIn<MockGraph<Directed>>) -> bool
 {
 	let graph = NonNullGraph::insure(graph).unwrap();
 	for scc in TarjanSCC::new(&graph)
@@ -100,9 +99,7 @@ fn produces_only_valid_vertices(ArbVertexIn(graph, _): ArbVertexIn<MockGraph<Dir
 
 /// Tests that no two produced SCCs share any vertices
 #[quickcheck]
-fn produces_vertex_disjoint_components(
-	ArbVertexIn(graph, _): ArbVertexIn<MockGraph<Directed>>,
-) -> bool
+fn produces_vertex_disjoint_components(graph: ArbVertexIn<MockGraph<Directed>>) -> bool
 {
 	let graph = NonNullGraph::insure(graph).unwrap();
 	let sccs = TarjanSCC::new(&graph).collect::<Vec<_>>();
@@ -128,9 +125,7 @@ fn produces_vertex_disjoint_components(
 /// This is a guarantee of Tarjan's algorithm, which means if we don't do that,
 /// we are not implementing it correctly.
 #[quickcheck]
-fn produces_reverse_topological_ordering(
-	ArbVertexIn(graph, _): ArbVertexIn<MockGraph<Directed>>,
-) -> bool
+fn produces_reverse_topological_ordering(graph: ArbVertexIn<MockGraph<Directed>>) -> bool
 {
 	// To test the ordering, we simply check that an earlier-produced component
 	// can't reach any later one.

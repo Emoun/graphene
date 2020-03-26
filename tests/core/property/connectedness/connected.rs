@@ -7,7 +7,7 @@ use crate::mock_graph::{
 	MockEdgeWeight, MockVertexWeight,
 };
 use graphene::core::{
-	property::{AddEdge, ConnectedGraph, NewVertex, RemoveEdge, RemoveVertex},
+	property::{AddEdge, ConnectedGraph, NewVertex, NonNull, RemoveEdge, RemoveVertex},
 	Directedness, Edge, Insure, Release,
 };
 
@@ -20,7 +20,7 @@ duplicate_for_directedness! {
 	#[quickcheck]
 	fn accept_connected(g: ArbConnectedGraph<directedness>) -> bool
 	{
-		ConnectedGraph::validate(&g.0.release_all())
+		ConnectedGraph::validate(&g.release_all())
 	}
 
 	///
@@ -63,14 +63,16 @@ duplicate_for_directedness! {
 	///
 	#[quickcheck]
 	fn reject_remove_edge_where(
-		ArbVertexIn(g1,v1): ArbVertexIn<ArbConnectedGraph<directedness>>,
-		ArbVertexIn(g2,v2):	ArbVertexIn<ArbConnectedGraph<directedness>>,
+		g1: ArbVertexIn<ArbConnectedGraph<directedness>>,
+		g2:	ArbVertexIn<ArbConnectedGraph<directedness>>,
 		e_weight: MockEdgeWeight)
 		-> bool
 	{
-		let mut graph = g1.0.release_all();
+		let v1 = g1.get_vertex();
+		let v2 = g2.get_vertex();
+		let mut graph = g1.release_all();
 		// We start by joining 2 connected graphs into a unconnected graph with the 2 components
-		let v_map = graph.join(&g2.0);
+		let v_map = graph.join(&g2);
 
 		// We then connect the two components
 		graph.add_edge_weighted((v1,v_map[&v2], e_weight.clone())).unwrap();

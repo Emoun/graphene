@@ -2,8 +2,8 @@
 use crate::mock_graph::arbitrary::{ArbTwoUniqueVerticesIn, ArbVertexIn};
 use crate::mock_graph::{MockDirectedness, MockGraph, MockVertexWeight};
 use graphene::core::{
-	property::{NewVertex, NonNull, NonNullGraph, RemoveVertex, VertexInGraph},
-	Graph, Insure,
+	property::{NewVertex, NonNullGraph, RemoveVertex, VertexInGraph},
+	Insure,
 };
 
 duplicate_for_directedness! {
@@ -23,7 +23,7 @@ duplicate_for_directedness! {
 
 		/// Tests that graphs with at least 1 vertex are accepted.
 		#[quickcheck]
-		fn accept_non_null(ArbVertexIn(g,_): ArbVertexIn<MockGraph<directedness>>) -> bool
+		fn accept_non_null(g: ArbVertexIn<MockGraph<directedness>>) -> bool
 		{
 			ensurer::validate(&g)
 		}
@@ -39,17 +39,6 @@ duplicate_for_directedness! {
 			let mut g = ensurer::insure(g).unwrap();
 
 			assert!(g.remove_vertex(v).is_err())
-		}
-
-		/// Tests that `get_vertex()` returns a vertex in the graph.
-		#[quickcheck]
-		fn get_vertex(
-			ArbVertexIn(g,_): ArbVertexIn<MockGraph<MockDirectedness>>
-		) -> bool
-		{
-			let g = ensurer::insure(g).unwrap();
-
-			g.contains_vertex(g.get_vertex())
 		}
 	}
 

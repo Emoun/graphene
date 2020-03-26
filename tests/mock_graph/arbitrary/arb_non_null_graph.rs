@@ -2,8 +2,11 @@ use crate::mock_graph::{
 	arbitrary::{GuidedArbGraph, Limit},
 	MockGraph,
 };
-use graphene::core::{
-	property::NonNullGraph, BaseGraph, Directedness, GraphDeref, GraphDerefMut, Insure, Release,
+use graphene::{
+	core::{
+		property::NonNullGraph, BaseGraph, Directedness, GraphDeref, GraphDerefMut, Insure, Release,
+	},
+	impl_insurer,
 };
 use quickcheck::{Arbitrary, Gen};
 use static_assertions::_core::ops::RangeBounds;
@@ -12,23 +15,6 @@ use std::collections::HashSet;
 /// An arbitrary graph with at least 1 vertex
 #[derive(Clone, Debug)]
 pub struct ArbNonNullGraph<D: Directedness>(pub NonNullGraph<MockGraph<D>>);
-
-impl<D: Directedness> GraphDeref for ArbNonNullGraph<D>
-{
-	type Graph = NonNullGraph<MockGraph<D>>;
-
-	fn graph(&self) -> &Self::Graph
-	{
-		&self.0
-	}
-}
-impl<D: Directedness> GraphDerefMut for ArbNonNullGraph<D>
-{
-	fn graph_mut(&mut self) -> &mut Self::Graph
-	{
-		&mut self.0
-	}
-}
 
 impl<D: Directedness> GuidedArbGraph for ArbNonNullGraph<D>
 {
@@ -73,4 +59,10 @@ impl<D: Directedness> Arbitrary for ArbNonNullGraph<D>
 	{
 		self.shrink_guided(HashSet::new())
 	}
+}
+
+impl_insurer! {
+	ArbNonNullGraph<D>
+	for NonNullGraph<MockGraph<D>> as (self.0)
+	where D: Directedness
 }

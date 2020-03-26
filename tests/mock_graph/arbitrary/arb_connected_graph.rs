@@ -2,9 +2,12 @@ use crate::mock_graph::{
 	arbitrary::{GuidedArbGraph, Limit},
 	MockEdgeWeight, MockGraph, MockVertex,
 };
-use graphene::core::{
-	property::{AddEdge, ConnectedGraph, DirectedGraph, WeakGraph},
-	Directed, Directedness, Edge, Graph, GraphDeref, GraphDerefMut, Insure, Release,
+use graphene::{
+	core::{
+		property::{AddEdge, ConnectedGraph, DirectedGraph, WeakGraph},
+		Directed, Directedness, Edge, Graph, GraphDeref, GraphDerefMut, Insure, Release,
+	},
+	impl_insurer,
 };
 use quickcheck::{Arbitrary, Gen};
 use rand::Rng;
@@ -73,23 +76,6 @@ fn is_weak(graph: &MockGraph<Directed>) -> bool
 /// An arbitrary graph that is connected
 #[derive(Clone, Debug)]
 pub struct ArbConnectedGraph<D: Directedness>(pub ConnectedGraph<MockGraph<D>>);
-
-impl<D: Directedness> GraphDeref for ArbConnectedGraph<D>
-{
-	type Graph = ConnectedGraph<MockGraph<D>>;
-
-	fn graph(&self) -> &Self::Graph
-	{
-		&self.0
-	}
-}
-impl<D: Directedness> GraphDerefMut for ArbConnectedGraph<D>
-{
-	fn graph_mut(&mut self) -> &mut Self::Graph
-	{
-		&mut self.0
-	}
-}
 
 impl<D: Directedness> GuidedArbGraph for ArbConnectedGraph<D>
 {
@@ -196,6 +182,12 @@ impl<D: Directedness> Arbitrary for ArbConnectedGraph<D>
 	}
 }
 
+impl_insurer! {
+	ArbConnectedGraph<D>
+	for ConnectedGraph<MockGraph<D>> as (self.0)
+	where D: Directedness
+}
+
 /// An arbitrary graph that is unconnected
 #[derive(Clone, Debug)]
 pub struct ArbUnconnectedGraph<D: Directedness>(pub MockGraph<D>);
@@ -254,23 +246,6 @@ impl<D: Directedness> Arbitrary for ArbUnconnectedGraph<D>
 /// An arbitrary graph that is weakly connected
 #[derive(Clone, Debug)]
 pub struct ArbWeakGraph(pub WeakGraph<MockGraph<Directed>>);
-
-impl GraphDeref for ArbWeakGraph
-{
-	type Graph = WeakGraph<MockGraph<Directed>>;
-
-	fn graph(&self) -> &Self::Graph
-	{
-		&self.0
-	}
-}
-impl GraphDerefMut for ArbWeakGraph
-{
-	fn graph_mut(&mut self) -> &mut Self::Graph
-	{
-		&mut self.0
-	}
-}
 
 impl GuidedArbGraph for ArbWeakGraph
 {
@@ -370,4 +345,13 @@ impl Arbitrary for ArbWeakGraph
 	{
 		self.shrink_guided(HashSet::new())
 	}
+}
+
+impl_insurer! {
+	ArbWeakGraph:
+	// A new vertex wouldn't be connected to the rest of the graph
+	NewVertex,
+	// Can never impl the following
+	Subgraph, NonNull
+	for WeakGraph<MockGraph<Directed>> as (self.0)
 }

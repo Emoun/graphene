@@ -49,6 +49,6 @@ where
 impl<C: Insure> NoLoops for NoLoopsGraph<C> {}
 
 impl_insurer! {
-	NoLoopsGraph<C>: NoLoops, AddEdge
-	for C as (self.0)
+	NoLoopsGraph<C>: Insure, NoLoops, AddEdge
+	for <C> as (self.0)
 }

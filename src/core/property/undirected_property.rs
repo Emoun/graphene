@@ -45,6 +45,6 @@ impl<C: Insure> Graph for UndirectedGraph<C>
 impl<C: Insure> UndirectedConstraint for UndirectedGraph<C> {}
 
 impl_insurer! {
-	UndirectedGraph<C>: Graph, UndirectedConstraint
-	for C as (self.0)
+	UndirectedGraph<C>: Insure, Graph, UndirectedConstraint
+	for <C> as (self.0)
 }
