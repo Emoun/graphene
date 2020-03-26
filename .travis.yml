@@ -1,6 +1,6 @@
 language: rust
 rust:
-  - 1.37.0
+  - 1.42.0
   - stable
   - beta
   - nightly
@@ -12,13 +12,18 @@ env:
   - QUICKCHECK_GENERATOR_SIZE=50 QUICKCHECK_TESTS=1000
 
 matrix:
-  allow_failures:
-    - rust: nightly
-      env: QUICKCHECK_GENERATOR_SIZE=50 QUICKCHECK_TESTS=1000
   include:
     # An additional job specifically to check formatting
+    - rust: nightly-2020-03-22
+      script:
+        - rustup component add --toolchain nightly-2020-03-22 rustfmt
+        - cargo +nightly-2020-03-22 fmt -- --check
+      env:
+    # Another formatting job using newest nightly, allowed to fail
     - rust: nightly
       script:
         - rustup component add rustfmt
-        - cargo +nightly fmt -- --check
-      env:
+        - cargo +nightly -- --check
+  allow_failures:
+    - rust: nightly
+  
