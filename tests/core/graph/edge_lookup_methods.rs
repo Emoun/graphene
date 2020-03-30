@@ -48,7 +48,9 @@ use graphene::core::{property::NonNull, Directed, Edge, Graph, GraphMut};
 		vertices				[ v, _v2 ]
 		vertices_init			[let v = g.1;let _v2 = g.2;]
 		vertices_init_invalid 	[let v = g.1;let _v2 = g.2;]
-		closure 				[|e| (e.source() == v && e.sink() == _v2) || (e.source() == _v2 && e.sink() == v)]
+		closure 				[
+			|e| (e.source() == v && e.sink() == _v2) || (e.source() == _v2 && e.sink() == v)
+		]
 		arb_graph 				[ ArbTwoVerticesIn ]
 		arb_invalid_graph 		[ ArbEdgeOutside ]
 		base_graph 				[ MockGraph<MockDirectedness> ]

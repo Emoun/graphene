@@ -1,28 +1,38 @@
 use crate::mock_graph::arbitrary::{ArbConnectedGraph, ArbVertexIn};
+use duplicate::duplicate;
 use graphene::{
 	algo::Bfs,
-	core::{property::NonNull, Directed},
+	core::{property::NonNull, Directed, Undirected},
 };
 use std::collections::HashSet;
 
-duplicate_for_directedness! {
-	$directedness
+#[duplicate(
+	[
+		module			[ directed ]
+		directedness 	[ Directed ]
+	]
+	[
+		module			[ undirected ]
+		directedness 	[ Undirected ]
+	]
+)]
+mod module
+{
+	use super::*;
 
-	///
-	/// Tests that each produced vertex has an equal or higher depth than the previous
-	/// one.
-	///
+	/// Tests that each produced vertex has an equal or higher depth than the
+	/// previous one.
 	#[quickcheck]
-	fn increasing_depth(
-		graph: ArbVertexIn<ArbConnectedGraph<directedness>>
-	) -> bool
+	fn increasing_depth(graph: ArbVertexIn<ArbConnectedGraph<directedness>>) -> bool
 	{
 		let v = graph.get_vertex();
 		let mut depth = 0;
 		let mut bfs = Bfs::new(&graph, v);
 
-		while let Some(v) = bfs.next() {
-			if bfs.depth(v) < depth {
+		while let Some(v) = bfs.next()
+		{
+			if bfs.depth(v) < depth
+			{
 				return false;
 			}
 			depth = bfs.depth(v);
@@ -30,22 +40,21 @@ duplicate_for_directedness! {
 		true
 	}
 
-	///
 	/// Tests that a vertex's predecessor in the search has already been seen.
-	///
 	#[quickcheck]
-	fn predecessor_already_seen(
-		graph: ArbVertexIn<ArbConnectedGraph<directedness>>
-	) -> bool
+	fn predecessor_already_seen(graph: ArbVertexIn<ArbConnectedGraph<directedness>>) -> bool
 	{
 		let v = graph.get_vertex();
 		let mut seen = HashSet::new();
 		let mut bfs = Bfs::new(&graph, v);
 
-		while let Some(v) = bfs.next() {
-			if let Some(p) = bfs.predecessor(v) {
-				if !seen.contains(&p.value) {
-					return false
+		while let Some(v) = bfs.next()
+		{
+			if let Some(p) = bfs.predecessor(v)
+			{
+				if !seen.contains(&p.value)
+				{
+					return false;
 				}
 			}
 			seen.insert(v.value);
@@ -53,20 +62,20 @@ duplicate_for_directedness! {
 		true
 	}
 
-	///
-	/// Tests that each produced vertex's depth is 1 higher that its predecessor.
-	///
+	/// Tests that each produced vertex's depth is 1 higher that its
+	/// predecessor.
 	#[quickcheck]
-	fn predecessor_shallower(
-		graph: ArbVertexIn<ArbConnectedGraph<directedness>>
-	) -> bool
+	fn predecessor_shallower(graph: ArbVertexIn<ArbConnectedGraph<directedness>>) -> bool
 	{
 		let v = graph.get_vertex();
 		let mut bfs = Bfs::new(&graph, v);
 
-		while let Some(v) = bfs.next() {
-			if let Some(p) = bfs.predecessor(v) {
-				if !(bfs.depth(v) == (bfs.depth(p)+1)) {
+		while let Some(v) = bfs.next()
+		{
+			if let Some(p) = bfs.predecessor(v)
+			{
+				if !(bfs.depth(v) == (bfs.depth(p) + 1))
+				{
 					return false;
 				}
 			}
@@ -74,20 +83,19 @@ duplicate_for_directedness! {
 		true
 	}
 
-	///
 	/// Tests that any vertex with a depth > 0 has a predecessor.
-	///
 	#[quickcheck]
-	fn has_predecessor(
-		graph: ArbVertexIn<ArbConnectedGraph<directedness>>
-	) -> bool
+	fn has_predecessor(graph: ArbVertexIn<ArbConnectedGraph<directedness>>) -> bool
 	{
 		let v = graph.get_vertex();
 		let mut bfs = Bfs::new(&graph, v);
 
-		while let Some(v) = bfs.next() {
-			if bfs.depth(v) > 0{
-				if bfs.predecessor(v).is_none() {
+		while let Some(v) = bfs.next()
+		{
+			if bfs.depth(v) > 0
+			{
+				if bfs.predecessor(v).is_none()
+				{
 					return false;
 				}
 			}
@@ -95,24 +103,23 @@ duplicate_for_directedness! {
 		true
 	}
 
-	///
 	/// Tests that following the predecessors will reach the root.
-	///
 	#[quickcheck]
-	fn predecessor_path_reaches_root(
-		graph: ArbVertexIn<ArbConnectedGraph<directedness>>
-	) -> bool
+	fn predecessor_path_reaches_root(graph: ArbVertexIn<ArbConnectedGraph<directedness>>) -> bool
 	{
 		let root = graph.get_vertex();
 		let mut bfs = Bfs::new(&graph, root);
 
-		while let Some(v) = bfs.next() {
+		while let Some(v) = bfs.next()
+		{
 			let mut current = v;
-			while let Some(p) = bfs.predecessor(current) {
+			while let Some(p) = bfs.predecessor(current)
+			{
 				current = p;
 			}
-			if current != root {
-				return false
+			if current != root
+			{
+				return false;
 			}
 		}
 		true

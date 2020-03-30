@@ -3,49 +3,67 @@ use crate::mock_graph::{
 	arbitrary::{ArbConnectedGraph, ArbVertexIn, ArbVerticesIn},
 	MockEdgeWeight, MockGraph,
 };
+use duplicate::duplicate;
 use graphene::{
 	algo::{Bfs, DFS},
 	core::{
 		property::{AddEdge, NonNull},
-		Directed, Graph, GraphDeref, Release,
+		Directed, Graph, GraphDeref, Release, Undirected,
 	},
 };
 use std::collections::HashSet;
 
-duplicate_for! {
-	$search_algo_new [
-		dfs [DFS::new_simple]
-		bfs [Bfs::new]
+#[duplicate(
+	[
+		module				[ dfs ]
+		search_algo_new 	[ DFS::new_simple ]
 	]
+	[
+		module				[ bfs ]
+		search_algo_new 	[ Bfs::new ]
+	]
+)]
+mod module
+{
+	use super::*;
 
-	duplicate_for_directedness! {
-		$directedness
+	#[duplicate(
+	[
+		module2			[ directed ]
+		directedness 	[ Directed ]
+	]
+	[
+		module2			[ undirected ]
+		directedness 	[ Undirected ]
+	]
+	)]
+	mod module2
+	{
+		use super::*;
 
-		///
-		/// Tests that all vertices in a connected component are produced exactly once.
-		///
+		/// Tests that all vertices in a connected component are produced
+		/// exactly once.
 		#[quickcheck]
-		fn visits_component_once(mock: ArbVertexIn<ArbConnectedGraph<directedness>>)
-				 -> bool
+		fn visits_component_once(mock: ArbVertexIn<ArbConnectedGraph<directedness>>) -> bool
 		{
 			let v = mock.get_vertex();
 			// Use a set to insure we only count each vertex once
 			let mut visited = HashSet::new();
 			let mut visited_once = true;
-			search_algo_new(mock.graph(), v).for_each(|v|{ visited_once &= visited.insert(v); });
+			search_algo_new(mock.graph(), v).for_each(|v| {
+				visited_once &= visited.insert(v);
+			});
 
 			// We insure all vertices were visited, but only once
 			visited.len() == mock.all_vertices().count() && visited_once
 		}
 
-		///
 		/// Tests that no vertices outside a connected component are produced
-		///
 		#[quickcheck]
 		fn visits_none_outside_component(
 			g1: ArbVertexIn<ArbConnectedGraph<directedness>>,
-			g2: MockGraph<directedness>)
-			 -> bool
+			g2: MockGraph<directedness>,
+		) -> bool
 		{
 			let v = g1.get_vertex();
 			// Our starting connected component
@@ -63,10 +81,10 @@ duplicate_for! {
 	/// from a different component, only the first component's vertices are
 	/// produced.
 	///
-	/// This is different from `visits_none_outside_component` because in that case
-	/// the components are completely unconnected with no edges between them
-	/// (incoming or outgoing). This test therefore insures edges aren't taken the
-	/// wrong directed.
+	/// This is different from `visits_none_outside_component` because in that
+	/// case the components are completely unconnected with no edges between
+	/// them (incoming or outgoing). This test therefore insures edges aren't
+	/// taken the wrong directed.
 	#[quickcheck]
 	fn directed_doesnt_visit_incoming_component(
 		component: ArbVerticesIn<ArbVertexIn<ArbConnectedGraph<Directed>>>,
