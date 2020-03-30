@@ -13,14 +13,8 @@ use graphene::core::{
 };
 
 #[duplicate(
-	[
-		module			[ directed ]
-		directedness 	[ Directed ]
-	]
-	[
-		module			[ undirected ]
-		directedness 	[ Undirected ]
-	]
+	module			[ directed ] [ undirected ]
+	directedness 	[ Directed ] [ Undirected ]
 )]
 mod module
 {

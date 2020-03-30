@@ -8,28 +8,16 @@ use graphene::core::{
 };
 
 #[duplicate(
-	[
-		module			[ directed ]
-		directedness 	[ Directed ]
-	]
-	[
-		module			[ undirected ]
-		directedness 	[ Undirected ]
-	]
+	module			[ directed ] [ undirected ]
+	directedness 	[ Directed ] [ Undirected ]
 )]
 mod module
 {
 	use super::*;
 
 	#[duplicate(
-		[
-			module2		[ non_null_graph ]
-			ensurer 	[ NonNullGraph ]
-		]
-		[
-			module2		[ vertex_in_graph ]
-			ensurer 	[ VertexInGraph ]
-		]
+		module2	[ non_null_graph ]	[ vertex_in_graph ]
+		ensurer	[ NonNullGraph ]	[ VertexInGraph ]
 	)]
 	mod module2
 	{
