@@ -72,7 +72,7 @@ where
 }
 
 impl_insurer! {
-	ArbVertexIn<G>: RemoveVertex
+	ArbVertexIn<G>
 	for VertexInGraph<G> as (self.0)
 	where
 	G: GuidedArbGraph + Insure + Clone,

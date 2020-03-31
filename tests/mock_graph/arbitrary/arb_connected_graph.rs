@@ -4,8 +4,8 @@ use crate::mock_graph::{
 };
 use graphene::{
 	core::{
-		property::{AddEdge, ConnectedGraph, DirectedGraph, WeakGraph},
-		Directed, Directedness, Edge, Graph, GraphDeref, GraphDerefMut, Insure, Release,
+		property::{AddEdge, ConnectedGraph, WeakGraph},
+		Directed, Directedness, Edge, Graph, GraphDeref, GraphDerefMut, Release,
 	},
 	impl_insurer,
 };
@@ -25,7 +25,7 @@ fn is_connected<D: Directedness>(graph: &MockGraph<D>) -> bool
 		return true;
 	}
 
-	if let Ok(_) = <DirectedGraph<&MockGraph<D>>>::insure_all(graph)
+	if D::directed()
 	{
 		v_all
 			.iter()

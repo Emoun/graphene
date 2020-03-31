@@ -192,36 +192,6 @@ macro_rules! impl_insurer {
 			}
 		}
 
-		//Directed
-		impl_insurer!{
-			@inner
-			@struct_id $struct
-			@generic [ $($generics)* ]
-			@delegate [ $(@generic $generic_graph)? ]
-			@exclude [ $($trait)* ]
-			@bounds [
-				$($generic_graph: $crate::core::property::DirectedConstraint,)?
-				$($bounds)*
-			]
-			@trait_id DirectedConstraint [$crate::core::property]
-			@implement {}
-		}
-
-		//Undirected
-		impl_insurer!{
-			@inner
-			@struct_id $struct
-			@generic [ $($generics)* ]
-			@delegate [ $(@generic $generic_graph)? ]
-			@exclude [ $($trait)* ]
-			@bounds [
-				$($generic_graph: $crate::core::property::UndirectedConstraint,)?
-				$($bounds)*
-			]
-			@trait_id UndirectedConstraint [$crate::core::property]
-			@implement {}
-		}
-
 		// NewVertex
 		impl_insurer!{
 			@inner

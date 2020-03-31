@@ -2,19 +2,18 @@
 mod impl_insurer;
 mod base_props;
 mod connected;
-mod directed_property;
+mod directedness_insurers;
 mod no_loops;
 mod non_null;
 mod reflexive;
 mod subgraph;
-mod undirected_property;
 mod unilateral;
 mod unique;
 mod weak;
 
 pub use self::{
-	base_props::*, connected::*, directed_property::*, impl_insurer::*, no_loops::*, non_null::*,
-	reflexive::*, subgraph::*, undirected_property::*, unilateral::*, unique::*, weak::*,
+	base_props::*, connected::*, directedness_insurers::*, impl_insurer::*, no_loops::*,
+	non_null::*, reflexive::*, subgraph::*, unilateral::*, unique::*, weak::*,
 };
 use crate::core::{
 	proxy::{EdgeProxyGraph, ProxyVertex, VertexProxyGraph},

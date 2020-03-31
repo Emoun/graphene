@@ -49,7 +49,7 @@ impl<C: Insure> Insure for ConnectedGraph<C>
 			if dfs_count == v_count
 			{
 				// If its undirected, no more needs to be done
-				if let Ok(g) = <DirectedGraph<&C::Graph>>::insure_all(g)
+				if let Ok(g) = DirectedGraph::insure(g)
 				{
 					let reverse = ReverseGraph::new(g);
 					if DFS::new_simple(&reverse, v).count() != v_count

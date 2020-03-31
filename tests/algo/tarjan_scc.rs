@@ -1,5 +1,4 @@
 use crate::mock_graph::{arbitrary::ArbVertexIn, MockGraph};
-use graphene::core::property::NonNullGraph;
 /// Tests `TarjanSCC`: Tarjan's algorithm for finding strongly connected
 /// components.
 use graphene::{
@@ -14,7 +13,6 @@ use graphene::{
 #[quickcheck]
 fn produces_non_empty_components(graph: ArbVertexIn<MockGraph<Directed>>) -> bool
 {
-	let graph = NonNullGraph::insure(graph).unwrap();
 	for scc in TarjanSCC::new(&graph)
 	{
 		if scc.all_vertices().count() == 0
@@ -29,7 +27,7 @@ fn produces_non_empty_components(graph: ArbVertexIn<MockGraph<Directed>>) -> boo
 #[quickcheck]
 fn produces_connected_components(graph: ArbVertexIn<MockGraph<Directed>>) -> bool
 {
-	for scc in TarjanSCC::new(&NonNullGraph::insure(graph).unwrap())
+	for scc in TarjanSCC::new(&graph)
 	{
 		if !ConnectedGraph::validate(&scc)
 		{
@@ -43,7 +41,6 @@ fn produces_connected_components(graph: ArbVertexIn<MockGraph<Directed>>) -> boo
 #[quickcheck]
 fn produces_disconnected_components(graph: ArbVertexIn<MockGraph<Directed>>) -> bool
 {
-	let graph = NonNullGraph::insure(graph).unwrap();
 	let sccs = TarjanSCC::new(&graph).collect::<Vec<_>>();
 	let mut scc_iter = sccs.iter();
 
@@ -67,8 +64,6 @@ fn produces_disconnected_components(graph: ArbVertexIn<MockGraph<Directed>>) -> 
 #[quickcheck]
 fn produces_all_vertices(graph: ArbVertexIn<MockGraph<Directed>>) -> bool
 {
-	let graph = NonNullGraph::insure(graph).unwrap();
-
 	// We simply count the vertices since we have another test
 	// for checking that no vertex is reused
 	let mut vertex_count = 0;
@@ -83,7 +78,6 @@ fn produces_all_vertices(graph: ArbVertexIn<MockGraph<Directed>>) -> bool
 #[quickcheck]
 fn produces_only_valid_vertices(graph: ArbVertexIn<MockGraph<Directed>>) -> bool
 {
-	let graph = NonNullGraph::insure(graph).unwrap();
 	for scc in TarjanSCC::new(&graph)
 	{
 		for v in scc.all_vertices()
@@ -101,7 +95,6 @@ fn produces_only_valid_vertices(graph: ArbVertexIn<MockGraph<Directed>>) -> bool
 #[quickcheck]
 fn produces_vertex_disjoint_components(graph: ArbVertexIn<MockGraph<Directed>>) -> bool
 {
-	let graph = NonNullGraph::insure(graph).unwrap();
 	let sccs = TarjanSCC::new(&graph).collect::<Vec<_>>();
 	let mut scc_iter = sccs.iter();
 
@@ -129,7 +122,6 @@ fn produces_reverse_topological_ordering(graph: ArbVertexIn<MockGraph<Directed>>
 {
 	// To test the ordering, we simply check that an earlier-produced component
 	// can't reach any later one.
-	let graph = NonNullGraph::insure(graph).unwrap();
 	let sccs = TarjanSCC::new(&graph).collect::<Vec<_>>();
 	let mut scc_iter = sccs.iter();
 
