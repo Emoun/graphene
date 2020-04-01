@@ -116,7 +116,9 @@ impl<D: Directedness> Arbitrary for ArbUniqueGraph<D>
 }
 
 impl_ensurer! {
-	ArbUniqueGraph<D>
+	use<D> ArbUniqueGraph<D>:
+	// Can never impl the following because MockGraph doesn't
+	Reflexive
 	for UniqueGraph<MockGraph<D>> as (self.0)
 	where D: Directedness
 }

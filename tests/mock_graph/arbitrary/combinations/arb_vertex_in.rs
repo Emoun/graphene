@@ -72,7 +72,9 @@ where
 }
 
 impl_ensurer! {
-	ArbVertexIn<G>
+	use<G> ArbVertexIn<G>:
+	// Can never impl the following because MockGraph doesn't
+	Reflexive
 	for VertexInGraph<G> as (self.0)
 	where
 	G: GuidedArbGraph + Ensure + Clone,

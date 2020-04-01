@@ -38,8 +38,8 @@ impl<C: Ensure> Graph for DirectedGraph<C>
 }
 
 impl_ensurer! {
-	DirectedGraph<C>: Ensure, Graph, DirectedConstraint
-	for <C> as (self.0)
+	use<C> DirectedGraph<C>: Ensure, Graph, DirectedConstraint
+	for C as (self.0)
 }
 
 #[derive(Clone, Debug)]
@@ -79,6 +79,6 @@ impl<C: Ensure> Graph for UndirectedGraph<C>
 }
 
 impl_ensurer! {
-	UndirectedGraph<C>: Ensure, Graph, UndirectedConstraint
-	for <C> as (self.0)
+	use<C> UndirectedGraph<C>: Ensure, Graph, UndirectedConstraint
+	for C as (self.0)
 }

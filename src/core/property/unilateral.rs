@@ -100,9 +100,9 @@ impl<C: Ensure> Weak for UnilateralGraph<C> where C::Graph: Graph<Directedness =
 impl<C: Ensure> Unilateral for UnilateralGraph<C> where C::Graph: Graph<Directedness = Directed> {}
 
 impl_ensurer! {
-	UnilateralGraph<C>: Ensure, Unilateral, Weak, RemoveVertex, RemoveEdge,
+	use<C> UnilateralGraph<C>: Ensure, Unilateral, Weak, RemoveVertex, RemoveEdge,
 	// A new vertex would be unconnected to the rest of the graph
 	NewVertex
-	for <C> as (self.0)
+	for C as (self.0)
 	where C::Graph: Graph<Directedness=Directed>
 }

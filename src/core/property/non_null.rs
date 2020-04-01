@@ -64,8 +64,8 @@ impl<C: Ensure> NonNull for NonNullGraph<C>
 }
 
 impl_ensurer! {
-	NonNullGraph<C>: Ensure, NonNull, RemoveVertex
-	for <C> as (self.0)
+	use<C> NonNullGraph<C>: Ensure, NonNull, RemoveVertex
+	for C as (self.0)
 }
 
 /// Ensures a specific vertex is in the underlying graph.
@@ -153,6 +153,6 @@ impl<C: Ensure> NonNull for VertexInGraph<C>
 }
 
 impl_ensurer! {
-	VertexInGraph<C>: Ensure, NonNull, RemoveVertex
-	for <C> as (self.0)
+	use<C> VertexInGraph<C>: Ensure, NonNull, RemoveVertex
+	for C as (self.0)
 }

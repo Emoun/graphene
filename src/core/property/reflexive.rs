@@ -73,7 +73,7 @@ where
 impl<C: Ensure> Reflexive for ReflexiveGraph<C> where <C::Graph as Graph>::EdgeWeight: Default {}
 
 impl_ensurer! {
-	ReflexiveGraph<C>: Ensure, NewVertex, RemoveVertex, Reflexive
-	for <C> as (self.0)
+	use<C> ReflexiveGraph<C>: Ensure, NewVertex, RemoveVertex, Reflexive
+	for C as (self.0)
 	where <C::Graph as Graph>::EdgeWeight: Default,
 }

@@ -183,7 +183,9 @@ impl<D: Directedness> Arbitrary for ArbConnectedGraph<D>
 }
 
 impl_ensurer! {
-	ArbConnectedGraph<D>
+	use<D> ArbConnectedGraph<D>:
+	// Can never impl the following because MockGraph doesn't
+	Reflexive
 	for ConnectedGraph<MockGraph<D>> as (self.0)
 	where D: Directedness
 }
@@ -352,6 +354,6 @@ impl_ensurer! {
 	// A new vertex wouldn't be connected to the rest of the graph
 	NewVertex,
 	// Can never impl the following
-	Subgraph, NonNull
+	Unique, NoLoops, Reflexive, Unilateral, Connected, Subgraph, NonNull
 	for WeakGraph<MockGraph<Directed>> as (self.0)
 }

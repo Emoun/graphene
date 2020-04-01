@@ -191,7 +191,7 @@ impl_ensurer! {
 	// A new vertex wouldn't be connected to the rest of the graph
 	NewVertex,
 	// Can never impl the following because MockGraph doesn't
-	Subgraph, NonNull
+	Unique, NoLoops, Reflexive, Connected, Subgraph, NonNull
 	for UnilateralGraph<MockGraph<Directed>> as (self.0)
 }
 

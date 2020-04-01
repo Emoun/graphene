@@ -84,9 +84,9 @@ where
 impl<C: Ensure> Weak for WeakGraph<C> where C::Graph: Graph<Directedness = Directed> {}
 
 impl_ensurer! {
-	WeakGraph<C>: Ensure, Weak, RemoveVertex, RemoveEdge,
+	use<C> WeakGraph<C>: Ensure, Weak, RemoveVertex, RemoveEdge,
 	// A new vertex wouldn't be connected to the rest of the graph
 	NewVertex
-	for <C> as (self.0)
+	for C as (self.0)
 	where C::Graph: Graph<Directedness=Directed>
 }
