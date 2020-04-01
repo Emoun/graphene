@@ -1,23 +1,23 @@
-use crate::core::{Directed, Directedness, Graph, Insure, Undirected};
+use crate::core::{Directed, Directedness, Ensure, Graph, Undirected};
 use delegate::delegate;
 
 #[derive(Clone, Debug)]
-pub struct DirectedGraph<C: Insure>(C);
+pub struct DirectedGraph<C: Ensure>(C);
 
-impl<C: Insure> Insure for DirectedGraph<C>
+impl<C: Ensure> Ensure for DirectedGraph<C>
 {
-	fn insure_unvalidated(c: Self::Insured) -> Self
+	fn ensure_unvalidated(c: Self::Ensured) -> Self
 	{
 		Self(c)
 	}
 
-	fn validate(_: &Self::Insured) -> bool
+	fn validate(_: &Self::Ensured) -> bool
 	{
 		<<C::Graph as Graph>::Directedness as Directedness>::directed()
 	}
 }
 
-impl<C: Insure> Graph for DirectedGraph<C>
+impl<C: Ensure> Graph for DirectedGraph<C>
 {
 	type Directedness = Directed;
 	type EdgeWeight = <C::Graph as Graph>::EdgeWeight;
@@ -37,28 +37,28 @@ impl<C: Insure> Graph for DirectedGraph<C>
 	}
 }
 
-impl_insurer! {
-	DirectedGraph<C>: Insure, Graph, DirectedConstraint
+impl_ensurer! {
+	DirectedGraph<C>: Ensure, Graph, DirectedConstraint
 	for <C> as (self.0)
 }
 
 #[derive(Clone, Debug)]
-pub struct UndirectedGraph<C: Insure>(C);
+pub struct UndirectedGraph<C: Ensure>(C);
 
-impl<C: Insure> Insure for UndirectedGraph<C>
+impl<C: Ensure> Ensure for UndirectedGraph<C>
 {
-	fn insure_unvalidated(c: Self::Insured) -> Self
+	fn ensure_unvalidated(c: Self::Ensured) -> Self
 	{
 		Self(c)
 	}
 
-	fn validate(_: &Self::Insured) -> bool
+	fn validate(_: &Self::Ensured) -> bool
 	{
 		!<<C::Graph as Graph>::Directedness as Directedness>::directed()
 	}
 }
 
-impl<C: Insure> Graph for UndirectedGraph<C>
+impl<C: Ensure> Graph for UndirectedGraph<C>
 {
 	type Directedness = Undirected;
 	type EdgeWeight = <C::Graph as Graph>::EdgeWeight;
@@ -78,7 +78,7 @@ impl<C: Insure> Graph for UndirectedGraph<C>
 	}
 }
 
-impl_insurer! {
-	UndirectedGraph<C>: Insure, Graph, UndirectedConstraint
+impl_ensurer! {
+	UndirectedGraph<C>: Ensure, Graph, UndirectedConstraint
 	for <C> as (self.0)
 }

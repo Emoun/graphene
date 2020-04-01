@@ -5,7 +5,7 @@ use crate::{
 			proxy_remove_edge_where, proxy_remove_vertex, DirectedGraph, RemoveEdge, RemoveVertex,
 			Unilateral, Weak,
 		},
-		Graph, GraphDerefMut, Insure, ReverseGraph,
+		Ensure, Graph, GraphDerefMut, ReverseGraph,
 	},
 };
 
@@ -18,9 +18,9 @@ pub trait Connected: Unilateral
 }
 
 #[derive(Clone, Debug)]
-pub struct ConnectedGraph<C: Insure>(C);
+pub struct ConnectedGraph<C: Ensure>(C);
 
-impl<C: Insure> ConnectedGraph<C>
+impl<C: Ensure> ConnectedGraph<C>
 {
 	/// Creates a new connected graph. The given graph *must* be connected.
 	/// This method does not check for this!!
@@ -30,14 +30,14 @@ impl<C: Insure> ConnectedGraph<C>
 	}
 }
 
-impl<C: Insure> Insure for ConnectedGraph<C>
+impl<C: Ensure> Ensure for ConnectedGraph<C>
 {
-	fn insure_unvalidated(c: Self::Insured) -> Self
+	fn ensure_unvalidated(c: Self::Ensured) -> Self
 	{
 		Self(c)
 	}
 
-	fn validate(c: &Self::Insured) -> bool
+	fn validate(c: &Self::Ensured) -> bool
 	{
 		let g = c.graph();
 		let v_count = g.all_vertices().count();
@@ -49,7 +49,7 @@ impl<C: Insure> Insure for ConnectedGraph<C>
 			if dfs_count == v_count
 			{
 				// If its undirected, no more needs to be done
-				if let Ok(g) = DirectedGraph::insure(g)
+				if let Ok(g) = DirectedGraph::ensure(g)
 				{
 					let reverse = ReverseGraph::new(g);
 					if DFS::new_simple(&reverse, v).count() != v_count
@@ -65,7 +65,7 @@ impl<C: Insure> Insure for ConnectedGraph<C>
 	}
 }
 
-impl<C: Insure + GraphDerefMut> RemoveVertex for ConnectedGraph<C>
+impl<C: Ensure + GraphDerefMut> RemoveVertex for ConnectedGraph<C>
 where
 	C::Graph: RemoveVertex,
 {
@@ -75,7 +75,7 @@ where
 	}
 }
 
-impl<C: Insure + GraphDerefMut> RemoveEdge for ConnectedGraph<C>
+impl<C: Ensure + GraphDerefMut> RemoveEdge for ConnectedGraph<C>
 where
 	C::Graph: RemoveEdge,
 {
@@ -90,12 +90,12 @@ where
 	}
 }
 
-impl<C: Insure> Weak for ConnectedGraph<C> {}
-impl<C: Insure> Unilateral for ConnectedGraph<C> {}
-impl<C: Insure> Connected for ConnectedGraph<C> {}
+impl<C: Ensure> Weak for ConnectedGraph<C> {}
+impl<C: Ensure> Unilateral for ConnectedGraph<C> {}
+impl<C: Ensure> Connected for ConnectedGraph<C> {}
 
-impl_insurer! {
-	ConnectedGraph<C>: Insure, Connected, Unilateral, Weak, RemoveVertex, RemoveEdge,
+impl_ensurer! {
+	ConnectedGraph<C>: Ensure, Connected, Unilateral, Weak, RemoveVertex, RemoveEdge,
 	// A new vertex wouldn't be connected to the rest of the graph
 	NewVertex
 	for <C> as (self.0)

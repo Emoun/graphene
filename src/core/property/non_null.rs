@@ -1,4 +1,4 @@
-use crate::core::{property::RemoveVertex, Graph, GraphDerefMut, Insure};
+use crate::core::{property::RemoveVertex, Ensure, Graph, GraphDerefMut};
 use std::fmt::{Debug, Error, Formatter};
 
 /// A marker trait for graphs with at least 1 vertex.
@@ -21,22 +21,22 @@ pub trait NonNull: Graph
 /// Gives no guarantees on which vertex is returned by any given call to
 /// `get_vertex` if the the graph has multiple vertices.
 #[derive(Clone, Debug)]
-pub struct NonNullGraph<C: Insure>(C);
+pub struct NonNullGraph<C: Ensure>(C);
 
-impl<C: Insure> Insure for NonNullGraph<C>
+impl<C: Ensure> Ensure for NonNullGraph<C>
 {
-	fn insure_unvalidated(c: Self::Insured) -> Self
+	fn ensure_unvalidated(c: Self::Ensured) -> Self
 	{
 		Self(c)
 	}
 
-	fn validate(c: &Self::Insured) -> bool
+	fn validate(c: &Self::Ensured) -> bool
 	{
 		c.graph().all_vertices().next().is_some()
 	}
 }
 
-impl<C: Insure + GraphDerefMut> RemoveVertex for NonNullGraph<C>
+impl<C: Ensure + GraphDerefMut> RemoveVertex for NonNullGraph<C>
 where
 	C::Graph: RemoveVertex,
 {
@@ -53,7 +53,7 @@ where
 	}
 }
 
-impl<C: Insure> NonNull for NonNullGraph<C>
+impl<C: Ensure> NonNull for NonNullGraph<C>
 {
 	fn get_vertex(&self) -> Self::Vertex
 	{
@@ -63,8 +63,8 @@ impl<C: Insure> NonNull for NonNullGraph<C>
 	}
 }
 
-impl_insurer! {
-	NonNullGraph<C>: Insure, NonNull, RemoveVertex
+impl_ensurer! {
+	NonNullGraph<C>: Ensure, NonNull, RemoveVertex
 	for <C> as (self.0)
 }
 
@@ -77,13 +77,13 @@ impl_insurer! {
 /// created:
 ///
 /// 1. If `new` was used, the vertex it was given is guaranteed.
-/// 2. If an instance was created as an insurer (using `insure_unvalidated` or
-/// `insure` etc.) then an arbitrary vertex in the graph is chosen, with no
+/// 2. If an instance was created as an ensurer (using `ensure_unvalidated` or
+/// `ensure` etc.) then an arbitrary vertex in the graph is chosen, with no
 /// guarantees as to how this choice is made.
 #[derive(Clone)]
-pub struct VertexInGraph<C: Insure>(C, <C::Graph as Graph>::Vertex);
+pub struct VertexInGraph<C: Ensure>(C, <C::Graph as Graph>::Vertex);
 
-impl<C: Insure> Debug for VertexInGraph<C>
+impl<C: Ensure> Debug for VertexInGraph<C>
 where
 	<C::Graph as Graph>::Vertex: Debug,
 {
@@ -93,7 +93,7 @@ where
 	}
 }
 
-impl<C: Insure> VertexInGraph<C>
+impl<C: Ensure> VertexInGraph<C>
 {
 	pub fn new(graph: C, v: <C::Graph as Graph>::Vertex) -> Option<Self>
 	{
@@ -113,21 +113,21 @@ impl<C: Insure> VertexInGraph<C>
 	}
 }
 
-impl<C: Insure> Insure for VertexInGraph<C>
+impl<C: Ensure> Ensure for VertexInGraph<C>
 {
-	fn insure_unvalidated(c: Self::Insured) -> Self
+	fn ensure_unvalidated(c: Self::Ensured) -> Self
 	{
 		let v = c.graph().all_vertices().next().unwrap();
 		Self(c, v)
 	}
 
-	fn validate(c: &Self::Insured) -> bool
+	fn validate(c: &Self::Ensured) -> bool
 	{
 		NonNullGraph::validate(c)
 	}
 }
 
-impl<C: Insure + GraphDerefMut> RemoveVertex for VertexInGraph<C>
+impl<C: Ensure + GraphDerefMut> RemoveVertex for VertexInGraph<C>
 where
 	C::Graph: RemoveVertex,
 {
@@ -144,7 +144,7 @@ where
 	}
 }
 
-impl<C: Insure> NonNull for VertexInGraph<C>
+impl<C: Ensure> NonNull for VertexInGraph<C>
 {
 	fn get_vertex(&self) -> Self::Vertex
 	{
@@ -152,7 +152,7 @@ impl<C: Insure> NonNull for VertexInGraph<C>
 	}
 }
 
-impl_insurer! {
-	VertexInGraph<C>: Insure, NonNull, RemoveVertex
+impl_ensurer! {
+	VertexInGraph<C>: Ensure, NonNull, RemoveVertex
 	for <C> as (self.0)
 }

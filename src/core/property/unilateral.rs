@@ -5,7 +5,7 @@ use crate::{
 			proxy_remove_edge_where, proxy_remove_vertex, NonNullGraph, RemoveEdge, RemoveVertex,
 			Subgraph, Weak,
 		},
-		Directed, Graph, GraphDerefMut, Insure,
+		Directed, Ensure, Graph, GraphDerefMut,
 	},
 };
 
@@ -18,7 +18,7 @@ use crate::{
 ///
 /// The distinction between unilaterally and strongly connected only exists for
 /// directed graphs, for undirected ones, they are equal. For this reason, the
-/// companion insurer graph `UnilateralGraph` only allows directed graphs.
+/// companion ensurer graph `UnilateralGraph` only allows directed graphs.
 /// For undirected graph, simply use `ConnectedGraph`.
 ///
 /// For type safety reasons, the trait itself does not restrict directedness.
@@ -27,22 +27,22 @@ pub trait Unilateral: Weak
 }
 
 #[derive(Clone, Debug)]
-pub struct UnilateralGraph<C: Insure>(C)
+pub struct UnilateralGraph<C: Ensure>(C)
 where
 	C::Graph: Graph<Directedness = Directed>;
 
-impl<C: Insure> Insure for UnilateralGraph<C>
+impl<C: Ensure> Ensure for UnilateralGraph<C>
 where
 	C::Graph: Graph<Directedness = Directed>,
 {
-	fn insure_unvalidated(c: Self::Insured) -> Self
+	fn ensure_unvalidated(c: Self::Ensured) -> Self
 	{
 		Self(c)
 	}
 
-	fn validate(c: &Self::Insured) -> bool
+	fn validate(c: &Self::Ensured) -> bool
 	{
-		if let Ok(graph) = NonNullGraph::insure(c.graph())
+		if let Ok(graph) = NonNullGraph::ensure(c.graph())
 		{
 			// Algorithm: First use Tarjan's Strongly Connected Component (SCC) algorithm to
 			// find SCCs and then check whether every component has an edge to the next one
@@ -71,7 +71,7 @@ where
 	}
 }
 
-impl<C: Insure + GraphDerefMut> RemoveVertex for UnilateralGraph<C>
+impl<C: Ensure + GraphDerefMut> RemoveVertex for UnilateralGraph<C>
 where
 	C::Graph: RemoveVertex<Directedness = Directed>,
 {
@@ -81,7 +81,7 @@ where
 	}
 }
 
-impl<C: Insure + GraphDerefMut> RemoveEdge for UnilateralGraph<C>
+impl<C: Ensure + GraphDerefMut> RemoveEdge for UnilateralGraph<C>
 where
 	C::Graph: RemoveEdge<Directedness = Directed>,
 {
@@ -96,11 +96,11 @@ where
 	}
 }
 
-impl<C: Insure> Weak for UnilateralGraph<C> where C::Graph: Graph<Directedness = Directed> {}
-impl<C: Insure> Unilateral for UnilateralGraph<C> where C::Graph: Graph<Directedness = Directed> {}
+impl<C: Ensure> Weak for UnilateralGraph<C> where C::Graph: Graph<Directedness = Directed> {}
+impl<C: Ensure> Unilateral for UnilateralGraph<C> where C::Graph: Graph<Directedness = Directed> {}
 
-impl_insurer! {
-	UnilateralGraph<C>: Insure, Unilateral, Weak, RemoveVertex, RemoveEdge,
+impl_ensurer! {
+	UnilateralGraph<C>: Ensure, Unilateral, Weak, RemoveVertex, RemoveEdge,
 	// A new vertex would be unconnected to the rest of the graph
 	NewVertex
 	for <C> as (self.0)

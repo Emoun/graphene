@@ -35,14 +35,14 @@ mod module
 		fn visits_component_once(mock: ArbVertexIn<ArbConnectedGraph<directedness>>) -> bool
 		{
 			let v = mock.get_vertex();
-			// Use a set to insure we only count each vertex once
+			// Use a set to ensure we only count each vertex once
 			let mut visited = HashSet::new();
 			let mut visited_once = true;
 			search_algo_new(mock.graph(), v).for_each(|v| {
 				visited_once &= visited.insert(v);
 			});
 
-			// We insure all vertices were visited, but only once
+			// We ensure all vertices were visited, but only once
 			visited.len() == mock.all_vertices().count() && visited_once
 		}
 
@@ -71,7 +71,7 @@ mod module
 	///
 	/// This is different from `visits_none_outside_component` because in that
 	/// case the components are completely unconnected with no edges between
-	/// them (incoming or outgoing). This test therefore insures edges aren't
+	/// them (incoming or outgoing). This test therefore ensures edges aren't
 	/// taken the wrong directed.
 	#[quickcheck]
 	fn directed_doesnt_visit_incoming_component(

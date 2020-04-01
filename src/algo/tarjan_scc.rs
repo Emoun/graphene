@@ -53,7 +53,7 @@ use crate::{
 	core::{
 		property::{ConnectedGraph, NonNull},
 		proxy::SubgraphProxy,
-		Directed, Graph, Insure,
+		Directed, Ensure, Graph,
 	},
 };
 use std::cmp::min;
@@ -142,7 +142,7 @@ where
 					}
 
 					return Some(
-						ConnectedGraph::insure(scc)
+						ConnectedGraph::ensure(scc)
 							.expect("Tarjans algorithm produced non-strongly-connected subgraph"),
 					);
 					// return Some(ConnectedGraph::new(scc));

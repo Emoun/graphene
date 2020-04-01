@@ -157,7 +157,7 @@ impl<D: Directedness> Graph for MockGraph<D>
 {
 	type Directedness = D;
 	type EdgeWeight = MockEdgeWeight;
-	/// We hide u32 behind a struct to insure our tests aren't dependent
+	/// We hide u32 behind a struct to ensure our tests aren't dependent
 	/// on graphs using usize as ids
 	type Vertex = MockVertex;
 	type VertexWeight = MockVertexWeight;

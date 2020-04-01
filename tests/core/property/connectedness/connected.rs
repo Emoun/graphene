@@ -1,4 +1,4 @@
-//! Tests the `core::Connected` trait and its insurer `core::ConnectedGraph`.
+//! Tests the `core::Connected` trait and its ensurer `core::ConnectedGraph`.
 
 use crate::mock_graph::{
 	arbitrary::{
@@ -9,7 +9,7 @@ use crate::mock_graph::{
 use duplicate::duplicate;
 use graphene::core::{
 	property::{AddEdge, ConnectedGraph, NewVertex, NonNull, RemoveEdge, RemoveVertex},
-	Directed, Directedness, Edge, Insure, Release, Undirected,
+	Directed, Directedness, Edge, Ensure, Release, Undirected,
 };
 
 #[duplicate(
@@ -52,7 +52,7 @@ mod module
 		e_weight: MockEdgeWeight,
 	) -> bool
 	{
-		// To insure we can remove an edge, we first create an edge to remove
+		// To ensure we can remove an edge, we first create an edge to remove
 		g.0.add_edge_weighted((v1, v2, e_weight.clone())).unwrap();
 
 		g.0.remove_edge_where(|e| (e.source() == v1 && e.sink() == v2))
@@ -85,7 +85,7 @@ mod module
 				.add_edge_weighted((v_map[&v2], v1, e_weight.clone()))
 				.unwrap();
 		}
-		let mut connected = ConnectedGraph::insure(graph).unwrap();
+		let mut connected = ConnectedGraph::ensure(graph).unwrap();
 
 		// We now try to remove the the added edge
 		connected
@@ -179,7 +179,7 @@ mod module
 				.add_edge_weighted((new_v, v12, e_weight.clone()))
 				.unwrap();
 		}
-		let mut connected = ConnectedGraph::insure(graph).unwrap();
+		let mut connected = ConnectedGraph::ensure(graph).unwrap();
 
 		// We now try to remove the the added vertex
 		connected.remove_vertex(new_v).is_err()

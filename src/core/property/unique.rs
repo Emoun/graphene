@@ -1,5 +1,5 @@
 use crate::core::{
-	property::AddEdge, Directedness, Edge, EdgeWeighted, Graph, GraphDerefMut, Insure,
+	property::AddEdge, Directedness, Edge, EdgeWeighted, Ensure, Graph, GraphDerefMut,
 };
 
 /// A marker trait for graphs containing only unique edges.
@@ -21,9 +21,9 @@ pub trait Unique: Graph
 }
 
 #[derive(Clone, Debug)]
-pub struct UniqueGraph<C: Insure>(C);
+pub struct UniqueGraph<C: Ensure>(C);
 
-impl<C: Insure> UniqueGraph<C>
+impl<C: Ensure> UniqueGraph<C>
 {
 	/// Constrains the given graph.
 	///
@@ -34,14 +34,14 @@ impl<C: Insure> UniqueGraph<C>
 	}
 }
 
-impl<C: Insure> Insure for UniqueGraph<C>
+impl<C: Ensure> Ensure for UniqueGraph<C>
 {
-	fn insure_unvalidated(c: Self::Insured) -> Self
+	fn ensure_unvalidated(c: Self::Ensured) -> Self
 	{
 		Self(c)
 	}
 
-	fn validate(c: &Self::Insured) -> bool
+	fn validate(c: &Self::Ensured) -> bool
 	{
 		let edges: Vec<_> = c.graph().all_edges().collect();
 		let mut iter = edges.iter();
@@ -62,7 +62,7 @@ impl<C: Insure> Insure for UniqueGraph<C>
 	}
 }
 
-impl<C: Insure + GraphDerefMut> AddEdge for UniqueGraph<C>
+impl<C: Ensure + GraphDerefMut> AddEdge for UniqueGraph<C>
 where
 	C::Graph: AddEdge,
 {
@@ -90,10 +90,10 @@ where
 	}
 }
 
-impl<C: Insure> Unique for UniqueGraph<C> {}
+impl<C: Ensure> Unique for UniqueGraph<C> {}
 
-impl_insurer! {
-	UniqueGraph<C>: Insure, Unique, AddEdge
+impl_ensurer! {
+	UniqueGraph<C>: Ensure, Unique, AddEdge
 	for <C> as (self.0)
-	where C: Insure
+	where C: Ensure
 }

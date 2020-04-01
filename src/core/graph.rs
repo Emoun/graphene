@@ -1,7 +1,7 @@
 use crate::core::{
 	property::{DirectedGraph, UndirectedGraph},
 	trait_aliases::Id,
-	BaseGraph, Directed, Directedness, Edge, Insure,
+	BaseGraph, Directed, Directedness, Edge, Ensure,
 };
 use std::iter::Iterator;
 
@@ -136,17 +136,17 @@ pub trait Graph
 		edges_incident_on!(self.all_edges(), v)
 	}
 
-	fn insure_directedness(&self) -> DirectednessVariants<&Self>
+	fn ensure_directedness(&self) -> DirectednessVariants<&Self>
 	where
 		Self: BaseGraph,
 	{
-		if let Ok(g) = self.insure_all()
+		if let Ok(g) = self.ensure_all()
 		{
 			DirectednessVariants::Directed(g)
 		}
 		else
 		{
-			DirectednessVariants::Undirected(UndirectedGraph::insure_unvalidated(self))
+			DirectednessVariants::Undirected(UndirectedGraph::ensure_unvalidated(self))
 		}
 	}
 
@@ -212,7 +212,7 @@ pub trait GraphMut: Graph
 	}
 
 	#[allow(unreachable_code)]
-	fn insure_directedness_mut(&mut self) -> DirectednessVariants<&mut Self>
+	fn ensure_directedness_mut(&mut self) -> DirectednessVariants<&mut Self>
 	where
 		Self: BaseGraph,
 	{
@@ -227,18 +227,18 @@ pub trait GraphMut: Graph
 		// block.
 		let self_2: &mut Self = unsafe { (self as *mut Self).as_mut().unwrap() };
 
-		if let Ok(g) = self.insure_all()
+		if let Ok(g) = self.ensure_all()
 		{
 			DirectednessVariants::Directed(g)
 		}
 		else
 		{
-			DirectednessVariants::Undirected(UndirectedGraph::insure_unvalidated(self_2))
+			DirectednessVariants::Undirected(UndirectedGraph::ensure_unvalidated(self_2))
 		}
 	}
 }
 
-pub enum DirectednessVariants<C: Insure>
+pub enum DirectednessVariants<C: Ensure>
 {
 	Directed(DirectedGraph<C>),
 	Undirected(UndirectedGraph<C>),

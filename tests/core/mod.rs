@@ -3,6 +3,6 @@
 //!
 
 mod edge;
+mod ensure;
 mod graph;
-mod insure;
 mod property;

@@ -1,8 +1,8 @@
 #[macro_use]
-mod impl_insurer;
+mod impl_ensurer;
 mod base_props;
 mod connected;
-mod directedness_insurers;
+mod directedness_ensurers;
 mod no_loops;
 mod non_null;
 mod reflexive;
@@ -12,20 +12,20 @@ mod unique;
 mod weak;
 
 pub use self::{
-	base_props::*, connected::*, directedness_insurers::*, impl_insurer::*, no_loops::*,
+	base_props::*, connected::*, directedness_ensurers::*, impl_ensurer::*, no_loops::*,
 	non_null::*, reflexive::*, subgraph::*, unilateral::*, unique::*, weak::*,
 };
 use crate::core::{
 	proxy::{EdgeProxyGraph, ProxyVertex, VertexProxyGraph},
-	Edge, Insure,
+	Edge, Ensure,
 };
 
 /// Will try to remove an edge from the graph that holds for the given function.
 ///
-/// If after removing the edge, the given Insure ('C') doesn't hold, then
+/// If after removing the edge, the given Ensure ('C') doesn't hold, then
 /// the edge isn't removed in the first place.
 ///
-/// Will always need a type annotation for the Insure 'C'.
+/// Will always need a type annotation for the Ensure 'C'.
 pub fn proxy_remove_edge_where<'a, C, G, F>(
 	g: &'a mut G,
 	f: F,
@@ -33,7 +33,7 @@ pub fn proxy_remove_edge_where<'a, C, G, F>(
 where
 	G: RemoveEdge,
 	F: Fn((G::Vertex, G::Vertex, &G::EdgeWeight)) -> bool,
-	C: Insure<Insured = EdgeProxyGraph<&'a G>, Base = EdgeProxyGraph<&'a G>>,
+	C: Ensure<Ensured = EdgeProxyGraph<&'a G>, Base = EdgeProxyGraph<&'a G>>,
 {
 	let to_remove = g
 		.all_edges()
@@ -72,14 +72,14 @@ where
 
 /// Will try to remove the given vertex from the graph.
 ///
-/// If after removing the vertex, the given Insure ('C') doesn't hold, then
+/// If after removing the vertex, the given Ensure ('C') doesn't hold, then
 /// the vertex isn't removed in the first place.
 ///
-/// Will always need a type annotation for the Insure 'C'.
+/// Will always need a type annotation for the Ensure 'C'.
 pub fn proxy_remove_vertex<'a, C, G>(g: &'a mut G, v: G::Vertex) -> Result<G::VertexWeight, ()>
 where
 	G: RemoveVertex,
-	C: Insure<Insured = VertexProxyGraph<&'a G>, Base = VertexProxyGraph<&'a G>>,
+	C: Ensure<Ensured = VertexProxyGraph<&'a G>, Base = VertexProxyGraph<&'a G>>,
 {
 	// 	We use the unsafe block here to allow us to use 'g' again later.
 	// Currently, the compiler can't see when 'proxy' is no longer used,

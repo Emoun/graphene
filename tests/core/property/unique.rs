@@ -1,4 +1,4 @@
-//! Tests the `core::Unique` trait and its insurer `core::UniqueGraph`.
+//! Tests the `core::Unique` trait and its ensurer `core::UniqueGraph`.
 //!
 use crate::mock_graph::{
 	arbitrary::{ArbEdgeIn, ArbNonUniqueGraph, ArbUniqueGraph, ArbVertexIn},
@@ -7,7 +7,7 @@ use crate::mock_graph::{
 use duplicate::duplicate;
 use graphene::core::{
 	property::{AddEdge, NewVertex, NonNull, UniqueGraph},
-	Directed, Edge, Graph, Insure, Release, Undirected,
+	Directed, Edge, Ensure, Graph, Release, Undirected,
 };
 
 #[duplicate(
@@ -41,7 +41,7 @@ mod module
 	) -> bool
 	{
 		let v = g.get_vertex();
-		// To insure we add a non-duplicate edge,
+		// To ensure we add a non-duplicate edge,
 		// we create a new vertex and add an edge to it from an existing one.
 		let v2 = g.new_vertex_weighted(v_weight).unwrap();
 		let accepted = g.add_edge_weighted((v, v2, e_weight)).is_ok();

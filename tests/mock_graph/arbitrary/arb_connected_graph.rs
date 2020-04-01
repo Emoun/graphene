@@ -7,7 +7,7 @@ use graphene::{
 		property::{AddEdge, ConnectedGraph, WeakGraph},
 		Directed, Directedness, Edge, Graph, GraphDeref, GraphDerefMut, Release,
 	},
-	impl_insurer,
+	impl_ensurer,
 };
 use quickcheck::{Arbitrary, Gen};
 use rand::Rng;
@@ -182,7 +182,7 @@ impl<D: Directedness> Arbitrary for ArbConnectedGraph<D>
 	}
 }
 
-impl_insurer! {
+impl_ensurer! {
 	ArbConnectedGraph<D>
 	for ConnectedGraph<MockGraph<D>> as (self.0)
 	where D: Directedness
@@ -213,7 +213,7 @@ impl<D: Directedness> Arbitrary for ArbUnconnectedGraph<D>
 {
 	fn arbitrary<G: Gen>(g: &mut G) -> Self
 	{
-		// We merge 2 graphs into 1. This will insure they are not connected.
+		// We merge 2 graphs into 1. This will ensure they are not connected.
 		// They must each have at least 1 vertex, otherwise the result
 		// might be trivially connected (<2 vertices)
 		let mut graph = MockGraph::arbitrary_guided(g, 1..(g.size() / 2), ..);
@@ -347,7 +347,7 @@ impl Arbitrary for ArbWeakGraph
 	}
 }
 
-impl_insurer! {
+impl_ensurer! {
 	ArbWeakGraph:
 	// A new vertex wouldn't be connected to the rest of the graph
 	NewVertex,

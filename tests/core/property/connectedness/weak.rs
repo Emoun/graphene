@@ -1,4 +1,4 @@
-//! Tests the `core::Weak` trait and its insurer `core::WeakGraph`.
+//! Tests the `core::Weak` trait and its ensurer `core::WeakGraph`.
 //!
 
 use crate::mock_graph::{
@@ -7,7 +7,7 @@ use crate::mock_graph::{
 };
 use graphene::core::{
 	property::{AddEdge, NewVertex, NonNull, RemoveEdge, RemoveVertex, WeakGraph},
-	Directed, Edge, Insure, Release,
+	Directed, Edge, Ensure, Release,
 };
 
 /// Tests that WeakGraph correctly identifies weak graphs.
@@ -42,7 +42,7 @@ fn accept_remove_edge_where(
 	e_weight: MockEdgeWeight,
 ) -> bool
 {
-	// To insure we can remove an edge, we first create an edge to remove
+	// To ensure we can remove an edge, we first create an edge to remove
 	g.0.add_edge_weighted((v1, v2, e_weight.clone())).unwrap();
 
 	g.0.remove_edge_where(|e| (e.source() == v1 && e.sink() == v2))
@@ -70,7 +70,7 @@ fn reject_remove_edge_where(
 		.add_edge_weighted((v1, v_map[&v2], e_weight.clone()))
 		.unwrap();
 
-	let mut weak = WeakGraph::insure(graph).unwrap();
+	let mut weak = WeakGraph::ensure(graph).unwrap();
 
 	// We now try to remove the the added edge
 	weak.remove_edge_where(|e| (e.source() == v1 && e.sink() == v_map[&v2]))
@@ -159,7 +159,7 @@ fn reject_remove_vertex(
 		.add_edge_weighted((new_v, v_map[&v2], e_weight.clone()))
 		.unwrap();
 
-	let mut weak = WeakGraph::insure(graph).unwrap();
+	let mut weak = WeakGraph::ensure(graph).unwrap();
 
 	// We now try to remove the the added vertex
 	weak.remove_vertex(new_v).is_err()

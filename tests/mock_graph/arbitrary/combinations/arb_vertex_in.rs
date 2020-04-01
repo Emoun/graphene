@@ -5,9 +5,9 @@ use crate::mock_graph::{
 use graphene::{
 	core::{
 		property::{NonNull, VertexInGraph},
-		Graph, GraphDeref, GraphDerefMut, Insure, Release,
+		Ensure, Graph, GraphDeref, GraphDerefMut, Release,
 	},
-	impl_insurer,
+	impl_ensurer,
 };
 use quickcheck::{Arbitrary, Gen};
 use std::{
@@ -22,12 +22,12 @@ use std::{
 #[derive(Clone, Debug)]
 pub struct ArbVertexIn<G>(pub VertexInGraph<G>)
 where
-	G: GuidedArbGraph + Insure + Clone,
+	G: GuidedArbGraph + Ensure + Clone,
 	G::Graph: Clone
 		+ Graph<Vertex = MockVertex, VertexWeight = MockVertexWeight, EdgeWeight = MockEdgeWeight>;
 impl<Gr> Arbitrary for ArbVertexIn<Gr>
 where
-	Gr: GuidedArbGraph + Insure + Clone + GraphDerefMut,
+	Gr: GuidedArbGraph + Ensure + Clone + GraphDerefMut,
 	Gr::Graph: Clone
 		+ Graph<Vertex = MockVertex, VertexWeight = MockVertexWeight, EdgeWeight = MockEdgeWeight>,
 {
@@ -43,7 +43,7 @@ where
 }
 impl<Gr> GuidedArbGraph for ArbVertexIn<Gr>
 where
-	Gr: GuidedArbGraph + Insure + Clone + GraphDerefMut,
+	Gr: GuidedArbGraph + Ensure + Clone + GraphDerefMut,
 	Gr::Graph: Clone
 		+ Graph<Vertex = MockVertex, VertexWeight = MockVertexWeight, EdgeWeight = MockEdgeWeight>,
 {
@@ -71,11 +71,11 @@ where
 	}
 }
 
-impl_insurer! {
+impl_ensurer! {
 	ArbVertexIn<G>
 	for VertexInGraph<G> as (self.0)
 	where
-	G: GuidedArbGraph + Insure + Clone,
+	G: GuidedArbGraph + Ensure + Clone,
 	G::Graph: Clone +
 		Graph<Vertex = MockVertex, VertexWeight = MockVertexWeight, EdgeWeight = MockEdgeWeight>
 }

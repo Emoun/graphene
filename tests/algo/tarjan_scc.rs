@@ -5,7 +5,7 @@ use graphene::{
 	algo::TarjanSCC,
 	core::{
 		property::{ConnectedGraph, Subgraph},
-		Directed, Graph, Insure,
+		Directed, Ensure, Graph,
 	},
 };
 

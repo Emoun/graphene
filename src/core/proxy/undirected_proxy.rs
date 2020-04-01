@@ -1,15 +1,15 @@
 use crate::core::{
 	property::{NewVertex, RemoveVertex},
-	BaseGraph, Directed, Graph, GraphDeref, GraphDerefMut, GraphMut, Insure, Undirected,
+	BaseGraph, Directed, Ensure, Graph, GraphDeref, GraphDerefMut, GraphMut, Undirected,
 };
 use delegate::delegate;
 
 /// A proxy that acts as an undirected version of the underlying directed graph
-pub struct UndirectedProxy<C: Insure>(C)
+pub struct UndirectedProxy<C: Ensure>(C)
 where
 	C::Graph: Graph<Directedness = Directed>;
 
-impl<C: Insure> UndirectedProxy<C>
+impl<C: Ensure> UndirectedProxy<C>
 where
 	C::Graph: Graph<Directedness = Directed>,
 {
@@ -19,7 +19,7 @@ where
 	}
 }
 
-impl<C: Insure> Graph for UndirectedProxy<C>
+impl<C: Ensure> Graph for UndirectedProxy<C>
 where
 	C::Graph: Graph<Directedness = Directed>,
 {
@@ -41,7 +41,7 @@ where
 	}
 }
 
-impl<C: Insure + GraphDerefMut> GraphMut for UndirectedProxy<C>
+impl<C: Ensure + GraphDerefMut> GraphMut for UndirectedProxy<C>
 where
 	C::Graph: GraphMut<Directedness = Directed>,
 {
@@ -60,7 +60,7 @@ where
 	}
 }
 
-impl<C: Insure + GraphDerefMut> NewVertex for UndirectedProxy<C>
+impl<C: Ensure + GraphDerefMut> NewVertex for UndirectedProxy<C>
 where
 	C::Graph: NewVertex<Directedness = Directed>,
 {
@@ -71,7 +71,7 @@ where
 	}
 }
 
-impl<C: Insure + GraphDerefMut> RemoveVertex for UndirectedProxy<C>
+impl<C: Ensure + GraphDerefMut> RemoveVertex for UndirectedProxy<C>
 where
 	C::Graph: RemoveVertex<Directedness = Directed>,
 {
@@ -82,7 +82,7 @@ where
 	}
 }
 
-impl<C: Insure> GraphDeref for UndirectedProxy<C>
+impl<C: Ensure> GraphDeref for UndirectedProxy<C>
 where
 	C::Graph: Graph<Directedness = Directed>,
 {
@@ -93,7 +93,7 @@ where
 		self
 	}
 }
-impl<C: Insure> GraphDerefMut for UndirectedProxy<C>
+impl<C: Ensure> GraphDerefMut for UndirectedProxy<C>
 where
 	C::Graph: Graph<Directedness = Directed>,
 {
@@ -102,4 +102,4 @@ where
 		self
 	}
 }
-impl<C: Insure> BaseGraph for UndirectedProxy<C> where C::Graph: Graph<Directedness = Directed> {}
+impl<C: Ensure> BaseGraph for UndirectedProxy<C> where C::Graph: Graph<Directedness = Directed> {}

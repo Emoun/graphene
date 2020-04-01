@@ -5,9 +5,9 @@ use crate::mock_graph::{
 use graphene::{
 	core::{
 		property::{AddEdge, NewVertex, NonNull, RemoveEdge, UnilateralGraph},
-		Directed, Edge, Graph, GraphDeref, GraphDerefMut, Insure, Release,
+		Directed, Edge, Ensure, Graph, GraphDeref, GraphDerefMut, Release,
 	},
-	impl_insurer,
+	impl_ensurer,
 };
 use quickcheck::{Arbitrary, Gen};
 use rand::Rng;
@@ -56,7 +56,7 @@ impl GuidedArbGraph for ArbUnilatralGraph
 		// If we are asked to make the empty graph, we just do
 		if v_max <= 1
 		{
-			return Self(UnilateralGraph::insure_unvalidated(
+			return Self(UnilateralGraph::ensure_unvalidated(
 				MockGraph::arbitrary_guided(g, v_min..v_max, v_min..v_max),
 			));
 		}
@@ -94,7 +94,7 @@ impl GuidedArbGraph for ArbUnilatralGraph
 			// Add an edge to/from the new and old vertices
 			if g.gen_bool(0.5)
 			{
-				// To insure unilateralism, take all outgoing edges from the original vertex
+				// To ensure unilateralism, take all outgoing edges from the original vertex
 				// and move them to the new one.
 				let outgoing_sinks = graph
 					.edges_sourced_in(v_original)
@@ -112,7 +112,7 @@ impl GuidedArbGraph for ArbUnilatralGraph
 			}
 			else
 			{
-				// To insure unilateralism, take all the incoming edges from the original vertex
+				// To ensure unilateralism, take all the incoming edges from the original vertex
 				// and move them to the new one.
 				let sources = graph
 					.edges_sinked_in(v_original)
@@ -148,7 +148,7 @@ impl GuidedArbGraph for ArbUnilatralGraph
 			}
 		}
 
-		Self(UnilateralGraph::insure_unvalidated(graph))
+		Self(UnilateralGraph::ensure_unvalidated(graph))
 	}
 
 	fn shrink_guided(&self, limits: HashSet<Limit>) -> Box<dyn Iterator<Item = Self>>
@@ -166,7 +166,7 @@ impl GuidedArbGraph for ArbUnilatralGraph
 		Box::new(
 			result
 				.into_iter()
-				.map(|g| Self(UnilateralGraph::insure_unvalidated(g))),
+				.map(|g| Self(UnilateralGraph::ensure_unvalidated(g))),
 		)
 	}
 }
@@ -177,7 +177,7 @@ impl Arbitrary for ArbUnilatralGraph
 	{
 		let graph = Self::arbitrary_guided(g, .., ..).0.release();
 		// 		assert!(is_unilateral(&graph));
-		Self(UnilateralGraph::insure_unvalidated(graph))
+		Self(UnilateralGraph::ensure_unvalidated(graph))
 	}
 
 	fn shrink(&self) -> Box<dyn Iterator<Item = Self>>
@@ -186,7 +186,7 @@ impl Arbitrary for ArbUnilatralGraph
 	}
 }
 
-impl_insurer! {
+impl_ensurer! {
 	ArbUnilatralGraph:
 	// A new vertex wouldn't be connected to the rest of the graph
 	NewVertex,

@@ -1,4 +1,4 @@
-//! Tests the `core::Unilateral` trait and its insurer
+//! Tests the `core::Unilateral` trait and its ensurer
 //! `core::UnilateralGraph`.
 //!
 
@@ -11,7 +11,7 @@ use crate::mock_graph::{
 };
 use graphene::core::{
 	property::{AddEdge, NewVertex, NonNull, RemoveEdge, RemoveVertex, UnilateralGraph},
-	Directed, Edge, Insure, Release,
+	Directed, Edge, Ensure, Release,
 };
 
 /// Tests that UnilateralGraph correctly identifies unilateral graphs.
@@ -46,7 +46,7 @@ fn accept_remove_edge_where(
 	e_weight: MockEdgeWeight,
 ) -> bool
 {
-	// To insure we can remove an edge, we first create an edge to remove
+	// To ensure we can remove an edge, we first create an edge to remove
 	g.0.add_edge_weighted((v1, v2, e_weight.clone())).unwrap();
 
 	g.0.remove_edge_where(|e| (e.source() == v1 && e.sink() == v2))
@@ -78,7 +78,7 @@ fn reject_remove_edge_where(
 		.add_edge_weighted((v1, v_map[&v2], e_weight.clone()))
 		.unwrap();
 
-	let mut unilateral = UnilateralGraph::insure(graph).unwrap();
+	let mut unilateral = UnilateralGraph::ensure(graph).unwrap();
 
 	// We now try to remove the the added edge
 	unilateral
@@ -133,7 +133,7 @@ fn accept_remove_vertex(
 	}
 
 	// We then try to remove the vertex again
-	UnilateralGraph::insure_unvalidated(graph)
+	UnilateralGraph::ensure_unvalidated(graph)
 		.remove_vertex(v_new)
 		.is_ok()
 }
@@ -168,7 +168,7 @@ fn reject_remove_vertex(
 		.add_edge_weighted((new_v, v_map[&v2], e_weight.clone()))
 		.unwrap();
 
-	let mut unilateral = UnilateralGraph::insure(graph).unwrap();
+	let mut unilateral = UnilateralGraph::ensure(graph).unwrap();
 
 	// We now try to remove the the added vertex
 	unilateral.remove_vertex(new_v).is_err()

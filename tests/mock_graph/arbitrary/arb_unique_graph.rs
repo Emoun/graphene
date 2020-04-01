@@ -5,9 +5,9 @@ use crate::mock_graph::{
 use graphene::{
 	core::{
 		property::{AddEdge, DirectedGraph, RemoveEdge, UniqueGraph},
-		Directedness, Edge, Graph, GraphDeref, GraphDerefMut, Insure, Release,
+		Directedness, Edge, Ensure, Graph, GraphDeref, GraphDerefMut, Release,
 	},
-	impl_insurer,
+	impl_ensurer,
 };
 use quickcheck::{Arbitrary, Gen};
 use rand::Rng;
@@ -115,7 +115,7 @@ impl<D: Directedness> Arbitrary for ArbUniqueGraph<D>
 	}
 }
 
-impl_insurer! {
+impl_ensurer! {
 	ArbUniqueGraph<D>
 	for UniqueGraph<MockGraph<D>> as (self.0)
 	where D: Directedness
@@ -169,7 +169,7 @@ impl<D: Directedness> Arbitrary for ArbNonUniqueGraph<D>
 				// without the edge
 				let mut shrunk_graph = self.0.clone();
 				let mut shrunk_dup_count = self.1;
-				if let Ok(g) = <DirectedGraph<&MockGraph<D>>>::insure_all(&self.0)
+				if let Ok(g) = <DirectedGraph<&MockGraph<D>>>::ensure_all(&self.0)
 				{
 					if g.edges_sourced_in(e.source()).count() > 1
 					{

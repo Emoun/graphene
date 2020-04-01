@@ -7,7 +7,7 @@
 /// Directed, Undirected, Unique, NoLoops, Reflexive, Weak, Unilateral,
 /// Connected, Subgraph
 #[macro_export]
-macro_rules! impl_insurer {
+macro_rules! impl_ensurer {
 
 	{
 		$struct:ident$(<$($generics:ident),+>)?
@@ -15,7 +15,7 @@ macro_rules! impl_insurer {
 		for <$generic_graph:ident> as (self $($delegate:tt)+)
 		$(where $($bounds:tt)*)?
 	} => {
-		impl_insurer!{
+		impl_ensurer!{
 			@inner
 			@struct_id $struct
 			@generic [ $($($generics)+)? ]
@@ -32,7 +32,7 @@ macro_rules! impl_insurer {
 		for $type_graph:ty as (self $($delegate:tt)+)
 		$(where $($bounds:tt)*)?
 	} =>{
-		impl_insurer!{
+		impl_ensurer!{
 			@inner
 			@struct_id $struct
 			@generic [ $($($generics)+)? ]
@@ -54,7 +54,7 @@ macro_rules! impl_insurer {
 	} => {
 
 		//GraphDeref
-		impl_insurer!{
+		impl_ensurer!{
 			@inner
 			@struct_id $struct
 			@generic [ $($generics)* ]
@@ -73,7 +73,7 @@ macro_rules! impl_insurer {
 		}
 
 		//GraphDerefMut
-		impl_insurer!{
+		impl_ensurer!{
 			@inner
 			@struct_id $struct
 			@generic [ $($generics)* ]
@@ -90,7 +90,7 @@ macro_rules! impl_insurer {
 		}
 
 		//Release
-		impl_insurer!{
+		impl_ensurer!{
 			@inner
 			@struct_id $struct
 			@generic [ $($generics)* ]
@@ -100,31 +100,31 @@ macro_rules! impl_insurer {
 			@trait_id Release [$crate::core]
 			@implement {
 				type Base = <$($generic_graph)? $($type_graph)? as $crate::core::Release>::Base ;
-				type Insured = $($generic_graph)? $($type_graph)?;
+				type Ensured = $($generic_graph)? $($type_graph)?;
 
-				fn release(self) -> Self::Insured
+				fn release(self) -> Self::Ensured
 				{
 					self$($delegate)+
 				}
 			}
 		}
 
-		//Insure
-		impl_insurer!{
+		//Ensure
+		impl_ensurer!{
 			@inner
 			@struct_id $struct
 			@generic [ $($generics)* ]
 			@delegate [ $(@generic $generic_graph)? ]
 			@exclude [ $($trait)* ]
 			@bounds [ $($bounds)* ]
-			@trait_id Insure [$crate::core]
+			@trait_id Ensure [$crate::core]
 			@implement {
-				fn insure_unvalidated(c: Self::Insured) -> Self
+				fn ensure_unvalidated(c: Self::Ensured) -> Self
 				{
 					Self(c)
 				}
 
-				fn validate(_: &Self::Insured) -> bool
+				fn validate(_: &Self::Ensured) -> bool
 				{
 					true
 				}
@@ -132,7 +132,7 @@ macro_rules! impl_insurer {
 		}
 
 		//Graph
-		impl_insurer!{
+		impl_ensurer!{
 			@inner
 			@struct_id $struct
 			@generic [ $($generics)* ]
@@ -161,7 +161,7 @@ macro_rules! impl_insurer {
 		}
 
 		//GraphMut
-		impl_insurer!{
+		impl_ensurer!{
 			@inner
 			@struct_id $struct
 			@generic [ $($generics)* ]
@@ -193,7 +193,7 @@ macro_rules! impl_insurer {
 		}
 
 		// NewVertex
-		impl_insurer!{
+		impl_ensurer!{
 			@inner
 			@struct_id $struct
 			@generic [ $($generics)* ]
@@ -216,7 +216,7 @@ macro_rules! impl_insurer {
 		}
 
 		// RemoveVertex
-		impl_insurer!{
+		impl_ensurer!{
 			@inner
 			@struct_id $struct
 			@generic [ $($generics)* ]
@@ -239,7 +239,7 @@ macro_rules! impl_insurer {
 		}
 
 		// AddEdge
-		impl_insurer!{
+		impl_ensurer!{
 			@inner
 			@struct_id $struct
 			@generic [ $($generics)* ]
@@ -263,7 +263,7 @@ macro_rules! impl_insurer {
 		}
 
 		// RemoveEdge
-		impl_insurer!{
+		impl_ensurer!{
 			@inner
 			@struct_id $struct
 			@generic [ $($generics)* ]
@@ -290,7 +290,7 @@ macro_rules! impl_insurer {
 		}
 
 		// Unique
-		impl_insurer!{
+		impl_ensurer!{
 			@inner
 			@struct_id $struct
 			@generic [ $($generics)* ]
@@ -302,7 +302,7 @@ macro_rules! impl_insurer {
 		}
 
 		// NoLoops
-		impl_insurer!{
+		impl_ensurer!{
 			@inner
 			@struct_id $struct
 			@generic [ $($generics)* ]
@@ -314,7 +314,7 @@ macro_rules! impl_insurer {
 		}
 
 		// Reflexive
-		impl_insurer!{
+		impl_ensurer!{
 			@inner
 			@struct_id $struct
 			@generic [ $($generics)* ]
@@ -331,7 +331,7 @@ macro_rules! impl_insurer {
 		}
 
 		// Weak
-		impl_insurer!{
+		impl_ensurer!{
 			@inner
 			@struct_id $struct
 			@generic [ $($generics)* ]
@@ -343,7 +343,7 @@ macro_rules! impl_insurer {
 		}
 
 		// Unilateral
-		impl_insurer!{
+		impl_ensurer!{
 			@inner
 			@struct_id $struct
 			@generic [ $($generics)* ]
@@ -355,7 +355,7 @@ macro_rules! impl_insurer {
 		}
 
 		// Connected
-		impl_insurer!{
+		impl_ensurer!{
 			@inner
 			@struct_id $struct
 			@generic [ $($generics)* ]
@@ -367,7 +367,7 @@ macro_rules! impl_insurer {
 		}
 
 		// Subgraph
-		impl_insurer!{
+		impl_ensurer!{
 			@inner
 			@struct_id $struct
 			@generic [ $($generics)* ]
@@ -389,7 +389,7 @@ macro_rules! impl_insurer {
 		}
 
 		// NonNull
-		impl_insurer!{
+		impl_ensurer!{
 			@inner
 			@struct_id $struct
 			@generic [ $($generics)* ]
@@ -426,7 +426,7 @@ macro_rules! impl_insurer {
 			input = [{$trait $trait_id}]
 			true = [{}]
 			false = [{
-				impl_insurer!{
+				impl_ensurer!{
 					@inner
 					@struct_id $struct
 					@generic [ $($generics)* ]
@@ -453,7 +453,7 @@ macro_rules! impl_insurer {
 		impl$(<$($generics)+>)? $($trait_path)*::$trait_id
 			for $struct$(<$($generics)+>)?
 			where
-				$($generic_graph: $crate::core::Insure,)?
+				$($generic_graph: $crate::core::Ensure,)?
 				$($bounds)*
 		{$($impl)*}
 	};

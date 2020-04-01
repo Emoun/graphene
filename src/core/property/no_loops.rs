@@ -1,4 +1,4 @@
-use crate::core::{property::AddEdge, EdgeWeighted, Graph, GraphDerefMut, Insure};
+use crate::core::{property::AddEdge, EdgeWeighted, Ensure, Graph, GraphDerefMut};
 
 /// A marker trait for graphs containing no graph loops.
 ///
@@ -10,16 +10,16 @@ pub trait NoLoops: Graph
 	fn no_loops_func(&self) {}
 }
 
-pub struct NoLoopsGraph<C: Insure>(C);
+pub struct NoLoopsGraph<C: Ensure>(C);
 
-impl<C: Insure> Insure for NoLoopsGraph<C>
+impl<C: Ensure> Ensure for NoLoopsGraph<C>
 {
-	fn insure_unvalidated(c: Self::Insured) -> Self
+	fn ensure_unvalidated(c: Self::Ensured) -> Self
 	{
 		Self(c)
 	}
 
-	fn validate(c: &Self::Insured) -> bool
+	fn validate(c: &Self::Ensured) -> bool
 	{
 		c.graph()
 			.all_vertices()
@@ -27,7 +27,7 @@ impl<C: Insure> Insure for NoLoopsGraph<C>
 	}
 }
 
-impl<C: Insure + GraphDerefMut> AddEdge for NoLoopsGraph<C>
+impl<C: Ensure + GraphDerefMut> AddEdge for NoLoopsGraph<C>
 where
 	C::Graph: AddEdge,
 {
@@ -46,9 +46,9 @@ where
 	}
 }
 
-impl<C: Insure> NoLoops for NoLoopsGraph<C> {}
+impl<C: Ensure> NoLoops for NoLoopsGraph<C> {}
 
-impl_insurer! {
-	NoLoopsGraph<C>: Insure, NoLoops, AddEdge
+impl_ensurer! {
+	NoLoopsGraph<C>: Ensure, NoLoops, AddEdge
 	for <C> as (self.0)
 }

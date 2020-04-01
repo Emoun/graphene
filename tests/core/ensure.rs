@@ -1,8 +1,8 @@
-//! Tests the `Insure` and `BaseGraph` combination for insuring graphs.
+//! Tests the `Ensure` and `BaseGraph` combination for insuring graphs.
 //!
 
 use crate::mock_graph::{MockDirectedness, MockGraph, MockVertexWeight};
-use graphene::core::{BaseGraph, Graph, GraphDeref, GraphDerefMut, GraphMut, Insure, Release};
+use graphene::core::{BaseGraph, Ensure, Graph, GraphDeref, GraphDerefMut, GraphMut, Release};
 
 /// A mock property that doesn't use mutability.
 ///
@@ -19,10 +19,10 @@ trait MockPropertyMut: MockProperty
 	fn mock_set_weight(&mut self, w: Self::VertexWeight);
 }
 
-/// A mock insurer.
-struct MockInsurer<C: Insure>(pub C);
+/// A mock ensurer.
+struct MockEnsurer<C: Ensure>(pub C);
 
-impl<C: Insure> GraphDeref for MockInsurer<C>
+impl<C: Ensure> GraphDeref for MockEnsurer<C>
 {
 	type Graph = Self;
 
@@ -31,38 +31,38 @@ impl<C: Insure> GraphDeref for MockInsurer<C>
 		self
 	}
 }
-impl<C: Insure> GraphDerefMut for MockInsurer<C>
+impl<C: Ensure> GraphDerefMut for MockEnsurer<C>
 {
 	fn graph_mut(&mut self) -> &mut Self::Graph
 	{
 		self
 	}
 }
-impl<C: Insure> Insure for MockInsurer<C>
+impl<C: Ensure> Ensure for MockEnsurer<C>
 {
-	fn insure_unvalidated(c: Self::Insured) -> Self
+	fn ensure_unvalidated(c: Self::Ensured) -> Self
 	{
 		Self(c)
 	}
 
-	fn validate(c: &Self::Insured) -> bool
+	fn validate(c: &Self::Ensured) -> bool
 	{
 		c.graph().all_vertices().count() == 1
 	}
 }
 
-impl<C: Insure> Release for MockInsurer<C>
+impl<C: Ensure> Release for MockEnsurer<C>
 {
 	type Base = C::Base;
-	type Insured = C;
+	type Ensured = C;
 
-	fn release(self) -> Self::Insured
+	fn release(self) -> Self::Ensured
 	{
 		self.0
 	}
 }
 
-impl<C: Insure> Graph for MockInsurer<C>
+impl<C: Ensure> Graph for MockEnsurer<C>
 {
 	type Directedness = <C::Graph as Graph>::Directedness;
 	type EdgeWeight = <C::Graph as Graph>::EdgeWeight;
@@ -84,7 +84,7 @@ impl<C: Insure> Graph for MockInsurer<C>
 	}
 }
 
-impl<C: Insure + GraphDerefMut> GraphMut for MockInsurer<C>
+impl<C: Ensure + GraphDerefMut> GraphMut for MockEnsurer<C>
 where
 	C::Graph: GraphMut,
 {
@@ -103,7 +103,7 @@ where
 	}
 }
 
-impl<C: Insure> MockProperty for MockInsurer<C>
+impl<C: Ensure> MockProperty for MockEnsurer<C>
 {
 	fn mock_weight_value(&self) -> &Self::VertexWeight
 	{
@@ -111,7 +111,7 @@ impl<C: Insure> MockProperty for MockInsurer<C>
 	}
 }
 
-impl<C: Insure + GraphDerefMut> MockPropertyMut for MockInsurer<C>
+impl<C: Ensure + GraphDerefMut> MockPropertyMut for MockEnsurer<C>
 where
 	C::Graph: GraphMut,
 {
@@ -121,7 +121,7 @@ where
 	}
 }
 
-/// Creates a graph that can be insured by MockInsure.
+/// Creates a graph that can be ensured by MockEnsure.
 macro_rules! insurable_graph {
 	{} =>{
 		{
@@ -152,19 +152,19 @@ macro_rules! assert_implements_mock_property_mut {
 #[test]
 fn pretyped_insuring()
 {
-	type InsuredGraph = MockInsurer<MockInsurer<MockGraph<MockDirectedness>>>;
+	type EnsuredGraph = MockEnsurer<MockEnsurer<MockGraph<MockDirectedness>>>;
 
-	// Test can use `Insure.insure_all` on a base graph without needing type
+	// Test can use `Ensure.ensure_all` on a base graph without needing type
 	// annotation
-	let g = InsuredGraph::insure_all(insurable_graph!()).unwrap();
+	let g = EnsuredGraph::ensure_all(insurable_graph!()).unwrap();
 
-	// Test that `BaseGraph.insure_all` can be used where the property is defined
+	// Test that `BaseGraph.ensure_all` can be used where the property is defined
 	// elsewhere (in this case by an annotation, but could also be elsewhere and
 	// then solved by type inference)
-	let g2: InsuredGraph = insurable_graph!().insure_all().unwrap();
+	let g2: EnsuredGraph = insurable_graph!().ensure_all().unwrap();
 
 	// Test can remove 1 property
-	let _: MockInsurer<MockGraph<MockDirectedness>> = g.release();
+	let _: MockEnsurer<MockGraph<MockDirectedness>> = g.release();
 
 	// Test can remove all properties
 	let _: MockGraph<MockDirectedness> = g2.release_all();
@@ -174,61 +174,61 @@ fn pretyped_insuring()
 #[test]
 fn inline_insuring()
 {
-	// Test can use `Insure.insure_all` on a base graph using inline properties
-	let g = <MockInsurer<MockInsurer<MockGraph<MockDirectedness>>>>::insure_all(insurable_graph!())
+	// Test can use `Ensure.ensure_all` on a base graph using inline properties
+	let g = <MockEnsurer<MockEnsurer<MockGraph<MockDirectedness>>>>::ensure_all(insurable_graph!())
 		.unwrap();
 
-	// Test that `BaseGraph.insure_all` can be used where the property is defined
+	// Test that `BaseGraph.ensure_all` can be used where the property is defined
 	// elsewhere (in this case by an annotation, but could also be elsewhere and
 	// then solved by type inference)
-	let g2: MockInsurer<MockInsurer<MockGraph<MockDirectedness>>> =
-		insurable_graph!().insure_all().unwrap();
+	let g2: MockEnsurer<MockEnsurer<MockGraph<MockDirectedness>>> =
+		insurable_graph!().ensure_all().unwrap();
 
 	// Test can remove 1 property
-	let _: MockInsurer<MockGraph<MockDirectedness>> = g.release();
+	let _: MockEnsurer<MockGraph<MockDirectedness>> = g.release();
 
 	// Test can remove all properties
 	let _: MockGraph<MockDirectedness> = g2.release_all();
 }
 
 #[test]
-fn insurer_insuring_base()
+fn ensurer_insuring_base()
 {
-	type InsuredGraphRef<'a> = MockInsurer<MockInsurer<&'a MockGraph<MockDirectedness>>>;
+	type EnsuredGraphRef<'a> = MockEnsurer<MockEnsurer<&'a MockGraph<MockDirectedness>>>;
 
 	let mut g = insurable_graph!();
 
 	// Test insuring reference to graph
-	let c_ref = InsuredGraphRef::insure_all(&g).unwrap();
+	let c_ref = EnsuredGraphRef::ensure_all(&g).unwrap();
 	assert_implements_mock_property!(c_ref);
 
-	// Test still is a MockInsure after 1 release_all
+	// Test still is a MockEnsure after 1 release_all
 	let c_ref_uncon = c_ref.release();
 	assert_implements_mock_property!(c_ref_uncon);
 
 	// By reusing 'g' below, we test that the previous property
 	// is dropped when it i no longer used.
 
-	type InsuredGraphMut<'a> = MockInsurer<MockInsurer<&'a mut MockGraph<MockDirectedness>>>;
+	type EnsuredGraphMut<'a> = MockEnsurer<MockEnsurer<&'a mut MockGraph<MockDirectedness>>>;
 
 	// Test insuring mutable reference to graph
-	let mut c_ref_mut = InsuredGraphMut::insure_all(&mut g).unwrap();
+	let mut c_ref_mut = EnsuredGraphMut::ensure_all(&mut g).unwrap();
 	assert_implements_mock_property_mut!(c_ref_mut);
 
-	// Test still is a MockInsure after 1 release_all
+	// Test still is a MockEnsure after 1 release_all
 	let mut c_ref_mut_uncon = c_ref_mut.release();
 	assert_implements_mock_property_mut!(c_ref_mut_uncon);
 
 	// We don't test release_all() explicitly now, because it happens automatically
-	// when insurer is no longer used and the reference is freed.
+	// when ensurer is no longer used and the reference is freed.
 
-	type InsuredGraph<'a> = MockInsurer<MockInsurer<MockInsurer<MockGraph<MockDirectedness>>>>;
+	type EnsuredGraph<'a> = MockEnsurer<MockEnsurer<MockEnsurer<MockGraph<MockDirectedness>>>>;
 
 	// Test insuring graph directly
-	let mut c_owned = InsuredGraph::insure_all(g).unwrap();
+	let mut c_owned = EnsuredGraph::ensure_all(g).unwrap();
 	assert_implements_mock_property_mut!(c_owned);
 
-	// Test still is a MockInsure after 1 release_all
+	// Test still is a MockEnsure after 1 release_all
 	let mut c_owned_uncon = c_owned.release();
 	assert_implements_mock_property_mut!(c_owned_uncon);
 
@@ -237,59 +237,59 @@ fn insurer_insuring_base()
 }
 
 #[test]
-fn inline_insurer_insuring_base()
+fn inline_ensurer_insuring_base()
 {
 	let mut g = insurable_graph!();
 
-	let c_ref = <MockInsurer<MockInsurer<&MockGraph<MockDirectedness>>>>::insure_all(&g).unwrap();
+	let c_ref = <MockEnsurer<MockEnsurer<&MockGraph<MockDirectedness>>>>::ensure_all(&g).unwrap();
 	assert_implements_mock_property!(c_ref);
 
 	let mut c_ref_mut =
-		<MockInsurer<MockInsurer<&mut MockGraph<MockDirectedness>>>>::insure_all(&mut g).unwrap();
+		<MockEnsurer<MockEnsurer<&mut MockGraph<MockDirectedness>>>>::ensure_all(&mut g).unwrap();
 	assert_implements_mock_property_mut!(c_ref_mut);
 
 	let mut c_owned =
-		<MockInsurer<MockInsurer<MockGraph<MockDirectedness>>>>::insure_all(g).unwrap();
+		<MockEnsurer<MockEnsurer<MockGraph<MockDirectedness>>>>::ensure_all(g).unwrap();
 	assert_implements_mock_property_mut!(c_owned);
 }
 
 #[test]
-fn base_insures_self_by_inference()
+fn base_ensures_self_by_inference()
 {
-	type InsuredGraph<G> = MockInsurer<MockInsurer<G>>;
+	type EnsuredGraph<G> = MockEnsurer<MockEnsurer<G>>;
 
 	let mut g = insurable_graph!();
 
-	let c_ref: InsuredGraph<&MockGraph<MockDirectedness>> = (&g).insure_all().unwrap();
+	let c_ref: EnsuredGraph<&MockGraph<MockDirectedness>> = (&g).ensure_all().unwrap();
 	assert_implements_mock_property!(c_ref);
 	let c_ref_unc = c_ref.release();
 	assert_implements_mock_property!(c_ref_unc);
 
-	let mut c_ref_mut: InsuredGraph<&mut MockGraph<MockDirectedness>> =
-		(&mut g).insure_all().unwrap();
+	let mut c_ref_mut: EnsuredGraph<&mut MockGraph<MockDirectedness>> =
+		(&mut g).ensure_all().unwrap();
 	assert_implements_mock_property_mut!(c_ref_mut);
 
-	let mut c_owned: InsuredGraph<MockGraph<MockDirectedness>> = g.insure_all().unwrap();
+	let mut c_owned: EnsuredGraph<MockGraph<MockDirectedness>> = g.ensure_all().unwrap();
 	assert_implements_mock_property_mut!(c_owned);
 }
 
 #[test]
-fn base_insures_self_by_inline_inference()
+fn base_ensures_self_by_inline_inference()
 {
 	let mut g = insurable_graph!();
 
-	let c_ref: MockInsurer<MockInsurer<&MockGraph<MockDirectedness>>> = (&g).insure_all().unwrap();
+	let c_ref: MockEnsurer<MockEnsurer<&MockGraph<MockDirectedness>>> = (&g).ensure_all().unwrap();
 	assert_implements_mock_property!(c_ref);
 	let c_ref_unc = c_ref.release();
 	assert_implements_mock_property!(c_ref_unc);
 
-	let mut c_ref_mut: MockInsurer<MockInsurer<&mut MockGraph<MockDirectedness>>> =
-		(&mut g).insure_all().unwrap();
+	let mut c_ref_mut: MockEnsurer<MockEnsurer<&mut MockGraph<MockDirectedness>>> =
+		(&mut g).ensure_all().unwrap();
 	assert_implements_mock_property_mut!(c_ref_mut);
 	let mut c_ref_mut_unc = c_ref_mut.release();
 	assert_implements_mock_property_mut!(c_ref_mut_unc);
 
-	let c_owned: MockInsurer<MockInsurer<MockGraph<MockDirectedness>>> = g.insure_all().unwrap();
+	let c_owned: MockEnsurer<MockEnsurer<MockGraph<MockDirectedness>>> = g.ensure_all().unwrap();
 	assert_implements_mock_property!(c_owned);
 	let mut c_owned_unc = c_owned.release();
 	assert_implements_mock_property_mut!(c_owned_unc);

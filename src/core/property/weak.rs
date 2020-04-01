@@ -3,7 +3,7 @@ use crate::core::{
 		proxy_remove_edge_where, proxy_remove_vertex, ConnectedGraph, RemoveEdge, RemoveVertex,
 	},
 	proxy::UndirectedProxy,
-	Directed, Graph, GraphDerefMut, Insure,
+	Directed, Ensure, Graph, GraphDerefMut,
 };
 
 /// A marker trait for graphs that are weakly connected.
@@ -13,7 +13,7 @@ use crate::core::{
 ///
 /// The distinction between weakly and strongly connected only exists for
 /// directed graphs, for undirected ones, they are equal. For this reason, the
-/// companion insurer graph `WeakGraph` only allows directed graphs. For
+/// companion ensurer graph `WeakGraph` only allows directed graphs. For
 /// undirected graph, simply use `ConnectedGraph`.
 ///
 /// For type safety reasons, the trait itself does not restrict directedness.
@@ -22,11 +22,11 @@ pub trait Weak: Graph
 }
 
 #[derive(Clone, Debug)]
-pub struct WeakGraph<C: Insure>(C)
+pub struct WeakGraph<C: Ensure>(C)
 where
 	C::Graph: Graph<Directedness = Directed>;
 
-impl<C: Insure> WeakGraph<C>
+impl<C: Ensure> WeakGraph<C>
 where
 	C::Graph: Graph<Directedness = Directed>,
 {
@@ -39,16 +39,16 @@ where
 	}
 }
 
-impl<C: Insure> Insure for WeakGraph<C>
+impl<C: Ensure> Ensure for WeakGraph<C>
 where
 	C::Graph: Graph<Directedness = Directed>,
 {
-	fn insure_unvalidated(c: Self::Insured) -> Self
+	fn ensure_unvalidated(c: Self::Ensured) -> Self
 	{
 		Self(c)
 	}
 
-	fn validate(c: &Self::Insured) -> bool
+	fn validate(c: &Self::Ensured) -> bool
 	{
 		let undirected = UndirectedProxy::new(c.graph());
 
@@ -56,7 +56,7 @@ where
 	}
 }
 
-impl<C: Insure + GraphDerefMut> RemoveVertex for WeakGraph<C>
+impl<C: Ensure + GraphDerefMut> RemoveVertex for WeakGraph<C>
 where
 	C::Graph: RemoveVertex<Directedness = Directed>,
 {
@@ -66,7 +66,7 @@ where
 	}
 }
 
-impl<C: Insure + GraphDerefMut> RemoveEdge for WeakGraph<C>
+impl<C: Ensure + GraphDerefMut> RemoveEdge for WeakGraph<C>
 where
 	C::Graph: RemoveEdge<Directedness = Directed>,
 {
@@ -81,10 +81,10 @@ where
 	}
 }
 
-impl<C: Insure> Weak for WeakGraph<C> where C::Graph: Graph<Directedness = Directed> {}
+impl<C: Ensure> Weak for WeakGraph<C> where C::Graph: Graph<Directedness = Directed> {}
 
-impl_insurer! {
-	WeakGraph<C>: Insure, Weak, RemoveVertex, RemoveEdge,
+impl_ensurer! {
+	WeakGraph<C>: Ensure, Weak, RemoveVertex, RemoveEdge,
 	// A new vertex wouldn't be connected to the rest of the graph
 	NewVertex
 	for <C> as (self.0)

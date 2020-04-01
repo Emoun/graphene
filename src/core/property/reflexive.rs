@@ -1,6 +1,6 @@
 use crate::core::{
 	property::{AddEdge, NewVertex, RemoveEdge, RemoveVertex},
-	Graph, GraphDerefMut, Insure,
+	Ensure, Graph, GraphDerefMut,
 };
 
 /// A marker trait for a reflexive graph.
@@ -15,20 +15,20 @@ where
 {
 }
 
-pub struct ReflexiveGraph<C: Insure>(C)
+pub struct ReflexiveGraph<C: Ensure>(C)
 where
 	<C::Graph as Graph>::EdgeWeight: Default;
 
-impl<C: Insure> Insure for ReflexiveGraph<C>
+impl<C: Ensure> Ensure for ReflexiveGraph<C>
 where
 	<C::Graph as Graph>::EdgeWeight: Default,
 {
-	fn insure_unvalidated(c: Self::Insured) -> Self
+	fn ensure_unvalidated(c: Self::Ensured) -> Self
 	{
 		Self(c)
 	}
 
-	fn validate(c: &Self::Insured) -> bool
+	fn validate(c: &Self::Ensured) -> bool
 	{
 		let g = c.graph();
 		g.all_vertices().all(|v| {
@@ -45,7 +45,7 @@ where
 	}
 }
 
-impl<C: Insure + GraphDerefMut> NewVertex for ReflexiveGraph<C>
+impl<C: Ensure + GraphDerefMut> NewVertex for ReflexiveGraph<C>
 where
 	C::Graph: NewVertex + AddEdge,
 	<C::Graph as Graph>::EdgeWeight: Default,
@@ -58,7 +58,7 @@ where
 	}
 }
 
-impl<C: Insure + GraphDerefMut> RemoveVertex for ReflexiveGraph<C>
+impl<C: Ensure + GraphDerefMut> RemoveVertex for ReflexiveGraph<C>
 where
 	C::Graph: RemoveVertex + RemoveEdge,
 	<C::Graph as Graph>::EdgeWeight: Default,
@@ -70,10 +70,10 @@ where
 	}
 }
 
-impl<C: Insure> Reflexive for ReflexiveGraph<C> where <C::Graph as Graph>::EdgeWeight: Default {}
+impl<C: Ensure> Reflexive for ReflexiveGraph<C> where <C::Graph as Graph>::EdgeWeight: Default {}
 
-impl_insurer! {
-	ReflexiveGraph<C>: Insure, NewVertex, RemoveVertex, Reflexive
+impl_ensurer! {
+	ReflexiveGraph<C>: Ensure, NewVertex, RemoveVertex, Reflexive
 	for <C> as (self.0)
 	where <C::Graph as Graph>::EdgeWeight: Default,
 }

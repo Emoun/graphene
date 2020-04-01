@@ -4,7 +4,7 @@ use crate::mock_graph::{MockDirectedness, MockGraph, MockVertexWeight};
 use duplicate::duplicate;
 use graphene::core::{
 	property::{NewVertex, NonNullGraph, RemoveVertex, VertexInGraph},
-	Directed, Insure, Undirected,
+	Directed, Ensure, Undirected,
 };
 
 #[duplicate(
@@ -49,7 +49,7 @@ mod module
 				.new_vertex_weighted(MockVertexWeight { value: 0 })
 				.unwrap();
 
-			let mut g = ensurer::insure(g).unwrap();
+			let mut g = ensurer::ensure(g).unwrap();
 
 			assert!(g.remove_vertex(v).is_err())
 		}
@@ -62,7 +62,7 @@ mod module
 		ArbTwoUniqueVerticesIn(g, v, _): ArbTwoUniqueVerticesIn<MockGraph<MockDirectedness>>,
 	) -> bool
 	{
-		let mut g = NonNullGraph::insure(g).unwrap();
+		let mut g = NonNullGraph::ensure(g).unwrap();
 
 		g.remove_vertex(v).is_ok()
 	}
