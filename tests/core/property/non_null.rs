@@ -3,8 +3,8 @@ use crate::mock_graph::arbitrary::{ArbTwoVerticesIn, ArbVertexIn};
 use crate::mock_graph::{MockDirectedness, MockGraph, MockVertexWeight};
 use duplicate::duplicate;
 use graphene::core::{
-	property::{NewVertex, NonNullGraph, RemoveVertex, VertexInGraph},
-	Directed, Ensure, Undirected,
+	property::{NewVertex, NonNull, NonNullGraph, RemoveVertex, VertexInGraph},
+	Directed, Ensure, Release, Undirected,
 };
 
 #[duplicate(
@@ -37,7 +37,7 @@ mod module
 		#[quickcheck]
 		fn accept_non_null(g: ArbVertexIn<MockGraph<directedness>>) -> bool
 		{
-			ensurer::validate(&g)
+			ensurer::validate(&g.release_all())
 		}
 
 		/// Tests cannot remove a vertex if its the only one in the graph.
@@ -60,10 +60,11 @@ mod module
 	/// 2.
 	#[quickcheck]
 	fn non_null_accept_remove_vertex(
-		ArbTwoVerticesIn(g, v, _, _): ArbTwoVerticesIn<MockGraph<MockDirectedness>, Unique>,
+		g: ArbTwoVerticesIn<MockGraph<MockDirectedness>, Unique>,
 	) -> bool
 	{
-		let mut g = NonNullGraph::ensure(g).unwrap();
+		let v = g.get_vertex();
+		let mut g = NonNullGraph::ensure(g.release_all()).unwrap();
 
 		g.remove_vertex(v).is_ok()
 	}
@@ -72,10 +73,11 @@ mod module
 	/// VertexInGraph
 	#[quickcheck]
 	fn vertex_in_accept_remove_vertex(
-		ArbTwoVerticesIn(g, v1, v2, _): ArbTwoVerticesIn<MockGraph<MockDirectedness>, Unique>,
+		g: ArbTwoVerticesIn<MockGraph<MockDirectedness>, Unique>,
 	) -> bool
 	{
-		let mut g = VertexInGraph::new(g, v1).unwrap();
+		let (v1, v2) = g.get_both();
+		let mut g = VertexInGraph::new(g.release_all(), v1).unwrap();
 
 		g.remove_vertex(v2).is_ok()
 	}

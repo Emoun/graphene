@@ -133,7 +133,7 @@ macro_rules! impl_ensurer_inner {
 					$crate::core::GraphDeref>::Graph as $crate::core::Graph>::VertexWeight;
 
 				delegate::delegate! {
-					to (self$($delegate)+).graph() {
+					to $crate::core::GraphDeref::graph(&self$($delegate)+){
 						fn all_vertices_weighted<'a>(
 							&'a self,
 						) -> Box<dyn 'a + Iterator<Item = (Self::Vertex, &'a Self::VertexWeight)>>;
@@ -162,7 +162,7 @@ macro_rules! impl_ensurer_inner {
 			@trait_id GraphMut [$crate::core]
 			@implement {
 				delegate::delegate! {
-					to (self$($delegate)+).graph_mut() {
+					to $crate::core::GraphDerefMut::graph_mut(&mut self$($delegate)+) {
 						fn all_vertices_weighted_mut<'a>(
 							&'a mut self,
 						) -> Box<dyn 'a + Iterator<
@@ -194,7 +194,7 @@ macro_rules! impl_ensurer_inner {
 			@trait_id NewVertex [$crate::core::property]
 			@implement {
 				delegate::delegate! {
-					to (self$($delegate)+).graph_mut() {
+					to $crate::core::GraphDerefMut::graph_mut(&mut self$($delegate)+){
 						fn new_vertex_weighted(&mut self, w: Self::VertexWeight)
 							-> Result<Self::Vertex, ()>;
 					}
@@ -217,7 +217,7 @@ macro_rules! impl_ensurer_inner {
 			@trait_id RemoveVertex [$crate::core::property]
 			@implement {
 				delegate::delegate! {
-					to (self$($delegate)+).graph_mut() {
+					to $crate::core::GraphDerefMut::graph_mut(&mut self$($delegate)+) {
 						fn remove_vertex(&mut self, v: Self::Vertex)
 							-> Result<Self::VertexWeight, ()>;
 					}
@@ -240,7 +240,7 @@ macro_rules! impl_ensurer_inner {
 			@trait_id AddEdge [$crate::core::property]
 			@implement {
 				delegate::delegate! {
-					to (self$($delegate)+).graph_mut() {
+					to $crate::core::GraphDerefMut::graph_mut(&mut self$($delegate)+) {
 						fn add_edge_weighted<E>(&mut self, e: E) -> Result<(), ()>
 						where
 							E: $crate::core::EdgeWeighted<Self::Vertex, Self::EdgeWeight>;
@@ -264,7 +264,7 @@ macro_rules! impl_ensurer_inner {
 			@trait_id RemoveEdge [$crate::core::property]
 			@implement {
 				delegate::delegate! {
-					to (self$($delegate)+).graph_mut() {
+					to $crate::core::GraphDerefMut::graph_mut(&mut self$($delegate)+) {
 						fn remove_edge_where<F>(
 							&mut self,
 							f: F,
@@ -382,7 +382,7 @@ macro_rules! impl_ensurer_inner {
 			@trait_id Subgraph [$crate::core::property]
 			@implement {
 				delegate::delegate!{
-					to (self$($delegate)+).graph() {
+					to $crate::core::GraphDeref::graph(&self$($delegate)+) {
 						fn exit_edges<'a>(&'a self) -> Box<dyn 'a + Iterator<Item=
 							(Self::Vertex, Self::Vertex)>>;
 					}
@@ -404,7 +404,7 @@ macro_rules! impl_ensurer_inner {
 			@trait_id NonNull [$crate::core::property]
 			@implement {
 				delegate::delegate! {
-					to (self$($delegate)+).graph() {
+					to $crate::core::GraphDeref::graph(&self$($delegate)+) {
 						fn get_vertex(&self) -> Self::Vertex;
 					}
 				}

@@ -1,10 +1,13 @@
 use crate::mock_graph::{
-	arbitrary::{ArbTwoVerticesIn, GuidedArbGraph, Limit, Unique},
+	arbitrary::{ArbTwoVerticesIn, GuidedArbGraph, Limit, NonUnique},
 	MockEdgeWeight, MockVertex, MockVertexWeight,
 };
-use graphene::core::{
-	property::{AddEdge, RemoveEdge},
-	Edge, EdgeDeref, EdgeWeighted, Graph, GraphDeref, GraphDerefMut, GraphMut,
+use graphene::{
+	core::{
+		property::{AddEdge, NonNullGraph, RemoveEdge},
+		Edge, EdgeDeref, EdgeWeighted, Ensure, Graph, GraphDerefMut, GraphMut, Release,
+	},
+	impl_ensurer,
 };
 use quickcheck::{Arbitrary, Gen};
 use rand::Rng;
@@ -13,15 +16,19 @@ use std::{collections::HashSet, ops::RangeBounds};
 /// An arbitrary graph with an edge that is guaranteed to be in the graph (the
 /// weight is a clone)
 #[derive(Clone, Debug)]
-pub struct ArbEdgeIn<G>(pub G, pub (MockVertex, MockVertex, MockEdgeWeight))
+pub struct ArbEdgeIn<G>(
+	pub NonNullGraph<G>,
+	pub (MockVertex, MockVertex, MockEdgeWeight),
+)
 where
-	G: Arbitrary + GraphDeref,
-	G::Graph:
-		Graph<Vertex = MockVertex, VertexWeight = MockVertexWeight, EdgeWeight = MockEdgeWeight>;
+	G: Arbitrary + Ensure,
+	G::Graph: Clone
+		+ Graph<Vertex = MockVertex, VertexWeight = MockVertexWeight, EdgeWeight = MockEdgeWeight>;
 impl<Gr> GuidedArbGraph for ArbEdgeIn<Gr>
 where
-	Gr: GuidedArbGraph + GraphDerefMut,
-	Gr::Graph: GraphMut<Vertex = MockVertex, VertexWeight = MockVertexWeight, EdgeWeight = MockEdgeWeight>
+	Gr: GuidedArbGraph + Ensure + GraphDerefMut,
+	Gr::Graph: Clone
+		+ GraphMut<Vertex = MockVertex, VertexWeight = MockVertexWeight, EdgeWeight = MockEdgeWeight>
 		+ AddEdge
 		+ RemoveEdge,
 {
@@ -40,7 +47,7 @@ where
 			.nth(g.gen_range(0, graph.all_edges().count()))
 			.unwrap();
 		let edge_clone = (edge.source(), edge.sink(), edge.weight().clone());
-		Self(arb_graph, edge_clone)
+		Self(NonNullGraph::ensure_unvalidated(arb_graph), edge_clone)
 	}
 
 	fn shrink_guided(&self, _: HashSet<Limit>) -> Box<dyn Iterator<Item = Self>>
@@ -64,7 +71,7 @@ where
 		}));
 
 		// We shrink each vertex in the edge
-		let mut without_edge = self.0.clone();
+		let mut without_edge = self.0.clone().release();
 		without_edge
 			.graph_mut()
 			.remove_edge_where(|e| {
@@ -74,13 +81,17 @@ where
 			})
 			.unwrap();
 		result.extend(
-			ArbTwoVerticesIn::new(without_edge, (self.1).0, (self.1).1)
+			ArbTwoVerticesIn::<_, NonUnique>::new(without_edge, (self.1).0, (self.1).1)
 				.shrink()
-				.map(|ArbTwoVerticesIn::<_, Unique>(mut g, v1, v2, _)| {
+				.map(|mut g| {
+					let (v1, v2) = g.get_both();
 					g.graph_mut()
 						.add_edge_weighted((v1, v2, (self.1).2.clone()))
 						.unwrap();
-					Self(g, (v1, v2, (self.1).2.clone()))
+					Self(
+						NonNullGraph::ensure(g.release().release().release()).unwrap(),
+						(v1, v2, (self.1).2.clone()),
+					)
 				}),
 		);
 
@@ -89,8 +100,9 @@ where
 }
 impl<Gr> Arbitrary for ArbEdgeIn<Gr>
 where
-	Gr: GuidedArbGraph + GraphDerefMut,
-	Gr::Graph: GraphMut<Vertex = MockVertex, VertexWeight = MockVertexWeight, EdgeWeight = MockEdgeWeight>
+	Gr: GuidedArbGraph + Ensure + GraphDerefMut,
+	Gr::Graph: Clone
+		+ GraphMut<Vertex = MockVertex, VertexWeight = MockVertexWeight, EdgeWeight = MockEdgeWeight>
 		+ AddEdge
 		+ RemoveEdge,
 {
@@ -103,4 +115,32 @@ where
 	{
 		self.shrink_guided(HashSet::new())
 	}
+}
+
+impl<G> Ensure for ArbEdgeIn<G>
+where
+	G: Arbitrary + Ensure,
+	G::Graph: Clone
+		+ Graph<Vertex = MockVertex, VertexWeight = MockVertexWeight, EdgeWeight = MockEdgeWeight>,
+{
+	fn ensure_unvalidated(c: Self::Ensured) -> Self
+	{
+		let edge = c.all_edges().next().unwrap();
+		let edge_copy = (edge.0, edge.1, edge.2.clone());
+		Self(c, edge_copy)
+	}
+
+	fn validate(c: &Self::Ensured) -> bool
+	{
+		c.all_edges().count() >= 1
+	}
+}
+
+impl_ensurer! {
+	use<G> ArbEdgeIn<G>: Ensure
+	as (self.0): NonNullGraph<G>
+	where
+	G: Arbitrary + Ensure,
+	G::Graph: Clone +
+		Graph<Vertex = MockVertex, VertexWeight = MockVertexWeight, EdgeWeight = MockEdgeWeight>
 }

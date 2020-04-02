@@ -31,25 +31,27 @@ fn reject_unilateral(g: ArbNonUnilatralGraph) -> bool
 /// Tests that UnilateralGraph always accepts adding an edge
 #[quickcheck]
 fn accept_add_edge_weighted(
-	ArbTwoVerticesIn(mut g, v1, v2, _): ArbTwoVerticesIn<ArbUnilatralGraph>,
+	mut g: ArbTwoVerticesIn<ArbUnilatralGraph>,
 	e_weight: MockEdgeWeight,
 ) -> bool
 {
-	g.0.add_edge_weighted((v1, v2, e_weight)).is_ok()
+	let (v1, v2) = g.get_both();
+	g.add_edge_weighted((v1, v2, e_weight)).is_ok()
 }
 
 /// Tests that a UnilateralGraph accepts removing an edge that isn't critical
 /// for unilateralism.
 #[quickcheck]
 fn accept_remove_edge_where(
-	ArbTwoVerticesIn(mut g, v1, v2, _): ArbTwoVerticesIn<ArbUnilatralGraph>,
+	mut g: ArbTwoVerticesIn<ArbUnilatralGraph>,
 	e_weight: MockEdgeWeight,
 ) -> bool
 {
+	let (v1, v2) = g.get_both();
 	// To ensure we can remove an edge, we first create an edge to remove
-	g.0.add_edge_weighted((v1, v2, e_weight.clone())).unwrap();
+	g.add_edge_weighted((v1, v2, e_weight.clone())).unwrap();
 
-	g.0.remove_edge_where(|e| (e.source() == v1 && e.sink() == v2))
+	g.remove_edge_where(|e| (e.source() == v1 && e.sink() == v2))
 		.is_ok()
 }
 
@@ -96,9 +98,9 @@ fn accept_remove_vertex(
 ) -> bool
 {
 	let v_set = mock.1;
+	let (v1, v2) = (mock.0).get_both();
 	let mut graph = ((mock.0).0).0.release_all();
-	let v1 = (mock.0).1;
-	let v2 = (mock.0).2;
+
 	// It is only acceptable to remove a vertex (and any edge incident on it)
 	// if after doing so, the rest of the vertices are still unilateral.
 

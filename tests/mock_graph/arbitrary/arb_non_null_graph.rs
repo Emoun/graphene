@@ -3,9 +3,7 @@ use crate::mock_graph::{
 	MockGraph,
 };
 use graphene::{
-	core::{
-		property::NonNullGraph, BaseGraph, Directedness, Ensure, GraphDeref, GraphDerefMut, Release,
-	},
+	core::{property::NonNullGraph, BaseGraph, Directedness, Ensure, Release},
 	impl_ensurer,
 };
 use quickcheck::{Arbitrary, Gen};

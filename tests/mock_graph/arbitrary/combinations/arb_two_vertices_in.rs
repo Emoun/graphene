@@ -1,9 +1,12 @@
 use crate::mock_graph::{
-	arbitrary::{ArbVerticesIn, GuidedArbGraph, Limit},
+	arbitrary::{ArbVertexIn, ArbVerticesIn, GuidedArbGraph, Limit},
 	MockEdgeWeight, MockVertex, MockVertexWeight,
 };
 use graphene::{
-	core::{Ensure, Graph, GraphDeref, GraphDerefMut},
+	core::{
+		property::{NonNull, VertexInGraph},
+		Ensure, Graph, GraphDeref, GraphDerefMut, Release,
+	},
 	impl_ensurer,
 };
 use quickcheck::{Arbitrary, Gen};
@@ -51,36 +54,48 @@ impl Uniqueness for NonUnique
 /// Note: All graphs will have at least 1 vertex for non-unique and 2 vertices
 /// for unique, meaning this type never includes the empty graph.
 #[derive(Clone, Debug)]
-pub struct ArbTwoVerticesIn<G, U = NonUnique>(
-	pub G,
-	pub MockVertex,
-	pub MockVertex,
-	pub PhantomData<U>,
-)
+pub struct ArbTwoVerticesIn<G, U = NonUnique>(pub ArbVertexIn<G>, MockVertex, PhantomData<U>)
 where
-	G: Arbitrary + GraphDeref,
-	G::Graph:
-		Graph<Vertex = MockVertex, VertexWeight = MockVertexWeight, EdgeWeight = MockEdgeWeight>,
+	G: Arbitrary + Ensure,
+	G::Graph: Clone
+		+ Graph<Vertex = MockVertex, VertexWeight = MockVertexWeight, EdgeWeight = MockEdgeWeight>,
 	U: Uniqueness;
 
 impl<G, U> ArbTwoVerticesIn<G, U>
 where
-	G: Arbitrary + GraphDeref,
-	G::Graph:
-		Graph<Vertex = MockVertex, VertexWeight = MockVertexWeight, EdgeWeight = MockEdgeWeight>,
+	G: Arbitrary + Ensure,
+	G::Graph: Clone
+		+ Graph<Vertex = MockVertex, VertexWeight = MockVertexWeight, EdgeWeight = MockEdgeWeight>,
 	U: Uniqueness,
 {
 	pub fn new(g: G, v1: MockVertex, v2: MockVertex) -> Self
 	{
-		Self(g, v1, v2, PhantomData)
+		if U::unique() && v1 == v2
+		{
+			panic!("Unique vertices aren't allowed: '{:?}', '{:?}'", v1, v2);
+		}
+		if !g.graph().contains_vertex(v2)
+		{
+			panic!("Vertex not in graph: '{:?}'", v2);
+		}
+		Self(
+			ArbVertexIn(VertexInGraph::new(g, v1).unwrap()),
+			v2,
+			PhantomData,
+		)
+	}
+
+	pub fn get_both(&self) -> (MockVertex, MockVertex)
+	{
+		(self.0.get_vertex(), self.1)
 	}
 }
 
 impl<Gr, U> Arbitrary for ArbTwoVerticesIn<Gr, U>
 where
-	Gr: GuidedArbGraph + GraphDerefMut,
-	Gr::Graph:
-		Graph<Vertex = MockVertex, VertexWeight = MockVertexWeight, EdgeWeight = MockEdgeWeight>,
+	Gr: GuidedArbGraph + Ensure + GraphDerefMut,
+	Gr::Graph: Clone
+		+ Graph<Vertex = MockVertex, VertexWeight = MockVertexWeight, EdgeWeight = MockEdgeWeight>,
 	U: 'static + Uniqueness,
 {
 	fn arbitrary<G: Gen>(g: &mut G) -> Self
@@ -95,9 +110,9 @@ where
 }
 impl<Gr, U> GuidedArbGraph for ArbTwoVerticesIn<Gr, U>
 where
-	Gr: GuidedArbGraph + GraphDerefMut,
-	Gr::Graph:
-		Graph<Vertex = MockVertex, VertexWeight = MockVertexWeight, EdgeWeight = MockEdgeWeight>,
+	Gr: GuidedArbGraph + Ensure + GraphDerefMut,
+	Gr::Graph: Clone
+		+ Graph<Vertex = MockVertex, VertexWeight = MockVertexWeight, EdgeWeight = MockEdgeWeight>,
 	U: 'static + Uniqueness,
 {
 	fn arbitrary_guided<G: Gen>(
@@ -138,7 +153,7 @@ where
 		Box::new(
 			ArbVerticesIn(
 				self.0.clone(),
-				HashSet::from_iter([self.1, self.2].iter().cloned()),
+				HashSet::from_iter([self.get_vertex(), self.1].iter().cloned()),
 			)
 			.shrink_guided(limits)
 			.map(|g| {
@@ -147,12 +162,20 @@ where
 					// we cycle, such that when the set only contains 1 vertex, we can use the same
 					// one for both positions.
 					let mut set = g.1.iter().cycle();
-					Self::new(g.0, *set.next().unwrap(), *set.next().unwrap())
+					Self::new(
+						g.0.release().release(),
+						*set.next().unwrap(),
+						*set.next().unwrap(),
+					)
 				}
 				else
 				{
 					let mut set = g.1.iter();
-					Self::new(g.0, *set.next().unwrap(), *set.next().unwrap())
+					Self::new(
+						g.0.release().release(),
+						*set.next().unwrap(),
+						*set.next().unwrap(),
+					)
 				}
 			}),
 		)
@@ -162,39 +185,38 @@ where
 impl<G, U> Ensure for ArbTwoVerticesIn<G, U>
 where
 	G: Arbitrary + Ensure,
-	G::Graph:
-		Graph<Vertex = MockVertex, VertexWeight = MockVertexWeight, EdgeWeight = MockEdgeWeight>,
+	G::Graph: Clone
+		+ Graph<Vertex = MockVertex, VertexWeight = MockVertexWeight, EdgeWeight = MockEdgeWeight>,
 	U: Uniqueness,
 {
 	fn ensure_unvalidated(c: Self::Ensured) -> Self
 	{
-		let (v1, v2) = {
-			let mut verts = c.graph().all_vertices();
+		let v2 = {
+			let mut verts = c.all_vertices();
 			if !U::unique()
 			{
-				let v = verts.next().unwrap();
-				(v, verts.next().unwrap_or(v))
+				verts.next().unwrap()
 			}
 			else
 			{
-				(verts.next().unwrap(), verts.next().unwrap())
+				verts.filter(|&v| v != c.get_vertex()).next().unwrap()
 			}
 		};
-		Self::new(c, v1, v2)
+		Self(c, v2, PhantomData)
 	}
 
 	fn validate(c: &Self::Ensured) -> bool
 	{
-		c.graph().all_vertices().count() >= (1 + (U::unique() as usize))
+		!U::unique() || c.graph().all_vertices().count() >= 2
 	}
 }
 
 impl_ensurer! {
 	use<G,U> ArbTwoVerticesIn<G,U>: Ensure
-	as (self.0): G
+	as (self.0): ArbVertexIn<G>
 	where
-	G: Arbitrary + GraphDeref,
-	G::Graph:
+	G: Arbitrary + Ensure,
+	G::Graph: Clone +
 		Graph<Vertex = MockVertex, VertexWeight = MockVertexWeight, EdgeWeight = MockEdgeWeight>,
 	U: Uniqueness
 }

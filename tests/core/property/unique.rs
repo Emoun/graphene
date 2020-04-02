@@ -55,7 +55,6 @@ mod module
 		weight: MockEdgeWeight,
 	) -> bool
 	{
-		g.0.add_edge_weighted((e.source(), e.sink(), weight))
-			.is_err()
+		g.add_edge_weighted((e.source(), e.sink(), weight)).is_err()
 	}
 }

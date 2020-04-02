@@ -37,25 +37,27 @@ mod module
 	/// Tests that a ConnectedGraph always accepts adding an edge.
 	#[quickcheck]
 	fn accept_add_edge_weighted(
-		ArbTwoVerticesIn(mut g, v1, v2, _): ArbTwoVerticesIn<ArbConnectedGraph<directedness>>,
+		mut g: ArbTwoVerticesIn<ArbConnectedGraph<directedness>>,
 		e_weight: MockEdgeWeight,
 	) -> bool
 	{
-		g.0.add_edge_weighted((v1, v2, e_weight.clone())).is_ok()
+		let (v1, v2) = g.get_both();
+		g.add_edge_weighted((v1, v2, e_weight.clone())).is_ok()
 	}
 
 	/// Tests that a ConnectedGraph accepts removing an edge that isn't critical
 	/// for connectedness
 	#[quickcheck]
 	fn accept_remove_edge_where(
-		ArbTwoVerticesIn(mut g, v1, v2, _): ArbTwoVerticesIn<ArbConnectedGraph<directedness>>,
+		mut g: ArbTwoVerticesIn<ArbConnectedGraph<directedness>>,
 		e_weight: MockEdgeWeight,
 	) -> bool
 	{
+		let (v1, v2) = g.get_both();
 		// To ensure we can remove an edge, we first create an edge to remove
-		g.0.add_edge_weighted((v1, v2, e_weight.clone())).unwrap();
+		g.add_edge_weighted((v1, v2, e_weight.clone())).unwrap();
 
-		g.0.remove_edge_where(|e| (e.source() == v1 && e.sink() == v2))
+		g.remove_edge_where(|e| (e.source() == v1 && e.sink() == v2))
 			.is_ok()
 	}
 
@@ -103,9 +105,8 @@ mod module
 	) -> bool
 	{
 		let v_set = mock.1;
+		let (v1, v2) = mock.0.get_both();
 		let mut graph = ((mock.0).0).0.release_all();
-		let v1 = (mock.0).1;
-		let v2 = (mock.0).2;
 		// It is only acceptable to remove a vertex (and any edge incident on it)
 		// if after doing so, the rest of the vertices are still connected.
 
@@ -150,12 +151,14 @@ mod module
 	/// graph unconnected
 	#[quickcheck]
 	fn reject_remove_vertex(
-		ArbTwoVerticesIn(g1, v11, v12, _): ArbTwoVerticesIn<ArbConnectedGraph<directedness>>,
-		ArbTwoVerticesIn(g2, v21, v22, _): ArbTwoVerticesIn<ArbConnectedGraph<directedness>>,
+		g1: ArbTwoVerticesIn<ArbConnectedGraph<directedness>>,
+		g2: ArbTwoVerticesIn<ArbConnectedGraph<directedness>>,
 		e_weight: MockEdgeWeight,
 		v_weight: MockVertexWeight,
 	) -> bool
 	{
+		let (v11, v12) = g1.get_both();
+		let (v21, v22) = g2.get_both();
 		let mut graph = g1.0.release_all();
 		// We start by joining 2 connected graphs into a unconnected graph with the 2
 		// components

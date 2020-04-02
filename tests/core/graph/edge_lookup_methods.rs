@@ -46,7 +46,7 @@ use graphene::core::{property::NonNull, Directed, Edge, Graph, GraphMut};
 		method 					[edges_between]
 		method_mut 				[edges_between_mut]
 		vertices				[ v, _v2 ]
-		vertices_init			[let v = g.1;let _v2 = g.2;]
+		vertices_init			[let (v, _v2) = g.get_both();]
 		vertices_init_invalid 	[let v = g.1;let _v2 = g.2;]
 		closure 				[
 			|e| (e.source() == v && e.sink() == _v2) || (e.source() == _v2 && e.sink() == v)

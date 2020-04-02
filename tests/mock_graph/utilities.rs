@@ -1,7 +1,7 @@
-use crate::mock_graph::{MockEdgeWeight, MockGraph, MockVertex, MockVertexWeight};
+use crate::mock_graph::{MockEdgeWeight, MockVertex, MockVertexWeight};
 use graphene::core::{
 	property::{AddEdge, NewVertex},
-	Directedness, Edge, EdgeDeref, Graph,
+	Edge, EdgeDeref, Graph,
 };
 use std::collections::HashMap;
 #[macro_export]
@@ -94,11 +94,15 @@ pub fn unordered_equivalent_lists_equal<L: PartialEq<R>, R: PartialEq<L>>(
 	unordered_sublist_equal(l1, l2) && unordered_sublist_equal(l2, l1)
 }
 
-pub fn auto_copy_from<G, D>(g: &mut G, mock: &MockGraph<D>) -> HashMap<MockVertex, G::Vertex>
+pub fn auto_copy_from<G, M>(g: &mut G, mock: &M) -> HashMap<MockVertex, G::Vertex>
 where
-	G: NewVertex<Directedness = D, VertexWeight = MockVertexWeight, EdgeWeight = MockEdgeWeight>
-		+ AddEdge,
-	D: Directedness,
+	G: NewVertex<VertexWeight = MockVertexWeight, EdgeWeight = MockEdgeWeight> + AddEdge,
+	M: Graph<
+		Vertex = MockVertex,
+		Directedness = G::Directedness,
+		VertexWeight = MockVertexWeight,
+		EdgeWeight = MockEdgeWeight,
+	>,
 {
 	// Add all the vertices, remembering which mock vertices match which real
 	// vertices
