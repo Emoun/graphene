@@ -1,5 +1,5 @@
 use crate::mock_graph::{
-	arbitrary::{ArbTwoVerticesIn, GuidedArbGraph, Limit},
+	arbitrary::{ArbTwoVerticesIn, GuidedArbGraph, Limit, NonUnique},
 	MockEdgeWeight, MockVertex, MockVertexWeight,
 };
 use graphene::{
@@ -53,20 +53,22 @@ where
 		e_range: impl RangeBounds<usize>,
 	) -> Self
 	{
-		let arb = ArbTwoVerticesIn::arbitrary_guided(g, v_range, e_range);
+		let arb = ArbTwoVerticesIn::<_, NonUnique>::arbitrary_guided(g, v_range, e_range);
 		Self(VertexInGraph::new_unvalidated(arb.0, arb.1))
 	}
 
 	fn shrink_guided(&self, limits: HashSet<Limit, RandomState>) -> Box<dyn Iterator<Item = Self>>
 	{
 		Box::new(
-			ArbTwoVerticesIn(
+			ArbTwoVerticesIn::new(
 				self.0.clone().release(),
 				self.get_vertex(),
 				self.get_vertex(),
 			)
 			.shrink_guided(limits)
-			.map(|ArbTwoVerticesIn(g, v, _)| Self(VertexInGraph::new_unvalidated(g, v))),
+			.map(|ArbTwoVerticesIn::<_, NonUnique>(g, v, _, _)| {
+				Self(VertexInGraph::new_unvalidated(g, v))
+			}),
 		)
 	}
 }
@@ -75,7 +77,7 @@ impl_ensurer! {
 	use<G> ArbVertexIn<G>:
 	// Can never impl the following because MockGraph doesn't
 	Reflexive
-	for VertexInGraph<G> as (self.0)
+	as ( self.0) : VertexInGraph<G>
 	where
 	G: GuidedArbGraph + Ensure + Clone,
 	G::Graph: Clone +

@@ -87,6 +87,6 @@ impl_ensurer! {
 	use<C> WeakGraph<C>: Ensure, Weak, RemoveVertex, RemoveEdge,
 	// A new vertex wouldn't be connected to the rest of the graph
 	NewVertex
-	for C as (self.0)
+	as (self.0) : C
 	where C::Graph: Graph<Directedness=Directed>
 }

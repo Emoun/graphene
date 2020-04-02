@@ -103,6 +103,6 @@ impl_ensurer! {
 	use<C> UnilateralGraph<C>: Ensure, Unilateral, Weak, RemoveVertex, RemoveEdge,
 	// A new vertex would be unconnected to the rest of the graph
 	NewVertex
-	for C as (self.0)
+	as (self.0) : C
 	where C::Graph: Graph<Directedness=Directed>
 }

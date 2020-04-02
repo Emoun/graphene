@@ -126,7 +126,7 @@ pub trait GuidedArbGraph: Arbitrary
 			Bound::Excluded(&x) => x,
 			Bound::Unbounded => v_max,
 		};
-		assert!(v_min < v_max);
+		assert!(v_min < v_max, "{} >= {}", v_min, v_max);
 		assert!(e_min < e_max);
 		(v_min, v_max, e_min, e_max)
 	}

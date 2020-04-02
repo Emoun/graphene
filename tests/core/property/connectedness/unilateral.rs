@@ -31,7 +31,7 @@ fn reject_unilateral(g: ArbNonUnilatralGraph) -> bool
 /// Tests that UnilateralGraph always accepts adding an edge
 #[quickcheck]
 fn accept_add_edge_weighted(
-	ArbTwoVerticesIn(mut g, v1, v2): ArbTwoVerticesIn<ArbUnilatralGraph>,
+	ArbTwoVerticesIn(mut g, v1, v2, _): ArbTwoVerticesIn<ArbUnilatralGraph>,
 	e_weight: MockEdgeWeight,
 ) -> bool
 {
@@ -42,7 +42,7 @@ fn accept_add_edge_weighted(
 /// for unilateralism.
 #[quickcheck]
 fn accept_remove_edge_where(
-	ArbTwoVerticesIn(mut g, v1, v2): ArbTwoVerticesIn<ArbUnilatralGraph>,
+	ArbTwoVerticesIn(mut g, v1, v2, _): ArbTwoVerticesIn<ArbUnilatralGraph>,
 	e_weight: MockEdgeWeight,
 ) -> bool
 {

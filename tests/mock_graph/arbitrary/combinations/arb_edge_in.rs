@@ -1,5 +1,5 @@
 use crate::mock_graph::{
-	arbitrary::{ArbTwoVerticesIn, GuidedArbGraph, Limit},
+	arbitrary::{ArbTwoVerticesIn, GuidedArbGraph, Limit, Unique},
 	MockEdgeWeight, MockVertex, MockVertexWeight,
 };
 use graphene::core::{
@@ -74,9 +74,9 @@ where
 			})
 			.unwrap();
 		result.extend(
-			ArbTwoVerticesIn(without_edge, (self.1).0, (self.1).1)
+			ArbTwoVerticesIn::new(without_edge, (self.1).0, (self.1).1)
 				.shrink()
-				.map(|ArbTwoVerticesIn(mut g, v1, v2)| {
+				.map(|ArbTwoVerticesIn::<_, Unique>(mut g, v1, v2, _)| {
 					g.graph_mut()
 						.add_edge_weighted((v1, v2, (self.1).2.clone()))
 						.unwrap();

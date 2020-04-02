@@ -192,7 +192,7 @@ impl_ensurer! {
 	NewVertex,
 	// Can never impl the following because MockGraph doesn't
 	Unique, NoLoops, Reflexive, Connected, Subgraph, NonNull
-	for UnilateralGraph<MockGraph<Directed>> as (self.0)
+	as (self.0) : UnilateralGraph<MockGraph<Directed>>
 }
 
 /// An arbitrary graph that is not unilaterally connected

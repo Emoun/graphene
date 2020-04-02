@@ -65,6 +65,6 @@ impl_ensurer! {
 	use<D> ArbNonNullGraph<D>:
 	// Can never impl the following because MockGraph doesn't
 	Reflexive
-	for NonNullGraph<MockGraph<D>> as (self.0)
+	as (self.0) : NonNullGraph<MockGraph<D>>
 	where D: Directedness
 }

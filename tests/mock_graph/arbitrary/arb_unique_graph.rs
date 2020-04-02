@@ -119,7 +119,7 @@ impl_ensurer! {
 	use<D> ArbUniqueGraph<D>:
 	// Can never impl the following because MockGraph doesn't
 	Reflexive
-	for UniqueGraph<MockGraph<D>> as (self.0)
+	as (self.0) : UniqueGraph<MockGraph<D>>
 	where D: Directedness
 }
 

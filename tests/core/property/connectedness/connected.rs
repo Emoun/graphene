@@ -37,7 +37,7 @@ mod module
 	/// Tests that a ConnectedGraph always accepts adding an edge.
 	#[quickcheck]
 	fn accept_add_edge_weighted(
-		ArbTwoVerticesIn(mut g, v1, v2): ArbTwoVerticesIn<ArbConnectedGraph<directedness>>,
+		ArbTwoVerticesIn(mut g, v1, v2, _): ArbTwoVerticesIn<ArbConnectedGraph<directedness>>,
 		e_weight: MockEdgeWeight,
 	) -> bool
 	{
@@ -48,7 +48,7 @@ mod module
 	/// for connectedness
 	#[quickcheck]
 	fn accept_remove_edge_where(
-		ArbTwoVerticesIn(mut g, v1, v2): ArbTwoVerticesIn<ArbConnectedGraph<directedness>>,
+		ArbTwoVerticesIn(mut g, v1, v2, _): ArbTwoVerticesIn<ArbConnectedGraph<directedness>>,
 		e_weight: MockEdgeWeight,
 	) -> bool
 	{
@@ -150,8 +150,8 @@ mod module
 	/// graph unconnected
 	#[quickcheck]
 	fn reject_remove_vertex(
-		ArbTwoVerticesIn(g1, v11, v12): ArbTwoVerticesIn<ArbConnectedGraph<directedness>>,
-		ArbTwoVerticesIn(g2, v21, v22): ArbTwoVerticesIn<ArbConnectedGraph<directedness>>,
+		ArbTwoVerticesIn(g1, v11, v12, _): ArbTwoVerticesIn<ArbConnectedGraph<directedness>>,
+		ArbTwoVerticesIn(g2, v21, v22, _): ArbTwoVerticesIn<ArbConnectedGraph<directedness>>,
 		e_weight: MockEdgeWeight,
 		v_weight: MockVertexWeight,
 	) -> bool

@@ -6,12 +6,15 @@
 /// Supported property traits:
 /// Directed, Undirected, Unique, NoLoops, Reflexive, Weak, Unilateral,
 /// Connected, Subgraph
+///
+/// Warning: The Ensure implementation assumes the struct has 1 public member.
+/// If this is not the case, implement it yourself.
 #[macro_export]
 macro_rules! impl_ensurer {
 	{
-		$(use <$($generics:ident),+>)? $struct:ty :
-		$($exclude_props:ident),*
-		for $type_graph:ty as (self $($delegate:tt)+)
+		$(use <$($generics:ident),+>)? $struct:ty
+		$(: $( $exclude_props:ident),+)?
+		as (self $($delegate:tt)+) : $type_graph:ty
 		$(where $($bounds:tt)*)?
 	} =>{
 		$crate::impl_ensurer_inner!{
@@ -19,7 +22,7 @@ macro_rules! impl_ensurer {
 			@generic [ $($($generics)+)? ]
 			@delegate [ $type_graph ]
 			@delegate_to [ $($delegate)+ ]
-			@exclude [ $($exclude_props)* ]
+			@exclude [ $($($exclude_props)+)? ]
 			@bounds [$($($bounds)*)?]
 		}
 	};
@@ -445,7 +448,7 @@ macro_rules! impl_ensurer_inner {
 		@trait_id $exclude_props_id:ident [ $($exclude_props_path:tt)* ]
 		@implement {$($impl:tt)*}
 	} => {
-		impl$(<$($generics)+>)? $($exclude_props_path)*::$exclude_props_id
+		impl$(<$($generics),+>)? $($exclude_props_path)*::$exclude_props_id
 			for $struct
 			where
 				$delegate_type: $crate::core::Ensure,

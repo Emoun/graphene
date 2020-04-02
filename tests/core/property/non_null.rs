@@ -1,5 +1,5 @@
 /// Tests `NonNullGraph` and `VertexInGraph`
-use crate::mock_graph::arbitrary::{ArbTwoUniqueVerticesIn, ArbVertexIn};
+use crate::mock_graph::arbitrary::{ArbTwoVerticesIn, ArbVertexIn};
 use crate::mock_graph::{MockDirectedness, MockGraph, MockVertexWeight};
 use duplicate::duplicate;
 use graphene::core::{
@@ -14,6 +14,7 @@ use graphene::core::{
 mod module
 {
 	use super::*;
+	use crate::mock_graph::arbitrary::Unique;
 
 	#[duplicate(
 		module2	[ non_null_graph ]	[ vertex_in_graph ]
@@ -59,7 +60,7 @@ mod module
 	/// 2.
 	#[quickcheck]
 	fn non_null_accept_remove_vertex(
-		ArbTwoUniqueVerticesIn(g, v, _): ArbTwoUniqueVerticesIn<MockGraph<MockDirectedness>>,
+		ArbTwoVerticesIn(g, v, _, _): ArbTwoVerticesIn<MockGraph<MockDirectedness>, Unique>,
 	) -> bool
 	{
 		let mut g = NonNullGraph::ensure(g).unwrap();
@@ -71,7 +72,7 @@ mod module
 	/// VertexInGraph
 	#[quickcheck]
 	fn vertex_in_accept_remove_vertex(
-		ArbTwoUniqueVerticesIn(g, v1, v2): ArbTwoUniqueVerticesIn<MockGraph<MockDirectedness>>,
+		ArbTwoVerticesIn(g, v1, v2, _): ArbTwoVerticesIn<MockGraph<MockDirectedness>, Unique>,
 	) -> bool
 	{
 		let mut g = VertexInGraph::new(g, v1).unwrap();

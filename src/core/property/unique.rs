@@ -94,6 +94,6 @@ impl<C: Ensure> Unique for UniqueGraph<C> {}
 
 impl_ensurer! {
 	use<C> UniqueGraph<C>: Ensure, Unique, AddEdge
-	for C as (self.0)
+	as (self.0) : C
 	where C: Ensure
 }

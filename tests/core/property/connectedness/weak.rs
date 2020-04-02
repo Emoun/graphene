@@ -27,7 +27,7 @@ fn reject_weak(g: ArbUnconnectedGraph<Directed>) -> bool
 /// Tests that WeakGraph always accepts adding an edge
 #[quickcheck]
 fn accept_add_edge_weighted(
-	ArbTwoVerticesIn(mut g, v1, v2): ArbTwoVerticesIn<ArbWeakGraph>,
+	ArbTwoVerticesIn(mut g, v1, v2, _): ArbTwoVerticesIn<ArbWeakGraph>,
 	e_weight: MockEdgeWeight,
 ) -> bool
 {
@@ -38,7 +38,7 @@ fn accept_add_edge_weighted(
 /// connectivity.
 #[quickcheck]
 fn accept_remove_edge_where(
-	ArbTwoVerticesIn(mut g, v1, v2): ArbTwoVerticesIn<ArbWeakGraph>,
+	ArbTwoVerticesIn(mut g, v1, v2, _): ArbTwoVerticesIn<ArbWeakGraph>,
 	e_weight: MockEdgeWeight,
 ) -> bool
 {
