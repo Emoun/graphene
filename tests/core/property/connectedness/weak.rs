@@ -79,15 +79,14 @@ fn reject_remove_edge_where(
 /// graph is still unilateral.
 #[quickcheck]
 fn accept_remove_vertex(
-	mock: ArbVerticesIn<ArbTwoVerticesIn<ArbWeakGraph>>,
+	ArbVerticesIn(graph, verts): ArbVerticesIn<ArbTwoVerticesIn<ArbWeakGraph>>,
 	v_weight: MockVertexWeight,
 	e_weight: MockEdgeWeight,
 	e_direction: bool,
 ) -> bool
 {
-	let v1 = mock.get_vertex();
-	let v_set = mock.1;
-	let mut graph = ((mock.0.release()).0).0.release_all();
+	let v1 = graph.get_vertex();
+	let mut graph = (graph.0).0.release_all();
 	// It is only acceptable to remove a vertex (and any edge incident on it)
 	// if after doing so, the rest of the vertices are still weakly connected.
 
@@ -109,7 +108,7 @@ fn accept_remove_vertex(
 	}
 
 	// We add auxiliary edges from the new vertex to the others
-	for (idx, v_other) in v_set.into_iter().enumerate()
+	for (idx, v_other) in verts.into_iter().enumerate()
 	{
 		// just to add some variance
 		if idx % 2 == 0

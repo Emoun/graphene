@@ -1,40 +1,44 @@
-use crate::mock_graph::{arbitrary::{GuidedArbGraph, Limit}, MockVertex, TestGraph};
+use crate::mock_graph::{
+	arbitrary::{GuidedArbGraph, Limit},
+	MockVertex, TestGraph,
+};
 use graphene::{
-	core::{Graph, GraphDeref, GraphDerefMut, Release}, impl_ensurer
+	core::{Ensure, Graph, GraphDerefMut},
+	impl_ensurer,
 };
 use quickcheck::{Arbitrary, Gen};
 use rand::Rng;
 use std::{collections::HashSet, ops::RangeBounds};
-use graphene::core::property::NonNullGraph;
-use graphene::core::Ensure;
 
 /// An arbitrary graph and an arbitrary set of vertices in it.
 #[derive(Clone, Debug)]
-pub struct ArbVerticesIn<G>(pub NonNullGraph<G>, pub HashSet<MockVertex>)
+pub struct ArbVerticesIn<G>(pub G, pub HashSet<MockVertex>)
 where
 	G: GuidedArbGraph,
 	G::Graph: TestGraph;
 
 impl<G> ArbVerticesIn<G>
-	where
-		G: GuidedArbGraph,
-		G::Graph: TestGraph,
+where
+	G: GuidedArbGraph,
+	G::Graph: TestGraph,
 {
 	pub fn new(g: G, set: HashSet<MockVertex>) -> Self
 	{
-		for &v in set.iter() {
-			if !g.graph().contains_vertex(v){
+		for &v in set.iter()
+		{
+			if !g.graph().contains_vertex(v)
+			{
 				panic!("Vertex not in graph: {:?}", v);
 			}
 		}
-		
-		Self(NonNullGraph::ensure_unvalidated(g), set)
+
+		Self(g, set)
 	}
 }
 
 impl<Gr> Arbitrary for ArbVerticesIn<Gr>
 where
-	Gr: GuidedArbGraph + Ensure + GraphDerefMut,
+	Gr: GuidedArbGraph + GraphDerefMut,
 	Gr::Graph: TestGraph,
 {
 	fn arbitrary<G: Gen>(g: &mut G) -> Self
@@ -81,7 +85,7 @@ where
 	fn shrink_guided(&self, mut limits: HashSet<Limit>) -> Box<dyn Iterator<Item = Self>>
 	{
 		let mut result = Vec::new();
-		let arb_graph = &self.0.clone().release();
+		let arb_graph = &self.0.clone();
 
 		// First we shrink the graph without touching the designated vertices
 		for v in self.1.iter()
@@ -109,22 +113,24 @@ where
 }
 
 impl<G> Ensure for ArbVerticesIn<G>
-	where
-		G: GuidedArbGraph,
-		G::Graph: TestGraph
+where
+	G: GuidedArbGraph,
+	G::Graph: TestGraph,
 {
-	fn ensure_unvalidated(c: Self::Ensured) -> Self {
+	fn ensure_unvalidated(c: Self::Ensured) -> Self
+	{
 		Self(c, HashSet::new())
 	}
-	
-	fn validate(_: &Self::Ensured) -> bool {
+
+	fn validate(_: &Self::Ensured) -> bool
+	{
 		true
 	}
 }
 
 impl_ensurer! {
 	use<G> ArbVerticesIn<G>: Ensure
-	as (self.0): NonNullGraph<G>
+	as (self.0): G
 	where
 	G: GuidedArbGraph,
 	G::Graph: TestGraph

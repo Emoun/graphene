@@ -99,15 +99,15 @@ mod module
 	/// graph is still connected.
 	#[quickcheck]
 	fn accept_remove_vertex(
-		mock: ArbVerticesIn<ArbTwoVerticesIn<ArbConnectedGraph<directedness>>>,
+		ArbVerticesIn(graph, verts): ArbVerticesIn<
+			ArbTwoVerticesIn<ArbConnectedGraph<directedness>>,
+		>,
 		v_weight: MockVertexWeight,
 		e_weight: MockEdgeWeight,
 	) -> bool
 	{
-		let v_set = mock.1;
-		let two_v_in = mock.0.release();
-		let (v1, v2) = two_v_in.get_both();
-		let mut graph = ((two_v_in).0).0.release_all();
+		let (v1, v2) = graph.get_both();
+		let mut graph = ((graph).0).0.release_all();
 		// It is only acceptable to remove a vertex (and any edge incident on it)
 		// if after doing so, the rest of the vertices are still connected.
 
@@ -127,7 +127,7 @@ mod module
 		}
 
 		// We add auxiliary edges from the new vertex to the others
-		for (idx, v_other) in v_set.into_iter().enumerate()
+		for (idx, v_other) in verts.into_iter().enumerate()
 		{
 			// just to add some variance
 			if idx % 2 == 0

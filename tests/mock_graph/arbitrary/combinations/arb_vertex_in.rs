@@ -1,4 +1,7 @@
-use crate::mock_graph::{arbitrary::{ArbTwoVerticesIn, GuidedArbGraph, Limit, NonUnique}, TestGraph};
+use crate::mock_graph::{
+	arbitrary::{ArbTwoVerticesIn, GuidedArbGraph, Limit, NonUnique},
+	TestGraph,
+};
 use graphene::{
 	core::{
 		property::{NonNull, VertexInGraph},

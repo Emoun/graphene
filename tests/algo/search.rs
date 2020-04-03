@@ -75,22 +75,19 @@ mod module
 	/// taken the wrong directed.
 	#[quickcheck]
 	fn directed_doesnt_visit_incoming_component(
-		component: ArbVerticesIn<ArbVertexIn<ArbConnectedGraph<Directed>>>,
-		rest: ArbVerticesIn<MockGraph<Directed>>,
+		ArbVerticesIn(comp, verts): ArbVerticesIn<ArbVertexIn<ArbConnectedGraph<Directed>>>,
+		ArbVerticesIn(g2, g2_verts): ArbVerticesIn<MockGraph<Directed>>,
 		weight: MockEdgeWeight,
 	) -> bool
 	{
-		let comp_set = component.1;
-		let v = component.0.get_vertex();
-		let mut graph = component.0.release_all();
-		let g2 = rest.0;
-		let g2_set = rest.1;
+		let v = comp.get_vertex();
+		let mut graph = comp.release_all();
 
 		// First join the two graphs
 		let v_map = graph.join(&g2);
 
 		// Add edges from the other component to the start component
-		for (v1, v2) in comp_set.iter().zip(g2_set.iter())
+		for (v1, v2) in verts.iter().zip(g2_verts.iter())
 		{
 			graph
 				.add_edge_weighted((v_map[v2], *v1, weight.clone()))
@@ -105,18 +102,16 @@ mod module
 	/// start component is also visited in full.
 	#[quickcheck]
 	fn directed_visits_outgoing_component(
-		comp1: ArbVerticesIn<ArbVertexIn<ArbConnectedGraph<Directed>>>,
-		comp2: ArbVerticesIn<ArbVertexIn<ArbConnectedGraph<Directed>>>,
+		ArbVerticesIn(comp1, verts1): ArbVerticesIn<ArbVertexIn<ArbConnectedGraph<Directed>>>,
+		ArbVerticesIn(comp2, verts2): ArbVerticesIn<ArbVertexIn<ArbConnectedGraph<Directed>>>,
 		weight: MockEdgeWeight,
 	) -> bool
 	{
-		let comp1_set = comp1.1;
-		let v = comp1.0.get_vertex();
-		let mut graph = comp1.0.release_all();
+		let v = comp1.get_vertex();
+		let mut graph = comp1.release_all();
 
-		let comp2_set = comp2.1;
-		let v2 = comp2.0.get_vertex();
-		let g2 = comp2.0.release_all();
+		let v2 = comp2.get_vertex();
+		let g2 = comp2.release_all();
 
 		// First join the two graphs
 		let v_map = graph.join(&g2);
@@ -125,7 +120,7 @@ mod module
 		graph
 			.add_edge_weighted((v, v_map[&v2], weight.clone()))
 			.unwrap();
-		for (v1, v2) in comp1_set.iter().zip(comp2_set.iter())
+		for (v1, v2) in verts1.iter().zip(verts2.iter())
 		{
 			graph
 				.add_edge_weighted((*v1, v_map[v2], weight.clone()))

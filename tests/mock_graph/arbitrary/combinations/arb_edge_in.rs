@@ -1,4 +1,7 @@
-use crate::mock_graph::{arbitrary::{ArbTwoVerticesIn, GuidedArbGraph, Limit, NonUnique}, MockEdgeWeight, MockVertex, TestGraph};
+use crate::mock_graph::{
+	arbitrary::{ArbTwoVerticesIn, GuidedArbGraph, Limit, NonUnique},
+	MockEdgeWeight, MockVertex, TestGraph,
+};
 use graphene::{
 	core::{
 		property::{AddEdge, NonNullGraph, RemoveEdge},

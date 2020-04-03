@@ -1,4 +1,7 @@
-use crate::mock_graph::{arbitrary::{ArbVertexIn, ArbVerticesIn, GuidedArbGraph, Limit}, MockVertex, TestGraph};
+use crate::mock_graph::{
+	arbitrary::{ArbVertexIn, ArbVerticesIn, GuidedArbGraph, Limit},
+	MockVertex, TestGraph,
+};
 use graphene::{
 	core::{
 		property::{NonNull, VertexInGraph},
@@ -155,20 +158,16 @@ where
 					// we cycle, such that when the set only contains 1 vertex, we can use the same
 					// one for both positions.
 					let mut set = g.1.iter().cycle();
-					Self::new(
-						g.0.release().release().release(),
-						*set.next().unwrap(),
-						*set.next().unwrap(),
-					)
+					let v1 = *set.next().unwrap();
+					let v2 = *set.next().unwrap();
+					Self::new(g.release().release().release(), v1, v2)
 				}
 				else
 				{
 					let mut set = g.1.iter();
-					Self::new(
-						g.0.release().release().release(),
-						*set.next().unwrap(),
-						*set.next().unwrap(),
-					)
+					let v1 = *set.next().unwrap();
+					let v2 = *set.next().unwrap();
+					Self::new(g.release().release().release(), v1, v2)
 				}
 			}),
 		)
