@@ -148,7 +148,7 @@ where
 		limits.insert(Limit::VertexMin(1 + (U::unique() as usize)));
 		Box::new(
 			ArbVerticesIn::new(
-				self.0.clone(),
+				(self.0.clone()).0.release(),
 				HashSet::from_iter([self.get_vertex(), self.1].iter().cloned()),
 			)
 			.shrink_guided(limits)
@@ -160,14 +160,14 @@ where
 					let mut set = g.1.iter().cycle();
 					let v1 = *set.next().unwrap();
 					let v2 = *set.next().unwrap();
-					Self::new(g.release().release().release(), v1, v2)
+					Self::new(g.release(), v1, v2)
 				}
 				else
 				{
 					let mut set = g.1.iter();
 					let v1 = *set.next().unwrap();
 					let v2 = *set.next().unwrap();
-					Self::new(g.release().release().release(), v1, v2)
+					Self::new(g.release(), v1, v2)
 				}
 			}),
 		)

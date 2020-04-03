@@ -85,11 +85,15 @@ pub struct VertexInGraph<C: Ensure>(C, <C::Graph as Graph>::Vertex);
 
 impl<C: Ensure> Debug for VertexInGraph<C>
 where
+	C: Debug,
 	<C::Graph as Graph>::Vertex: Debug,
 {
 	fn fmt(&self, f: &mut Formatter<'_>) -> Result<(), Error>
 	{
-		f.debug_tuple("VertexInGraph").field(&self.1).finish()
+		f.debug_tuple("VertexInGraph")
+			.field(&self.0)
+			.field(&self.1)
+			.finish()
 	}
 }
 

@@ -266,7 +266,7 @@ impl<D: Directedness> MockGraph<D>
 	{
 		if !limits.contains(&Limit::VertexRemove)
 			&& !limits.contains(&Limit::EdgeRemove)
-			&& !limits.contains(&Limit::VertexMin(self.all_vertices().count()))
+			&& (Limit::min_vertices(limits) < self.all_vertices().count())
 		{
 			for v in self
 				.all_vertices()

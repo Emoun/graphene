@@ -101,7 +101,10 @@ where
 		// The we simply remove one of the vertices and keep the rest
 		if Limit::min_vertices(&limits) < self.0.graph().all_vertices().count()
 		{
-			for v in self.1.iter()
+			for v in self
+				.1
+				.iter()
+				.filter(|v| !limits.contains(&Limit::VertexKeep(**v)))
 			{
 				let mut new_set = self.1.clone();
 				new_set.remove(v);

@@ -5,13 +5,16 @@ use crate::mock_graph::{
 use graphene::{
 	core::{
 		property::{AddEdge, ConnectedGraph, WeakGraph},
-		Directed, Directedness, Edge, Graph, GraphDeref, GraphDerefMut, Release,
+		Directed, Directedness, Edge, Graph, Release,
 	},
 	impl_ensurer,
 };
 use quickcheck::{Arbitrary, Gen};
 use rand::Rng;
-use std::{collections::HashSet, ops::RangeBounds};
+use std::{
+	collections::{hash_map::RandomState, HashSet},
+	ops::RangeBounds,
+};
 
 /// This is very inefficient (but never-the-less correct)
 fn is_connected<D: Directedness>(graph: &MockGraph<D>) -> bool
@@ -194,26 +197,28 @@ impl_ensurer! {
 #[derive(Clone, Debug)]
 pub struct ArbUnconnectedGraph<D: Directedness>(pub MockGraph<D>);
 
-impl<D: Directedness> GraphDeref for ArbUnconnectedGraph<D>
-{
-	type Graph = MockGraph<D>;
-
-	fn graph(&self) -> &Self::Graph
-	{
-		&self.0
-	}
-}
-impl<D: Directedness> GraphDerefMut for ArbUnconnectedGraph<D>
-{
-	fn graph_mut(&mut self) -> &mut Self::Graph
-	{
-		&mut self.0
-	}
-}
-
 impl<D: Directedness> Arbitrary for ArbUnconnectedGraph<D>
 {
 	fn arbitrary<G: Gen>(g: &mut G) -> Self
+	{
+		let graph = Self::arbitrary_guided(g, .., ..).0;
+		// 		assert!(is_connected(&graph));
+		Self(graph)
+	}
+
+	fn shrink(&self) -> Box<dyn Iterator<Item = Self>>
+	{
+		self.shrink_guided(HashSet::new())
+	}
+}
+
+impl<D: Directedness> GuidedArbGraph for ArbUnconnectedGraph<D>
+{
+	fn arbitrary_guided<G: Gen>(
+		g: &mut G,
+		_v_range: impl RangeBounds<usize>,
+		_e_range: impl RangeBounds<usize>,
+	) -> Self
 	{
 		// We merge 2 graphs into 1. This will ensure they are not connected.
 		// They must each have at least 1 vertex, otherwise the result
@@ -228,7 +233,8 @@ impl<D: Directedness> Arbitrary for ArbUnconnectedGraph<D>
 		Self(graph)
 	}
 
-	fn shrink(&self) -> Box<dyn Iterator<Item = Self>>
+	fn shrink_guided(&self, _limits: HashSet<Limit, RandomState>)
+		-> Box<dyn Iterator<Item = Self>>
 	{
 		let mut result = Vec::new();
 
@@ -243,6 +249,12 @@ impl<D: Directedness> Arbitrary for ArbUnconnectedGraph<D>
 
 		Box::new(result.into_iter())
 	}
+}
+
+impl_ensurer! {
+	use<D> ArbUnconnectedGraph<D>
+	as (self.0): MockGraph<D>
+	where D: Directedness
 }
 
 /// An arbitrary graph that is weakly connected
