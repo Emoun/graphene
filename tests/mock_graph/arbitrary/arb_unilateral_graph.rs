@@ -5,7 +5,7 @@ use crate::mock_graph::{
 use graphene::{
 	core::{
 		property::{AddEdge, NewVertex, NonNull, RemoveEdge, UnilateralGraph},
-		Directed, Edge, Ensure, Graph, GraphDeref, GraphDerefMut, Release,
+		Directed, Edge, Ensure, Graph, Release,
 	},
 	impl_ensurer,
 };
@@ -199,23 +199,6 @@ impl_ensurer! {
 #[derive(Clone, Debug)]
 pub struct ArbNonUnilatralGraph(pub MockGraph<Directed>);
 
-impl GraphDeref for ArbNonUnilatralGraph
-{
-	type Graph = MockGraph<Directed>;
-
-	fn graph(&self) -> &Self::Graph
-	{
-		&self.0
-	}
-}
-impl GraphDerefMut for ArbNonUnilatralGraph
-{
-	fn graph_mut(&mut self) -> &mut Self::Graph
-	{
-		&mut self.0
-	}
-}
-
 impl GuidedArbGraph for ArbNonUnilatralGraph
 {
 	fn arbitrary_guided<G: Gen>(
@@ -352,4 +335,11 @@ impl Arbitrary for ArbNonUnilatralGraph
 	{
 		self.shrink_guided(HashSet::new())
 	}
+}
+
+impl_ensurer! {
+	ArbNonUnilatralGraph:
+	// Can never impl the following because MockGraph doesn't
+	Unique, NoLoops, Reflexive, Connected, Unilateral, Weak, Subgraph, NonNull
+	as (self.0) : MockGraph<Directed>
 }

@@ -105,8 +105,9 @@ mod module
 	) -> bool
 	{
 		let v_set = mock.1;
-		let (v1, v2) = mock.0.get_both();
-		let mut graph = ((mock.0).0).0.release_all();
+		let two_v_in = mock.0.release();
+		let (v1, v2) = two_v_in.get_both();
+		let mut graph = ((two_v_in).0).0.release_all();
 		// It is only acceptable to remove a vertex (and any edge incident on it)
 		// if after doing so, the rest of the vertices are still connected.
 

@@ -1,7 +1,4 @@
-use crate::mock_graph::{
-	arbitrary::{ArbTwoVerticesIn, GuidedArbGraph, Limit, NonUnique},
-	MockEdgeWeight, MockVertex, MockVertexWeight,
-};
+use crate::mock_graph::{arbitrary::{ArbTwoVerticesIn, GuidedArbGraph, Limit, NonUnique}, MockEdgeWeight, MockVertex, TestGraph};
 use graphene::{
 	core::{
 		property::{AddEdge, NonNullGraph, RemoveEdge},
@@ -21,16 +18,13 @@ pub struct ArbEdgeIn<G>(
 	pub (MockVertex, MockVertex, MockEdgeWeight),
 )
 where
-	G: Arbitrary + Ensure,
-	G::Graph: Clone
-		+ Graph<Vertex = MockVertex, VertexWeight = MockVertexWeight, EdgeWeight = MockEdgeWeight>;
+	G: GuidedArbGraph,
+	G::Graph: TestGraph;
+
 impl<Gr> GuidedArbGraph for ArbEdgeIn<Gr>
 where
-	Gr: GuidedArbGraph + Ensure + GraphDerefMut,
-	Gr::Graph: Clone
-		+ GraphMut<Vertex = MockVertex, VertexWeight = MockVertexWeight, EdgeWeight = MockEdgeWeight>
-		+ AddEdge
-		+ RemoveEdge,
+	Gr: GuidedArbGraph + GraphDerefMut,
+	Gr::Graph: TestGraph + GraphMut + AddEdge + RemoveEdge,
 {
 	fn arbitrary_guided<G: Gen>(
 		g: &mut G,
@@ -100,11 +94,8 @@ where
 }
 impl<Gr> Arbitrary for ArbEdgeIn<Gr>
 where
-	Gr: GuidedArbGraph + Ensure + GraphDerefMut,
-	Gr::Graph: Clone
-		+ GraphMut<Vertex = MockVertex, VertexWeight = MockVertexWeight, EdgeWeight = MockEdgeWeight>
-		+ AddEdge
-		+ RemoveEdge,
+	Gr: GuidedArbGraph + GraphDerefMut,
+	Gr::Graph: TestGraph + GraphMut + AddEdge + RemoveEdge,
 {
 	fn arbitrary<G: Gen>(g: &mut G) -> Self
 	{
@@ -119,9 +110,8 @@ where
 
 impl<G> Ensure for ArbEdgeIn<G>
 where
-	G: Arbitrary + Ensure,
-	G::Graph: Clone
-		+ Graph<Vertex = MockVertex, VertexWeight = MockVertexWeight, EdgeWeight = MockEdgeWeight>,
+	G: GuidedArbGraph,
+	G::Graph: TestGraph,
 {
 	fn ensure_unvalidated(c: Self::Ensured) -> Self
 	{
@@ -140,7 +130,6 @@ impl_ensurer! {
 	use<G> ArbEdgeIn<G>: Ensure
 	as (self.0): NonNullGraph<G>
 	where
-	G: Arbitrary + Ensure,
-	G::Graph: Clone +
-		Graph<Vertex = MockVertex, VertexWeight = MockVertexWeight, EdgeWeight = MockEdgeWeight>
+	G: GuidedArbGraph,
+	G::Graph:  TestGraph
 }

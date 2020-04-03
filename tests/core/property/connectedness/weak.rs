@@ -85,9 +85,9 @@ fn accept_remove_vertex(
 	e_direction: bool,
 ) -> bool
 {
+	let v1 = mock.get_vertex();
 	let v_set = mock.1;
-	let v1 = mock.0.get_vertex();
-	let mut graph = ((mock.0).0).0.release_all();
+	let mut graph = ((mock.0.release()).0).0.release_all();
 	// It is only acceptable to remove a vertex (and any edge incident on it)
 	// if after doing so, the rest of the vertices are still weakly connected.
 

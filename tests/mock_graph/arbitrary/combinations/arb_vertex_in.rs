@@ -1,11 +1,8 @@
-use crate::mock_graph::{
-	arbitrary::{ArbTwoVerticesIn, GuidedArbGraph, Limit, NonUnique},
-	MockEdgeWeight, MockVertex, MockVertexWeight,
-};
+use crate::mock_graph::{arbitrary::{ArbTwoVerticesIn, GuidedArbGraph, Limit, NonUnique}, TestGraph};
 use graphene::{
 	core::{
 		property::{NonNull, VertexInGraph},
-		Ensure, Graph, GraphDerefMut, Release,
+		Graph, GraphDerefMut, Release,
 	},
 	impl_ensurer,
 };
@@ -23,14 +20,12 @@ use std::{
 #[derive(Clone, Debug)]
 pub struct ArbVertexIn<G>(pub VertexInGraph<G>)
 where
-	G: Arbitrary + Ensure,
-	G::Graph: Clone
-		+ Graph<Vertex = MockVertex, VertexWeight = MockVertexWeight, EdgeWeight = MockEdgeWeight>;
+	G: GuidedArbGraph,
+	G::Graph: TestGraph;
 impl<Gr> Arbitrary for ArbVertexIn<Gr>
 where
-	Gr: GuidedArbGraph + Ensure + GraphDerefMut,
-	Gr::Graph: Clone
-		+ Graph<Vertex = MockVertex, VertexWeight = MockVertexWeight, EdgeWeight = MockEdgeWeight>,
+	Gr: GuidedArbGraph + GraphDerefMut,
+	Gr::Graph: TestGraph,
 {
 	fn arbitrary<G: Gen>(g: &mut G) -> Self
 	{
@@ -44,9 +39,8 @@ where
 }
 impl<Gr> GuidedArbGraph for ArbVertexIn<Gr>
 where
-	Gr: GuidedArbGraph + Ensure + GraphDerefMut,
-	Gr::Graph: Clone
-		+ Graph<Vertex = MockVertex, VertexWeight = MockVertexWeight, EdgeWeight = MockEdgeWeight>,
+	Gr: GuidedArbGraph + GraphDerefMut,
+	Gr::Graph: TestGraph,
 {
 	fn arbitrary_guided<G: Gen>(
 		g: &mut G,
@@ -85,7 +79,6 @@ impl_ensurer! {
 	Reflexive
 	as ( self.0) : VertexInGraph<G>
 	where
-	G: Arbitrary + Ensure ,
-	G::Graph: Clone +
-		Graph<Vertex = MockVertex, VertexWeight = MockVertexWeight, EdgeWeight = MockEdgeWeight>
+	G: GuidedArbGraph,
+	G::Graph:  TestGraph
 }

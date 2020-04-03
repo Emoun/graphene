@@ -1,7 +1,4 @@
-use crate::mock_graph::{
-	arbitrary::{ArbVertexIn, ArbVerticesIn, GuidedArbGraph, Limit},
-	MockEdgeWeight, MockVertex, MockVertexWeight,
-};
+use crate::mock_graph::{arbitrary::{ArbVertexIn, ArbVerticesIn, GuidedArbGraph, Limit}, MockVertex, TestGraph};
 use graphene::{
 	core::{
 		property::{NonNull, VertexInGraph},
@@ -56,16 +53,14 @@ impl Uniqueness for NonUnique
 #[derive(Clone, Debug)]
 pub struct ArbTwoVerticesIn<G, U = NonUnique>(pub ArbVertexIn<G>, MockVertex, PhantomData<U>)
 where
-	G: Arbitrary + Ensure,
-	G::Graph: Clone
-		+ Graph<Vertex = MockVertex, VertexWeight = MockVertexWeight, EdgeWeight = MockEdgeWeight>,
+	G: GuidedArbGraph,
+	G::Graph: TestGraph,
 	U: Uniqueness;
 
 impl<G, U> ArbTwoVerticesIn<G, U>
 where
-	G: Arbitrary + Ensure,
-	G::Graph: Clone
-		+ Graph<Vertex = MockVertex, VertexWeight = MockVertexWeight, EdgeWeight = MockEdgeWeight>,
+	G: GuidedArbGraph,
+	G::Graph: TestGraph,
 	U: Uniqueness,
 {
 	pub fn new(g: G, v1: MockVertex, v2: MockVertex) -> Self
@@ -93,9 +88,8 @@ where
 
 impl<Gr, U> Arbitrary for ArbTwoVerticesIn<Gr, U>
 where
-	Gr: GuidedArbGraph + Ensure + GraphDerefMut,
-	Gr::Graph: Clone
-		+ Graph<Vertex = MockVertex, VertexWeight = MockVertexWeight, EdgeWeight = MockEdgeWeight>,
+	Gr: GuidedArbGraph + GraphDerefMut,
+	Gr::Graph: TestGraph,
 	U: 'static + Uniqueness,
 {
 	fn arbitrary<G: Gen>(g: &mut G) -> Self
@@ -110,9 +104,8 @@ where
 }
 impl<Gr, U> GuidedArbGraph for ArbTwoVerticesIn<Gr, U>
 where
-	Gr: GuidedArbGraph + Ensure + GraphDerefMut,
-	Gr::Graph: Clone
-		+ Graph<Vertex = MockVertex, VertexWeight = MockVertexWeight, EdgeWeight = MockEdgeWeight>,
+	Gr: GuidedArbGraph + GraphDerefMut,
+	Gr::Graph: TestGraph,
 	U: 'static + Uniqueness,
 {
 	fn arbitrary_guided<G: Gen>(
@@ -151,7 +144,7 @@ where
 		// self.2 are equal
 		limits.insert(Limit::VertexMin(1 + (U::unique() as usize)));
 		Box::new(
-			ArbVerticesIn(
+			ArbVerticesIn::new(
 				self.0.clone(),
 				HashSet::from_iter([self.get_vertex(), self.1].iter().cloned()),
 			)
@@ -163,7 +156,7 @@ where
 					// one for both positions.
 					let mut set = g.1.iter().cycle();
 					Self::new(
-						g.0.release().release(),
+						g.0.release().release().release(),
 						*set.next().unwrap(),
 						*set.next().unwrap(),
 					)
@@ -172,7 +165,7 @@ where
 				{
 					let mut set = g.1.iter();
 					Self::new(
-						g.0.release().release(),
+						g.0.release().release().release(),
 						*set.next().unwrap(),
 						*set.next().unwrap(),
 					)
@@ -184,9 +177,8 @@ where
 
 impl<G, U> Ensure for ArbTwoVerticesIn<G, U>
 where
-	G: Arbitrary + Ensure,
-	G::Graph: Clone
-		+ Graph<Vertex = MockVertex, VertexWeight = MockVertexWeight, EdgeWeight = MockEdgeWeight>,
+	G: GuidedArbGraph,
+	G::Graph: TestGraph,
 	U: Uniqueness,
 {
 	fn ensure_unvalidated(c: Self::Ensured) -> Self
@@ -215,8 +207,7 @@ impl_ensurer! {
 	use<G,U> ArbTwoVerticesIn<G,U>: Ensure
 	as (self.0): ArbVertexIn<G>
 	where
-	G: Arbitrary + Ensure,
-	G::Graph: Clone +
-		Graph<Vertex = MockVertex, VertexWeight = MockVertexWeight, EdgeWeight = MockEdgeWeight>,
+	G: GuidedArbGraph,
+	G::Graph: TestGraph,
 	U: Uniqueness
 }

@@ -1,9 +1,10 @@
-use crate::mock_graph::MockVertex;
+use crate::mock_graph::{MockVertex, TestGraph};
 use quickcheck::{Arbitrary, Gen};
 use std::{
 	collections::HashSet,
 	ops::{Bound, RangeBounds},
 };
+use graphene::core::{Ensure};
 
 #[allow(dead_code)]
 #[derive(PartialEq, Eq, Hash, Copy, Clone)]
@@ -57,7 +58,9 @@ impl Limit
 
 /// A version of `quickcheck::Arbitrary` for Graphs that can be guided how to
 /// make the graph
-pub trait GuidedArbGraph: Arbitrary
+pub trait GuidedArbGraph: Arbitrary + Ensure
+where
+	Self::Graph: TestGraph
 {
 	/// Generates an arbitrary graph, where the number of vertices and edges is
 	/// within the given ranges.

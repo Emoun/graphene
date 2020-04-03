@@ -9,7 +9,7 @@ pub mod arbitrary;
 mod mock_graph;
 
 pub use self::mock_graph::*;
-use graphene::core::Directedness;
+use graphene::core::{Directedness, Graph};
 
 #[derive(Copy, Clone, Eq, PartialEq, Debug, Hash)]
 pub struct MockVertex
@@ -47,3 +47,10 @@ impl Directedness for MockDirectedness
 		panic!("Mock directedness should not be queried.");
 	}
 }
+
+pub trait TestGraph: Clone
++ Graph<Vertex = MockVertex, VertexWeight = MockVertexWeight, EdgeWeight = MockEdgeWeight>
+{
+}
+impl<T> TestGraph for T where T: Clone + Graph<Vertex = MockVertex, VertexWeight = MockVertexWeight, EdgeWeight = MockEdgeWeight>
+{}
