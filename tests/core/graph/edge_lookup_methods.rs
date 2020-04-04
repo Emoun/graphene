@@ -9,38 +9,24 @@ use duplicate::duplicate;
 use graphene::core::{property::NonNull, Directed, Edge, Graph, GraphMut};
 
 #[duplicate(
-	[
-		method 					[edges_sourced_in]
-		method_mut 				[edges_sourced_in_mut]
-		vertices				[ v ]
-		vertices_init			[let v = g.get_vertex();]
-		vertices_init_invalid 	[ let v = g.1; ]
-		closure 				[|e| e.source() == v]
-		arb_graph 				[ ArbVertexIn ]
-		arb_invalid_graph 		[ ArbVertexOutside ]
-		base_graph 				[ MockGraph<Directed> ]
-	]
-	[
-		method 					[edges_sinked_in]
-		method_mut 				[edges_sinked_in_mut]
-		vertices				[ v ]
-		vertices_init			[let v = g.get_vertex();]
-		vertices_init_invalid 	[ let v = g.1; ]
-		closure 				[|e| e.sink() == v]
-		arb_graph 				[ ArbVertexIn ]
-		arb_invalid_graph 		[ ArbVertexOutside ]
-		base_graph 				[ MockGraph<Directed> ]
-	]
-	[
-		method 					[edges_incident_on]
-		method_mut 				[edges_incident_on]
-		vertices				[ v ]
-		vertices_init			[let v = g.get_vertex();]
-		vertices_init_invalid 	[ let v = g.1; ]
-		closure 				[|e| e.source() == v || e.sink() == v]
-		arb_graph 				[ ArbVertexIn ]
-		arb_invalid_graph 		[ ArbVertexOutside ]
-		base_graph 				[ MockGraph<MockDirectedness> ]
+	#[
+		method_nested		[edges_sourced_in]		[edges_sinked_in]		[edges_incident_on]
+		method_mut_nested	[edges_sourced_in_mut]	[edges_sinked_in_mut]	[edges_incident_on_mut]
+		closure_nested		[|e| e.source() == v]	[|e| e.sink() == v]		[|e| e.source() == v
+																				|| e.sink() == v]
+		directedness_nested	[ Directed ]			[ Directed ]			[ MockDirectedness ]
+	][
+		[
+			method 					[ method_nested ]
+			method_mut 				[ method_mut_nested ]
+			vertices				[ v ]
+			vertices_init			[ let v = g.get_vertex(); ]
+			vertices_init_invalid 	[ let v = g.1; ]
+			closure 				[ closure_nested ]
+			arb_graph 				[ ArbVertexIn ]
+			arb_invalid_graph 		[ ArbVertexOutside ]
+			base_graph 				[ MockGraph<directedness_nested> ]
+		]
 	]
 	[
 		method 					[edges_between]
@@ -59,7 +45,7 @@ use graphene::core::{property::NonNull, Directed, Edge, Graph, GraphMut};
 mod method
 {
 	use super::*;
-
+	
 	/// Ensures that all the returned edges are correct.
 	#[quickcheck]
 	fn returns_valid_edges(g: arb_graph<base_graph>) -> bool
@@ -97,7 +83,15 @@ mod method
 	{
 		#[allow(unused_mut)]
 		let mut clone = g.clone();
-		let edges_mut = clone.method_mut(vertices).collect();
+		let mut edges_mut: Vec<_> = clone.method_mut(vertices).collect();
+		
+		if edges_mut.len() > 0 {
+			// Ensure its mutable by updating a weight
+			let old_weight = (edges_mut[0].2).clone();
+			*(edges_mut[0].2) = old_weight;
+			
+		}
+		
 		let edges = g.method(vertices).collect();
 
 		unordered_equivalent_lists(&edges, &edges_mut, _3_tuple_equality(), _3_tuple_equality())

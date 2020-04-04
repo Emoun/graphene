@@ -18,19 +18,17 @@ use graphene::core::{
 use static_assertions::assert_impl_all;
 
 #[duplicate(
-	[
-		module				[ connected_directed ]
-		connected_graph		[ ConnectedGraph ]
-		arb_connected		[ ArbConnectedGraph::<Directed> ]
-		arb_unconnected		[ ArbUnconnectedGraph::<Directed> ]
-		arb_reject_remove	[ ArbConnectedGraph::<Directed> ]
-	]
-	[
-		module				[ connected_undirected ]
-		connected_graph		[ ConnectedGraph ]
-		arb_connected		[ ArbConnectedGraph::<Undirected> ]
-		arb_unconnected		[ ArbUnconnectedGraph::<Undirected> ]
-		arb_reject_remove	[ ArbConnectedGraph::<Undirected> ]
+	#[
+		module_connected	[connected_directed] [connected_undirected]
+		directedness		[Directed]	[Undirected]
+	][
+		[
+			module				[ module_connected ]
+			connected_graph		[ ConnectedGraph ]
+			arb_connected		[ ArbConnectedGraph<directedness> ]
+			arb_unconnected		[ ArbUnconnectedGraph<directedness> ]
+			arb_reject_remove	[ ArbConnectedGraph<directedness> ]
+		]
 	]
 	[
 		module				[ unilateral ]

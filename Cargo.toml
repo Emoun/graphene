@@ -29,4 +29,4 @@ rand = "0.6.5"
 quickcheck = "0.8"
 quickcheck_macros = "0.8"
 static_assertions = "1.1.0"
-duplicate = {git = "https://github.com/Emoun/duplicate"}
+duplicate = "0.0.1"
