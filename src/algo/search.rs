@@ -1,4 +1,4 @@
-use crate::core::{Directedness, Edge, Graph};
+use crate::core::{property::NonNull, Directedness, Edge, Graph};
 
 /// DFS
 ///
@@ -52,12 +52,14 @@ impl<'a, G, F> DFS<'a, G, F>
 where
 	G: 'a + Graph,
 {
-	pub fn new(g: &'a G, v: G::Vertex, on_exit: fn(&G, G::Vertex, &mut F), payload: F) -> Self
+	pub fn new(g: &'a G, on_exit: fn(&G, G::Vertex, &mut F), payload: F) -> Self
+	where
+		G: NonNull,
 	{
 		Self {
 			graph: g,
 			visited: Vec::new(),
-			stack: vec![(v, true)],
+			stack: vec![(g.get_vertex(), true)],
 			on_exit,
 			payload,
 		}
@@ -112,12 +114,12 @@ where
 
 impl<'a, G> DFS<'a, G, ()>
 where
-	G: 'a + Graph,
+	G: 'a + NonNull,
 {
-	pub fn new_simple(g: &'a G, v: G::Vertex) -> Self
+	pub fn new_simple(g: &'a G) -> Self
 	{
 		fn do_nothing<G, T>(_: &G, _: T, _: &mut ()) {}
-		Self::new(g, v, do_nothing, ())
+		Self::new(g, do_nothing, ())
 	}
 }
 

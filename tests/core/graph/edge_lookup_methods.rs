@@ -45,7 +45,7 @@ use graphene::core::{property::NonNull, Directed, Edge, Graph, GraphMut};
 mod method
 {
 	use super::*;
-	
+
 	/// Ensures that all the returned edges are correct.
 	#[quickcheck]
 	fn returns_valid_edges(g: arb_graph<base_graph>) -> bool
@@ -84,14 +84,14 @@ mod method
 		#[allow(unused_mut)]
 		let mut clone = g.clone();
 		let mut edges_mut: Vec<_> = clone.method_mut(vertices).collect();
-		
-		if edges_mut.len() > 0 {
+
+		if edges_mut.len() > 0
+		{
 			// Ensure its mutable by updating a weight
 			let old_weight = (edges_mut[0].2).clone();
 			*(edges_mut[0].2) = old_weight;
-			
 		}
-		
+
 		let edges = g.method(vertices).collect();
 
 		unordered_equivalent_lists(&edges, &edges_mut, _3_tuple_equality(), _3_tuple_equality())

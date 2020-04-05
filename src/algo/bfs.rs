@@ -1,4 +1,4 @@
-use crate::core::{Directedness, Edge, Graph};
+use crate::core::{property::NonNull, Directedness, Edge, Graph};
 use std::collections::VecDeque;
 
 pub struct Bfs<'a, G>
@@ -15,9 +15,12 @@ impl<'a, G> Bfs<'a, G>
 where
 	G: 'a + Graph,
 {
-	pub fn new(graph: &'a G, v: G::Vertex) -> Self
+	pub fn new(graph: &'a G) -> Self
+	where
+		G: NonNull,
 	{
 		let mut queue = VecDeque::new();
+		let v = graph.get_vertex();
 		queue.push_back(v);
 		let visited = vec![v];
 		let predecessor = vec![(v, None)];

@@ -2,8 +2,8 @@ use crate::{
 	algo::DFS,
 	core::{
 		property::{
-			proxy_remove_edge_where, proxy_remove_vertex, DirectedGraph, RemoveEdge, RemoveVertex,
-			Unilateral, Weak,
+			proxy_remove_edge_where, proxy_remove_vertex, DirectedGraph, NonNullGraph, RemoveEdge,
+			RemoveVertex, Unilateral, Weak,
 		},
 		Ensure, Graph, GraphDerefMut, ReverseGraph,
 	},
@@ -42,17 +42,16 @@ impl<C: Ensure> Ensure for ConnectedGraph<C>
 		let g = c.graph();
 		let v_count = g.all_vertices().count();
 
-		if v_count > 0
+		if let Ok(g) = NonNullGraph::ensure(g)
 		{
-			let v = g.all_vertices().next().unwrap();
-			let dfs_count = DFS::new_simple(g, v).count();
+			let dfs_count = DFS::new_simple(&g).count();
 			if dfs_count == v_count
 			{
 				// If its undirected, no more needs to be done
 				if let Ok(g) = DirectedGraph::ensure(g)
 				{
 					let reverse = ReverseGraph::new(g);
-					if DFS::new_simple(&reverse, v).count() != v_count
+					if DFS::new_simple(&reverse).count() != v_count
 					{
 						return false;
 					}

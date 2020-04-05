@@ -19,9 +19,8 @@ mod module
 	#[quickcheck]
 	fn increasing_depth(graph: ArbVertexIn<ArbConnectedGraph<directedness>>) -> bool
 	{
-		let v = graph.get_vertex();
 		let mut depth = 0;
-		let mut bfs = Bfs::new(&graph, v);
+		let mut bfs = Bfs::new(&graph);
 
 		while let Some(v) = bfs.next()
 		{
@@ -38,9 +37,8 @@ mod module
 	#[quickcheck]
 	fn predecessor_already_seen(graph: ArbVertexIn<ArbConnectedGraph<directedness>>) -> bool
 	{
-		let v = graph.get_vertex();
 		let mut seen = HashSet::new();
-		let mut bfs = Bfs::new(&graph, v);
+		let mut bfs = Bfs::new(&graph);
 
 		while let Some(v) = bfs.next()
 		{
@@ -61,8 +59,7 @@ mod module
 	#[quickcheck]
 	fn predecessor_shallower(graph: ArbVertexIn<ArbConnectedGraph<directedness>>) -> bool
 	{
-		let v = graph.get_vertex();
-		let mut bfs = Bfs::new(&graph, v);
+		let mut bfs = Bfs::new(&graph);
 
 		while let Some(v) = bfs.next()
 		{
@@ -81,8 +78,7 @@ mod module
 	#[quickcheck]
 	fn has_predecessor(graph: ArbVertexIn<ArbConnectedGraph<directedness>>) -> bool
 	{
-		let v = graph.get_vertex();
-		let mut bfs = Bfs::new(&graph, v);
+		let mut bfs = Bfs::new(&graph);
 
 		while let Some(v) = bfs.next()
 		{
@@ -102,7 +98,7 @@ mod module
 	fn predecessor_path_reaches_root(graph: ArbVertexIn<ArbConnectedGraph<directedness>>) -> bool
 	{
 		let root = graph.get_vertex();
-		let mut bfs = Bfs::new(&graph, root);
+		let mut bfs = Bfs::new(&graph);
 
 		while let Some(v) = bfs.next()
 		{
@@ -125,7 +121,7 @@ mod module
 fn predecessor_path_reaches_root(graph: ArbVertexIn<ArbConnectedGraph<Directed>>) -> bool
 {
 	let root = graph.get_vertex();
-	let mut bfs = Bfs::new(&graph, root);
+	let mut bfs = Bfs::new(&graph);
 
 	while let Some(v) = bfs.next()
 	{

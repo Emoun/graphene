@@ -104,7 +104,7 @@ where
 			}
 		}
 
-		let dfs = DFS::new(graph, graph.get_vertex(), on_exit, Vec::new());
+		let dfs = DFS::new(graph, on_exit, Vec::new());
 		Self {
 			dfs,
 			unchecked: graph.all_vertices(),

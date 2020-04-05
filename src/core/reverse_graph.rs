@@ -1,5 +1,5 @@
 use crate::core::{
-	property::{AddEdge, NewVertex, RemoveEdge, RemoveVertex},
+	property::{AddEdge, NewVertex, NonNull, RemoveEdge, RemoveVertex},
 	BaseGraph, Directed, Edge, EdgeDeref, EdgeWeighted, Ensure, Graph, GraphDeref, GraphDerefMut,
 	GraphMut,
 };
@@ -123,6 +123,17 @@ where
 		self.0
 			.graph_mut()
 			.remove_edge_where(|e| f((e.sink(), e.source(), e.weight())))
+	}
+}
+
+impl<C: Ensure> NonNull for ReverseGraph<C>
+where
+	C::Graph: NonNull<Directedness = Directed>,
+{
+	delegate! {
+		to self.0.graph() {
+			fn get_vertex(&self) -> Self::Vertex ;
+		}
 	}
 }
 

@@ -20,6 +20,7 @@ use std::collections::HashSet;
 mod module
 {
 	use super::*;
+	use graphene::core::property::VertexInGraph;
 
 	#[duplicate(
 		module2			[ directed ] [ undirected ]
@@ -34,11 +35,10 @@ mod module
 		#[quickcheck]
 		fn visits_component_once(mock: ArbVertexIn<ArbConnectedGraph<directedness>>) -> bool
 		{
-			let v = mock.get_vertex();
 			// Use a set to ensure we only count each vertex once
 			let mut visited = HashSet::new();
 			let mut visited_once = true;
-			search_algo_new(mock.graph(), v).for_each(|v| {
+			search_algo_new(mock.graph()).for_each(|v| {
 				visited_once &= visited.insert(v);
 			});
 
@@ -53,15 +53,16 @@ mod module
 			g2: MockGraph<directedness>,
 		) -> bool
 		{
-			let v = g1.get_vertex();
 			// Our starting connected component
+			let v = g1.get_vertex();
 			let mut graph = g1.release_all();
 
 			// First join the two graphs
 			let v_map = graph.join(&g2);
 
 			// Ensure that no visited vertex comes from outside the start component
-			search_algo_new(&graph, v).all(|visit| v_map.values().all(|&new_v| visit != new_v))
+			search_algo_new(&VertexInGraph::new_unvalidated(graph, v))
+				.all(|visit| v_map.values().all(|&new_v| visit != new_v))
 		}
 	}
 
@@ -95,7 +96,8 @@ mod module
 		}
 
 		// Ensure that no visited vertex comes from outside the start component
-		search_algo_new(&graph, v).all(|visit| v_map.values().all(|&new_v| visit != new_v))
+		search_algo_new(&VertexInGraph::new_unvalidated(graph, v))
+			.all(|visit| v_map.values().all(|&new_v| visit != new_v))
 	}
 
 	/// Tests for directed graphs that any component with an edge to it from the
@@ -128,6 +130,7 @@ mod module
 		}
 
 		// Ensure that all vertices are visited
-		search_algo_new(&graph, v).count() == graph.all_vertices().count()
+		let count = graph.all_vertices().count();
+		search_algo_new(&VertexInGraph::new_unvalidated(graph, v)).count() == count
 	}
 }
