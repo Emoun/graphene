@@ -1,7 +1,10 @@
 use crate::mock_graph::{MockEdgeWeight, MockVertex, MockVertexWeight};
-use graphene::core::{
-	property::{AddEdge, NewVertex, RemoveEdge, RemoveVertex},
-	BaseGraph, Directedness, Edge, EdgeWeighted, Graph, GraphDeref, GraphDerefMut, GraphMut,
+use graphene::{
+	base_graph,
+	core::{
+		property::{AddEdge, NewVertex, RemoveEdge, RemoveVertex},
+		Directedness, Edge, EdgeWeighted, Graph, GraphMut,
+	},
 };
 use std::{
 	collections::HashMap,
@@ -292,20 +295,7 @@ impl<D: Directedness> RemoveEdge for MockGraph<D>
 	}
 }
 
-impl<D: Directedness> GraphDeref for MockGraph<D>
-{
-	type Graph = Self;
-
-	fn graph(&self) -> &Self::Graph
-	{
-		self
-	}
+base_graph! {
+	use<D> MockGraph<D>
+	where D: Directedness
 }
-impl<D: Directedness> GraphDerefMut for MockGraph<D>
-{
-	fn graph_mut(&mut self) -> &mut Self::Graph
-	{
-		self
-	}
-}
-impl<D: Directedness> BaseGraph for MockGraph<D> {}

@@ -1,7 +1,6 @@
 use crate::core::{
 	property::{AddEdge, NewVertex, NonNull, RemoveEdge, RemoveVertex},
-	BaseGraph, Directed, Edge, EdgeDeref, EdgeWeighted, Ensure, Graph, GraphDeref, GraphDerefMut,
-	GraphMut,
+	Directed, Edge, EdgeDeref, EdgeWeighted, Ensure, Graph, GraphDerefMut, GraphMut,
 };
 use delegate::delegate;
 
@@ -137,24 +136,9 @@ where
 	}
 }
 
-impl<C: Ensure> GraphDeref for ReverseGraph<C>
-where
-	C::Graph: Graph<Directedness = Directed>,
-{
-	type Graph = Self;
-
-	fn graph(&self) -> &Self::Graph
-	{
-		self
-	}
+base_graph! {
+	use<C> ReverseGraph<C>
+	where
+		C: Ensure,
+		C::Graph: Graph<Directedness = Directed>
 }
-impl<C: Ensure + GraphDerefMut> GraphDerefMut for ReverseGraph<C>
-where
-	C::Graph: Graph<Directedness = Directed>,
-{
-	fn graph_mut(&mut self) -> &mut Self::Graph
-	{
-		self
-	}
-}
-impl<C: Ensure> BaseGraph for ReverseGraph<C> where C::Graph: Graph<Directedness = Directed> {}

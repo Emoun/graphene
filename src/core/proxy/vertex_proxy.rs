@@ -1,7 +1,7 @@
 use crate::core::{
 	property::{NewVertex, RemoveVertex},
 	trait_aliases::Id,
-	BaseGraph, Ensure, Graph, GraphDeref, GraphDerefMut,
+	Ensure, Graph,
 };
 
 #[derive(Copy, Clone, PartialEq, Eq)]
@@ -117,20 +117,7 @@ impl<C: Ensure> RemoveVertex for VertexProxyGraph<C>
 	}
 }
 
-impl<C: Ensure> GraphDeref for VertexProxyGraph<C>
-{
-	type Graph = Self;
-
-	fn graph(&self) -> &Self::Graph
-	{
-		self
-	}
+base_graph! {
+	use<C> VertexProxyGraph<C>
+	where C: Ensure,
 }
-impl<C: Ensure> GraphDerefMut for VertexProxyGraph<C>
-{
-	fn graph_mut(&mut self) -> &mut Self::Graph
-	{
-		self
-	}
-}
-impl<C: Ensure> BaseGraph for VertexProxyGraph<C> {}

@@ -28,6 +28,54 @@ macro_rules! impl_ensurer {
 	};
 }
 
+#[macro_export]
+macro_rules! base_graph {
+	{
+		$(use <$($generics:ident),+>)? $struct:ty
+		$(where $($bounds:tt)*)?
+	} => {
+		$crate::base_graph_inner! {
+			@struct [ $struct ]
+			@generics [ $($($generics)+)? ]
+			@bounds [ $($($bounds)*)? ]
+		}
+	}
+}
+
+#[doc(hidden)]
+#[macro_export]
+macro_rules! base_graph_inner {
+	{
+		@struct [  $struct:ty ]
+		@generics [ $($($generics:ident)+)? ]
+		@bounds [ $($bounds:tt)* ]
+	} => {
+		impl$(<$($generics),+>)? $crate::core::GraphDeref for $struct
+		where $($bounds)*
+		{
+			type Graph = Self;
+
+			fn graph(&self) -> &Self::Graph
+			{
+				self
+			}
+		}
+
+		impl$(<$($generics),+>)? $crate::core::GraphDerefMut for $struct
+		where $($bounds)*
+		{
+			fn graph_mut(&mut self) -> &mut Self::Graph
+			{
+				self
+			}
+		}
+
+		impl$(<$($generics),+>)? $crate::core::BaseGraph for $struct
+		where $($bounds)*
+		{}
+	}
+}
+
 #[doc(hidden)]
 #[macro_export]
 macro_rules! impl_ensurer_inner {

@@ -1,6 +1,6 @@
 use crate::core::{
 	property::{AddEdge, NewVertex, RemoveEdge, RemoveVertex, Subgraph},
-	BaseGraph, Edge, EdgeWeighted, Ensure, Graph, GraphDeref, GraphDerefMut, GraphMut,
+	Edge, EdgeWeighted, Ensure, Graph, GraphDerefMut, GraphMut,
 };
 
 /// A subgraph of another graph.
@@ -202,23 +202,10 @@ where
 	}
 }
 
-impl<C: Ensure> GraphDeref for SubgraphProxy<C>
-{
-	type Graph = Self;
-
-	fn graph(&self) -> &Self::Graph
-	{
-		self
-	}
+base_graph! {
+	use<C> SubgraphProxy<C>
+	where C: Ensure
 }
-impl<C: Ensure> GraphDerefMut for SubgraphProxy<C>
-{
-	fn graph_mut(&mut self) -> &mut Self::Graph
-	{
-		self
-	}
-}
-impl<C: Ensure> BaseGraph for SubgraphProxy<C> {}
 
 impl<C: Ensure> Subgraph for SubgraphProxy<C>
 {

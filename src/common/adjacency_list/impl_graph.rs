@@ -2,7 +2,7 @@ use crate::{
 	common::AdjListGraph,
 	core::{
 		property::{AddEdge, NewVertex, RemoveEdge, RemoveVertex, VertexCount},
-		BaseGraph, Directedness, Edge, EdgeWeighted, Graph, GraphDeref, GraphDerefMut, GraphMut,
+		Directedness, Edge, EdgeWeighted, Graph, GraphMut,
 	},
 };
 
@@ -172,24 +172,7 @@ where
 	}
 }
 
-impl<Vw, Ew, D> GraphDeref for AdjListGraph<Vw, Ew, D>
-where
-	D: Directedness,
-{
-	type Graph = Self;
-
-	fn graph(&self) -> &Self::Graph
-	{
-		self
-	}
+base_graph! {
+	use<Vw, Ew, D> AdjListGraph<Vw, Ew, D>
+	where D: Directedness,
 }
-impl<Vw, Ew, D> GraphDerefMut for AdjListGraph<Vw, Ew, D>
-where
-	D: Directedness,
-{
-	fn graph_mut(&mut self) -> &mut Self::Graph
-	{
-		self
-	}
-}
-impl<Vw, Ew, D> BaseGraph for AdjListGraph<Vw, Ew, D> where D: Directedness {}

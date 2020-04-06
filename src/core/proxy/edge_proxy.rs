@@ -1,7 +1,6 @@
 use crate::core::{
 	property::{AddEdge, NewVertex, RemoveEdge, RemoveVertex},
-	BaseGraph, Directedness, Edge, EdgeWeighted, Ensure, Graph, GraphDeref, GraphDerefMut,
-	GraphMut,
+	Directedness, Edge, EdgeWeighted, Ensure, Graph, GraphDerefMut, GraphMut,
 };
 use delegate::delegate;
 
@@ -198,20 +197,7 @@ where
 	}
 }
 
-impl<C: Ensure> GraphDeref for EdgeProxyGraph<C>
-{
-	type Graph = Self;
-
-	fn graph(&self) -> &Self::Graph
-	{
-		self
-	}
+base_graph! {
+	use<C> EdgeProxyGraph<C>
+	where C: Ensure
 }
-impl<C: Ensure> GraphDerefMut for EdgeProxyGraph<C>
-{
-	fn graph_mut(&mut self) -> &mut Self::Graph
-	{
-		self
-	}
-}
-impl<C: Ensure> BaseGraph for EdgeProxyGraph<C> {}

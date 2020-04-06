@@ -1,6 +1,6 @@
 use crate::core::{
 	property::{NewVertex, RemoveVertex},
-	BaseGraph, Directed, Ensure, Graph, GraphDeref, GraphDerefMut, GraphMut, Undirected,
+	Directed, Ensure, Graph, GraphDerefMut, GraphMut, Undirected,
 };
 use delegate::delegate;
 
@@ -82,24 +82,9 @@ where
 	}
 }
 
-impl<C: Ensure> GraphDeref for UndirectedProxy<C>
-where
-	C::Graph: Graph<Directedness = Directed>,
-{
-	type Graph = Self;
-
-	fn graph(&self) -> &Self::Graph
-	{
-		self
-	}
+base_graph! {
+	use<C> UndirectedProxy<C>
+	where
+		C: Ensure,
+		C::Graph: Graph<Directedness = Directed>
 }
-impl<C: Ensure> GraphDerefMut for UndirectedProxy<C>
-where
-	C::Graph: Graph<Directedness = Directed>,
-{
-	fn graph_mut(&mut self) -> &mut Self::Graph
-	{
-		self
-	}
-}
-impl<C: Ensure> BaseGraph for UndirectedProxy<C> where C::Graph: Graph<Directedness = Directed> {}
