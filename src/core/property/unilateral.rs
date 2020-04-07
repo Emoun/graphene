@@ -1,5 +1,5 @@
 use crate::{
-	algo::TarjanSCC,
+	algo::TarjanScc,
 	core::{
 		property::{
 			proxy_remove_edge_where, proxy_remove_vertex, NonNullGraph, RemoveEdge, RemoveVertex,
@@ -50,7 +50,7 @@ where
 			// order, so we don't need to sort, just check the first has an edge to it from
 			// the next.
 
-			let mut tarjan = TarjanSCC::new(&graph);
+			let mut tarjan = TarjanScc::new(&graph);
 
 			let mut scc_current = tarjan.next();
 

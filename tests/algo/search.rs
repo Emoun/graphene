@@ -5,9 +5,9 @@ use crate::mock_graph::{
 };
 use duplicate::duplicate;
 use graphene::{
-	algo::{Bfs, DFS},
+	algo::{Bfs, Dfs},
 	core::{
-		property::{AddEdge, NonNull},
+		property::{AddEdge, NonNull, VertexInGraph},
 		Directed, Graph, GraphDeref, Release, Undirected,
 	},
 };
@@ -15,12 +15,11 @@ use std::collections::HashSet;
 
 #[duplicate(
 	module			[ dfs ]				[ bfs ]
-	search_algo_new	[ DFS::new_simple ]	[ Bfs::new ]
+	search_algo_new	[ Dfs::new_simple ]	[ Bfs::new ]
 )]
 mod module
 {
 	use super::*;
-	use graphene::core::property::VertexInGraph;
 
 	#[duplicate(
 		module2			[ directed ] [ undirected ]

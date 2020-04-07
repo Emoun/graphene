@@ -1,8 +1,8 @@
 use crate::mock_graph::{arbitrary::ArbVertexIn, MockGraph};
-/// Tests `TarjanSCC`: Tarjan's algorithm for finding strongly connected
+/// Tests `TarjanScc`: Tarjan's algorithm for finding strongly connected
 /// components.
 use graphene::{
-	algo::TarjanSCC,
+	algo::TarjanScc,
 	core::{
 		property::{ConnectedGraph, Subgraph},
 		Directed, Ensure, Graph,
@@ -13,7 +13,7 @@ use graphene::{
 #[quickcheck]
 fn produces_non_empty_components(graph: ArbVertexIn<MockGraph<Directed>>) -> bool
 {
-	for scc in TarjanSCC::new(&graph)
+	for scc in TarjanScc::new(&graph)
 	{
 		if scc.all_vertices().count() == 0
 		{
@@ -27,7 +27,7 @@ fn produces_non_empty_components(graph: ArbVertexIn<MockGraph<Directed>>) -> boo
 #[quickcheck]
 fn produces_connected_components(graph: ArbVertexIn<MockGraph<Directed>>) -> bool
 {
-	for scc in TarjanSCC::new(&graph)
+	for scc in TarjanScc::new(&graph)
 	{
 		if !ConnectedGraph::validate(&scc)
 		{
@@ -41,7 +41,7 @@ fn produces_connected_components(graph: ArbVertexIn<MockGraph<Directed>>) -> boo
 #[quickcheck]
 fn produces_disconnected_components(graph: ArbVertexIn<MockGraph<Directed>>) -> bool
 {
-	let sccs = TarjanSCC::new(&graph).collect::<Vec<_>>();
+	let sccs = TarjanScc::new(&graph).collect::<Vec<_>>();
 	let mut scc_iter = sccs.iter();
 
 	while let Some(scc) = scc_iter.next()
@@ -67,7 +67,7 @@ fn produces_all_vertices(graph: ArbVertexIn<MockGraph<Directed>>) -> bool
 	// We simply count the vertices since we have another test
 	// for checking that no vertex is reused
 	let mut vertex_count = 0;
-	for scc in TarjanSCC::new(&graph)
+	for scc in TarjanScc::new(&graph)
 	{
 		vertex_count += scc.all_vertices().count();
 	}
@@ -78,7 +78,7 @@ fn produces_all_vertices(graph: ArbVertexIn<MockGraph<Directed>>) -> bool
 #[quickcheck]
 fn produces_only_valid_vertices(graph: ArbVertexIn<MockGraph<Directed>>) -> bool
 {
-	for scc in TarjanSCC::new(&graph)
+	for scc in TarjanScc::new(&graph)
 	{
 		for v in scc.all_vertices()
 		{
@@ -95,7 +95,7 @@ fn produces_only_valid_vertices(graph: ArbVertexIn<MockGraph<Directed>>) -> bool
 #[quickcheck]
 fn produces_vertex_disjoint_components(graph: ArbVertexIn<MockGraph<Directed>>) -> bool
 {
-	let sccs = TarjanSCC::new(&graph).collect::<Vec<_>>();
+	let sccs = TarjanScc::new(&graph).collect::<Vec<_>>();
 	let mut scc_iter = sccs.iter();
 
 	while let Some(scc) = scc_iter.next()
@@ -122,7 +122,7 @@ fn produces_reverse_topological_ordering(graph: ArbVertexIn<MockGraph<Directed>>
 {
 	// To test the ordering, we simply check that an earlier-produced component
 	// can't reach any later one.
-	let sccs = TarjanSCC::new(&graph).collect::<Vec<_>>();
+	let sccs = TarjanScc::new(&graph).collect::<Vec<_>>();
 	let mut scc_iter = sccs.iter();
 
 	while let Some(scc) = scc_iter.next()

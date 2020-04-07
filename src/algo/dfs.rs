@@ -1,6 +1,6 @@
 use crate::core::{property::NonNull, Directedness, Edge, Graph};
 
-/// DFS
+/// Dfs
 ///
 ///
 /// ### Notes
@@ -9,16 +9,16 @@ use crate::core::{property::NonNull, Directedness, Edge, Graph};
 ///
 /// There are Three possibilities for an API using closures:
 ///
-/// 1. Direct closure : This requires DFS to be generic on the closures type.
-/// this is possible but means DFS cannot be used in places where its explicit
+/// 1. Direct closure : This requires Dfs to be generic on the closures type.
+/// this is possible but means Dfs cannot be used in places where its explicit
 /// type is needed. I.e. it cannot be a field in a different struct nor be
 /// returned by a function.
 ///
-/// 2. Referenced closure: If DFS takes a reference to a closure, it no longer
-/// needs to be generic on the closures type. However, it limits where DFS can
+/// 2. Referenced closure: If Dfs takes a reference to a closure, it no longer
+/// needs to be generic on the closures type. However, it limits where Dfs can
 /// be used, since its now bound by the lifetime of the reference. It also
-/// doesn't solve the issue with other struct using DFS, because you can't have
-/// the closure anywhere when not using the DFS.
+/// doesn't solve the issue with other struct using Dfs, because you can't have
+/// the closure anywhere when not using the Dfs.
 ///
 /// 3. Boxed closure: Technically possible, but requires `std` and imposes
 /// allocations.
@@ -26,7 +26,7 @@ use crate::core::{property::NonNull, Directedness, Edge, Graph};
 /// This solution is as flexible as nr. 1, but solves the issue with naming the
 /// closures type. In essence, we are simulating a closure by have `on_exit` be
 /// a function and taking `on_exit_args`, that's basically what a closure is.
-pub struct DFS<'a, G, F>
+pub struct Dfs<'a, G, F>
 where
 	G: 'a + Graph,
 {
@@ -48,7 +48,7 @@ where
 	on_exit: fn(&G, G::Vertex, &mut F),
 }
 
-impl<'a, G, F> DFS<'a, G, F>
+impl<'a, G, F> Dfs<'a, G, F>
 where
 	G: 'a + Graph,
 {
@@ -112,7 +112,7 @@ where
 	}
 }
 
-impl<'a, G> DFS<'a, G, ()>
+impl<'a, G> Dfs<'a, G, ()>
 where
 	G: 'a + NonNull,
 {
@@ -123,7 +123,7 @@ where
 	}
 }
 
-impl<'a, G, F> Iterator for DFS<'a, G, F>
+impl<'a, G, F> Iterator for Dfs<'a, G, F>
 where
 	G: 'a + Graph,
 {

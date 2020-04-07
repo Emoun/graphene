@@ -1,5 +1,5 @@
 mod bfs;
-mod search;
+mod dfs;
 mod tarjan_scc;
 
-pub use self::{bfs::*, search::*, tarjan_scc::*};
+pub use self::{bfs::*, dfs::*, tarjan_scc::*};

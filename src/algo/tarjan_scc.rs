@@ -2,7 +2,7 @@
 //!
 //! The algorithm:
 //!
-//! Starting from some vertex, do a DFS.
+//! Starting from some vertex, do a Dfs.
 //! For each visited vertex, push it on top of a stack that you maintain.
 //! With the vertex you maintain the following information:
 //! "Index": A unique, increasing value for each vertex.
@@ -26,7 +26,7 @@
 //! kept on the stack. Therefore, we can now pop all vertices on the stack until
 //! the current vertex (and including it), and they then make up an SCC.
 //!
-//! When the DFS can no longer reach any vertices, the algorithm starts again on
+//! When the Dfs can no longer reach any vertices, the algorithm starts again on
 //! a new unvisited vertex.
 //! When all vertices have been visited, all SCCs have been found and the
 //! algorithm is done.
@@ -40,16 +40,16 @@
 //! the stack), it's still unique. Besides pushing the vertex on the stack, we
 //! also add the lowlink value.
 //!
-//! Most of the action happens in the DFS's on_exit function. However, instead
-//! of allowing the DFS to call the on_exit on its own, we start every call to
-//! `next()` by prompting DFS to call any on_exit it can. This is because any
+//! Most of the action happens in the Dfs's on_exit function. However, instead
+//! of allowing the Dfs to call the on_exit on its own, we start every call to
+//! `next()` by prompting Dfs to call any on_exit it can. This is because any
 //! on_exit call can result in an SCC being found. However, we can't return it
 //! from the on_exit to the next(). Therefore, we instead put it in a temporary.
 //! By calling the on_exit from next() manually, we can check if an SCC is
 //! produced, and if so return it. If not, we can continue the algorithm and if
-//! the DFS is done, check for any unvisited vertices.
+//! the Dfs is done, check for any unvisited vertices.
 use crate::{
-	algo::DFS,
+	algo::Dfs,
 	core::{
 		property::{ConnectedGraph, NonNull},
 		proxy::SubgraphProxy,
@@ -59,18 +59,18 @@ use crate::{
 use std::cmp::min;
 
 /// Implements Tarjan's Strongly Connected Components Algorithm.
-pub struct TarjanSCC<'a, G>
+pub struct TarjanScc<'a, G>
 where
 	G: 'a + Graph<Directedness = Directed>,
 {
-	dfs: DFS<'a, G, Vec<(G::Vertex, usize)>>,
+	dfs: Dfs<'a, G, Vec<(G::Vertex, usize)>>,
 
 	/// We use this to keep track of which vertices we have check for
 	/// whether they have been visited.
 	unchecked: Box<dyn 'a + Iterator<Item = G::Vertex>>,
 }
 
-impl<'a, G> TarjanSCC<'a, G>
+impl<'a, G> TarjanScc<'a, G>
 where
 	G: 'a + Graph<Directedness = Directed> + NonNull,
 {
@@ -104,7 +104,7 @@ where
 			}
 		}
 
-		let dfs = DFS::new(graph, on_exit, Vec::new());
+		let dfs = Dfs::new(graph, on_exit, Vec::new());
 		Self {
 			dfs,
 			unchecked: graph.all_vertices(),
@@ -112,7 +112,7 @@ where
 	}
 }
 
-impl<'a, G> Iterator for TarjanSCC<'a, G>
+impl<'a, G> Iterator for TarjanScc<'a, G>
 where
 	G: 'a + Graph<Directedness = Directed>,
 {
@@ -150,7 +150,7 @@ where
 				// Vertex is part of SCC but not root, keep it on stack.
 			}
 
-			// No SCCs found, let the DFS run once
+			// No SCCs found, let the Dfs run once
 			if let Some(v) = self.dfs.next()
 			{
 				// First push vertex onto stack, with lowlink value equal to its index

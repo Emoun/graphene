@@ -1,4 +1,4 @@
-//! Tests `DFS`
+//! Tests `Dfs`
 //!
 
 use crate::mock_graph::{
@@ -7,7 +7,7 @@ use crate::mock_graph::{
 };
 use duplicate::duplicate;
 use graphene::{
-	algo::DFS,
+	algo::Dfs,
 	core::{Directed, Undirected},
 };
 use std::cell::Cell;
@@ -54,8 +54,8 @@ mod module
 			stack.replace(s);
 		}
 
-		DFS::new(&mock, on_exit, (&stack, &mut success)).for_each(|v| {
-			// When a vertex is produced by the DFS, put it on the stack.
+		Dfs::new(&mock, on_exit, (&stack, &mut success)).for_each(|v| {
+			// When a vertex is produced by the Dfs, put it on the stack.
 			let mut s = stack.take();
 			s.push(v);
 			stack.replace(s);
