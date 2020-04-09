@@ -23,7 +23,7 @@ matrix:
     - rust: nightly
       script:
         - rustup component add rustfmt
-        - cargo +nightly -- --check
+        - cargo +nightly fmt -- --check
   allow_failures:
     - rust: nightly
   
