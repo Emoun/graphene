@@ -5,7 +5,8 @@ use crate::{
 			proxy_remove_edge_where, proxy_remove_vertex, DirectedGraph, NonNullGraph, RemoveEdge,
 			RemoveVertex, Unilateral, Weak,
 		},
-		Ensure, Graph, GraphDerefMut, ReverseGraph,
+		proxy::ReverseGraph,
+		Ensure, Graph, GraphDerefMut,
 	},
 };
 

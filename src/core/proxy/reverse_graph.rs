@@ -1,5 +1,5 @@
 use crate::core::{
-	property::{AddEdge, NewVertex, NonNull, RemoveEdge, RemoveVertex},
+	property::{AddEdge, RemoveEdge},
 	Directed, Edge, EdgeDeref, EdgeWeighted, Ensure, Graph, GraphDerefMut, GraphMut,
 };
 use delegate::delegate;
@@ -73,27 +73,6 @@ where
 	}
 }
 
-impl<C: Ensure + GraphDerefMut> NewVertex for ReverseGraph<C>
-where
-	C::Graph: NewVertex<Directedness = Directed>,
-{
-	delegate! {
-		to self.0.graph_mut() {
-			fn new_vertex_weighted(&mut self, w: Self::VertexWeight) -> Result<Self::Vertex, ()>;
-		}
-	}
-}
-impl<C: Ensure + GraphDerefMut> RemoveVertex for ReverseGraph<C>
-where
-	C::Graph: RemoveVertex<Directedness = Directed>,
-{
-	delegate! {
-		to self.0.graph_mut() {
-			fn remove_vertex(&mut self, v: Self::Vertex) -> Result<Self::VertexWeight, ()>;
-		}
-	}
-}
-
 impl<C: Ensure + GraphDerefMut> AddEdge for ReverseGraph<C>
 where
 	C::Graph: AddEdge<Directedness = Directed>,
@@ -125,19 +104,9 @@ where
 	}
 }
 
-impl<C: Ensure> NonNull for ReverseGraph<C>
-where
-	C::Graph: NonNull<Directedness = Directed>,
-{
-	delegate! {
-		to self.0.graph() {
-			fn get_vertex(&self) -> Self::Vertex ;
-		}
-	}
-}
-
 base_graph! {
-	use<C> ReverseGraph<C>
+	use<C> ReverseGraph<C>: NewVertex, RemoveVertex, NonNull
+	as (self.0): C
 	where
 		C: Ensure,
 		C::Graph: Graph<Directedness = Directed>

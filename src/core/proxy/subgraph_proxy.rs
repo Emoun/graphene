@@ -202,15 +202,15 @@ where
 	}
 }
 
-base_graph! {
-	use<C> SubgraphProxy<C>
-	where C: Ensure
-}
-
 impl<C: Ensure> Subgraph for SubgraphProxy<C>
 {
 	fn exit_edges<'a>(&'a self) -> Box<dyn 'a + Iterator<Item = (Self::Vertex, Self::Vertex)>>
 	{
 		Box::new(self.exit_edges.iter().cloned())
 	}
+}
+
+base_graph! {
+	use<C> SubgraphProxy<C>
+	where C: Ensure
 }

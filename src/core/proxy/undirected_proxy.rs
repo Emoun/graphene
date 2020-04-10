@@ -1,6 +1,6 @@
 use crate::core::{
-	property::{NewVertex, RemoveVertex},
-	Directed, Ensure, Graph, GraphDerefMut, GraphMut, Undirected,
+	property::{Connected, Unilateral, Weak},
+	Directed, Ensure, Graph, Undirected,
 };
 use delegate::delegate;
 
@@ -41,49 +41,12 @@ where
 	}
 }
 
-impl<C: Ensure + GraphDerefMut> GraphMut for UndirectedProxy<C>
-where
-	C::Graph: GraphMut<Directedness = Directed>,
-{
-	delegate! {
-		to self.0.graph_mut() {
-			fn all_vertices_weighted_mut<'a>(
-				&'a mut self,
-			) -> Box<dyn 'a + Iterator<Item = (Self::Vertex, &'a mut Self::VertexWeight)>>;
-
-			fn all_edges_mut<'a>(
-				&'a mut self,
-			) -> Box<
-				dyn 'a + Iterator<Item = (Self::Vertex, Self::Vertex, &'a mut Self::EdgeWeight)>
-			>;
-		}
-	}
-}
-
-impl<C: Ensure + GraphDerefMut> NewVertex for UndirectedProxy<C>
-where
-	C::Graph: NewVertex<Directedness = Directed>,
-{
-	delegate! {
-		to self.0.graph_mut() {
-			fn new_vertex_weighted(&mut self, w: Self::VertexWeight) -> Result<Self::Vertex, ()>;
-		}
-	}
-}
-
-impl<C: Ensure + GraphDerefMut> RemoveVertex for UndirectedProxy<C>
-where
-	C::Graph: RemoveVertex<Directedness = Directed>,
-{
-	delegate! {
-		to self.0.graph_mut() {
-			fn remove_vertex(&mut self, v: Self::Vertex) -> Result<Self::VertexWeight, ()>;
-		}
-	}
-}
+impl<C: Ensure> Connected for UndirectedProxy<C> where C::Graph: Unilateral<Directedness = Directed> {}
+impl<C: Ensure> Unilateral for UndirectedProxy<C> where C::Graph: Weak<Directedness = Directed> {}
 
 base_graph! {
-	use<C> UndirectedProxy<C>
+	use<C> UndirectedProxy<C>: GraphMut, NewVertex, RemoveVertex, NoLoops, Reflexive, Subgraph, Weak
+	as (self.0): C
 	where
 		C: Ensure,
 		C::Graph: Graph<Directedness = Directed>

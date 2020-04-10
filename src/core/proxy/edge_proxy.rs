@@ -1,5 +1,5 @@
 use crate::core::{
-	property::{AddEdge, NewVertex, RemoveEdge, RemoveVertex},
+	property::{AddEdge, RemoveEdge, RemoveVertex},
 	Directedness, Edge, EdgeWeighted, Ensure, Graph, GraphDerefMut, GraphMut,
 };
 use delegate::delegate;
@@ -111,7 +111,13 @@ where
 		&'a mut self,
 	) -> Box<dyn 'a + Iterator<Item = (Self::Vertex, Self::Vertex, &'a mut Self::EdgeWeight)>>
 	{
-		unimplemented!("No way to implement this as &mut () cannot be returned.")
+		Box::new(self.all_edges().map(|(so, si, w)| {
+			(so, si, {
+				let pointer = w as *const ();
+				let pointer_mut = pointer as *mut ();
+				unsafe { &mut *pointer_mut }
+			})
+		}))
 	}
 }
 
@@ -175,17 +181,6 @@ impl<C: Ensure> RemoveEdge for EdgeProxyGraph<C>
 	}
 }
 
-impl<C: Ensure + GraphDerefMut> NewVertex for EdgeProxyGraph<C>
-where
-	C::Graph: NewVertex,
-{
-	delegate! {
-		to self.graph.graph_mut() {
-			fn new_vertex_weighted(&mut self, w: Self::VertexWeight) -> Result<Self::Vertex, ()>;
-		}
-	}
-}
-
 impl<C: Ensure + GraphDerefMut> RemoveVertex for EdgeProxyGraph<C>
 where
 	C::Graph: RemoveVertex,
@@ -198,6 +193,7 @@ where
 }
 
 base_graph! {
-	use<C> EdgeProxyGraph<C>
+	use<C> EdgeProxyGraph<C>: NewVertex
+	as (self.graph) : C
 	where C: Ensure
 }
