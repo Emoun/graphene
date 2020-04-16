@@ -25,12 +25,12 @@ pub struct NonNullGraph<C: Ensure>(C);
 
 impl<C: Ensure> Ensure for NonNullGraph<C>
 {
-	fn ensure_unvalidated(c: Self::Ensured) -> Self
+	fn ensure_unvalidated(c: Self::Ensured, _: ()) -> Self
 	{
 		Self(c)
 	}
 
-	fn validate(c: &Self::Ensured) -> bool
+	fn validate(c: &Self::Ensured, _: &()) -> bool
 	{
 		c.graph().all_vertices().next().is_some()
 	}
@@ -119,15 +119,14 @@ impl<C: Ensure> VertexInGraph<C>
 
 impl<C: Ensure> Ensure for VertexInGraph<C>
 {
-	fn ensure_unvalidated(c: Self::Ensured) -> Self
+	fn ensure_unvalidated(c: Self::Ensured, v: <C::Graph as Graph>::Vertex) -> Self
 	{
-		let v = c.graph().all_vertices().next().unwrap();
 		Self(c, v)
 	}
 
-	fn validate(c: &Self::Ensured) -> bool
+	fn validate(c: &Self::Ensured, p: &<C::Graph as Graph>::Vertex) -> bool
 	{
-		NonNullGraph::validate(c)
+		c.graph().contains_vertex(*p)
 	}
 }
 
@@ -159,4 +158,5 @@ impl<C: Ensure> NonNull for VertexInGraph<C>
 impl_ensurer! {
 	use<C> VertexInGraph<C>: Ensure, NonNull, RemoveVertex
 	as (self.0) : C
+	as (self.1) : <C::Graph as Graph>::Vertex
 }

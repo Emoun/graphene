@@ -35,14 +35,14 @@ impl<C: Ensure> Ensure for UnilateralGraph<C>
 where
 	C::Graph: Graph<Directedness = Directed>,
 {
-	fn ensure_unvalidated(c: Self::Ensured) -> Self
+	fn ensure_unvalidated(c: Self::Ensured, _: ()) -> Self
 	{
 		Self(c)
 	}
 
-	fn validate(c: &Self::Ensured) -> bool
+	fn validate(c: &Self::Ensured, _: &()) -> bool
 	{
-		if let Ok(graph) = NonNullGraph::ensure(c.graph())
+		if let Ok(graph) = NonNullGraph::ensure(c.graph(), ())
 		{
 			// Algorithm: First use Tarjan's Strongly Connected Component (SCC) algorithm to
 			// find SCCs and then check whether every component has an edge to the next one

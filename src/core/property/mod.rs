@@ -33,7 +33,7 @@ pub fn proxy_remove_edge_where<'a, C, G, F>(
 where
 	G: RemoveEdge,
 	F: Fn((G::Vertex, G::Vertex, &G::EdgeWeight)) -> bool,
-	C: Ensure<Ensured = EdgeProxyGraph<&'a G>, Base = EdgeProxyGraph<&'a G>>,
+	C: Ensure<Ensured = EdgeProxyGraph<&'a G>, Base = EdgeProxyGraph<&'a G>, Payload = ()>,
 {
 	let to_remove = g
 		.all_edges()
@@ -57,7 +57,7 @@ where
 		return Err(());
 	};
 
-	if C::validate(&proxy)
+	if C::validate(&proxy, &())
 	{
 		// 	Here we use 'g' again since 'proxy' is no longer used.
 		// The compiler doesn't recognize that 'proxy' isn't used in this blocks,
@@ -79,7 +79,7 @@ where
 pub fn proxy_remove_vertex<'a, C, G>(g: &'a mut G, v: G::Vertex) -> Result<G::VertexWeight, ()>
 where
 	G: RemoveVertex,
-	C: Ensure<Ensured = VertexProxyGraph<&'a G>, Base = VertexProxyGraph<&'a G>>,
+	C: Ensure<Ensured = VertexProxyGraph<&'a G>, Base = VertexProxyGraph<&'a G>, Payload = ()>,
 {
 	// 	We use the unsafe block here to allow us to use 'g' again later.
 	// Currently, the compiler can't see when 'proxy' is no longer used,
@@ -93,7 +93,7 @@ where
 		.remove_vertex(ProxyVertex::Underlying(v))
 		.expect("Couldn't remove a vertex from the proxy");
 
-	if C::validate(&proxy)
+	if C::validate(&proxy, &())
 	{
 		g.remove_vertex(v)
 	}

@@ -33,23 +33,23 @@ impl<C: Ensure> ConnectedGraph<C>
 
 impl<C: Ensure> Ensure for ConnectedGraph<C>
 {
-	fn ensure_unvalidated(c: Self::Ensured) -> Self
+	fn ensure_unvalidated(c: Self::Ensured, _: ()) -> Self
 	{
 		Self(c)
 	}
 
-	fn validate(c: &Self::Ensured) -> bool
+	fn validate(c: &Self::Ensured, _: &()) -> bool
 	{
 		let g = c.graph();
 		let v_count = g.all_vertices().count();
 
-		if let Ok(g) = NonNullGraph::ensure(g)
+		if let Ok(g) = NonNullGraph::ensure(g, ())
 		{
 			let dfs_count = Dfs::new_simple(&g).count();
 			if dfs_count == v_count
 			{
 				// If its undirected, no more needs to be done
-				if let Ok(g) = DirectedGraph::ensure(g)
+				if let Ok(g) = DirectedGraph::ensure(g, ())
 				{
 					let reverse = ReverseGraph::new(g);
 					if Dfs::new_simple(&reverse).count() != v_count

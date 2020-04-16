@@ -8,7 +8,7 @@ use graphene::{
 	algo::{Bfs, Dfs},
 	core::{
 		property::{AddEdge, NonNull, VertexInGraph},
-		Directed, Graph, GraphDeref, Release, Undirected,
+		Directed, Graph, GraphDeref, ReleaseUnloaded, Undirected,
 	},
 };
 use std::collections::HashSet;

@@ -5,7 +5,7 @@ use crate::mock_graph::{
 use graphene::{
 	core::{
 		property::{NonNull, VertexInGraph},
-		Ensure, Graph, GraphDeref, GraphDerefMut, Release,
+		Ensure, Graph, GraphDeref, GraphDerefMut, ReleaseUnloaded,
 	},
 	impl_ensurer,
 };
@@ -180,7 +180,7 @@ where
 	G::Graph: TestGraph,
 	U: Uniqueness,
 {
-	fn ensure_unvalidated(c: Self::Ensured) -> Self
+	fn ensure_unvalidated(c: Self::Ensured, _: ()) -> Self
 	{
 		let v2 = {
 			let mut verts = c.all_vertices();
@@ -196,7 +196,7 @@ where
 		Self(c, v2, PhantomData)
 	}
 
-	fn validate(c: &Self::Ensured) -> bool
+	fn validate(c: &Self::Ensured, _: &()) -> bool
 	{
 		!U::unique() || c.graph().all_vertices().count() >= 2
 	}

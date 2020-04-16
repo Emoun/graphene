@@ -1,6 +1,42 @@
 use crate::core::{Graph, GraphDeref};
 use std::ops::Deref;
 
+pub trait Payload<B>
+{
+	type Item;
+	fn split(self) -> (Self::Item, B);
+
+	fn new(a: Self::Item, b: B) -> Self;
+}
+impl<A> Payload<A> for A
+{
+	type Item = ();
+
+	fn split(self) -> ((), A)
+	{
+		((), self)
+	}
+
+	fn new(_: (), a: A) -> Self
+	{
+		a
+	}
+}
+impl<A, B> Payload<B> for (A, B)
+{
+	type Item = A;
+
+	fn split(self) -> (A, B)
+	{
+		self
+	}
+
+	fn new(a: A, b: B) -> Self
+	{
+		(a, b)
+	}
+}
+
 /// A marker trait that specifies that the type is a base implementation of a
 /// graph with fixed properties that cannot be removed.
 ///
@@ -15,28 +51,47 @@ use std::ops::Deref;
 /// it possible.)
 pub trait BaseGraph: Sized + GraphDeref
 {
-	fn ensure_all<G>(self) -> Result<G, ()>
+	fn ensure_all<G>(self, p: G::Payload) -> Result<G, ()>
 	where
 		G: Ensure<Base = Self>,
 	{
-		G::ensure_all(self)
+		G::ensure_all(self, p)
 	}
 }
+pub trait BaseGraphUnloaded: BaseGraph
+{
+	fn ensure_all<G>(self) -> Result<G, ()>
+	where
+		G: Ensure<Base = Self>,
+		G::Payload: Payload<(), Item = ()>,
+	{
+		G::ensure_all(self, <G::Payload>::new((), ()))
+	}
+}
+
 /// An implementing type ensures a base graph implementation.
 ///
 /// Multiple levels of ensurers are supported.
 pub trait Ensure: Release
 {
-	fn ensure_unvalidated(c: Self::Ensured) -> Self;
+	fn ensure_unvalidated(
+		c: Self::Ensured,
+		p: <Self::Payload as Payload<<Self::Ensured as Release>::Payload>>::Item,
+	) -> Self;
 
-	fn validate(c: &Self::Ensured) -> bool;
+	fn validate(
+		c: &Self::Ensured,
+		p: &<Self::Payload as Payload<<Self::Ensured as Release>::Payload>>::Item,
+	) -> bool;
 
-	/// ensures a graph that is also already ensured.
-	fn ensure(c: Self::Ensured) -> Result<Self, ()>
+	fn ensure(
+		c: Self::Ensured,
+		p: <Self::Payload as Payload<<Self::Ensured as Release>::Payload>>::Item,
+	) -> Result<Self, ()>
 	{
-		if Self::validate(&c)
+		if Self::validate(&c, &p)
 		{
-			Ok(Self::ensure_unvalidated(c))
+			Ok(Self::ensure_unvalidated(c, p))
 		}
 		else
 		{
@@ -44,11 +99,34 @@ pub trait Ensure: Release
 		}
 	}
 
-	/// Fully ensures a base graph implementation type with all
-	/// levels of properties.
-	fn ensure_all(g: Self::Base) -> Result<Self, ()>
+	fn ensure_all(g: Self::Base, p: Self::Payload) -> Result<Self, ()>
 	{
-		Self::ensure(Self::Ensured::ensure_all(g)?)
+		let (p, rest) = p.split();
+		Self::ensure(Self::Ensured::ensure_all(g, rest)?, p)
+	}
+}
+pub trait EnsureUnloaded: Ensure
+where
+	<Self as Release>::Payload:
+		Payload<<<Self as Release>::Ensured as Release>::Payload, Item = ()>,
+{
+	fn ensure_unvalidated(c: Self::Ensured) -> Self
+	{
+		<Self as Ensure>::ensure_unvalidated(c, ())
+	}
+	fn validate(c: &Self::Ensured) -> bool
+	{
+		<Self as Ensure>::validate(c, &())
+	}
+	fn ensure(c: Self::Ensured) -> Result<Self, ()>
+	{
+		<Self as Ensure>::ensure(c, ())
+	}
+	fn ensure_all(g: Self::Base) -> Result<Self, ()>
+	where
+		<Self as Release>::Payload: Payload<(), Item = ()>,
+	{
+		Ensure::ensure_all(g, <<Self as Release>::Payload>::new((), ()))
 	}
 }
 
@@ -59,49 +137,86 @@ pub trait Release: Sized + GraphDeref
 
 	/// The next level of properties.
 	type Ensured: Ensure<Base = Self::Base>;
+	type Payload: Payload<<Self::Ensured as Release>::Payload>;
 
 	/// Release only this level's properties, maintaining
 	/// the next level's properties
-	fn release(self) -> Self::Ensured;
+	fn release(
+		self,
+	) -> (
+		Self::Ensured,
+		<Self::Payload as Payload<<Self::Ensured as Release>::Payload>>::Item,
+	);
+
+	/// Fully release this type, returning the base graph implementation
+	/// type
+	fn release_all(self) -> (Self::Base, Self::Payload)
+	{
+		let (ensured, payload) = self.release();
+		let (base, payload_rest) = Release::release_all(ensured);
+		(base, Payload::new(payload, payload_rest))
+	}
+}
+pub trait ReleaseUnloaded: Release
+{
+	/// Release only this level's properties, maintaining
+	/// the next level's properties
+	fn release(self) -> Self::Ensured
+	{
+		Release::release(self).0
+	}
 
 	/// Fully release this type, returning the base graph implementation
 	/// type
 	fn release_all(self) -> Self::Base
 	{
-		self.release().release_all()
+		Release::release_all(self).0
 	}
 }
 
 impl<G: Graph, D: Deref<Target = G>> BaseGraph for D {}
 impl<B: BaseGraph> Ensure for B
 {
-	fn ensure_unvalidated(c: Self::Ensured) -> Self
+	fn ensure_unvalidated(
+		c: Self::Ensured,
+		_: <Self::Payload as Payload<<Self::Ensured as Release>::Payload>>::Item,
+	) -> Self
 	{
 		c
 	}
 
-	fn validate(_c: &Self::Ensured) -> bool
+	fn validate(
+		_: &Self::Ensured,
+		_: &<Self::Payload as Payload<<Self::Ensured as Release>::Payload>>::Item,
+	) -> bool
 	{
 		true
 	}
 
-	fn ensure_all(g: Self::Base) -> Result<Self, ()>
+	fn ensure_all(g: Self::Base, _: Self::Payload) -> Result<Self, ()>
 	{
-		Self::ensure(g)
+		Ensure::ensure(g, ())
 	}
 }
 impl<B: BaseGraph> Release for B
 {
 	type Base = Self;
 	type Ensured = Self;
+	type Payload = ();
 
-	fn release(self) -> Self::Ensured
+	fn release(self) -> (Self::Ensured, ())
 	{
-		self
+		(self, ())
 	}
 
-	fn release_all(self) -> Self::Base
+	fn release_all(self) -> (Self::Base, Self::Payload)
 	{
-		self
+		(self, ())
 	}
 }
+impl<B: BaseGraph> BaseGraphUnloaded for B {}
+impl<E: Ensure> EnsureUnloaded for E where
+	E::Payload: Payload<<E::Ensured as Release>::Payload, Item = ()>
+{
+}
+impl<E: Release> ReleaseUnloaded for E {}

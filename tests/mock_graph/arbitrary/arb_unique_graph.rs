@@ -5,7 +5,7 @@ use crate::mock_graph::{
 use graphene::{
 	core::{
 		property::{AddEdge, DirectedGraph, RemoveEdge, UniqueGraph},
-		Directedness, Edge, Ensure, Graph, GraphDeref, GraphDerefMut, Release,
+		Directedness, Edge, EnsureUnloaded, Graph, GraphDeref, GraphDerefMut, ReleaseUnloaded,
 	},
 	impl_ensurer,
 };

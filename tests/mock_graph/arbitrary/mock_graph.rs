@@ -4,7 +4,7 @@ use crate::mock_graph::{
 };
 use graphene::core::{
 	property::{AddEdge, DirectedGraph, NewVertex, RemoveEdge, RemoveVertex},
-	Directedness, Edge, EdgeDeref, EdgeWeighted, Ensure, Graph,
+	Directedness, Edge, EdgeDeref, EdgeWeighted, EnsureUnloaded, Graph,
 };
 use quickcheck::{Arbitrary, Gen};
 use rand::Rng;

@@ -5,7 +5,8 @@ use crate::mock_graph::{
 use graphene::{
 	core::{
 		property::{AddEdge, NonNullGraph, RemoveEdge},
-		Edge, EdgeDeref, EdgeWeighted, Ensure, Graph, GraphDerefMut, GraphMut, Release,
+		Edge, EdgeDeref, EdgeWeighted, EnsureUnloaded, Graph, GraphDerefMut, GraphMut,
+		ReleaseUnloaded,
 	},
 	impl_ensurer,
 };
@@ -111,19 +112,19 @@ where
 	}
 }
 
-impl<G> Ensure for ArbEdgeIn<G>
+impl<G> graphene::core::Ensure for ArbEdgeIn<G>
 where
 	G: GuidedArbGraph,
 	G::Graph: TestGraph,
 {
-	fn ensure_unvalidated(c: Self::Ensured) -> Self
+	fn ensure_unvalidated(c: Self::Ensured, _: ()) -> Self
 	{
 		let edge = c.all_edges().next().unwrap();
 		let edge_copy = (edge.0, edge.1, edge.2.clone());
 		Self(c, edge_copy)
 	}
 
-	fn validate(c: &Self::Ensured) -> bool
+	fn validate(c: &Self::Ensured, _: &()) -> bool
 	{
 		c.all_edges().count() >= 1
 	}

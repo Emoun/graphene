@@ -120,12 +120,12 @@ where
 	G: GuidedArbGraph,
 	G::Graph: TestGraph,
 {
-	fn ensure_unvalidated(c: Self::Ensured) -> Self
+	fn ensure_unvalidated(c: Self::Ensured, _: ()) -> Self
 	{
 		Self(c, HashSet::new())
 	}
 
-	fn validate(_: &Self::Ensured) -> bool
+	fn validate(_: &Self::Ensured, _: &()) -> bool
 	{
 		true
 	}

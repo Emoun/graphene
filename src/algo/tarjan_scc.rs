@@ -53,7 +53,7 @@ use crate::{
 	core::{
 		property::{ConnectedGraph, NonNull},
 		proxy::SubgraphProxy,
-		Directed, Ensure, Graph,
+		Directed, EnsureUnloaded, Graph,
 	},
 };
 use std::cmp::min;

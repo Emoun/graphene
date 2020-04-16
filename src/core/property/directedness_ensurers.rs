@@ -6,12 +6,12 @@ pub struct DirectedGraph<C: Ensure>(C);
 
 impl<C: Ensure> Ensure for DirectedGraph<C>
 {
-	fn ensure_unvalidated(c: Self::Ensured) -> Self
+	fn ensure_unvalidated(c: Self::Ensured, _: ()) -> Self
 	{
 		Self(c)
 	}
 
-	fn validate(_: &Self::Ensured) -> bool
+	fn validate(_: &Self::Ensured, _: &()) -> bool
 	{
 		<<C::Graph as Graph>::Directedness as Directedness>::directed()
 	}
@@ -47,12 +47,12 @@ pub struct UndirectedGraph<C: Ensure>(C);
 
 impl<C: Ensure> Ensure for UndirectedGraph<C>
 {
-	fn ensure_unvalidated(c: Self::Ensured) -> Self
+	fn ensure_unvalidated(c: Self::Ensured, _: ()) -> Self
 	{
 		Self(c)
 	}
 
-	fn validate(_: &Self::Ensured) -> bool
+	fn validate(_: &Self::Ensured, _: &()) -> bool
 	{
 		!<<C::Graph as Graph>::Directedness as Directedness>::directed()
 	}

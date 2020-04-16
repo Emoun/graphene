@@ -36,12 +36,12 @@ impl<C: Ensure> UniqueGraph<C>
 
 impl<C: Ensure> Ensure for UniqueGraph<C>
 {
-	fn ensure_unvalidated(c: Self::Ensured) -> Self
+	fn ensure_unvalidated(c: Self::Ensured, _: ()) -> Self
 	{
 		Self(c)
 	}
 
-	fn validate(c: &Self::Ensured) -> bool
+	fn validate(c: &Self::Ensured, _: &()) -> bool
 	{
 		let edges: Vec<_> = c.graph().all_edges().collect();
 		let mut iter = edges.iter();

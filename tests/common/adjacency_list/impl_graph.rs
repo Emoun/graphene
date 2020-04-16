@@ -11,7 +11,7 @@ use crate::{
 };
 use graphene::core::{
 	property::{NonNull, RemoveEdge, RemoveVertex},
-	Edge, EdgeWeighted, Graph, GraphMut, Release,
+	Edge, EdgeWeighted, Graph, GraphMut, ReleaseUnloaded,
 };
 
 /// Tests that adding vertices to the graph results in the same vertices being

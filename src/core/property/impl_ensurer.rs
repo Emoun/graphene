@@ -15,6 +15,7 @@ macro_rules! impl_ensurer {
 		$(use <$($generics:ident),+>)? $struct:ty
 		$(: $( $exclude_props:ident),+)?
 		as (self $($delegate:tt)+) : $type_graph:ty
+		$(as (self $($payload_to:tt)+) : $payload_type:ty)?
 		$(where $($bounds:tt)*)?
 	} =>{
 		$crate::impl_properties!{
@@ -22,6 +23,9 @@ macro_rules! impl_ensurer {
 			@generic [ $($($generics)+)? ]
 			@delegate [ $type_graph ]
 			@delegate_to [ $($delegate)+ ]
+			$(	@payload [$payload_type]
+				@payload_to [$($payload_to)+]
+			)?
 			@exclude [ $($($exclude_props)+)? ]
 			@bounds [$($($bounds)*)?]
 		}
@@ -113,6 +117,9 @@ macro_rules! impl_properties {
 		@generic [ $($generics:ident)* ]
 		@delegate [ $delegate_type:ty ]
 		@delegate_to [ $($delegate:tt)+ ]
+		$(	@payload [$payload_type:ty]
+			@payload_to [$($payload_to:tt)+]
+		)?
 		@exclude $exclude_tt:tt
 		@include $include_tt:tt
 		@bounds [$($bounds:tt)*]
@@ -128,6 +135,9 @@ macro_rules! impl_properties {
 		@generic [ $($generics:ident)* ]
 		@delegate [ $delegate_type:ty ]
 		@delegate_to [ $($delegate:tt)+ ]
+		$(	@payload [$payload_type:ty]
+			@payload_to [$($payload_to:tt)+]
+		)?
 		$(@exclude [ $($exclude_props:ident)* ])?
 		$(@include [ $($include_props:ident)* ])?
 		@bounds [$($bounds:tt)*]
@@ -181,10 +191,12 @@ macro_rules! impl_properties {
 			@implement {
 				type Base = <$delegate_type as $crate::core::Release>::Base ;
 				type Ensured = $delegate_type;
-
-				fn release(self) -> Self::Ensured
+				#[allow(unused_parens)]
+				type Payload = ($($payload_type,)?<$delegate_type as $crate::core::Release>::Payload);
+				#[allow(unused_parens)]
+				fn release(self) -> (Self::Ensured, ($($payload_type)?))
 				{
-					self$($delegate)+
+					(self$($delegate)+, ($(self$($payload_to)+)?))
 				}
 			}
 		}
@@ -199,12 +211,12 @@ macro_rules! impl_properties {
 			@bounds [ $($bounds)* ]
 			@trait_id Ensure [$crate::core]
 			@implement {
-				fn ensure_unvalidated(c: Self::Ensured) -> Self
+				fn ensure_unvalidated(c: Self::Ensured, _p:($($payload_type)?)) -> Self
 				{
-					Self(c)
+					$crate::make_ensurer!(c, _p $($payload_type)?)
 				}
 
-				fn validate(_: &Self::Ensured) -> bool
+				fn validate(_: &Self::Ensured, _:&($($payload_type)?)) -> bool
 				{
 					true
 				}
@@ -612,4 +624,21 @@ macro_rules! impl_properties {
 		@trait_id $exclude_props_id:ident [ $($exclude_props_path:tt)* ]
 		@implement {$($impl:tt)*}
 	} => {}
+}
+
+#[doc(hidden)]
+#[macro_export]
+macro_rules! make_ensurer {
+	{
+		$ensured:ident
+		, $payload:ident $($rest:tt)+
+	} => {
+		Self($ensure, $payload)
+	};
+	{
+		$ensured:ident
+		, $payload:ident
+	} => {
+		Self($ensured)
+	}
 }

@@ -43,16 +43,16 @@ impl<C: Ensure> Ensure for WeakGraph<C>
 where
 	C::Graph: Graph<Directedness = Directed>,
 {
-	fn ensure_unvalidated(c: Self::Ensured) -> Self
+	fn ensure_unvalidated(c: Self::Ensured, _: ()) -> Self
 	{
 		Self(c)
 	}
 
-	fn validate(c: &Self::Ensured) -> bool
+	fn validate(c: &Self::Ensured, _: &()) -> bool
 	{
 		let undirected = UndirectedProxy::new(c.graph());
 
-		ConnectedGraph::validate(&undirected)
+		ConnectedGraph::validate(&undirected, &())
 	}
 }
 

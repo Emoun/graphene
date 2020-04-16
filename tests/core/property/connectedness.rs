@@ -13,7 +13,7 @@ use graphene::core::{
 		AddEdge, Connected, ConnectedGraph, NewVertex, NonNull, RemoveEdge, RemoveVertex,
 		Unilateral, UnilateralGraph, Weak, WeakGraph,
 	},
-	Directed, Directedness, Edge, Ensure, Graph, Release, Undirected,
+	Directed, Directedness, Edge, EnsureUnloaded, Graph, ReleaseUnloaded, Undirected,
 };
 use static_assertions::assert_impl_all;
 
