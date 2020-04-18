@@ -4,7 +4,7 @@ use crate::mock_graph::{
 };
 use graphene::{
 	core::{
-		property::{AddEdge, NonNullGraph, RemoveEdge},
+		property::{AddEdge, HasVertexGraph, RemoveEdge},
 		Edge, EdgeDeref, EdgeWeighted, EnsureUnloaded, Graph, GraphDerefMut, GraphMut,
 		ReleaseUnloaded,
 	},
@@ -18,7 +18,7 @@ use std::{collections::HashSet, ops::RangeBounds};
 /// weight is a clone)
 #[derive(Clone, Debug)]
 pub struct ArbEdgeIn<G>(
-	pub NonNullGraph<G>,
+	pub HasVertexGraph<G>,
 	pub (MockVertex, MockVertex, MockEdgeWeight),
 )
 where
@@ -45,7 +45,7 @@ where
 			.nth(g.gen_range(0, graph.all_edges().count()))
 			.unwrap();
 		let edge_clone = (edge.source(), edge.sink(), edge.weight().clone());
-		Self(NonNullGraph::ensure_unvalidated(arb_graph), edge_clone)
+		Self(HasVertexGraph::ensure_unvalidated(arb_graph), edge_clone)
 	}
 
 	fn shrink_guided(&self, _: HashSet<Limit>) -> Box<dyn Iterator<Item = Self>>
@@ -87,7 +87,7 @@ where
 						.add_edge_weighted((v1, v2, (self.1).2.clone()))
 						.unwrap();
 					Self(
-						NonNullGraph::ensure(g.release().release().release()).unwrap(),
+						HasVertexGraph::ensure(g.release().release().release()).unwrap(),
 						(v1, v2, (self.1).2.clone()),
 					)
 				}),
@@ -132,7 +132,7 @@ where
 
 impl_ensurer! {
 	use<G> ArbEdgeIn<G>: Ensure
-	as (self.0): NonNullGraph<G>
+	as (self.0): HasVertexGraph<G>
 	where
 	G: GuidedArbGraph,
 	G::Graph:  TestGraph

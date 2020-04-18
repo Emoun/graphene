@@ -2,7 +2,7 @@ use crate::{
 	algo::TarjanScc,
 	core::{
 		property::{
-			proxy_remove_edge_where, proxy_remove_vertex, NonNullGraph, RemoveEdge, RemoveVertex,
+			proxy_remove_edge_where, proxy_remove_vertex, HasVertexGraph, RemoveEdge, RemoveVertex,
 			Subgraph, Weak,
 		},
 		Directed, Ensure, Graph, GraphDerefMut,
@@ -42,7 +42,7 @@ where
 
 	fn validate(c: &Self::Ensured, _: &()) -> bool
 	{
-		if let Ok(graph) = NonNullGraph::ensure(c.graph(), ())
+		if let Ok(graph) = HasVertexGraph::ensure(c.graph(), ())
 		{
 			// Algorithm: First use Tarjan's Strongly Connected Component (SCC) algorithm to
 			// find SCCs and then check whether every component has an edge to the next one

@@ -512,7 +512,7 @@ macro_rules! impl_properties {
 			}
 		}
 
-		// NonNull
+		// HasVertex
 		$crate::impl_properties!{
 			@struct [ $struct ]
 			@generic [ $($generics)* ]
@@ -521,10 +521,10 @@ macro_rules! impl_properties {
 			$(@include [ $($include_props)* ])?
 			@bounds [
 				<$delegate_type as $crate::core::GraphDeref>::Graph:
-					$crate::core::property::NonNull,
+					$crate::core::property::HasVertex,
 				$($bounds)*
 			]
-			@trait_id NonNull [$crate::core::property]
+			@trait_id HasVertex [$crate::core::property]
 			@implement {
 				delegate::delegate! {
 					to $crate::core::GraphDeref::graph(&self$($delegate)+) {

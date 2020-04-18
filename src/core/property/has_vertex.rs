@@ -2,7 +2,7 @@ use crate::core::{property::RemoveVertex, Ensure, Graph, GraphDerefMut};
 use std::fmt::{Debug, Error, Formatter};
 
 /// A marker trait for graphs with at least 1 vertex.
-pub trait NonNull: Graph
+pub trait HasVertex: Graph
 {
 	/// Returns a vertex in the graph.
 	///
@@ -21,9 +21,9 @@ pub trait NonNull: Graph
 /// Gives no guarantees on which vertex is returned by any given call to
 /// `get_vertex` if the the graph has multiple vertices.
 #[derive(Clone, Debug)]
-pub struct NonNullGraph<C: Ensure>(C);
+pub struct HasVertexGraph<C: Ensure>(C);
 
-impl<C: Ensure> Ensure for NonNullGraph<C>
+impl<C: Ensure> Ensure for HasVertexGraph<C>
 {
 	fn ensure_unvalidated(c: Self::Ensured, _: ()) -> Self
 	{
@@ -36,7 +36,7 @@ impl<C: Ensure> Ensure for NonNullGraph<C>
 	}
 }
 
-impl<C: Ensure + GraphDerefMut> RemoveVertex for NonNullGraph<C>
+impl<C: Ensure + GraphDerefMut> RemoveVertex for HasVertexGraph<C>
 where
 	C::Graph: RemoveVertex,
 {
@@ -53,18 +53,18 @@ where
 	}
 }
 
-impl<C: Ensure> NonNull for NonNullGraph<C>
+impl<C: Ensure> HasVertex for HasVertexGraph<C>
 {
 	fn get_vertex(&self) -> Self::Vertex
 	{
 		self.all_vertices()
 			.next()
-			.expect("NonNull graph is null (has no vertices).")
+			.expect("HasVertexGraph has no vertices.")
 	}
 }
 
 impl_ensurer! {
-	use<C> NonNullGraph<C>: Ensure, NonNull, RemoveVertex
+	use<C> HasVertexGraph<C>: Ensure, HasVertex, RemoveVertex
 	as (self.0) : C
 }
 
@@ -147,7 +147,7 @@ where
 	}
 }
 
-impl<C: Ensure> NonNull for VertexInGraph<C>
+impl<C: Ensure> HasVertex for VertexInGraph<C>
 {
 	fn get_vertex(&self) -> Self::Vertex
 	{
@@ -156,7 +156,7 @@ impl<C: Ensure> NonNull for VertexInGraph<C>
 }
 
 impl_ensurer! {
-	use<C> VertexInGraph<C>: Ensure, NonNull, RemoveVertex
+	use<C> VertexInGraph<C>: Ensure, HasVertex, RemoveVertex
 	as (self.0) : C
 	as (self.1) : <C::Graph as Graph>::Vertex
 }

@@ -366,6 +366,6 @@ impl_ensurer! {
 	// A new vertex wouldn't be connected to the rest of the graph
 	NewVertex,
 	// Can never impl the following
-	Unique, NoLoops, Reflexive, Unilateral, Connected, Subgraph, NonNull
+	Unique, NoLoops, Reflexive, Unilateral, Connected, Subgraph, HasVertex
 	as (self.0) : WeakGraph<MockGraph<Directed>>
 }

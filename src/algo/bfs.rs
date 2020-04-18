@@ -1,4 +1,4 @@
-use crate::core::{property::NonNull, Directedness, Edge, Graph};
+use crate::core::{property::HasVertex, Directedness, Edge, Graph};
 use std::collections::VecDeque;
 
 pub struct Bfs<'a, G>
@@ -17,7 +17,7 @@ where
 {
 	pub fn new(graph: &'a G) -> Self
 	where
-		G: NonNull,
+		G: HasVertex,
 	{
 		let mut queue = VecDeque::new();
 		let v = graph.get_vertex();

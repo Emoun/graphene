@@ -10,7 +10,7 @@ use crate::mock_graph::{
 use duplicate::duplicate;
 use graphene::core::{
 	property::{
-		AddEdge, Connected, ConnectedGraph, NewVertex, NonNull, RemoveEdge, RemoveVertex,
+		AddEdge, Connected, ConnectedGraph, HasVertex, NewVertex, RemoveEdge, RemoveVertex,
 		Unilateral, UnilateralGraph, Weak, WeakGraph,
 	},
 	Directed, Directedness, Edge, EnsureUnloaded, Graph, ReleaseUnloaded, Undirected,

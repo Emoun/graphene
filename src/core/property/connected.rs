@@ -2,8 +2,8 @@ use crate::{
 	algo::Dfs,
 	core::{
 		property::{
-			proxy_remove_edge_where, proxy_remove_vertex, DirectedGraph, NonNullGraph, RemoveEdge,
-			RemoveVertex, Unilateral, Weak,
+			proxy_remove_edge_where, proxy_remove_vertex, DirectedGraph, HasVertexGraph,
+			RemoveEdge, RemoveVertex, Unilateral, Weak,
 		},
 		proxy::ReverseGraph,
 		Ensure, Graph, GraphDerefMut,
@@ -43,7 +43,7 @@ impl<C: Ensure> Ensure for ConnectedGraph<C>
 		let g = c.graph();
 		let v_count = g.all_vertices().count();
 
-		if let Ok(g) = NonNullGraph::ensure(g, ())
+		if let Ok(g) = HasVertexGraph::ensure(g, ())
 		{
 			let dfs_count = Dfs::new_simple(&g).count();
 			if dfs_count == v_count

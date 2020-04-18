@@ -6,7 +6,7 @@ use crate::mock_graph::{
 	MockDirectedness, MockGraph, MockVertex,
 };
 use duplicate::duplicate;
-use graphene::core::{property::NonNull, Directed, Edge, Graph, GraphMut};
+use graphene::core::{property::HasVertex, Directed, Edge, Graph, GraphMut};
 
 #[duplicate(
 	#[

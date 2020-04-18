@@ -7,7 +7,7 @@ use duplicate::duplicate;
 use graphene::{
 	algo::{Bfs, Dfs},
 	core::{
-		property::{AddEdge, NonNull, VertexInGraph},
+		property::{AddEdge, HasVertex, VertexInGraph},
 		Directed, Graph, GraphDeref, ReleaseUnloaded, Undirected,
 	},
 };

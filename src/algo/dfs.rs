@@ -1,7 +1,65 @@
-use crate::core::{property::NonNull, Directedness, Edge, Graph};
+use crate::core::{property::HasVertex, Directedness, Edge, Graph};
 
-/// Dfs
+/// Performs [depth-first traversal](https://mathworld.wolfram.com/Depth-FirstTraversal.html)
+/// of a graph's vertices.
 ///
+/// Even though the 's' in its name implies a search, this struct only performs
+/// traversal, delegating the searching to the user.
+///
+/// It implements [`Iterator`](https://doc.rust-lang.org/std/iter/trait.Iterator.html). [`next`]
+/// is therefore the primary way to use this struct.
+/// Each call will traverse the graph just enough to visit the next vertex and
+/// return it. The initial vertex visited is the one returned by calling the
+/// graph's [`get_vertex`](../core/property/trait.HasVertex.html#method.
+/// get_vertex) method. That vertex is also guaranteed to be returned by the
+/// first call to [`next`].
+///
+/// When the traversal is finished, either because all vertices in the graph
+/// have been visited or because no more vertices can be reached,
+/// [`next`] will return [`None`](https://doc.rust-lang.org/std/option/enum.Option.html#variant.None).
+///
+/// ### Simple Usage
+///
+/// ```
+/// # use graphene::{
+/// # 	algo::Dfs,
+/// # 	common::AdjListGraph,
+/// # 	core::{
+/// # 		Ensure,
+/// # 		property::{
+/// # 			NewVertex, AddEdge, VertexInGraph
+/// # 		}
+/// # 	},
+/// # };
+/// # use graphene::core::Graph;
+/// let mut graph = AdjListGraph::<usize,()>::new();
+///
+/// let v0 = graph.new_vertex_weighted(0).unwrap();
+/// let v1 = graph.new_vertex_weighted(1).unwrap();
+/// let v2 = graph.new_vertex_weighted(2).unwrap();
+///
+/// graph.add_edge((v0,v1)).unwrap();
+/// graph.add_edge((v1,v2)).unwrap();
+///
+/// // We use `VertexInGraph` to ensure traversal starts at v0.
+/// let graph = VertexInGraph::ensure(graph, v0).unwrap();
+///
+/// // Initialize the traversal
+/// let mut dfs = Dfs::new_simple(&graph);
+///
+/// // We search for the first vertex with weight == 1.
+/// let found_vertex = dfs.find(|&v| graph.vertex_weight(v).unwrap() == &1).unwrap();
+/// assert_eq!(v1, found_vertex)
+/// ```
+///
+/// The most basic use of this struct is through the
+/// [`new_simple`](#method.new_simple) function which creates a traversal over
+/// the given graph. In our example above, we use this to implement an actual
+/// search, by using [`find`](https://doc.rust-lang.org/std/iter/trait.Iterator.html#method.find), looking for the
+/// first vertex visited that has a given weight.
+/// Since traversal is lazy, `v2` was never visited, since `v1` was found before
+/// `v2` was explored. Therefore, we could theoretically continue the traversal
+/// on the same dfs.
 ///
 /// ### Notes
 ///
@@ -26,6 +84,9 @@ use crate::core::{property::NonNull, Directedness, Edge, Graph};
 /// This solution is as flexible as nr. 1, but solves the issue with naming the
 /// closures type. In essence, we are simulating a closure by have `on_exit` be
 /// a function and taking `on_exit_args`, that's basically what a closure is.
+///
+/// [`next`]: https://doc.rust-lang.org/std/iter/trait.Iterator.html#tymethod.next
+///
 pub struct Dfs<'a, G, F>
 where
 	G: 'a + Graph,
@@ -54,7 +115,7 @@ where
 {
 	pub fn new(g: &'a G, on_exit: fn(&G, G::Vertex, &mut F), payload: F) -> Self
 	where
-		G: NonNull,
+		G: HasVertex,
 	{
 		Self {
 			graph: g,
@@ -114,7 +175,7 @@ where
 
 impl<'a, G> Dfs<'a, G, ()>
 where
-	G: 'a + NonNull,
+	G: 'a + HasVertex,
 {
 	pub fn new_simple(g: &'a G) -> Self
 	{

@@ -10,7 +10,7 @@ use crate::{
 	},
 };
 use graphene::core::{
-	property::{NonNull, RemoveEdge, RemoveVertex},
+	property::{HasVertex, RemoveEdge, RemoveVertex},
 	Edge, EdgeWeighted, Graph, GraphMut, ReleaseUnloaded,
 };
 

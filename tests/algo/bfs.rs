@@ -2,7 +2,7 @@ use crate::mock_graph::arbitrary::{ArbConnectedGraph, ArbVertexIn};
 use duplicate::duplicate;
 use graphene::{
 	algo::Bfs,
-	core::{property::NonNull, Directed, Undirected},
+	core::{property::HasVertex, Directed, Undirected},
 };
 use std::collections::HashSet;
 

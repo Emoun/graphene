@@ -51,7 +51,7 @@
 use crate::{
 	algo::Dfs,
 	core::{
-		property::{ConnectedGraph, NonNull},
+		property::{ConnectedGraph, HasVertex},
 		proxy::SubgraphProxy,
 		Directed, EnsureUnloaded, Graph,
 	},
@@ -72,7 +72,7 @@ where
 
 impl<'a, G> TarjanScc<'a, G>
 where
-	G: 'a + Graph<Directedness = Directed> + NonNull,
+	G: 'a + Graph<Directedness = Directed> + HasVertex,
 {
 	pub fn new(graph: &'a G) -> Self
 	{

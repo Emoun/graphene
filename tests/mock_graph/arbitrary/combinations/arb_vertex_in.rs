@@ -4,7 +4,7 @@ use crate::mock_graph::{
 };
 use graphene::{
 	core::{
-		property::{NonNull, VertexInGraph},
+		property::{HasVertex, VertexInGraph},
 		Graph, GraphDerefMut, ReleaseUnloaded,
 	},
 	impl_ensurer,

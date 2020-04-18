@@ -4,7 +4,7 @@ use crate::mock_graph::{
 };
 use graphene::{
 	core::{
-		property::{AddEdge, NewVertex, NonNull, RemoveEdge, UnilateralGraph},
+		property::{AddEdge, HasVertex, NewVertex, RemoveEdge, UnilateralGraph},
 		Directed, Edge, EnsureUnloaded, Graph, ReleaseUnloaded,
 	},
 	impl_ensurer,
@@ -191,7 +191,7 @@ impl_ensurer! {
 	// A new vertex wouldn't be connected to the rest of the graph
 	NewVertex,
 	// Can never impl the following because MockGraph doesn't
-	Unique, NoLoops, Reflexive, Connected, Subgraph, NonNull
+	Unique, NoLoops, Reflexive, Connected, Subgraph, HasVertex
 	as (self.0) : UnilateralGraph<MockGraph<Directed>>
 }
 
@@ -340,6 +340,6 @@ impl Arbitrary for ArbNonUnilatralGraph
 impl_ensurer! {
 	ArbNonUnilatralGraph:
 	// Can never impl the following because MockGraph doesn't
-	Unique, NoLoops, Reflexive, Connected, Unilateral, Weak, Subgraph, NonNull
+	Unique, NoLoops, Reflexive, Connected, Unilateral, Weak, Subgraph, HasVertex
 	as (self.0) : MockGraph<Directed>
 }

@@ -4,7 +4,7 @@ use crate::mock_graph::{
 };
 use graphene::{
 	core::{
-		property::NonNullGraph, BaseGraphUnloaded, Directedness, EnsureUnloaded, ReleaseUnloaded,
+		property::HasVertexGraph, BaseGraphUnloaded, Directedness, EnsureUnloaded, ReleaseUnloaded,
 	},
 	impl_ensurer,
 };
@@ -14,9 +14,9 @@ use std::collections::HashSet;
 
 /// An arbitrary graph with at least 1 vertex
 #[derive(Clone, Debug)]
-pub struct ArbNonNullGraph<D: Directedness>(pub NonNullGraph<MockGraph<D>>);
+pub struct ArbHasVertexGraph<D: Directedness>(pub HasVertexGraph<MockGraph<D>>);
 
-impl<D: Directedness> GuidedArbGraph for ArbNonNullGraph<D>
+impl<D: Directedness> GuidedArbGraph for ArbHasVertexGraph<D>
 {
 	fn arbitrary_guided<G: Gen>(
 		g: &mut G,
@@ -43,12 +43,12 @@ impl<D: Directedness> GuidedArbGraph for ArbNonNullGraph<D>
 				.clone()
 				.release_all()
 				.shrink_guided(limits)
-				.map(|g| Self(NonNullGraph::ensure(g).unwrap())),
+				.map(|g| Self(HasVertexGraph::ensure(g).unwrap())),
 		)
 	}
 }
 
-impl<D: Directedness> Arbitrary for ArbNonNullGraph<D>
+impl<D: Directedness> Arbitrary for ArbHasVertexGraph<D>
 {
 	fn arbitrary<G: Gen>(g: &mut G) -> Self
 	{
@@ -62,9 +62,9 @@ impl<D: Directedness> Arbitrary for ArbNonNullGraph<D>
 }
 
 impl_ensurer! {
-	use<D> ArbNonNullGraph<D>:
+	use<D> ArbHasVertexGraph<D>:
 	// Can never impl the following because MockGraph doesn't
 	Reflexive
-	as (self.0) : NonNullGraph<MockGraph<D>>
+	as (self.0) : HasVertexGraph<MockGraph<D>>
 	where D: Directedness
 }

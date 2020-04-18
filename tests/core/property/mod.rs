@@ -2,5 +2,5 @@
 //!
 
 mod connectedness;
-mod non_null;
+mod has_vertex;
 mod unique;
