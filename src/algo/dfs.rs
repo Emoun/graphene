@@ -10,9 +10,8 @@ use crate::core::{property::HasVertex, Directedness, Edge, Graph};
 /// is therefore the primary way to use this struct.
 /// Each call will traverse the graph just enough to visit the next vertex and
 /// return it. The initial vertex visited is the one returned by calling the
-/// graph's [`get_vertex`](../core/property/trait.HasVertex.html#method.
-/// get_vertex) method. That vertex is also guaranteed to be returned by the
-/// first call to [`next`].
+/// graph's [`get_vertex`] method. That vertex is also guaranteed to be returned
+/// by the first call to [`next`].
 ///
 /// When the traversal is finished, either because all vertices in the graph
 /// have been visited or because no more vertices can be reached,
@@ -86,15 +85,21 @@ use crate::core::{property::HasVertex, Directedness, Edge, Graph};
 /// a function and taking `on_exit_args`, that's basically what a closure is.
 ///
 /// [`next`]: https://doc.rust-lang.org/std/iter/trait.Iterator.html#tymethod.next
-///
+/// [`get_vertex`]: ../core/property/trait.HasVertex.html#method.get_vertex
 pub struct Dfs<'a, G, F>
 where
 	G: 'a + Graph,
 {
-	/// The graph being traversed.
+	/// A reference to the graph being traversed.
+	///
+	/// This is use by `Dfs` when doing the traversal. Mutating
+	/// this reference between calls to
+	/// [`next`](https://doc.rust-lang.org/std/iter/trait.Iterator.html#tymethod.next)
+	/// is undefined behaviour.
 	pub graph: &'a G,
 
 	/// A custom payload, available to the function called upon a vertex exit.
+	/// See [`new`](#method.new).
 	pub payload: F,
 	visited: Vec<G::Vertex>,
 
@@ -104,7 +109,7 @@ where
 
 	/// Function to call when exiting a vertex.
 	///
-	/// Provices a reference to the graph, the vertex that is exiting,
+	/// Provides a reference to the graph, the vertex that is exiting,
 	/// and a mutable reference to the payload given to the Dfs.
 	on_exit: fn(&G, G::Vertex, &mut F),
 }
@@ -177,6 +182,21 @@ impl<'a, G> Dfs<'a, G, ()>
 where
 	G: 'a + HasVertex,
 {
+	/// Constructs a new `Dfs` to traverse the specified graph.
+	///
+	/// It calls [`get_vertex`] on the graph making the traversal start from the
+	/// returned vertex. The first call to [`next`]
+	/// on the constructed `Dfs` is guaranteed to return the aforementioned
+	/// vertex.
+	///
+	/// ### Hint
+	///
+	/// [`VertexInGraph`](../core/property/struct.VertexInGraph.html) can be
+	/// used to select which specific vertex is returned by [`get_vertex`] and
+	/// thereby the starting vertex for the traversal.
+	///
+	/// [`next`]: https://doc.rust-lang.org/std/iter/trait.Iterator.html#tymethod.next
+	/// [`get_vertex`]: ../core/property/trait.HasVertex.html#method.get_vertex
 	pub fn new_simple(g: &'a G) -> Self
 	{
 		fn do_nothing<G, T>(_: &G, _: T, _: &mut ()) {}
