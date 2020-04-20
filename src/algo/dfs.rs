@@ -84,6 +84,9 @@ use crate::core::{property::HasVertex, Directedness, Edge, Graph};
 /// closures type. In essence, we are simulating a closure by have `on_exit` be
 /// a function and taking `on_exit_args`, that's basically what a closure is.
 ///
+/// ### Related
+/// - [Bfs](struct.Bfs.html): Another graph traversal but using breadth-first.
+///
 /// [`next`]: https://doc.rust-lang.org/std/iter/trait.Iterator.html#tymethod.next
 /// [`get_vertex`]: ../core/property/trait.HasVertex.html#method.get_vertex
 pub struct Dfs<'a, G, F>
@@ -184,8 +187,8 @@ where
 {
 	/// Constructs a new `Dfs` to traverse the specified graph.
 	///
-	/// It calls [`get_vertex`] on the graph making the traversal start from the
-	/// returned vertex. The first call to [`next`]
+	/// It calls [`get_vertex`] on the graph, making the traversal start from
+	/// the returned vertex. The first call to [`next`]
 	/// on the constructed `Dfs` is guaranteed to return the aforementioned
 	/// vertex.
 	///

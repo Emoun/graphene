@@ -58,7 +58,7 @@ use crate::{
 };
 use std::cmp::min;
 
-/// Implements Tarjan's Strongly Connected Components Algorithm.
+/// Implements Tarjan's [Strongly Connected Components](https://mathworld.wolfram.com/StronglyConnectedComponent.html) Algorithm.
 pub struct TarjanScc<'a, G>
 where
 	G: 'a + Graph<Directedness = Directed>,

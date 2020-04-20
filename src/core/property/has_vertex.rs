@@ -72,14 +72,6 @@ impl_ensurer! {
 ///
 /// That vertex is guaranteed to be returned by any call to `get_vertex` and
 /// cannot be removed from the graph.
-///
-/// Which vertex is guaranteed by this type depends on how an instance was
-/// created:
-///
-/// 1. If `new` was used, the vertex it was given is guaranteed.
-/// 2. If an instance was created as an ensurer (using `ensure_unvalidated` or
-/// `ensure` etc.) then an arbitrary vertex in the graph is chosen, with no
-/// guarantees as to how this choice is made.
 #[derive(Clone)]
 pub struct VertexInGraph<C: Ensure>(C, <C::Graph as Graph>::Vertex);
 
