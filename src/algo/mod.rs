@@ -1,3 +1,5 @@
+//! A collection of graph algorithm implementations.
+
 mod bfs;
 mod dfs;
 mod tarjan_scc;
