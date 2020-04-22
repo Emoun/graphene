@@ -5,6 +5,12 @@ use crate::core::{Directed, Directedness};
 use std::marker::PhantomData;
 
 /// A graph using the adjacency list representation.
+///
+/// It accepts the following generic parameters:
+/// - `Vw`: Vertex weights.
+/// - `Ew`: Edge weights.
+/// - `D`: Whether the graph should be directed or undirected.
+/// Defaults to [Directed](../core/struct.Directed.html).
 #[derive(Clone, Debug)]
 pub struct AdjListGraph<Vw, Ew, D = Directed>
 where
@@ -30,6 +36,7 @@ impl<Vw, Ew, D> AdjListGraph<Vw, Ew, D>
 where
 	D: Directedness,
 {
+	/// Constructs a new, empty `AdjListGraph`.
 	pub fn new() -> Self
 	{
 		Self {
