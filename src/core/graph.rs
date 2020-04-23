@@ -31,29 +31,77 @@ mod macros
 	}
 }
 
-/// The basic graph interface. This is the main trait for all types of graphs.
+/// The basic graph trait, providing vertex and edge inspection.
 ///
-/// For all graphs, vertices are identified by their
-/// [value](#associatedType.Vertex), and must be unique in the graph. Edges are
-/// identified by the two vertices they are incident on, the direction,
-/// and their [Id](#associatedType.EdgeId); I.e. the triple `(v1,v2,e)` is an
-/// edge from `v1` to `v2` with an edge id `e`. All edges are directed but need
-/// not be unique. Therefore, multiple edges with the same source (`v1`), sink
-/// (`v2`), and id (`e`) may be present in a graph at the same time. Edges with
-/// the same source, sink, and id are identical and must be interchangeable.
-/// E.g. if any one of two or more identical edges is to be removed, then any
-/// one of them may be removed.
+/// A graphs vertices are identified by the unique value of the associated type
+/// [`Vertex`](#associatedtype.Vertex).
+/// For example, [`Vertex`] could be `usize`, in which case every vertex is
+/// identified by a unique integer value.
+/// In addition to its identifier, each vertex has a weight of type
+/// [`VertexWeight`]. A vertex's weight can be anything or can be omitted by
+/// using `()`.
+///
+/// Edges are identified primarily by which two vertices they connect. They can
+/// also have a weight (of type [`EdgeWeight`]) that can be anything, but may
+/// also in some circumstances be used to differentiate between two edges that
+/// connect the same vertices. The associated type [`Directedness`] defined
+/// whether a graph is directed or undirected. If it is assigned to
+/// [`Directed`](struct.Directed.html), we say the graph is directed, meaning
+/// the order of vertices in the edge matter. `(v1,v2)` would be an edge
+/// "pointing" from `v1` to `v2` but not the other way around, which means
+/// `(v2,v1)` will always be seen as a strictly different edge.
+/// When [`Directedness`] is assigned to [`Undirected`](struct.Undirected.html)
+/// we say the graph is undirected and the order of vertices in an edge is not
+/// important. `(v1,v2)` therefore connects `v1` and `v2` and is synonymous with
+/// `(v2,v1)`.
 ///
 /// TODO: When Rust supports 'impl trait' consider having some of the iterators
 /// be clone too (those that don't include mutable references). This allows
 /// cloning the iterators mid-iteration, which can be useful when comparing each
 /// item to the ones after it.
+///
+/// ### Related
+///
+/// - [`GraphMut`](trait.GraphMut.html):
+/// Provides methods for accessing weights through mutable references.
+/// - [`NewVertex`](property/trait.NewVertex.html):
+/// Provides methods for adding vertices to a graph.
+/// - [`RemoveVertex`](property/trait.RemoveVertex.html):
+/// Provides methods for removing vertices from a graph.
+/// - [`AddEdge`](property/trait.AddEdge.html):
+/// Provides methods for adding edges to a graph.
+/// - [`RemoveEdge`](property/trait.RemoveEdge.html):
+/// Provides methods for removing edges to a graph.
+///
+/// [`Vertex`]: #associatedtype.Vertex
+/// [`VertexWeight`]: #associatedtype.VertexWeight
+/// [`EdgeWeight`]: #associatedtype.EdgeWeight
+/// [`Directedness`]: #associatedtype.Directedness
 pub trait Graph
 {
-	/// Type of the graph's vertex value.
+	/// Type of the graphs vertices.
+	///
+	/// This type should be lightweight, as its passed around by-value
+	/// (therefore must implement [`Copy`](https://doc.rust-lang.org/std/marker/trait.Copy.html)).
+	/// Whether two vertices are equal is also a very common operation and
+	/// should therefore also be light-weight.
 	type Vertex: Id;
+
+	/// The weight associated with each vertex.
+	///
+	/// `()` can be used if no weight is needed.
 	type VertexWeight;
+
+	/// The weight associated with each edge.
+	///
+	/// `()` can be used if no weight is needed.
 	type EdgeWeight;
+
+	/// Whether the graph is directed or not.
+	///
+	/// Only [`Directed`](struct.Directed.html) and
+	/// [`Undirected`](struct.Undirected.html)
+	/// are valid assignments. Using any other type is undefined behaviour.
 	type Directedness: Directedness;
 
 	/// Returns copies of all current vertex values in the graph.
@@ -140,6 +188,12 @@ pub trait Graph
 	}
 }
 
+/// A graph with mutable vertex and edge weights.
+///
+/// [`Graph`](trait.Graph.html) provides methods that return references to
+/// vertex and edge weight. However, it can't provide mutable references to the.
+/// This trait provides mutable variants of [`Graph`](trait.Graph.html)'s
+/// methods plus some additional utilities.
 pub trait GraphMut: Graph
 {
 	fn all_vertices_weighted_mut<'a>(
