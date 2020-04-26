@@ -14,16 +14,18 @@ use graphene::{
 use std::collections::HashSet;
 
 #[duplicate(
-	module			[ dfs ]				[ bfs ]
-	search_algo_new	[ Dfs::new_simple ]	[ Bfs::new ]
+	module	search_algo_new;
+	[ dfs ]	[ Dfs::new_simple ];
+	[ bfs ]	[ Bfs::new ]
 )]
 mod module
 {
 	use super::*;
 
 	#[duplicate(
-		module2			[ directed ] [ undirected ]
-		directedness 	[ Directed ] [ Undirected ]
+		module2			directedness;
+		[ directed ]	[ Directed ];
+		[ undirected ]	[ Undirected ]
 	)]
 	mod module2
 	{

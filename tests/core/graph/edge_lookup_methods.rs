@@ -10,11 +10,11 @@ use graphene::core::{property::HasVertex, Directed, Edge, Graph, GraphMut};
 
 #[duplicate(
 	#[
-		method_nested		[edges_sourced_in]		[edges_sinked_in]		[edges_incident_on]
-		method_mut_nested	[edges_sourced_in_mut]	[edges_sinked_in_mut]	[edges_incident_on_mut]
-		closure_nested		[|e| e.source() == v]	[|e| e.sink() == v]		[|e| e.source() == v
-																				|| e.sink() == v]
-		directedness_nested	[ Directed ]			[ Directed ]			[ MockDirectedness ]
+		method_nested		method_mut_nested		closure_nested			directedness_nested;
+		[edges_sourced_in]	[edges_sourced_in_mut]	[|e| e.source() == v]	[ Directed ];
+		[edges_sinked_in]	[edges_sinked_in_mut]	[|e| e.sink() == v]		[ Directed ];
+		[edges_incident_on]	[edges_incident_on_mut]	[|e| e.source() == v
+														|| e.sink() == v]	[ MockDirectedness ]
 	][
 		[
 			method 					[ method_nested ]

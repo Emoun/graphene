@@ -19,8 +19,9 @@ use static_assertions::assert_impl_all;
 
 #[duplicate(
 	#[
-		module_connected	[connected_directed] [connected_undirected]
-		directedness		[Directed]	[Undirected]
+		module_connected		directedness;
+		[connected_directed]	[Directed];
+		[connected_undirected]	[Undirected]
 	][
 		[
 			module				[ module_connected ]

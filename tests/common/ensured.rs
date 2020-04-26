@@ -20,7 +20,7 @@ use graphene::{
 /// renamed (using a tool to find and rename usages automatically), this
 /// will fail to compile if the other isn't renamed too.
 #[duplicate(
-	contains_vertex [contains_vertex]
+	contains_vertex; [contains_vertex]
 )]
 #[quickcheck]
 fn contains_vertex(graph: MockGraph<Directed>, v: MockVertex) -> bool
@@ -38,8 +38,9 @@ fn contains_vertex(graph: MockGraph<Directed>, v: MockVertex) -> bool
 /// Tests that `new_vertex` and `new_vertex_weighted` for EnsureGraph are
 /// identical to their originals.
 #[duplicate(
-	new_vertex	[new_vertex_weighted]	[new_vertex]
-	arguments	[_w.clone()]			[]
+	new_vertex				arguments;
+	[new_vertex_weighted]	[_w.clone()];
+	[new_vertex]			[]
 )]
 #[quickcheck]
 fn new_vertex(mut graph: MockGraph<Directed>, _w: MockVertexWeight) -> bool

@@ -13,8 +13,9 @@ use graphene::{
 use std::cell::Cell;
 
 #[duplicate(
-	module			[ directed ] [ undirected ]
-	directedness 	[ Directed ] [ Undirected ]
+	module			directedness;
+	[ directed ]	[ Directed ];
+	[ undirected ]	[ Undirected ]
 )]
 mod module
 {

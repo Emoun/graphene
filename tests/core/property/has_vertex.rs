@@ -8,8 +8,9 @@ use graphene::core::{
 };
 
 #[duplicate(
-	module			[ directed ] [ undirected ]
-	directedness 	[ Directed ] [ Undirected ]
+	module			directedness;
+	[ directed ]	[ Directed ];
+	[ undirected ]	[ Undirected ]
 )]
 mod module
 {

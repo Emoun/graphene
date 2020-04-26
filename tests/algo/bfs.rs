@@ -7,8 +7,9 @@ use graphene::{
 use std::collections::HashSet;
 
 #[duplicate(
-	module			[ directed ] [ undirected ]
-	directedness 	[ Directed ] [ Undirected ]
+	module			directedness;
+	[ directed ]	[ Directed ];
+	[ undirected ]	[ Undirected ]
 )]
 mod module
 {
