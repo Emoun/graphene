@@ -1,0 +1,106 @@
+use crate::core::{property::HasVertex, Directedness, Edge, EdgeWeighted, Graph};
+use num_traits::{PrimInt, Unsigned};
+
+/// [Dijkstra's shortest paths algorithm](https://mathworld.wolfram.com/DijkstrasAlgorithm.html)
+pub struct DijkstraShortestPaths<'a, G, W>
+where
+	G: 'a + Graph,
+	W: PrimInt + Unsigned,
+{
+	graph: &'a G,
+	visited: Vec<G::Vertex>,
+	// We keep is sorted with the lowest weight at the end for efficiency.
+	queue: Vec<(W, (G::Vertex, G::Vertex, &'a G::EdgeWeight))>,
+	get_weight: fn(&G::EdgeWeight) -> W,
+}
+
+impl<'a, G, W> DijkstraShortestPaths<'a, G, W>
+where
+	G: 'a + Graph,
+	W: PrimInt + Unsigned,
+{
+	pub fn new(graph: &'a G, get_weight: fn(&G::EdgeWeight) -> W) -> Self
+	where
+		G: HasVertex,
+	{
+		let mut dijk = Self {
+			graph,
+			visited: Vec::new(),
+			queue: Vec::new(),
+			get_weight,
+		};
+		dijk.visit(graph.get_vertex(), W::zero());
+		dijk
+	}
+
+	fn visit(&mut self, v: G::Vertex, w: W)
+	{
+		self.visited.push(v);
+		let visited = &self.visited;
+		let edges = self.graph.edges_incident_on(v)
+			// If directed, only outgoing edges
+			.filter_map(|edge|
+				if G::Directedness::directed() {
+					if edge.source() == v {
+						Some(edge)
+					}else {
+						None
+					}
+				} else {
+					Some((v, edge.other(v), edge.weight_owned()))
+				})
+			// Remove any edge to a visited vertex
+			.filter(|edge| !visited.contains(&edge.sink()));
+
+		for (_, sink, weight) in edges
+		{
+			let new_weight = w + (self.get_weight)(weight);
+			if let Some((old_weight, old_edge)) = self
+				.queue
+				.iter_mut()
+				.find(|(_, (_, vert, _))| *vert == sink)
+			{
+				if *old_weight > new_weight
+				{
+					*old_weight = new_weight;
+					*old_edge = (v, sink, weight);
+				}
+			}
+			else
+			{
+				self.queue.push((new_weight, (v, sink, weight)));
+			}
+		}
+		self.queue.sort_by(|(w1, _), (w2, _)| w2.cmp(w1));
+	}
+}
+
+impl<'a, G> DijkstraShortestPaths<'a, G, G::EdgeWeight>
+where
+	G: 'a + Graph,
+	G::EdgeWeight: PrimInt + Unsigned,
+{
+	pub fn new_simple(graph: &'a G) -> Self
+	where
+		G: HasVertex,
+	{
+		Self::new(graph, Clone::clone)
+	}
+}
+
+impl<'a, G, W> Iterator for DijkstraShortestPaths<'a, G, W>
+where
+	G: 'a + Graph,
+	W: PrimInt + Unsigned,
+{
+	type Item = (G::Vertex, G::Vertex, &'a G::EdgeWeight);
+
+	fn next(&mut self) -> Option<Self::Item>
+	{
+		let (weight, result) = self.queue.pop()?;
+
+		self.visit(result.sink(), weight);
+
+		Some(result)
+	}
+}

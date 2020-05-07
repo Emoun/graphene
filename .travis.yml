@@ -14,10 +14,10 @@ env:
 matrix:
   include:
     # An additional job specifically to check formatting
-    - rust: nightly-2020-03-22
+    - rust: nightly-2020-04-26
       script:
-        - rustup component add --toolchain nightly-2020-03-22 rustfmt
-        - cargo +nightly-2020-03-22 fmt -- --check
+        - rustup component add --toolchain nightly-2020-04-26 rustfmt
+        - cargo +nightly-2020-04-26 fmt -- --check
       env:
     # Another formatting job using newest nightly, allowed to fail
     - rust: nightly
