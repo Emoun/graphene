@@ -46,13 +46,13 @@ impl<C: Ensure> Ensure for ConnectedGraph<C>
 		if let Ok(g) = HasVertexGraph::ensure(g, ())
 		{
 			let dfs_count = Dfs::new_simple(&g).count();
-			if dfs_count == v_count
+			if (dfs_count + 1) == v_count
 			{
 				// If its undirected, no more needs to be done
 				if let Ok(g) = DirectedGraph::ensure(g, ())
 				{
 					let reverse = ReverseGraph::new(g);
-					if Dfs::new_simple(&reverse).count() != v_count
+					if (Dfs::new_simple(&reverse).count() + 1) != v_count
 					{
 						return false;
 					}

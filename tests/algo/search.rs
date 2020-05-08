@@ -38,8 +38,13 @@ mod module
 		{
 			// Use a set to ensure we only count each vertex once
 			let mut visited = HashSet::new();
+
+			// Add the starting vertex to ensure it is not produced.
+			visited.insert(mock.get_vertex());
+
 			let mut visited_once = true;
 			search_algo_new(mock.graph()).for_each(|v| {
+				// Track whether we have seen the vertex before
 				visited_once &= visited.insert(v);
 			});
 
@@ -130,8 +135,8 @@ mod module
 				.unwrap();
 		}
 
-		// Ensure that all vertices are visited
-		let count = graph.all_vertices().count();
+		// Ensure that all vertices are visited except the start
+		let count = graph.all_vertices().count() - 1;
 		search_algo_new(&VertexInGraph::new_unvalidated(graph, v)).count() == count
 	}
 }

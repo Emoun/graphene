@@ -10,8 +10,8 @@ use crate::core::{property::HasVertex, Directedness, Edge, Graph};
 /// is therefore the primary way to use this struct.
 /// Each call will traverse the graph just enough to visit the next vertex and
 /// return it. The initial vertex visited is the one returned by calling the
-/// graph's [`get_vertex`] method. That vertex is also guaranteed to be returned
-/// by the first call to [`next`].
+/// graph's [`get_vertex`] method. That vertex is never returned
+/// by a call to [`next`].
 ///
 /// When the traversal is finished, either because all vertices in the graph
 /// have been visited or because no more vertices can be reached,
@@ -125,12 +125,46 @@ where
 	where
 		G: HasVertex,
 	{
-		Self {
+		let v = g.get_vertex();
+		let mut result = Self {
 			graph: g,
 			visited: Vec::new(),
-			stack: vec![(g.get_vertex(), true)],
+			stack: vec![(v, true)],
 			on_exit,
 			payload,
+		};
+		// We never result the starting vertex, so throw it away
+		result.visit(v);
+		result
+	}
+
+	fn visit(&mut self, to_return: G::Vertex)
+	{
+		// Mark visited
+		self.visited.push(to_return);
+
+		// Explore children
+		for e in self.graph.edges_incident_on(to_return.clone())
+		{
+			let child = if to_return == e.source()
+			{
+				e.sink()
+			}
+			// In a directed graph, we have to skip incoming edges
+			else if G::Directedness::directed()
+			{
+				continue;
+			}
+			else
+			{
+				e.source()
+			};
+
+			if !self.visited(child.clone())
+			{
+				// Push to stack without exit mark
+				self.stack.push((child, false));
+			}
 		}
 	}
 
@@ -237,35 +271,11 @@ where
 		// Get the top of the stack. This is necessarily a non-visited vertex.
 		// If the stack is empty, then this will return none
 		let to_return = self.stack.last()?.0.clone();
-
-		// Mark visited
-		self.visited.push(to_return);
 		// Exit mark, since we will use it for exploring its children
 		self.stack.last_mut()?.1 = true;
 
-		// Explore children
-		for e in self.graph.edges_incident_on(to_return.clone())
-		{
-			let child = if to_return == e.source()
-			{
-				e.sink()
-			}
-			// In a directed graph, we have to skip incoming edges
-			else if G::Directedness::directed()
-			{
-				continue;
-			}
-			else
-			{
-				e.source()
-			};
+		self.visit(to_return);
 
-			if !self.visited(child.clone())
-			{
-				// Push to stack without exit mark
-				self.stack.push((child, false));
-			}
-		}
 		Some(to_return)
 	}
 }

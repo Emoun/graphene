@@ -11,8 +11,8 @@ use std::collections::VecDeque;
 /// is therefore the primary way to use this struct.
 /// Each call will traverse the graph just enough to visit the next vertex and
 /// return it. The initial vertex visited is the one returned by calling the
-/// graph's [`get_vertex`] method. That vertex is also guaranteed to be returned
-/// by the first call to [`next`].
+/// graph's [`get_vertex`] method. That vertex is never returned
+/// by the a call to [`next`].
 ///
 /// When the traversal is finished, either because all vertices in the graph
 /// have been visited or because no more vertices can be reached,
@@ -99,17 +99,16 @@ where
 	where
 		G: HasVertex,
 	{
-		let mut queue = VecDeque::new();
 		let v = graph.get_vertex();
-		queue.push_back(v);
-		let visited = vec![v];
-		let predecessor = vec![(v, None)];
-		Self {
+
+		let mut result = Self {
 			graph,
-			queue,
-			visited,
-			predecessor,
-		}
+			queue: VecDeque::new(),
+			visited: vec![v],
+			predecessor: vec![(v, None)],
+		};
+		result.explore(v);
+		result
 	}
 
 	/// Returns the traversal depth of the given vertex.
@@ -154,6 +153,47 @@ where
 			None
 		}
 	}
+
+	/// Explores the outgoing edges from the given vertex,
+	/// queueing up any previously unvisited vertices.
+	fn explore(&mut self, v: G::Vertex)
+	{
+		let visited = &mut self.visited;
+		let queue = &mut self.queue;
+		let pred = &mut self.predecessor;
+
+		self.graph
+			.edges_incident_on(v)
+			.filter_map(|e| {
+				let child = if v == e.source()
+				{
+					e.sink()
+				}
+				// In a directed graph, we have to skip incoming edges
+				else if G::Directedness::directed()
+				{
+					return None;
+				}
+				else
+				{
+					e.source()
+				};
+
+				if !visited.contains(&child)
+				{
+					visited.push(child);
+					Some(child)
+				}
+				else
+				{
+					None
+				}
+			})
+			.for_each(|child| {
+				queue.push_back(child);
+				pred.push((child, Some(v)))
+			});
+	}
 }
 
 impl<'a, G> Iterator for Bfs<'a, G>
@@ -166,42 +206,7 @@ where
 	{
 		if let Some(v) = self.queue.pop_front()
 		{
-			// Queue up the children
-			let visited = &mut self.visited;
-			let queue = &mut self.queue;
-			let pred = &mut self.predecessor;
-			self.graph
-				.edges_incident_on(v)
-				.filter_map(|e| {
-					let child = if v == e.source()
-					{
-						e.sink()
-					}
-					// In a directed graph, we have to skip incoming edges
-					else if G::Directedness::directed()
-					{
-						return None;
-					}
-					else
-					{
-						e.source()
-					};
-
-					if !visited.contains(&child)
-					{
-						visited.push(child);
-						Some(child)
-					}
-					else
-					{
-						None
-					}
-				})
-				.for_each(|child| {
-					queue.push_back(child);
-					pred.push((child, Some(v)))
-				});
-
+			self.explore(v);
 			Some(v)
 		}
 		else

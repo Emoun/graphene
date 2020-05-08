@@ -39,8 +39,9 @@ mod module
 	fn predecessor_already_seen(graph: ArbVertexIn<ArbConnectedGraph<directedness>>) -> bool
 	{
 		let mut seen = HashSet::new();
-		let mut bfs = Bfs::new(&graph);
+		seen.insert(graph.get_vertex().value);
 
+		let mut bfs = Bfs::new(&graph);
 		while let Some(v) = bfs.next()
 		{
 			if let Some(p) = bfs.predecessor(v)

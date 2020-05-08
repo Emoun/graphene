@@ -8,7 +8,7 @@ use crate::mock_graph::{
 use duplicate::duplicate;
 use graphene::{
 	algo::Dfs,
-	core::{Directed, Undirected},
+	core::{property::HasVertex, Directed, Undirected},
 };
 use std::cell::Cell;
 
@@ -26,7 +26,9 @@ mod module
 	#[quickcheck]
 	fn on_exit_stack_call_order(mock: ArbVertexIn<ArbConnectedGraph<directedness>>) -> bool
 	{
-		let stack: Cell<Vec<MockVertex>> = Cell::new(Vec::new());
+		// Ensure the starting vertex is on the stack, so that it is the last
+		// to run 'on_exit'
+		let stack: Cell<Vec<MockVertex>> = Cell::new(vec![mock.get_vertex()]);
 		let mut success = true;
 
 		fn on_exit<G>(
