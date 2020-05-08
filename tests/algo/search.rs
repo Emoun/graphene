@@ -5,7 +5,7 @@ use crate::mock_graph::{
 };
 use duplicate::duplicate;
 use graphene::{
-	algo::{Bfs, Dfs},
+	algo::{Bfs, Dfs, Spfs},
 	core::{
 		property::{AddEdge, HasVertex, VertexInGraph},
 		Directed, Graph, GraphDeref, ReleaseUnloaded, Undirected,
@@ -13,10 +13,19 @@ use graphene::{
 };
 use std::collections::HashSet;
 
+/// Constructs a new Spfs for graphs with MockEdgeWeight edge weights.
+///
+/// Used in the duplicate to instantiate `Spfs`
+fn spfs_new<G: HasVertex<EdgeWeight = MockEdgeWeight>>(g: &G) -> Spfs<G, u32>
+{
+	Spfs::new(g, |v| v.value)
+}
+
 #[duplicate(
-	module	search_algo_new;
-	[ dfs ]	[ Dfs::new_simple ];
-	[ bfs ]	[ Bfs::new ]
+	module		search_algo_new;
+	[ dfs ]		[ Dfs::new_simple ];
+	[ bfs ]		[ Bfs::new ];
+	[ spfs ]	[ spfs_new ]
 )]
 mod module
 {

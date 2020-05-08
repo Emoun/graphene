@@ -104,3 +104,55 @@ where
 		Some(result)
 	}
 }
+
+/// Shortest-Path-First search
+///
+/// next() doesn't return the starting vertex.
+pub struct Spfs<'a, G, W>
+where
+	G: 'a + Graph,
+	W: PrimInt + Unsigned,
+{
+	dijk: DijkstraShortestPaths<'a, G, W>,
+}
+
+impl<'a, G, W> Spfs<'a, G, W>
+where
+	G: 'a + Graph,
+	W: PrimInt + Unsigned,
+{
+	pub fn new(graph: &'a G, get_weight: fn(&G::EdgeWeight) -> W) -> Self
+	where
+		G: HasVertex,
+	{
+		Self {
+			dijk: DijkstraShortestPaths::new(graph, get_weight),
+		}
+	}
+}
+
+impl<'a, G> Spfs<'a, G, G::EdgeWeight>
+where
+	G: 'a + Graph,
+	G::EdgeWeight: PrimInt + Unsigned,
+{
+	pub fn new_simple(graph: &'a G) -> Self
+	where
+		G: HasVertex,
+	{
+		Self::new(graph, Clone::clone)
+	}
+}
+
+impl<'a, G, W> Iterator for Spfs<'a, G, W>
+where
+	G: 'a + Graph,
+	W: PrimInt + Unsigned,
+{
+	type Item = G::Vertex;
+
+	fn next(&mut self) -> Option<Self::Item>
+	{
+		Some(self.dijk.next()?.1)
+	}
+}
