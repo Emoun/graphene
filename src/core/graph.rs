@@ -216,6 +216,23 @@ pub trait Graph
 	{
 		self.contains_vertex(e.source()) && self.contains_vertex(e.sink())
 	}
+
+	fn vertex_neighbors<'a>(
+		&'a self,
+		v: &'a Self::Vertex,
+	) -> Box<dyn 'a + Iterator<Item = Self::Vertex>>
+	{
+		Box::new(
+			self.all_vertices()
+				.filter(move |other| self.neighbors(v, other)),
+		)
+	}
+
+	fn neighbors(&self, v1: &Self::Vertex, v2: &Self::Vertex) -> bool
+	{
+		self.edges_between(v1, v2).next().is_some()
+			|| (Self::Directedness::directed() && self.edges_between(v2, v1).next().is_some())
+	}
 }
 
 /// A graph with mutable vertex and edge weights.

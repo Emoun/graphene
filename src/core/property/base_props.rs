@@ -163,10 +163,22 @@ pub trait EdgeCount: Graph
 	fn edge_count(&self) -> Self::Count
 	{
 		let mut count = Self::Count::zero();
-		let mut edges = self.all_edges();
-		while let Some(_) = edges.next()
+		let mut inc = || count = count + Self::Count::one();
+		let verts: Vec<_> = self.all_vertices().collect();
+
+		let mut iter = verts.iter();
+		let mut rest_iter = iter.clone();
+		while let Some(v) = iter.next()
 		{
-			count = count + Self::Count::one();
+			for v2 in rest_iter
+			{
+				self.edges_between(&v, &v2).for_each(|_| inc());
+				if Self::Directedness::directed()
+				{
+					self.edges_between(&v2, &v).for_each(|_| inc());
+				}
+			}
+			rest_iter = iter.clone();
 		}
 		count
 	}
