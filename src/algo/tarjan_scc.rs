@@ -190,10 +190,10 @@ where
 			let index = stack.iter().position(|(v2, _)| *v2 == v).unwrap();
 
 			// Check which vertices can be reached, and update lowlink if necessary
-			for e in g.edges_sourced_in(v)
+			for e in g.edges_sourced_in(&v)
 			{
 				if let Some(&lowlink) = stack.iter().find_map(|(v2, lowlink)| {
-					if e.1 == *v2
+					if e.0 == *v2
 					{
 						Some(lowlink)
 					}

@@ -110,7 +110,7 @@ fn remove_vertex(mock: ArbVertexIn<MockGraph<MockDirectedness>>) -> bool
 		// on the vertex
 		( g.all_edges().count() ==
 			(mock.all_edges().count() -
-				mock.edges_incident_on(v_remove).count())
+				mock.edges_incident_on(&v_remove).count())
 		) &&
 
 		// Check that one less vertex has the same weight as the one removed

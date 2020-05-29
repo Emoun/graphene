@@ -1,4 +1,4 @@
-use crate::core::{trait_aliases::Id, Directed, Directedness, Edge};
+use crate::core::{trait_aliases::Id, Directedness, Edge};
 use std::iter::Iterator;
 
 #[macro_use]
@@ -7,11 +7,13 @@ mod macros
 	#[macro_export]
 	macro_rules! edges_between {
 		($e:expr, $v1:expr, $v2:expr) => {{
-			// Filter out any edge that is not connected to both vertices
-			let relevant = $e.filter(move |edge| {
-				(edge.source() == $v1 && edge.sink() == $v2)
-					|| (edge.source() == $v2 && edge.sink() == $v1)
-			});
+			let relevant = $e
+				.filter(move |edge| {
+					(edge.source() == *$v1 && edge.sink() == *$v2)
+						|| !Self::Directedness::directed()
+							&& (edge.source() == *$v2 && edge.sink() == *$v1)
+				})
+				.map(|edge| edge.2);
 
 			// Return the result
 			Box::new(relevant)
@@ -19,14 +21,37 @@ mod macros
 	}
 	#[macro_export]
 	macro_rules! edges_incident_on {
-		($e:expr, $v:expr, $i:ident) => {
-			Box::new($e.into_iter().filter(move |e| e.$i() == $v))
+		($e:expr, $v:expr, $i1:ident, $i2:ident) => {
+			Box::new($e.into_iter().filter_map(move |e| {
+				if e.$i1() == *$v
+					{
+					Some((e.$i2(), e.2))
+					}
+				else if !Self::Directedness::directed() && e.$i2() == *$v
+					{
+					Some((e.$i1(), e.2))
+					}
+				else
+					{
+					None
+					}
+				}))
 		};
 		($e:expr, $v:expr) => {
-			Box::new(
-				$e.into_iter()
-					.filter(move |edge| (edge.source() == $v) || (edge.sink() == $v)),
-				)
+			Box::new($e.into_iter().filter_map(move |edge| {
+				if edge.source() == *$v
+					{
+					Some((edge.1, edge.2))
+					}
+				else if edge.sink() == *$v
+					{
+					Some((edge.0, edge.2))
+					}
+				else
+					{
+					None
+					}
+				}))
 		};
 	}
 }
@@ -134,48 +159,53 @@ pub trait Graph
 		Box::new(self.all_vertices_weighted().map(|(_, w)| w))
 	}
 
-	/// Returns all edges that are incident on both of the given vertices,
-	/// regardless of direction.
+	/// Returns the weights of all edges that are sourced in v1 and sinked in
+	/// v2. I.e. all edges where e == (v1,v2,_).
 	///
-	/// I.e. all edges where e == (v1,v2,_) or e == (v2,v1,_)
-	fn edges_between<'a>(
+	/// If the graph is undirected, returns all edges connecting the two
+	/// vertices I.e. all edges where e == (v1,v2,_) or e == (v2,v1,_)
+	fn edges_between<'a: 'b, 'b: 'c, 'c>(
 		&'a self,
-		v1: Self::Vertex,
-		v2: Self::Vertex,
-	) -> Box<dyn 'a + Iterator<Item = (Self::Vertex, Self::Vertex, &'a Self::EdgeWeight)>>
+		v1: &'b Self::Vertex,
+		v2: &'b Self::Vertex,
+	) -> Box<dyn 'c + Iterator<Item = &'a Self::EdgeWeight>>
 	{
 		edges_between!(self.all_edges(), v1, v2)
 	}
-	/// Returns all edges that are sourced in the given vertex.
-	///
+
+	/// Returns the sink and weight of any edge sourced in the given vertex.
 	/// I.e. all edges where `e == (v,_,_)`
 	///
-	/// Only available for directed graphs
-	fn edges_sourced_in<'a>(
+	/// If the graph is undirected, is semantically equivalent to
+	/// `edges_incident_on`.
+	fn edges_sourced_in<'a: 'b, 'b: 'c, 'c>(
 		&'a self,
-		v: Self::Vertex,
-	) -> Box<dyn 'a + Iterator<Item = (Self::Vertex, Self::Vertex, &'a Self::EdgeWeight)>>
-	where
-		Self: Graph<Directedness = Directed>,
+		v: &'b Self::Vertex,
+	) -> Box<dyn 'c + Iterator<Item = (Self::Vertex, &'a Self::EdgeWeight)>>
 	{
-		edges_incident_on!(self.all_edges(), v, source)
+		edges_incident_on!(self.all_edges(), v, source, sink)
 	}
-	/// Returns all edges that are sinked in the given vertex.
-	///
+	/// Returns the source and weight of any edge sinked in the given vertex.
 	/// I.e. all edges where `e == (_,v,_)`
-	fn edges_sinked_in<'a>(
+	///
+	/// If the graph is undirected, is semantically equivalent to
+	/// `edges_incident_on`.
+	fn edges_sinked_in<'a: 'b, 'b: 'c, 'c>(
 		&'a self,
-		v: Self::Vertex,
-	) -> Box<dyn 'a + Iterator<Item = (Self::Vertex, Self::Vertex, &'a Self::EdgeWeight)>>
-	where
-		Self: Graph<Directedness = Directed>,
+		v: &'b Self::Vertex,
+	) -> Box<dyn 'c + Iterator<Item = (Self::Vertex, &'a Self::EdgeWeight)>>
 	{
-		edges_incident_on!(self.all_edges(), v, sink)
+		edges_incident_on!(self.all_edges(), v, sink, source)
 	}
-	fn edges_incident_on<'a>(
+
+	/// Returns the neighboring vertex and the weight of any edge incident
+	/// on the given vertex.
+	///
+	/// If the graph is directed, edge directions are ignored.
+	fn edges_incident_on<'a: 'b, 'b: 'c, 'c>(
 		&'a self,
-		v: Self::Vertex,
-	) -> Box<dyn 'a + Iterator<Item = (Self::Vertex, Self::Vertex, &'a Self::EdgeWeight)>>
+		v: &'b Self::Vertex,
+	) -> Box<dyn 'c + Iterator<Item = (Self::Vertex, &'a Self::EdgeWeight)>>
 	{
 		edges_incident_on!(self.all_edges(), v)
 	}
@@ -213,36 +243,32 @@ pub trait GraphMut: Graph
 			.map(|(_, w)| w)
 	}
 
-	fn edges_between_mut<'a>(
+	fn edges_between_mut<'a: 'b, 'b: 'c, 'c>(
 		&'a mut self,
-		v1: Self::Vertex,
-		v2: Self::Vertex,
-	) -> Box<dyn 'a + Iterator<Item = (Self::Vertex, Self::Vertex, &'a mut Self::EdgeWeight)>>
+		v1: &'b Self::Vertex,
+		v2: &'b Self::Vertex,
+	) -> Box<dyn 'c + Iterator<Item = &'a mut Self::EdgeWeight>>
 	{
 		edges_between!(self.all_edges_mut(), v1, v2)
 	}
-	fn edges_sourced_in_mut<'a>(
+	fn edges_sourced_in_mut<'a: 'b, 'b: 'c, 'c>(
 		&'a mut self,
-		v: Self::Vertex,
-	) -> Box<dyn 'a + Iterator<Item = (Self::Vertex, Self::Vertex, &'a mut Self::EdgeWeight)>>
-	where
-		Self: Graph<Directedness = Directed>,
+		v: &'b Self::Vertex,
+	) -> Box<dyn 'c + Iterator<Item = (Self::Vertex, &'a mut Self::EdgeWeight)>>
 	{
-		edges_incident_on!(self.all_edges_mut(), v, source)
+		edges_incident_on!(self.all_edges_mut(), v, source, sink)
 	}
-	fn edges_sinked_in_mut<'a>(
+	fn edges_sinked_in_mut<'a: 'b, 'b: 'c, 'c>(
 		&'a mut self,
-		v: Self::Vertex,
-	) -> Box<dyn 'a + Iterator<Item = (Self::Vertex, Self::Vertex, &'a mut Self::EdgeWeight)>>
-	where
-		Self: Graph<Directedness = Directed>,
+		v: &'b Self::Vertex,
+	) -> Box<dyn 'c + Iterator<Item = (Self::Vertex, &'a mut Self::EdgeWeight)>>
 	{
-		edges_incident_on!(self.all_edges_mut(), v, sink)
+		edges_incident_on!(self.all_edges_mut(), v, sink, source)
 	}
-	fn edges_incident_on_mut<'a>(
+	fn edges_incident_on_mut<'a: 'b, 'b: 'c, 'c>(
 		&'a mut self,
-		v: Self::Vertex,
-	) -> Box<dyn 'a + Iterator<Item = (Self::Vertex, Self::Vertex, &'a mut Self::EdgeWeight)>>
+		v: &'b Self::Vertex,
+	) -> Box<dyn 'c + Iterator<Item = (Self::Vertex, &'a mut Self::EdgeWeight)>>
 	{
 		edges_incident_on!(self.all_edges_mut(), v)
 	}

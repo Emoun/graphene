@@ -1,4 +1,4 @@
-use crate::core::{property::HasVertex, Directedness, Edge, Graph};
+use crate::core::{property::HasVertex, Graph};
 use std::collections::VecDeque;
 
 /// Performs [breadth-first traversal](https://mathworld.wolfram.com/Breadth-FirstTraversal.html)
@@ -163,22 +163,8 @@ where
 		let pred = &mut self.predecessor;
 
 		self.graph
-			.edges_incident_on(v)
-			.filter_map(|e| {
-				let child = if v == e.source()
-				{
-					e.sink()
-				}
-				// In a directed graph, we have to skip incoming edges
-				else if G::Directedness::directed()
-				{
-					return None;
-				}
-				else
-				{
-					e.source()
-				};
-
+			.edges_sourced_in(&v)
+			.filter_map(|(child, _)| {
 				if !visited.contains(&child)
 				{
 					visited.push(child);

@@ -5,7 +5,7 @@ use crate::mock_graph::{
 use graphene::{
 	core::{
 		property::{AddEdge, ConnectedGraph, WeakGraph},
-		Directed, Directedness, Edge, Graph, ReleaseUnloaded,
+		Directed, Directedness, Graph, ReleaseUnloaded,
 	},
 	impl_ensurer,
 };
@@ -65,9 +65,9 @@ fn is_weak(graph: &MockGraph<Directed>) -> bool
 		{
 			visited.push(v);
 
-			for e in graph.edges_incident_on(v)
+			for (neighbor, _) in graph.edges_incident_on(&v)
 			{
-				dfs(graph, e.other(v), visited);
+				dfs(graph, neighbor, visited);
 			}
 		}
 	}

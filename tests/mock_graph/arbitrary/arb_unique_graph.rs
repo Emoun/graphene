@@ -173,7 +173,7 @@ impl<D: Directedness> Arbitrary for ArbNonUniqueGraph<D>
 				let mut shrunk_dup_count = self.1;
 				if let Ok(g) = <DirectedGraph<&MockGraph<D>>>::ensure_all(&self.0)
 				{
-					if g.edges_sourced_in(e.source()).count() > 1
+					if g.edges_sourced_in(&e.source()).count() > 1
 					{
 						// Trying to remove a duplicate edge
 						if shrunk_dup_count > 1
@@ -197,7 +197,7 @@ impl<D: Directedness> Arbitrary for ArbNonUniqueGraph<D>
 				}
 				else
 				{
-					if self.0.edges_between(e.source(), e.sink()).count() > 1
+					if self.0.edges_between(&e.source(), &e.sink()).count() > 1
 					{
 						// Trying to remove a duplicate edge
 						if shrunk_dup_count > 1

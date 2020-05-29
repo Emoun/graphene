@@ -23,7 +23,7 @@ impl<C: Ensure> Ensure for NoLoopsGraph<C>
 	{
 		c.graph()
 			.all_vertices()
-			.all(|v| c.graph().edges_between(v, v).next().is_none())
+			.all(|v| c.graph().edges_between(&v, &v).next().is_none())
 	}
 }
 

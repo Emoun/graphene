@@ -32,7 +32,7 @@ where
 	{
 		let g = c.graph();
 		g.all_vertices().all(|v| {
-			let mut between = g.edges_between(v, v);
+			let mut between = g.edges_between(&v, &v);
 			if let Some(_) = between.next()
 			{
 				between.next().is_none()

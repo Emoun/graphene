@@ -5,7 +5,7 @@ use crate::mock_graph::{
 use graphene::{
 	core::{
 		property::{AddEdge, HasVertex, NewVertex, RemoveEdge, UnilateralGraph},
-		Directed, Edge, EnsureUnloaded, Graph, ReleaseUnloaded,
+		Directed, EnsureUnloaded, Graph, ReleaseUnloaded,
 	},
 	impl_ensurer,
 };
@@ -97,8 +97,8 @@ impl GuidedArbGraph for ArbUnilatralGraph
 				// To ensure unilateralism, take all outgoing edges from the original vertex
 				// and move them to the new one.
 				let outgoing_sinks = graph
-					.edges_sourced_in(v_original)
-					.map(|e| e.sink())
+					.edges_sourced_in(&v_original)
+					.map(|(v, _)| v)
 					.collect::<Vec<_>>();
 				for sink in outgoing_sinks
 				{
@@ -115,8 +115,8 @@ impl GuidedArbGraph for ArbUnilatralGraph
 				// To ensure unilateralism, take all the incoming edges from the original vertex
 				// and move them to the new one.
 				let sources = graph
-					.edges_sinked_in(v_original)
-					.map(|e| e.source())
+					.edges_sinked_in(&v_original)
+					.map(|(v, _)| v)
 					.collect::<Vec<_>>();
 				for source in sources
 				{

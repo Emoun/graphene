@@ -43,15 +43,11 @@ impl<C: Ensure> SubgraphProxy<C>
 					self.exit_edges.remove(idx);
 				}
 
-				// Add any exit edge that is sourced in the vertex
-				for e in self.graph.graph().edges_incident_on(v)
+				for e in self.graph.graph().edges_sourced_in(&v)
 				{
-					if e.source() == v
+					if !self.verts.contains(&e.0)
 					{
-						if !self.verts.contains(&e.sink())
-						{
-							self.exit_edges.push((v, e.sink()));
-						}
+						self.exit_edges.push((v, e.0));
 					}
 				}
 			}

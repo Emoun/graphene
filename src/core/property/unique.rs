@@ -14,9 +14,13 @@ use crate::core::{
 /// i.e. only one (v,v,_).
 pub trait Unique: Graph
 {
-	fn edge_between(&self, v1: Self::Vertex, v2: Self::Vertex) -> Option<&Self::EdgeWeight>
+	fn edge_between<'a>(
+		&'a self,
+		v1: &'a Self::Vertex,
+		v2: &'a Self::Vertex,
+	) -> Option<&'a Self::EdgeWeight>
 	{
-		self.edges_between(v1, v2).next().map(|(_, _, w)| w)
+		self.edges_between(v1, v2).next()
 	}
 }
 
@@ -70,21 +74,9 @@ where
 	where
 		E: EdgeWeighted<Self::Vertex, Self::EdgeWeight>,
 	{
-		if Self::Directedness::directed()
+		if self.edges_between(&e.source(), &e.sink()).next().is_some()
 		{
-			if self
-				.edges_between(e.source(), e.sink())
-				.any(|edge| e.source() == edge.source() && e.sink() == edge.sink())
-			{
-				return Err(());
-			}
-		}
-		else
-		{
-			if self.edges_between(e.source(), e.sink()).next().is_some()
-			{
-				return Err(());
-			}
+			return Err(());
 		}
 		self.0.graph_mut().add_edge_weighted(e)
 	}

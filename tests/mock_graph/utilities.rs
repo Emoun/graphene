@@ -26,6 +26,16 @@ where
 	|v1: &(A1, B1, C1), v2: &(A2, B2, C2)| v1.0 == v2.0 && v1.1 == v2.1 && v1.2 == v2.2
 }
 
+/// Creates a closure that calculates the equality between two 2-tuples where
+/// their elements implement partial equality.
+pub fn _2_tuple_equality<A1, B1, A2, B2>() -> impl Fn(&(A1, B1), &(A2, B2)) -> bool
+where
+	A1: PartialEq<A2>,
+	B1: PartialEq<B2>,
+{
+	|v1: &(A1, B1), v2: &(A2, B2)| v1.0 == v2.0 && v1.1 == v2.1
+}
+
 /// Returns whether the first list in an unordered sublist of the second list.
 ///
 /// One list is an unordered sublist of another if all its elements can be found

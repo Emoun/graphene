@@ -1,4 +1,4 @@
-use crate::core::{property::HasVertex, Directedness, Edge, EdgeWeighted, Graph};
+use crate::core::{property::HasVertex, Edge, Graph};
 use num_traits::{PrimInt, Unsigned};
 
 /// [Dijkstra's shortest paths algorithm](https://mathworld.wolfram.com/DijkstrasAlgorithm.html)
@@ -37,22 +37,11 @@ where
 	{
 		self.visited.push(v);
 		let visited = &self.visited;
-		let edges = self.graph.edges_incident_on(v)
-			// If directed, only outgoing edges
-			.filter_map(|edge|
-				if G::Directedness::directed() {
-					if edge.source() == v {
-						Some(edge)
-					}else {
-						None
-					}
-				} else {
-					Some((v, edge.other(v), edge.weight_owned()))
-				})
+		let edges = self.graph.edges_sourced_in(&v)
 			// Remove any edge to a visited vertex
-			.filter(|edge| !visited.contains(&edge.sink()));
+			.filter(|(sink, _)| !visited.contains(&sink));
 
-		for (_, sink, weight) in edges
+		for (sink, weight) in edges
 		{
 			let new_weight = w + (self.get_weight)(weight);
 			if let Some((old_weight, old_edge)) = self

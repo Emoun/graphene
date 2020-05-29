@@ -4,7 +4,7 @@ use crate::mock_graph::{
 };
 use graphene::core::{
 	property::{AddEdge, DirectedGraph, NewVertex, RemoveEdge, RemoveVertex},
-	Directedness, Edge, EdgeDeref, EdgeWeighted, EnsureUnloaded, Graph,
+	Directedness, EdgeDeref, EnsureUnloaded, Graph,
 };
 use quickcheck::{Arbitrary, Gen};
 use rand::Rng;
@@ -143,10 +143,10 @@ impl<D: Directedness> GuidedArbGraph for MockGraph<D>
 		{
 			for v in self
 				.all_vertices()
-				// Dont touch untouchable vertices
+				// Don't touch untouchable vertices
 				.filter(|&v| !limits.contains(&Limit::VertexKeep(v)))
 			{
-				if self.edges_incident_on(v).next().is_none()
+				if self.edges_incident_on(&v).next().is_none()
 				{
 					let mut shrunk_graph = self.clone();
 					shrunk_graph.remove_vertex(v).unwrap();
@@ -195,39 +195,18 @@ impl<D: Directedness> MockGraph<D>
 			}
 		}
 		visited.push(start);
-		if D::directed()
+
+		for (sink, _) in self.edges_sourced_in(&start)
 		{
-			for e in self
-				.edges_incident_on(start)
-				.filter(|e| e.source() == start)
+			if !visited.contains(&sink)
 			{
-				if !visited.contains(&e.sink())
+				if self.dfs_rec(sink, end, visited) && D::directed()
 				{
-					if self.dfs_rec(e.sink(), end, visited)
-					{
-						return true; // early return of 'end' is found
-					}
+					return true; // early return of 'end' is found when directed
 				}
 			}
 		}
-		else
-		{
-			for e in self.edges_incident_on(start)
-			{
-				let v_other = if e.source() == start
-				{
-					e.sink()
-				}
-				else
-				{
-					e.source()
-				};
-				if !visited.contains(&v_other)
-				{
-					self.dfs_rec(v_other, end, visited);
-				}
-			}
-		}
+
 		false
 	}
 
@@ -276,14 +255,13 @@ impl<D: Directedness> MockGraph<D>
 				clone.remove_vertex(v).unwrap();
 				if let Ok(g) = DirectedGraph::ensure(self)
 				{
-					for (sink, w1) in g.edges_sourced_in(v).map(|e| (e.sink(), e.weight_owned()))
+					for (sink, w1) in g.edges_sourced_in(&v)
 					{
 						if sink == v
 						{
 							continue;
 						}
-						for (source, w2) in
-							g.edges_sinked_in(v).map(|e| (e.source(), e.weight_owned()))
+						for (source, w2) in g.edges_sinked_in(&v)
 						{
 							if source == v
 							{
@@ -296,10 +274,7 @@ impl<D: Directedness> MockGraph<D>
 				}
 				else
 				{
-					let neighbors: Vec<_> = self
-						.edges_incident_on(v)
-						.map(|e| (e.other(v), e.weight_owned()))
-						.collect();
+					let neighbors: Vec<_> = self.edges_incident_on(&v).collect();
 					let mut neighbor_iter = neighbors.iter();
 					while let Some(&(v1, w1)) = neighbor_iter.next()
 					{
