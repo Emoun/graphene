@@ -2,7 +2,7 @@ use crate::{
 	algo::Dfs,
 	core::{
 		property::{
-			proxy_remove_edge_where, proxy_remove_vertex, DirectedGraph, HasVertexGraph,
+			proxy_remove_edge_where_weight, proxy_remove_vertex, DirectedGraph, HasVertexGraph,
 			RemoveEdge, RemoveVertex, Unilateral, Weak,
 		},
 		proxy::ReverseGraph,
@@ -79,14 +79,21 @@ impl<C: Ensure + GraphDerefMut> RemoveEdge for ConnectedGraph<C>
 where
 	C::Graph: RemoveEdge,
 {
-	fn remove_edge_where<F>(
+	fn remove_edge_where_weight<F>(
 		&mut self,
+		source: &Self::Vertex,
+		sink: &Self::Vertex,
 		f: F,
-	) -> Result<(Self::Vertex, Self::Vertex, Self::EdgeWeight), ()>
+	) -> Result<Self::EdgeWeight, ()>
 	where
-		F: Fn((Self::Vertex, Self::Vertex, &Self::EdgeWeight)) -> bool,
+		F: Fn(&Self::EdgeWeight) -> bool,
 	{
-		proxy_remove_edge_where::<ConnectedGraph<_>, _, _>(self.0.graph_mut(), f)
+		proxy_remove_edge_where_weight::<ConnectedGraph<_>, _, _>(
+			self.0.graph_mut(),
+			source,
+			sink,
+			f,
+		)
 	}
 }
 

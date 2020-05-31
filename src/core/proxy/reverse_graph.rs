@@ -1,6 +1,6 @@
 use crate::core::{
 	property::{AddEdge, RemoveEdge},
-	Directed, Edge, EdgeDeref, EdgeWeighted, Ensure, Graph, GraphDerefMut, GraphMut,
+	Directed, Edge, EdgeWeighted, Ensure, Graph, GraphDerefMut, GraphMut,
 };
 use delegate::delegate;
 
@@ -92,16 +92,16 @@ impl<C: Ensure + GraphDerefMut> RemoveEdge for ReverseGraph<C>
 where
 	C::Graph: RemoveEdge<Directedness = Directed>,
 {
-	fn remove_edge_where<F>(
+	fn remove_edge_where_weight<F>(
 		&mut self,
+		source: &Self::Vertex,
+		sink: &Self::Vertex,
 		f: F,
-	) -> Result<(Self::Vertex, Self::Vertex, Self::EdgeWeight), ()>
+	) -> Result<Self::EdgeWeight, ()>
 	where
-		F: Fn((Self::Vertex, Self::Vertex, &Self::EdgeWeight)) -> bool,
+		F: Fn(&Self::EdgeWeight) -> bool,
 	{
-		self.0
-			.graph_mut()
-			.remove_edge_where(|e| f((e.sink(), e.source(), e.weight())))
+		self.0.graph_mut().remove_edge_where_weight(source, sink, f)
 	}
 }
 

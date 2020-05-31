@@ -1,6 +1,7 @@
 use crate::core::{
 	property::{
-		proxy_remove_edge_where, proxy_remove_vertex, ConnectedGraph, RemoveEdge, RemoveVertex,
+		proxy_remove_edge_where_weight, proxy_remove_vertex, ConnectedGraph, RemoveEdge,
+		RemoveVertex,
 	},
 	proxy::UndirectedProxy,
 	Directed, Ensure, Graph, GraphDerefMut,
@@ -70,14 +71,16 @@ impl<C: Ensure + GraphDerefMut> RemoveEdge for WeakGraph<C>
 where
 	C::Graph: RemoveEdge<Directedness = Directed>,
 {
-	fn remove_edge_where<F>(
+	fn remove_edge_where_weight<F>(
 		&mut self,
+		source: &Self::Vertex,
+		sink: &Self::Vertex,
 		f: F,
-	) -> Result<(Self::Vertex, Self::Vertex, Self::EdgeWeight), ()>
+	) -> Result<Self::EdgeWeight, ()>
 	where
-		F: Fn((Self::Vertex, Self::Vertex, &Self::EdgeWeight)) -> bool,
+		F: Fn(&Self::EdgeWeight) -> bool,
 	{
-		proxy_remove_edge_where::<WeakGraph<_>, _, _>(self.0.graph_mut(), f)
+		proxy_remove_edge_where_weight::<WeakGraph<_>, _, _>(self.0.graph_mut(), source, sink, f)
 	}
 }
 

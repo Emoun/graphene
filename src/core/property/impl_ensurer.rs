@@ -383,12 +383,14 @@ macro_rules! impl_properties {
 			@implement {
 				delegate::delegate! {
 					to $crate::core::GraphDerefMut::graph_mut(&mut self$($delegate)+) {
-						fn remove_edge_where<F>(
+						fn remove_edge_where_weight<F>(
 							&mut self,
+							source: &Self::Vertex,
+							sink: &Self::Vertex,
 							f: F,
-						) -> Result<(Self::Vertex, Self::Vertex, Self::EdgeWeight), ()>
-						where
-							F: Fn((Self::Vertex, Self::Vertex, &Self::EdgeWeight)) -> bool;
+						) -> Result<Self::EdgeWeight, ()>
+							where
+								F: Fn(&Self::EdgeWeight) -> bool;
 					}
 				}
 			}

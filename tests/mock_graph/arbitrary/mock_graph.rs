@@ -4,7 +4,7 @@ use crate::mock_graph::{
 };
 use graphene::core::{
 	property::{AddEdge, DirectedGraph, NewVertex, RemoveEdge, RemoveVertex},
-	Directedness, EdgeDeref, EnsureUnloaded, Graph,
+	Directedness, Edge, EdgeDeref, EnsureUnloaded, Graph,
 };
 use quickcheck::{Arbitrary, Gen};
 use rand::Rng;
@@ -115,7 +115,7 @@ impl<D: Directedness> GuidedArbGraph for MockGraph<D>
 			shrunk_weights.for_each(|s_w| {
 				let mut shrunk_graph = self.clone();
 				shrunk_graph
-					.remove_edge_where_weight((source, sink), |ref w| w.value == weight.value)
+					.remove_edge_where_weight(&source, &sink, |ref w| w.value == weight.value)
 					.unwrap();
 				shrunk_graph.add_edge_weighted(&source, &sink, s_w).unwrap();
 				result.push(shrunk_graph);
@@ -130,7 +130,7 @@ impl<D: Directedness> GuidedArbGraph for MockGraph<D>
 				// Add to the result a copy of the graph
 				// without the edge
 				let mut shrunk_graph = self.clone();
-				shrunk_graph.remove_edge(e).unwrap();
+				shrunk_graph.remove_edge(&e.source(), &e.sink()).unwrap();
 				result.push(shrunk_graph);
 			}
 		}
@@ -225,7 +225,8 @@ impl<D: Directedness> MockGraph<D>
 				self.all_edges()
 					.map(|e| {
 						let mut g = self.clone();
-						g.remove_edge_where_weight(e, |w| w == e.weight()).unwrap();
+						g.remove_edge_where_weight(&e.source(), &e.sink(), |w| w == e.weight())
+							.unwrap();
 						g
 					})
 					.filter(|g| f(&g)),

@@ -2,8 +2,8 @@ use crate::{
 	algo::TarjanScc,
 	core::{
 		property::{
-			proxy_remove_edge_where, proxy_remove_vertex, HasVertexGraph, RemoveEdge, RemoveVertex,
-			Subgraph, Weak,
+			proxy_remove_edge_where_weight, proxy_remove_vertex, HasVertexGraph, RemoveEdge,
+			RemoveVertex, Subgraph, Weak,
 		},
 		Directed, Ensure, Graph, GraphDerefMut,
 	},
@@ -85,14 +85,21 @@ impl<C: Ensure + GraphDerefMut> RemoveEdge for UnilateralGraph<C>
 where
 	C::Graph: RemoveEdge<Directedness = Directed>,
 {
-	fn remove_edge_where<F>(
+	fn remove_edge_where_weight<F>(
 		&mut self,
+		source: &Self::Vertex,
+		sink: &Self::Vertex,
 		f: F,
-	) -> Result<(Self::Vertex, Self::Vertex, Self::EdgeWeight), ()>
+	) -> Result<Self::EdgeWeight, ()>
 	where
-		F: Fn((Self::Vertex, Self::Vertex, &Self::EdgeWeight)) -> bool,
+		F: Fn(&Self::EdgeWeight) -> bool,
 	{
-		proxy_remove_edge_where::<UnilateralGraph<_>, _, _>(self.0.graph_mut(), f)
+		proxy_remove_edge_where_weight::<UnilateralGraph<_>, _, _>(
+			self.0.graph_mut(),
+			source,
+			sink,
+			f,
+		)
 	}
 }
 

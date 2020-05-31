@@ -2,7 +2,7 @@ use crate::{
 	common::AdjListGraph,
 	core::{
 		property::{AddEdge, NewVertex, RemoveEdge, RemoveVertex, VertexCount},
-		Directedness, Edge, Graph, GraphMut,
+		Directedness, Graph, GraphMut,
 	},
 };
 
@@ -89,9 +89,17 @@ where
 	{
 		if *v < self.vertices.len()
 		{
-			while let Ok(_) = self.remove_edge_where(|e| e.sink() == *v || e.source() == *v)
+			let neighbors: Vec<_> = self.vertex_neighbors(v).collect();
+
+			for n in neighbors
 			{
-				// Drop edge
+				while let Ok(_) = self.remove_edge(v, &n)
+				{}
+				if D::directed()
+				{
+					while let Ok(_) = self.remove_edge(&n, v)
+					{}
+				}
 			}
 			Ok(self.vertices.remove(*v).0)
 		}
@@ -130,29 +138,41 @@ impl<Vw, Ew, D> RemoveEdge for AdjListGraph<Vw, Ew, D>
 where
 	D: Directedness,
 {
-	fn remove_edge_where<F>(
+	fn remove_edge_where_weight<F>(
 		&mut self,
+		source: &Self::Vertex,
+		sink: &Self::Vertex,
 		f: F,
-	) -> Result<(Self::Vertex, Self::Vertex, Self::EdgeWeight), ()>
+	) -> Result<Self::EdgeWeight, ()>
 	where
-		F: Fn((Self::Vertex, Self::Vertex, &Self::EdgeWeight)) -> bool,
+		F: Fn(&Self::EdgeWeight) -> bool,
 	{
-		let found = self
-			.vertices
-			.iter()
-			.enumerate()
-			.flat_map(|(so_i, (_, edges))| {
-				edges
-					.iter()
-					.enumerate()
-					.map(move |(si_i, (si, w))| ((so_i, si_i, si, w)))
-			})
-			.find(|(so_i, _, si, w)| f((*so_i, **si, w)));
-
-		if let Some((so, si_i, _, _)) = found
+		if self.contains_vertex(*source) && self.contains_vertex(*sink)
 		{
-			let (si, w) = self.vertices[so].1.remove(si_i);
-			Ok((so, si, w))
+			let found = self
+				.vertices
+				.iter()
+				.enumerate()
+				.flat_map(|(so_i, (_, edges))| {
+					edges
+						.iter()
+						.enumerate()
+						.map(move |(si_i, (si, w))| ((so_i, si_i, si, w)))
+				})
+				.find(|(so_i, _, si, w)| {
+					((so_i == source && *si == sink)
+						|| (!Self::Directedness::directed() && (so_i == sink && *si == source)))
+						&& f(w)
+				});
+			if let Some((so_i, si_i, _, _)) = found
+			{
+				let (_, w) = self.vertices[so_i].1.remove(si_i);
+				Ok(w)
+			}
+			else
+			{
+				Err(())
+			}
 		}
 		else
 		{

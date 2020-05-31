@@ -153,17 +153,25 @@ impl<C: Ensure + GraphDerefMut> RemoveEdge for SubgraphProxy<C>
 where
 	C::Graph: RemoveEdge,
 {
-	fn remove_edge_where<F>(
+	fn remove_edge_where_weight<F>(
 		&mut self,
+		source: &Self::Vertex,
+		sink: &Self::Vertex,
 		f: F,
-	) -> Result<(Self::Vertex, Self::Vertex, Self::EdgeWeight), ()>
+	) -> Result<Self::EdgeWeight, ()>
 	where
-		F: Fn((Self::Vertex, Self::Vertex, &Self::EdgeWeight)) -> bool,
+		F: Fn(&Self::EdgeWeight) -> bool,
 	{
-		let verts = &self.verts;
-		self.graph
-			.graph_mut()
-			.remove_edge_where(|e| verts.contains(&e.0) && verts.contains(&e.1) && f(e))
+		if self.verts.contains(source) && self.verts.contains(sink)
+		{
+			self.graph
+				.graph_mut()
+				.remove_edge_where_weight(source, sink, f)
+		}
+		else
+		{
+			Err(())
+		}
 	}
 }
 

@@ -72,10 +72,8 @@ where
 		let mut without_edge = self.0.clone().release();
 		without_edge
 			.graph_mut()
-			.remove_edge_where(|e| {
-				e.source() == self.1.source()
-					&& e.sink() == self.1.sink()
-					&& e.weight() == self.1.weight_ref()
+			.remove_edge_where_weight(&self.1.source(), &self.1.sink(), |w| {
+				w == self.1.weight_ref()
 			})
 			.unwrap();
 		result.extend(

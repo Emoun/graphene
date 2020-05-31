@@ -102,7 +102,7 @@ impl GuidedArbGraph for ArbUnilatralGraph
 					.collect::<Vec<_>>();
 				for sink in outgoing_sinks
 				{
-					let weight = graph.remove_edge((v_original, sink)).unwrap();
+					let weight = graph.remove_edge(&v_original, &sink).unwrap();
 					graph.add_edge_weighted(&v, &sink, weight).unwrap();
 				}
 
@@ -120,7 +120,7 @@ impl GuidedArbGraph for ArbUnilatralGraph
 					.collect::<Vec<_>>();
 				for source in sources
 				{
-					let weight = graph.remove_edge((source, v_original)).unwrap();
+					let weight = graph.remove_edge(&source, &v_original).unwrap();
 					graph.add_edge_weighted(&source, &v, weight).unwrap();
 				}
 

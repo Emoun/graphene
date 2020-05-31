@@ -141,16 +141,14 @@ mod module
 	{
 		let (mut g, v_map) = adj_list_from_mock(&mock);
 
-		let mapped_edge = (
-			v_map[&edge.source()],
-			v_map[&edge.sink()],
-			edge.weight_ref(),
-		);
+		let mapped_source = v_map[&edge.source()];
+		let mapped_sink = v_map[&edge.sink()];
 
-		if g.remove_edge_where(|e| e == mapped_edge).is_ok()
+		if g.remove_edge_where_weight(&mapped_source, &mapped_sink, |w| w == edge.weight_ref())
+			.is_ok()
 		{
 			// Ensure that one less edge matches our edge
-			g.edges_between(&mapped_edge.source(), &mapped_edge.sink())
+			g.edges_between(&mapped_source, &mapped_sink)
 				.filter(|&w| *w == edge.2)
 				.count() == (mock
 				.edges_between(&edge.source(), &edge.sink())

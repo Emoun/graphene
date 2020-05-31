@@ -17,7 +17,7 @@ pub use self::{
 };
 use crate::core::{
 	proxy::{EdgeProxyGraph, ProxyVertex, VertexProxyGraph},
-	Edge, Ensure,
+	Ensure,
 };
 
 /// Will try to remove an edge from the graph that holds for the given function.
@@ -26,43 +26,33 @@ use crate::core::{
 /// the edge isn't removed in the first place.
 ///
 /// Will always need a type annotation for the Ensure 'C'.
-pub fn proxy_remove_edge_where<'a, C, G, F>(
+pub fn proxy_remove_edge_where_weight<'a, C, G, F>(
 	g: &'a mut G,
+	source: &G::Vertex,
+	sink: &G::Vertex,
 	f: F,
-) -> Result<(G::Vertex, G::Vertex, G::EdgeWeight), ()>
+) -> Result<G::EdgeWeight, ()>
 where
 	G: RemoveEdge,
-	F: Fn((G::Vertex, G::Vertex, &G::EdgeWeight)) -> bool,
+	F: Fn(&G::EdgeWeight) -> bool,
 	C: Ensure<Ensured = EdgeProxyGraph<&'a G>, Base = EdgeProxyGraph<&'a G>, Payload = ()>,
 {
-	let to_remove = g
-		.all_edges()
-		.find(|&e| f(e))
-		.map(|e| (e.source(), e.sink()));
-	let proxy = if let Some(e) = to_remove
-	{
-		// We use the unsafe block here to allow us to use 'g' again later.
-		// Currently, the compiler can't see when 'proxy' is no longer used,
-		// and therefore 'g' is free to be used again.
-		// I think this is caused by: https://github.com/rust-lang/rust/issues/53528
-		// but not sure.
-		let g2: &G = unsafe { (g as *mut G).as_ref().unwrap() };
+	// We use the unsafe block here to allow us to use 'g' again later.
+	// Currently, the compiler can't see when 'proxy' is no longer used,
+	// and therefore 'g' is free to be used again.
+	// I think this is caused by: https://github.com/rust-lang/rust/issues/53528
+	// but not sure.
+	let g2: &G = unsafe { (g as *mut G).as_ref().unwrap() };
 
-		let mut proxy = EdgeProxyGraph::new(g2);
-		proxy.remove_edge((e.source(), e.sink()))?;
-		proxy
-	}
-	else
-	{
-		return Err(());
-	};
+	let mut proxy = EdgeProxyGraph::new(g2);
+	proxy.remove_edge(source, sink)?;
 
 	if C::validate(&proxy, &())
 	{
 		// 	Here we use 'g' again since 'proxy' is no longer used.
 		// The compiler doesn't recognize that 'proxy' isn't used in this blocks,
 		// and therefore, this wouldn't work when giving 'proxy' 'g' directly.
-		g.remove_edge_where(f)
+		g.remove_edge_where_weight(source, sink, f)
 	}
 	else
 	{

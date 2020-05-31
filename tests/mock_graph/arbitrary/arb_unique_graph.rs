@@ -179,7 +179,7 @@ impl<D: Directedness> Arbitrary for ArbNonUniqueGraph<D>
 						if shrunk_dup_count > 1
 						{
 							shrunk_dup_count -= 1;
-							shrunk_graph.remove_edge(e).unwrap();
+							shrunk_graph.remove_edge(&e.source(), &e.sink()).unwrap();
 							result.push(Self(shrunk_graph, shrunk_dup_count));
 						}
 						else
@@ -191,7 +191,7 @@ impl<D: Directedness> Arbitrary for ArbNonUniqueGraph<D>
 					else
 					{
 						// A non-duplicate edge can be removed
-						shrunk_graph.remove_edge(e).unwrap();
+						shrunk_graph.remove_edge(&e.source(), &e.sink()).unwrap();
 						result.push(Self(shrunk_graph, shrunk_dup_count));
 					}
 				}
@@ -203,7 +203,7 @@ impl<D: Directedness> Arbitrary for ArbNonUniqueGraph<D>
 						if shrunk_dup_count > 1
 						{
 							shrunk_dup_count -= 1;
-							shrunk_graph.remove_edge(e).unwrap();
+							shrunk_graph.remove_edge(&e.source(), &e.sink()).unwrap();
 							result.push(Self(shrunk_graph, shrunk_dup_count));
 						}
 						else
@@ -215,7 +215,7 @@ impl<D: Directedness> Arbitrary for ArbNonUniqueGraph<D>
 					else
 					{
 						// A non-duplicate edge can be removed
-						shrunk_graph.remove_edge(e).unwrap();
+						shrunk_graph.remove_edge(&e.source(), &e.sink()).unwrap();
 						result.push(Self(shrunk_graph, shrunk_dup_count));
 					}
 				}

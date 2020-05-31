@@ -13,7 +13,7 @@ use graphene::core::{
 		AddEdge, Connected, ConnectedGraph, HasVertex, NewVertex, RemoveEdge, RemoveVertex,
 		Unilateral, UnilateralGraph, Weak, WeakGraph,
 	},
-	Directed, Directedness, Edge, EnsureUnloaded, Graph, ReleaseUnloaded, Undirected,
+	Directed, Directedness, EnsureUnloaded, Graph, ReleaseUnloaded, Undirected,
 };
 use static_assertions::assert_impl_all;
 
@@ -80,7 +80,7 @@ mod module
 	/// Tests that a graph accepts removing an edge that isn't critical
 	/// for connectedness
 	#[quickcheck]
-	fn accept_remove_edge_where(
+	fn accept_remove_edge_where_weight(
 		g: ArbTwoVerticesIn<arb_connected>,
 		e_weight: MockEdgeWeight,
 	) -> bool
@@ -90,7 +90,7 @@ mod module
 		// To ensure we can remove an edge, we first create an edge to remove
 		g.add_edge_weighted(&v1, &v2, e_weight.clone()).unwrap();
 
-		g.remove_edge_where(|e| (e.source() == v1 && e.sink() == v2))
+		g.remove_edge_where_weight(&v1, &v2, |w| *w == e_weight)
 			.is_ok()
 	}
 
@@ -101,7 +101,7 @@ mod module
 	/// TODO: Right now uses 2 connected graphs, should find a way to use
 	/// TODO: unilateral graphs while still being able to find a critical edge.
 	#[quickcheck]
-	fn reject_remove_edge_where(
+	fn reject_remove_edge_where_weight(
 		g1: ArbVertexIn<arb_reject_remove>,
 		g2: ArbVertexIn<arb_reject_remove>,
 		e_weight: MockEdgeWeight,
@@ -128,7 +128,7 @@ mod module
 
 		// We now try to remove the the added edge
 		connected
-			.remove_edge_where(|e| (e.source() == v1 && e.sink() == v_map[&v2]))
+			.remove_edge_where_weight(&v1, &v_map[&v2], |_| true)
 			.is_err()
 	}
 

@@ -65,7 +65,7 @@ where
 {
 	fn remove_vertex(&mut self, v: &Self::Vertex) -> Result<Self::VertexWeight, ()>
 	{
-		self.0.graph_mut().remove_edge((*v, *v))?;
+		self.0.graph_mut().remove_edge(v, v)?;
 		self.0.graph_mut().remove_vertex(v)
 	}
 }

@@ -144,37 +144,38 @@ impl<C: Ensure> AddEdge for EdgeProxyGraph<C>
 
 impl<C: Ensure> RemoveEdge for EdgeProxyGraph<C>
 {
-	fn remove_edge_where<F>(
+	fn remove_edge_where_weight<F>(
 		&mut self,
-		f: F,
-	) -> Result<(Self::Vertex, Self::Vertex, Self::EdgeWeight), ()>
+		source: &Self::Vertex,
+		sink: &Self::Vertex,
+		_: F,
+	) -> Result<Self::EdgeWeight, ()>
 	where
-		F: Fn((Self::Vertex, Self::Vertex, &Self::EdgeWeight)) -> bool,
+		F: Fn(&Self::EdgeWeight) -> bool,
 	{
 		// First try to find a valid new vertex
-		let to_remove = self
-			.new
-			.iter()
-			.cloned()
-			.enumerate()
-			.find(|(_, e)| f((e.source(), e.sink(), &())));
+		let to_remove = self.new.iter().cloned().enumerate().find(|(_, e)| {
+			(e.source() == *source && e.sink() == *sink)
+				|| !Self::Directedness::directed() && (e.source() == *sink && e.sink() == *source)
+		});
 
-		if let Some((idx, e)) = to_remove
+		if let Some((idx, _)) = to_remove
 		{
 			self.new.remove(idx);
-			Ok((e.source(), e.sink(), ()))
+			Ok(())
 		}
 		else
 		{
 			// If no new vertex is valid, look through the existing ones.
-			let to_remove = self
-				.all_edges()
-				.map(|e| (e.source(), e.sink()))
-				.find(|e| f((e.source(), e.sink(), &())));
+			let to_remove = self.all_edges().map(|e| (e.source(), e.sink())).find(|e| {
+				(e.source() == *source && e.sink() == *sink)
+					|| !Self::Directedness::directed()
+						&& (e.source() == *sink && e.sink() == *source)
+			});
 			if let Some(e) = to_remove
 			{
 				self.removed.push((e.source(), e.sink()));
-				Ok((e.source(), e.sink(), ()))
+				Ok(())
 			}
 			else
 			{

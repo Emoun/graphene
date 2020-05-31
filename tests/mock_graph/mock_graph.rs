@@ -273,21 +273,24 @@ impl<D: Directedness> AddEdge for MockGraph<D>
 
 impl<D: Directedness> RemoveEdge for MockGraph<D>
 {
-	fn remove_edge_where<F>(
+	fn remove_edge_where_weight<F>(
 		&mut self,
+		source: &Self::Vertex,
+		sink: &Self::Vertex,
 		f: F,
-	) -> Result<(Self::Vertex, Self::Vertex, Self::EdgeWeight), ()>
+	) -> Result<Self::EdgeWeight, ()>
 	where
-		F: Fn((Self::Vertex, Self::Vertex, &Self::EdgeWeight)) -> bool,
+		F: Fn(&Self::EdgeWeight) -> bool,
 	{
-		if let Some((idx, _)) =
-			self.edges.iter().enumerate().find(|(_, (so, si, w))| {
-				f((MockVertex { value: *so }, MockVertex { value: *si }, w))
-			})
+		if let Some((idx, _)) = self.edges.iter().enumerate().find(|(_, (so, si, w))| {
+			((*so == source.value && *si == sink.value)
+				|| !Self::Directedness::directed() && (*so == sink.value && *si == source.value))
+				&& f(w)
+		})
 		{
-			let (so, si, w) = self.edges.remove(idx);
+			let (_, _, w) = self.edges.remove(idx);
 			self.validate_is_graph();
-			Ok((MockVertex { value: so }, MockVertex { value: si }, w))
+			Ok(w)
 		}
 		else
 		{
