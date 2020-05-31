@@ -77,13 +77,14 @@ impl<C: Ensure + GraphDerefMut> AddEdge for ReverseGraph<C>
 where
 	C::Graph: AddEdge<Directedness = Directed>,
 {
-	fn add_edge_weighted<E>(&mut self, e: E) -> Result<(), ()>
-	where
-		E: EdgeWeighted<Self::Vertex, Self::EdgeWeight>,
+	fn add_edge_weighted(
+		&mut self,
+		source: &Self::Vertex,
+		sink: &Self::Vertex,
+		weight: Self::EdgeWeight,
+	) -> Result<(), ()>
 	{
-		self.0
-			.graph_mut()
-			.add_edge_weighted((e.sink(), e.source(), e.weight_owned()))
+		self.0.graph_mut().add_edge_weighted(sink, source, weight)
 	}
 }
 

@@ -97,13 +97,13 @@ use std::cmp::min;
 /// let v3 = graph.new_vertex().unwrap();
 ///
 /// // First SCC has v0 and v1
-/// graph.add_edge((v0,v1)).unwrap();
-/// graph.add_edge((v1,v0)).unwrap();
+/// graph.add_edge(&v0,&v1).unwrap();
+/// graph.add_edge(&v1,&v0).unwrap();
 /// // Second SCC has v2 and v3
-/// graph.add_edge((v2,v3)).unwrap();
-/// graph.add_edge((v3,v2)).unwrap();
+/// graph.add_edge(&v2,&v3).unwrap();
+/// graph.add_edge(&v3,&v2).unwrap();
 /// // Connect first SCC to second
-/// graph.add_edge((v0,v2)).unwrap();
+/// graph.add_edge(&v0,&v2).unwrap();
 ///
 /// // We use `HasVertexGraph` because we don't care where we start
 /// let graph = HasVertexGraph::ensure(graph).unwrap();

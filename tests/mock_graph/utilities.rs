@@ -127,11 +127,11 @@ where
 	// Add all edges
 	for e in mock.all_edges()
 	{
-		g.add_edge_weighted((
-			vertex_map[&e.source()],
-			vertex_map[&e.sink()],
+		g.add_edge_weighted(
+			&vertex_map[&e.source()],
+			&vertex_map[&e.sink()],
 			e.weight().clone(),
-		))
+		)
 		.unwrap();
 	}
 	vertex_map

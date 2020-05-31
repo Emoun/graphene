@@ -37,8 +37,8 @@ use crate::core::{property::HasVertex, Graph};
 /// let v1 = graph.new_vertex_weighted(1).unwrap();
 /// let v2 = graph.new_vertex_weighted(2).unwrap();
 ///
-/// graph.add_edge((v0,v1)).unwrap();
-/// graph.add_edge((v1,v2)).unwrap();
+/// graph.add_edge(&v0,&v1).unwrap();
+/// graph.add_edge(&v1,&v2).unwrap();
 ///
 /// // We use `VertexInGraph` to ensure traversal starts at v0.
 /// let graph = VertexInGraph::ensure(graph, v0).unwrap();

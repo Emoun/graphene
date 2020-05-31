@@ -76,7 +76,7 @@ where
 /// the vertex isn't removed in the first place.
 ///
 /// Will always need a type annotation for the Ensure 'C'.
-pub fn proxy_remove_vertex<'a, C, G>(g: &'a mut G, v: G::Vertex) -> Result<G::VertexWeight, ()>
+pub fn proxy_remove_vertex<'a, C, G>(g: &'a mut G, v: &G::Vertex) -> Result<G::VertexWeight, ()>
 where
 	G: RemoveVertex,
 	C: Ensure<Ensured = VertexProxyGraph<&'a G>, Base = VertexProxyGraph<&'a G>, Payload = ()>,
@@ -90,7 +90,7 @@ where
 	let mut proxy = VertexProxyGraph::new(g2);
 
 	proxy
-		.remove_vertex(ProxyVertex::Underlying(v))
+		.remove_vertex(&ProxyVertex::Underlying(*v))
 		.expect("Couldn't remove a vertex from the proxy");
 
 	if C::validate(&proxy, &())

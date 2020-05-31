@@ -69,7 +69,7 @@ impl<C: Ensure + GraphDerefMut> RemoveVertex for ConnectedGraph<C>
 where
 	C::Graph: RemoveVertex,
 {
-	fn remove_vertex(&mut self, v: Self::Vertex) -> Result<Self::VertexWeight, ()>
+	fn remove_vertex(&mut self, v: &Self::Vertex) -> Result<Self::VertexWeight, ()>
 	{
 		proxy_remove_vertex::<ConnectedGraph<_>, _>(self.0.graph_mut(), v)
 	}

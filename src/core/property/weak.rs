@@ -60,7 +60,7 @@ impl<C: Ensure + GraphDerefMut> RemoveVertex for WeakGraph<C>
 where
 	C::Graph: RemoveVertex<Directedness = Directed>,
 {
-	fn remove_vertex(&mut self, v: Self::Vertex) -> Result<Self::VertexWeight, ()>
+	fn remove_vertex(&mut self, v: &Self::Vertex) -> Result<Self::VertexWeight, ()>
 	{
 		proxy_remove_vertex::<WeakGraph<_>, _>(self.0.graph_mut(), v)
 	}

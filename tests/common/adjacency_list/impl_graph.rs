@@ -106,7 +106,7 @@ mod module
 		let (mut g, v_map) = adj_list_from_mock(&mock);
 		let v_removed = v_map[&v_remove];
 
-		if g.remove_vertex(v_removed).is_err()
+		if g.remove_vertex(&v_removed).is_err()
 		{
 			false
 		}

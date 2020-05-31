@@ -1,4 +1,4 @@
-use crate::core::{property::AddEdge, EdgeWeighted, Ensure, Graph, GraphDerefMut};
+use crate::core::{property::AddEdge, Ensure, Graph, GraphDerefMut};
 
 /// A marker trait for graphs containing no graph loops.
 ///
@@ -31,17 +31,20 @@ impl<C: Ensure + GraphDerefMut> AddEdge for NoLoopsGraph<C>
 where
 	C::Graph: AddEdge,
 {
-	fn add_edge_weighted<E>(&mut self, e: E) -> Result<(), ()>
-	where
-		E: EdgeWeighted<Self::Vertex, Self::EdgeWeight>,
+	fn add_edge_weighted(
+		&mut self,
+		source: &Self::Vertex,
+		sink: &Self::Vertex,
+		weight: Self::EdgeWeight,
+	) -> Result<(), ()>
 	{
-		if e.source() == e.sink()
+		if source == sink
 		{
 			Err(())
 		}
 		else
 		{
-			self.0.graph_mut().add_edge_weighted(e)
+			self.0.graph_mut().add_edge_weighted(source, sink, weight)
 		}
 	}
 }

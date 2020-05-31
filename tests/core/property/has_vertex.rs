@@ -46,7 +46,7 @@ mod module
 
 			let mut g = HasVertexGraph::ensure(g).unwrap();
 
-			assert!(g.remove_vertex(v).is_err())
+			assert!(g.remove_vertex(&v).is_err())
 		}
 
 		/// Tests that can remove a vertex if there are at least 2.
@@ -58,7 +58,7 @@ mod module
 			let v = g.get_vertex();
 			let mut g = HasVertexGraph::ensure(g.release_all()).unwrap();
 
-			g.remove_vertex(v).is_ok()
+			g.remove_vertex(&v).is_ok()
 		}
 	}
 
@@ -92,7 +92,7 @@ mod module
 			let (v1, v2) = g.get_both();
 			let mut g = VertexInGraph::ensure_unvalidated(g.release_all().0, v1);
 
-			g.remove_vertex(v2).is_ok()
+			g.remove_vertex(&v2).is_ok()
 		}
 
 		/// Tests cannot remove a vertex if its the one guaranteed by
@@ -103,7 +103,7 @@ mod module
 			let v = g.get_vertex();
 			let mut g = VertexInGraph::ensure_unvalidated(g, v);
 
-			assert!(g.remove_vertex(v).is_err())
+			assert!(g.remove_vertex(&v).is_err())
 		}
 	}
 }

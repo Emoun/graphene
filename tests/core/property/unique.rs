@@ -45,7 +45,7 @@ mod module
 		// To ensure we add a non-duplicate edge,
 		// we create a new vertex and add an edge to it from an existing one.
 		let v2 = g.new_vertex_weighted(v_weight).unwrap();
-		let accepted = g.add_edge_weighted((v, v2, e_weight)).is_ok();
+		let accepted = g.add_edge_weighted(&v, &v2, e_weight).is_ok();
 		accepted && g.edges_between(&v, &v2).count() == 1
 	}
 
@@ -56,6 +56,6 @@ mod module
 		weight: MockEdgeWeight,
 	) -> bool
 	{
-		g.add_edge_weighted((e.source(), e.sink(), weight)).is_err()
+		g.add_edge_weighted(&e.source(), &e.sink(), weight).is_err()
 	}
 }

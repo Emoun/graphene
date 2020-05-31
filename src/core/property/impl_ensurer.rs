@@ -331,7 +331,7 @@ macro_rules! impl_properties {
 			@implement {
 				delegate::delegate! {
 					to $crate::core::GraphDerefMut::graph_mut(&mut self$($delegate)+) {
-						fn remove_vertex(&mut self, v: Self::Vertex)
+						fn remove_vertex(&mut self, v: &Self::Vertex)
 							-> Result<Self::VertexWeight, ()>;
 					}
 				}
@@ -355,9 +355,12 @@ macro_rules! impl_properties {
 			@implement {
 				delegate::delegate! {
 					to $crate::core::GraphDerefMut::graph_mut(&mut self$($delegate)+) {
-						fn add_edge_weighted<E>(&mut self, e: E) -> Result<(), ()>
-						where
-							E: $crate::core::EdgeWeighted<Self::Vertex, Self::EdgeWeight>;
+						fn add_edge_weighted(
+							&mut self,
+							source: &Self::Vertex,
+							sink: &Self::Vertex,
+							weight: Self::EdgeWeight,
+						) -> Result<(), ()>;
 					}
 				}
 			}

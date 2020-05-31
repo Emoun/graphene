@@ -103,11 +103,11 @@ impl GuidedArbGraph for ArbUnilatralGraph
 				for sink in outgoing_sinks
 				{
 					let weight = graph.remove_edge((v_original, sink)).unwrap();
-					graph.add_edge_weighted((v, sink, weight)).unwrap();
+					graph.add_edge_weighted(&v, &sink, weight).unwrap();
 				}
 
 				graph
-					.add_edge_weighted((v_original, v, MockEdgeWeight::arbitrary(g)))
+					.add_edge_weighted(&v_original, &v, MockEdgeWeight::arbitrary(g))
 					.unwrap();
 			}
 			else
@@ -121,11 +121,11 @@ impl GuidedArbGraph for ArbUnilatralGraph
 				for source in sources
 				{
 					let weight = graph.remove_edge((source, v_original)).unwrap();
-					graph.add_edge_weighted((source, v, weight)).unwrap();
+					graph.add_edge_weighted(&source, &v, weight).unwrap();
 				}
 
 				graph
-					.add_edge_weighted((v, v_original, MockEdgeWeight::arbitrary(g)))
+					.add_edge_weighted(&v, &v_original, MockEdgeWeight::arbitrary(g))
 					.unwrap();
 			}
 		}
@@ -137,13 +137,13 @@ impl GuidedArbGraph for ArbUnilatralGraph
 			if g.gen_bool(p)
 			{
 				graph
-					.add_edge_weighted((v, v_other, MockEdgeWeight::arbitrary(g)))
+					.add_edge_weighted(&v, &v_other, MockEdgeWeight::arbitrary(g))
 					.unwrap();
 			}
 			if g.gen_bool(p)
 			{
 				graph
-					.add_edge_weighted((v_other, v, MockEdgeWeight::arbitrary(g)))
+					.add_edge_weighted(&v_other, &v, MockEdgeWeight::arbitrary(g))
 					.unwrap();
 			}
 		}
@@ -280,24 +280,24 @@ impl GuidedArbGraph for ArbNonUnilatralGraph
 			if g.gen_bool(0.5)
 			{
 				graph
-					.add_edge_weighted((v, v1, MockEdgeWeight::arbitrary(g)))
+					.add_edge_weighted(&v, &v1, MockEdgeWeight::arbitrary(g))
 					.unwrap();
 				if g.gen_bool(0.8)
 				{
 					graph
-						.add_edge_weighted((v, map[&v2], MockEdgeWeight::arbitrary(g)))
+						.add_edge_weighted(&v, &map[&v2], MockEdgeWeight::arbitrary(g))
 						.unwrap();
 				}
 			}
 			else
 			{
 				graph
-					.add_edge_weighted((v1, v, MockEdgeWeight::arbitrary(g)))
+					.add_edge_weighted(&v1, &v, MockEdgeWeight::arbitrary(g))
 					.unwrap();
 				if g.gen_bool(0.8)
 				{
 					graph
-						.add_edge_weighted((map[&v2], v, MockEdgeWeight::arbitrary(g)))
+						.add_edge_weighted(&map[&v2], &v, MockEdgeWeight::arbitrary(g))
 						.unwrap();
 				}
 			}

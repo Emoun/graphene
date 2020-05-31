@@ -74,7 +74,7 @@ mod module
 		let (v1, v2) = g.get_both();
 		let mut g = connected_graph::ensure_unvalidated(g.release_all());
 
-		g.add_edge_weighted((v1, v2, e_weight)).is_ok()
+		g.add_edge_weighted(&v1, &v2, e_weight).is_ok()
 	}
 
 	/// Tests that a graph accepts removing an edge that isn't critical
@@ -88,7 +88,7 @@ mod module
 		let (v1, v2) = g.get_both();
 		let mut g = connected_graph::ensure_unvalidated(g.release_all());
 		// To ensure we can remove an edge, we first create an edge to remove
-		g.add_edge_weighted((v1, v2, e_weight.clone())).unwrap();
+		g.add_edge_weighted(&v1, &v2, e_weight.clone()).unwrap();
 
 		g.remove_edge_where(|e| (e.source() == v1 && e.sink() == v2))
 			.is_ok()
@@ -116,12 +116,12 @@ mod module
 
 		// We then connect the two components
 		graph
-			.add_edge_weighted((v1, v_map[&v2], e_weight.clone()))
+			.add_edge_weighted(&v1, &v_map[&v2], e_weight.clone())
 			.unwrap();
 		if !connected_graph::validate(&graph)
 		{
 			graph
-				.add_edge_weighted((v_map[&v2], v1, e_weight.clone()))
+				.add_edge_weighted(&v_map[&v2], &v1, e_weight.clone())
 				.unwrap();
 		}
 		let mut connected = connected_graph::ensure_unvalidated(graph);
@@ -153,13 +153,13 @@ mod module
 		// We then connect it to the other vertices,
 		// returning connectedness to the whole graph
 		graph
-			.add_edge_weighted((v_new, v1, e_weight.clone()))
+			.add_edge_weighted(&v_new, &v1, e_weight.clone())
 			.unwrap();
 
 		if <<arb_connected as Graph>::Directedness as Directedness>::directed()
 		{
 			graph
-				.add_edge_weighted((v2, v_new, e_weight.clone()))
+				.add_edge_weighted(&v2, &v_new, e_weight.clone())
 				.unwrap();
 		}
 
@@ -170,20 +170,20 @@ mod module
 			if idx % 2 == 0
 			{
 				graph
-					.add_edge_weighted((v_other, v_new, e_weight.clone()))
+					.add_edge_weighted(&v_other, &v_new, e_weight.clone())
 					.unwrap();
 			}
 			else
 			{
 				graph
-					.add_edge_weighted((v_new, v_other, e_weight.clone()))
+					.add_edge_weighted(&v_new, &v_other, e_weight.clone())
 					.unwrap();
 			}
 		}
 
 		// We then try to remove the vertex again
 		connected_graph::ensure_unvalidated(graph)
-			.remove_vertex(v_new)
+			.remove_vertex(&v_new)
 			.is_ok()
 	}
 
@@ -207,25 +207,25 @@ mod module
 		// We then connect the two components through a vertex
 		let new_v = graph.new_vertex_weighted(v_weight.clone()).unwrap();
 		graph
-			.add_edge_weighted((v11, new_v, e_weight.clone()))
+			.add_edge_weighted(&v11, &new_v, e_weight.clone())
 			.unwrap();
 		graph
-			.add_edge_weighted((new_v, v_map[&v21], e_weight.clone()))
+			.add_edge_weighted(&new_v, &v_map[&v21], e_weight.clone())
 			.unwrap();
 		if !connected_graph::validate(&graph)
 		{
 			let new_v = graph.new_vertex_weighted(v_weight.clone()).unwrap();
 			graph
-				.add_edge_weighted((v_map[&v22], new_v, e_weight.clone()))
+				.add_edge_weighted(&v_map[&v22], &new_v, e_weight.clone())
 				.unwrap();
 			graph
-				.add_edge_weighted((new_v, v12, e_weight.clone()))
+				.add_edge_weighted(&new_v, &v12, e_weight.clone())
 				.unwrap();
 		}
 		let mut connected = connected_graph::ensure_unvalidated(graph);
 
 		// We now try to remove the the added vertex
-		connected.remove_vertex(new_v).is_err()
+		connected.remove_vertex(&new_v).is_err()
 	}
 }
 

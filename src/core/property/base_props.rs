@@ -1,4 +1,4 @@
-use crate::core::{Directedness, Edge, EdgeWeighted, Graph};
+use crate::core::{Directedness, Edge, Graph};
 use num_traits::{One, PrimInt, Unsigned, Zero};
 
 /// A graph where new vertices can be added
@@ -26,15 +26,18 @@ pub trait RemoveVertex: Graph
 	/// Removes the given vertex from the graph, returning its weight.
 	/// If the vertex still has edges incident on it, they are also removed,
 	/// dropping their weights.
-	fn remove_vertex(&mut self, v: Self::Vertex) -> Result<Self::VertexWeight, ()>;
+	fn remove_vertex(&mut self, v: &Self::Vertex) -> Result<Self::VertexWeight, ()>;
 }
 
 pub trait AddEdge: Graph
 {
 	/// Adds a copy of the given edge to the graph
-	fn add_edge_weighted<E>(&mut self, e: E) -> Result<(), ()>
-	where
-		E: EdgeWeighted<Self::Vertex, Self::EdgeWeight>;
+	fn add_edge_weighted(
+		&mut self,
+		source: &Self::Vertex,
+		sink: &Self::Vertex,
+		weight: Self::EdgeWeight,
+	) -> Result<(), ()>;
 
 	// Optional methods
 
@@ -57,12 +60,11 @@ pub trait AddEdge: Graph
 	/// ###`Err` properties:
 	///
 	/// - The graph is unchanged.
-	fn add_edge<E>(&mut self, e: E) -> Result<(), ()>
+	fn add_edge(&mut self, source: &Self::Vertex, sink: &Self::Vertex) -> Result<(), ()>
 	where
-		E: Edge<Self::Vertex>,
 		Self::EdgeWeight: Default,
 	{
-		self.add_edge_weighted((e.source(), e.sink(), Self::EdgeWeight::default()))
+		self.add_edge_weighted(source, sink, Self::EdgeWeight::default())
 	}
 }
 

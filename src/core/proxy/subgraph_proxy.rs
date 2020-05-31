@@ -1,6 +1,6 @@
 use crate::core::{
 	property::{AddEdge, NewVertex, RemoveEdge, RemoveVertex, Subgraph},
-	Edge, EdgeWeighted, Ensure, Graph, GraphDerefMut, GraphMut,
+	Edge, Ensure, Graph, GraphDerefMut, GraphMut,
 };
 
 /// A subgraph of another graph.
@@ -129,13 +129,18 @@ impl<C: Ensure + GraphDerefMut> AddEdge for SubgraphProxy<C>
 where
 	C::Graph: AddEdge,
 {
-	fn add_edge_weighted<E>(&mut self, e: E) -> Result<(), ()>
-	where
-		E: EdgeWeighted<Self::Vertex, Self::EdgeWeight>,
+	fn add_edge_weighted(
+		&mut self,
+		source: &Self::Vertex,
+		sink: &Self::Vertex,
+		weight: Self::EdgeWeight,
+	) -> Result<(), ()>
 	{
-		if self.edge_valid((e.source(), e.sink()))
+		if self.edge_valid((*source, *sink))
 		{
-			self.graph.graph_mut().add_edge_weighted(e)
+			self.graph
+				.graph_mut()
+				.add_edge_weighted(source, sink, weight)
 		}
 		else
 		{
@@ -178,15 +183,15 @@ impl<C: Ensure + GraphDerefMut> RemoveVertex for SubgraphProxy<C>
 where
 	C::Graph: RemoveVertex,
 {
-	fn remove_vertex(&mut self, v: Self::Vertex) -> Result<Self::VertexWeight, ()>
+	fn remove_vertex(&mut self, v: &Self::Vertex) -> Result<Self::VertexWeight, ()>
 	{
-		if self.contains_vertex(v)
+		if self.contains_vertex(*v)
 		{
 			let w = self.graph.graph_mut().remove_vertex(v)?;
 			let index = self
 				.verts
 				.iter()
-				.position(|&t| t == v)
+				.position(|&t| t == *v)
 				.expect("Couldn't find removed vertex in subgraph");
 			self.verts.remove(index);
 			Ok(w)

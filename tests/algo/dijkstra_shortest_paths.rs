@@ -125,7 +125,7 @@ fn directed_doesnt_visit_incoming_component(
 	for (v1, v2) in verts.iter().zip(g2_verts.iter())
 	{
 		graph
-			.add_edge_weighted((v_map[v2], *v1, weight.clone()))
+			.add_edge_weighted(&v_map[v2], v1, weight.clone())
 			.unwrap();
 	}
 
@@ -154,12 +154,12 @@ fn directed_visits_outgoing_component(
 
 	// Add edges from start component to the other component
 	graph
-		.add_edge_weighted((v, v_map[&v2], weight.clone()))
+		.add_edge_weighted(&v, &v_map[&v2], weight.clone())
 		.unwrap();
 	for (v1, v2) in verts1.iter().zip(verts2.iter())
 	{
 		graph
-			.add_edge_weighted((*v1, v_map[v2], weight.clone()))
+			.add_edge_weighted(v1, &v_map[v2], weight.clone())
 			.unwrap();
 	}
 

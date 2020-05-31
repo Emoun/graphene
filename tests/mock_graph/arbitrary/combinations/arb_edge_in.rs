@@ -84,7 +84,7 @@ where
 				.map(|mut g| {
 					let (v1, v2) = g.get_both();
 					g.graph_mut()
-						.add_edge_weighted((v1, v2, (self.1).2.clone()))
+						.add_edge_weighted(&v1, &v2, (self.1).2.clone())
 						.unwrap();
 					Self(
 						HasVertexGraph::ensure(g.release().release().release()).unwrap(),

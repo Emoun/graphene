@@ -78,7 +78,7 @@ impl<D: Directedness> GuidedArbGraph for MockGraph<D>
 				let t_sink = vertices[g.gen_range(0, vertex_count)];
 				let t_weight = MockEdgeWeight::arbitrary(g);
 				graph
-					.add_edge_weighted((t_source, t_sink, t_weight))
+					.add_edge_weighted(&t_source, &t_sink, t_weight)
 					.unwrap();
 			}
 		}
@@ -117,7 +117,7 @@ impl<D: Directedness> GuidedArbGraph for MockGraph<D>
 				shrunk_graph
 					.remove_edge_where_weight((source, sink), |ref w| w.value == weight.value)
 					.unwrap();
-				shrunk_graph.add_edge_weighted((source, sink, s_w)).unwrap();
+				shrunk_graph.add_edge_weighted(&source, &sink, s_w).unwrap();
 				result.push(shrunk_graph);
 			});
 		});
@@ -149,7 +149,7 @@ impl<D: Directedness> GuidedArbGraph for MockGraph<D>
 				if self.edges_incident_on(&v).next().is_none()
 				{
 					let mut shrunk_graph = self.clone();
-					shrunk_graph.remove_vertex(v).unwrap();
+					shrunk_graph.remove_vertex(&v).unwrap();
 					result.push(shrunk_graph);
 				}
 			}
@@ -252,7 +252,7 @@ impl<D: Directedness> MockGraph<D>
 				.filter(|v| !limits.contains(&Limit::VertexKeep(*v)))
 			{
 				let mut clone = self.clone();
-				clone.remove_vertex(v).unwrap();
+				clone.remove_vertex(&v).unwrap();
 				if let Ok(g) = DirectedGraph::ensure(self)
 				{
 					for (sink, w1) in g.edges_sourced_in(&v)
@@ -267,8 +267,8 @@ impl<D: Directedness> MockGraph<D>
 							{
 								continue;
 							}
-							clone.add_edge_weighted((source, sink, w1.clone())).unwrap();
-							clone.add_edge_weighted((source, sink, w2.clone())).unwrap();
+							clone.add_edge_weighted(&source, &sink, w1.clone()).unwrap();
+							clone.add_edge_weighted(&source, &sink, w2.clone()).unwrap();
 						}
 					}
 				}
@@ -289,8 +289,8 @@ impl<D: Directedness> MockGraph<D>
 							{
 								continue;
 							}
-							clone.add_edge_weighted((v1, v2, w1.clone())).unwrap();
-							clone.add_edge_weighted((v1, v2, w2.clone())).unwrap();
+							clone.add_edge_weighted(&v1, &v2, w1.clone()).unwrap();
+							clone.add_edge_weighted(&v1, &v2, w2.clone()).unwrap();
 						}
 					}
 				}

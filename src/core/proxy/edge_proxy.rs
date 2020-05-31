@@ -1,6 +1,6 @@
 use crate::core::{
 	property::{AddEdge, RemoveEdge, RemoveVertex},
-	Directedness, Edge, EdgeWeighted, Ensure, Graph, GraphDerefMut, GraphMut,
+	Directedness, Edge, Ensure, Graph, GraphDerefMut, GraphMut,
 };
 use delegate::delegate;
 
@@ -123,13 +123,16 @@ where
 
 impl<C: Ensure> AddEdge for EdgeProxyGraph<C>
 {
-	fn add_edge_weighted<E>(&mut self, e: E) -> Result<(), ()>
-	where
-		E: EdgeWeighted<Self::Vertex, Self::EdgeWeight>,
+	fn add_edge_weighted(
+		&mut self,
+		source: &Self::Vertex,
+		sink: &Self::Vertex,
+		_: Self::EdgeWeight,
+	) -> Result<(), ()>
 	{
-		if self.contains_vertex(e.source()) && self.contains_vertex(e.sink())
+		if self.contains_vertex(*source) && self.contains_vertex(*sink)
 		{
-			self.new.push((e.source(), e.sink()));
+			self.new.push((*source, *sink));
 			Ok(())
 		}
 		else
@@ -185,9 +188,9 @@ impl<C: Ensure + GraphDerefMut> RemoveVertex for EdgeProxyGraph<C>
 where
 	C::Graph: RemoveVertex,
 {
-	fn remove_vertex(&mut self, v: Self::Vertex) -> Result<Self::VertexWeight, ()>
+	fn remove_vertex(&mut self, v: &Self::Vertex) -> Result<Self::VertexWeight, ()>
 	{
-		self.new.retain(|e| e.source() != v && e.sink() != v);
+		self.new.retain(|e| e.source() != *v && e.sink() != *v);
 		self.graph.graph_mut().remove_vertex(v)
 	}
 }

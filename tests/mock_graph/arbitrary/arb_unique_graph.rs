@@ -49,7 +49,7 @@ impl<D: Directedness> GuidedArbGraph for ArbUniqueGraph<D>
 				if g.gen_bool(edge_saturation)
 				{
 					graph
-						.add_edge_weighted((source, sink, MockEdgeWeight::arbitrary(g)))
+						.add_edge_weighted(&source, &sink, MockEdgeWeight::arbitrary(g))
 						.unwrap();
 				}
 			};
@@ -79,11 +79,11 @@ impl<D: Directedness> GuidedArbGraph for ArbUniqueGraph<D>
 			if e_min == 1 && graph.all_edges().count() < 1
 			{
 				graph
-					.add_edge_weighted((
-						verts[g.gen_range(0, verts.len())],
-						verts[g.gen_range(0, verts.len())],
+					.add_edge_weighted(
+						&verts[g.gen_range(0, verts.len())],
+						&verts[g.gen_range(0, verts.len())],
 						MockEdgeWeight::arbitrary(g),
-					))
+					)
 					.unwrap()
 			}
 		}
@@ -141,11 +141,11 @@ impl<D: Directedness> Arbitrary for ArbNonUniqueGraph<D>
 		{
 			let dup_edge = original_edges[g.gen_range(0, original_edges.len())];
 			graph
-				.add_edge_weighted((
-					dup_edge.source(),
-					dup_edge.sink(),
+				.add_edge_weighted(
+					&dup_edge.source(),
+					&dup_edge.sink(),
 					MockEdgeWeight::arbitrary(g),
-				))
+				)
 				.unwrap();
 		}
 		Self(graph, duplicate_count)

@@ -2,7 +2,7 @@ use crate::{
 	common::AdjListGraph,
 	core::{
 		property::{AddEdge, NewVertex, RemoveEdge, RemoveVertex, VertexCount},
-		Directedness, Edge, EdgeWeighted, Graph, GraphMut,
+		Directedness, Edge, Graph, GraphMut,
 	},
 };
 
@@ -85,15 +85,15 @@ impl<Vw, Ew, D> RemoveVertex for AdjListGraph<Vw, Ew, D>
 where
 	D: Directedness,
 {
-	fn remove_vertex(&mut self, v: Self::Vertex) -> Result<Self::VertexWeight, ()>
+	fn remove_vertex(&mut self, v: &Self::Vertex) -> Result<Self::VertexWeight, ()>
 	{
-		if v < self.vertices.len()
+		if *v < self.vertices.len()
 		{
-			while let Ok(_) = self.remove_edge_where(|e| e.sink() == v || e.source() == v)
+			while let Ok(_) = self.remove_edge_where(|e| e.sink() == *v || e.source() == *v)
 			{
 				// Drop edge
 			}
-			Ok(self.vertices.remove(v).0)
+			Ok(self.vertices.remove(*v).0)
 		}
 		else
 		{
@@ -106,16 +106,17 @@ impl<Vw, Ew, D> AddEdge for AdjListGraph<Vw, Ew, D>
 where
 	D: Directedness,
 {
-	fn add_edge_weighted<E>(&mut self, e: E) -> Result<(), ()>
-	where
-		E: EdgeWeighted<Self::Vertex, Self::EdgeWeight>,
+	fn add_edge_weighted(
+		&mut self,
+		source: &Self::Vertex,
+		sink: &Self::Vertex,
+		weight: Self::EdgeWeight,
+	) -> Result<(), ()>
 	{
 		let len = self.vertices.len();
-		if e.source() < len && e.sink() < len
+		if *source < len && *sink < len
 		{
-			self.vertices[e.source()]
-				.1
-				.push((e.sink(), e.weight_owned()));
+			self.vertices[*source].1.push((*sink, weight));
 			Ok(())
 		}
 		else

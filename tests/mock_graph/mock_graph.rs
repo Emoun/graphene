@@ -3,7 +3,7 @@ use graphene::{
 	base_graph,
 	core::{
 		property::{AddEdge, NewVertex, RemoveEdge, RemoveVertex},
-		Directedness, Edge, EdgeWeighted, Graph, GraphMut,
+		Directedness, Edge, Graph, GraphMut,
 	},
 };
 use std::{
@@ -124,7 +124,7 @@ impl<D: Directedness> MockGraph<D>
 		}
 		for (so, si, w) in other.all_edges()
 		{
-			self.add_edge_weighted((v_map[&so], v_map[&si], w.clone()))
+			self.add_edge_weighted(&v_map[&so], &v_map[&si], w.clone())
 				.unwrap();
 		}
 
@@ -233,7 +233,7 @@ impl<D: Directedness> NewVertex for MockGraph<D>
 }
 impl<D: Directedness> RemoveVertex for MockGraph<D>
 {
-	fn remove_vertex(&mut self, mock_v: Self::Vertex) -> Result<Self::VertexWeight, ()>
+	fn remove_vertex(&mut self, mock_v: &Self::Vertex) -> Result<Self::VertexWeight, ()>
 	{
 		let v = mock_v.value;
 		if let Some(weight) = self.vertices.remove(&v)
@@ -251,15 +251,16 @@ impl<D: Directedness> RemoveVertex for MockGraph<D>
 
 impl<D: Directedness> AddEdge for MockGraph<D>
 {
-	fn add_edge_weighted<E>(&mut self, e: E) -> Result<(), ()>
-	where
-		E: EdgeWeighted<Self::Vertex, Self::EdgeWeight>,
+	fn add_edge_weighted(
+		&mut self,
+		source: &Self::Vertex,
+		sink: &Self::Vertex,
+		weight: Self::EdgeWeight,
+	) -> Result<(), ()>
 	{
-		if self.vertices.contains_key(&e.source().value)
-			&& self.vertices.contains_key(&e.sink().value)
+		if self.vertices.contains_key(&source.value) && self.vertices.contains_key(&sink.value)
 		{
-			self.edges
-				.push((e.source().value, e.sink().value, e.weight_owned()));
+			self.edges.push((source.value, sink.value, weight));
 			self.validate_is_graph();
 			Ok(())
 		}
