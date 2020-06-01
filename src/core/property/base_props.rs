@@ -1,7 +1,11 @@
 use crate::core::{Directedness, Graph};
 use num_traits::{One, PrimInt, Unsigned, Zero};
 
-/// A graph where new vertices can be added
+/// A graph where new vertices can be added.
+///
+/// Adding a vertex does not invalidate existing vertices.
+///
+/// See `InvalidatingNewVertex` for a version that allows invalidation.
 pub trait NewVertex: Graph
 {
 	/// Adds a new vertex with the given weight to the graph.
@@ -21,6 +25,8 @@ pub trait NewVertex: Graph
 }
 
 /// A graph where vertices can be removed.
+///
+/// Removing a vertex may invalidate existing vertices.
 pub trait RemoveVertex: Graph
 {
 	/// Removes the given vertex from the graph, returning its weight.

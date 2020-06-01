@@ -3,7 +3,7 @@ use crate::mock_graph::{
 	MockEdgeWeight, MockGraph, MockT, MockVertex, MockVertexWeight,
 };
 use graphene::core::{
-	property::{AddEdge, DirectedGraph, NewVertex, RemoveEdge, RemoveVertex},
+	property::{AddEdge, DirectedGraph, EdgeCount, NewVertex, RemoveEdge, RemoveVertex},
 	Directedness, Edge, EdgeDeref, EnsureUnloaded, Graph,
 };
 use quickcheck::{Arbitrary, Gen};
@@ -219,7 +219,7 @@ impl<D: Directedness> MockGraph<D>
 		F: Fn(&Self) -> bool,
 	{
 		if !limits.contains(&Limit::EdgeRemove)
-			&& !limits.contains(&Limit::EdgeMin(self.all_edges().count()))
+			&& !limits.contains(&Limit::EdgeMin(self.edge_count()))
 		{
 			result.extend(
 				self.all_edges()

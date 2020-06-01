@@ -4,7 +4,7 @@ use crate::mock_graph::{
 };
 use graphene::{
 	core::{
-		property::{AddEdge, DirectedGraph, RemoveEdge, UniqueGraph},
+		property::{AddEdge, DirectedGraph, EdgeCount, RemoveEdge, UniqueGraph},
 		Directedness, Edge, EnsureUnloaded, Graph, GraphDeref, GraphDerefMut, ReleaseUnloaded,
 	},
 	impl_ensurer,
@@ -76,7 +76,7 @@ impl<D: Directedness> GuidedArbGraph for ArbUniqueGraph<D>
 					iter_rest = iter.clone()
 				}
 			}
-			if e_min == 1 && graph.all_edges().count() < 1
+			if e_min == 1 && graph.edge_count() < 1
 			{
 				graph
 					.add_edge_weighted(
@@ -163,7 +163,7 @@ impl<D: Directedness> Arbitrary for ArbNonUniqueGraph<D>
 		// Shrink by removing an edge.
 		// Can only remove an edge if there are more than 2 (must have at least 2 edges
 		// duplicating each other.
-		if self.0.all_edges().count() > 2
+		if self.0.edge_count() > 2
 		{
 			for e in self.0.all_edges()
 			{

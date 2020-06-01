@@ -1,7 +1,7 @@
 use crate::{
 	common::AdjListGraph,
 	core::{
-		property::{AddEdge, NewVertex, RemoveEdge, RemoveVertex, VertexCount},
+		property::{AddEdge, EdgeCount, NewVertex, RemoveEdge, RemoveVertex, VertexCount},
 		Directedness, Graph, GraphMut,
 	},
 };
@@ -190,6 +190,20 @@ where
 	fn vertex_count(&self) -> Self::Count
 	{
 		self.vertices.len()
+	}
+}
+
+impl<Vw, Ew, D> EdgeCount for AdjListGraph<Vw, Ew, D>
+where
+	D: Directedness,
+{
+	type Count = usize;
+
+	fn edge_count(&self) -> Self::Count
+	{
+		self.vertices
+			.iter()
+			.fold(0, |count, (_, edges)| count + edges.len())
 	}
 }
 

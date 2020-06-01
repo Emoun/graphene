@@ -167,14 +167,9 @@ impl<C: Ensure> RemoveEdge for EdgeProxyGraph<C>
 		else
 		{
 			// If no new vertex is valid, look through the existing ones.
-			let to_remove = self.all_edges().map(|e| (e.source(), e.sink())).find(|e| {
-				(e.source() == *source && e.sink() == *sink)
-					|| !Self::Directedness::directed()
-						&& (e.source() == *sink && e.sink() == *source)
-			});
-			if let Some(e) = to_remove
+			if let Some(_) = self.graph.graph().edges_between(source, sink).next()
 			{
-				self.removed.push((e.source(), e.sink()));
+				self.removed.push((*source, *sink));
 				Ok(())
 			}
 			else

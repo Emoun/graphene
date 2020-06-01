@@ -139,7 +139,6 @@ pub trait Graph
 	) -> Box<dyn 'a + Iterator<Item = (Self::Vertex, Self::Vertex, &'a Self::EdgeWeight)>>;
 
 	// Optional methods
-
 	fn all_vertices<'a>(&'a self) -> Box<dyn 'a + Iterator<Item = Self::Vertex>>
 	{
 		Box::new(self.all_vertices_weighted().map(|(v, _)| v))
@@ -206,7 +205,8 @@ pub trait Graph
 		edges_incident_on!(self.all_edges(), v)
 	}
 
-	/// Returns any vertices connected to the given one with an edge regardless of direction.
+	/// Returns any vertices connected to the given one with an edge regardless
+	/// of direction.
 	fn vertex_neighbors<'a>(
 		&'a self,
 		v: &'a Self::Vertex,
@@ -218,7 +218,8 @@ pub trait Graph
 		)
 	}
 
-	/// Returns whether the two vertices are connected by an edge in any direction.
+	/// Returns whether the two vertices are connected by an edge in any
+	/// direction.
 	fn neighbors(&self, v1: &Self::Vertex, v2: &Self::Vertex) -> bool
 	{
 		self.edges_between(v1, v2).next().is_some()

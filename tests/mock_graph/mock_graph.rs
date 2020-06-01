@@ -2,7 +2,7 @@ use crate::mock_graph::{MockEdgeWeight, MockVertex, MockVertexWeight};
 use graphene::{
 	base_graph,
 	core::{
-		property::{AddEdge, NewVertex, RemoveEdge, RemoveVertex},
+		property::{AddEdge, EdgeCount, NewVertex, RemoveEdge, RemoveVertex, VertexCount},
 		Directedness, Edge, Graph, GraphMut,
 	},
 };
@@ -121,11 +121,24 @@ impl<D: Directedness> MockGraph<D>
 		{
 			let new_v = self.new_vertex_weighted(w.clone()).unwrap();
 			v_map.insert(v, new_v);
-		}
-		for (so, si, w) in other.all_edges()
-		{
-			self.add_edge_weighted(&v_map[&so], &v_map[&si], w.clone())
-				.unwrap();
+
+			// Insert all edge to/from the finished vertices
+			for (v_done, new_v_done) in v_map.iter()
+			{
+				for e_w in other.edges_between(&v, v_done)
+				{
+					self.add_edge_weighted(&new_v, new_v_done, e_w.clone())
+						.unwrap();
+				}
+				if D::directed() && *v_done != v
+				{
+					for e_w in other.edges_between(v_done, &v)
+					{
+						self.add_edge_weighted(new_v_done, &new_v, e_w.clone())
+							.unwrap();
+					}
+				}
+			}
 		}
 
 		v_map
@@ -296,6 +309,26 @@ impl<D: Directedness> RemoveEdge for MockGraph<D>
 		{
 			Err(())
 		}
+	}
+}
+
+impl<D: Directedness> VertexCount for MockGraph<D>
+{
+	type Count = usize;
+
+	fn vertex_count(&self) -> Self::Count
+	{
+		self.vertices.len()
+	}
+}
+
+impl<D: Directedness> EdgeCount for MockGraph<D>
+{
+	type Count = usize;
+
+	fn edge_count(&self) -> Self::Count
+	{
+		self.edges.len()
 	}
 }
 
