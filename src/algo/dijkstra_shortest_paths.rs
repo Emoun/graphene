@@ -37,27 +37,29 @@ where
 	{
 		self.visited.push(v);
 		let visited = &self.visited;
-		let edges = self.graph.edges_sourced_in(&v)
-			// Remove any edge to a visited vertex
-			.filter(|(sink, _)| !visited.contains(&sink));
-
-		for (sink, weight) in edges
 		{
-			let new_weight = w + (self.get_weight)(weight);
-			if let Some((old_weight, old_edge)) = self
-				.queue
-				.iter_mut()
-				.find(|(_, (_, vert, _))| *vert == sink)
+			let edges = self.graph.edges_sourced_in(&v)
+				// Remove any edge to a visited vertex
+				.filter(|(sink, _)| !visited.contains(&sink));
+
+			for (sink, weight) in edges
 			{
-				if *old_weight > new_weight
+				let new_weight = w + (self.get_weight)(weight);
+				if let Some((old_weight, old_edge)) = self
+					.queue
+					.iter_mut()
+					.find(|(_, (_, vert, _))| *vert == sink)
 				{
-					*old_weight = new_weight;
-					*old_edge = (v, sink, weight);
+					if *old_weight > new_weight
+					{
+						*old_weight = new_weight;
+						*old_edge = (v, sink, weight);
+					}
 				}
-			}
-			else
-			{
-				self.queue.push((new_weight, (v, sink, weight)));
+				else
+				{
+					self.queue.push((new_weight, (v, sink, weight)));
+				}
 			}
 		}
 		self.queue.sort_by(|(w1, _), (w2, _)| w2.cmp(w1));

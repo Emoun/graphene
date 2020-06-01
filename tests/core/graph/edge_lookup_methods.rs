@@ -19,7 +19,7 @@ use graphene::core::{property::HasVertex, Directed, Edge, Graph, GraphMut, Undir
 			module							method				method_mut;
 			[edges_sourced_in_undirected]	[edges_sourced_in]	[edges_sourced_in_mut];
 			[edges_sinked_in_undirected]	[edges_sinked_in]	[edges_sinked_in_mut];
-			[edges_incident_undirected]	[edges_incident_on]	[edges_incident_on_mut];
+			[edges_incident_undirected]		[edges_incident_on]	[edges_incident_on_mut];
 		][
 			[module]	[method]	[method_mut]	[e.source() == v || e.sink() == v]	[ Undirected ];
 		]
