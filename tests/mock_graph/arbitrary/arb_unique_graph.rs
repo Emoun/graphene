@@ -165,7 +165,7 @@ impl<D: Directedness> Arbitrary for ArbNonUniqueGraph<D>
 		// duplicating each other.
 		if self.0.edge_count() > 2
 		{
-			for e in self.0.all_edges()
+			for e in self.0.edges()
 			{
 				// Add to the result a copy of the graph
 				// without the edge

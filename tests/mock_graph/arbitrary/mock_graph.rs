@@ -109,7 +109,7 @@ impl<D: Directedness> GuidedArbGraph for MockGraph<D>
             });
 
 		// Shrink by shrinking edge weight
-		self.all_edges().for_each(|(source, sink, ref weight)| {
+		self.edges().for_each(|(source, sink, ref weight)| {
 			let shrunk_weights = weight.shrink();
 
 			shrunk_weights.for_each(|s_w| {
@@ -125,7 +125,7 @@ impl<D: Directedness> GuidedArbGraph for MockGraph<D>
 		// Shrink by removing an edge
 		if limits.iter().all(|l| l != &Limit::EdgeRemove)
 		{
-			for e in self.all_edges()
+			for e in self.edges()
 			{
 				// Add to the result a copy of the graph
 				// without the edge
@@ -222,7 +222,7 @@ impl<D: Directedness> MockGraph<D>
 			&& !limits.contains(&Limit::EdgeMin(self.edge_count()))
 		{
 			result.extend(
-				self.all_edges()
+				self.edges()
 					.map(|e| {
 						let mut g = self.clone();
 						g.remove_edge_where_weight(&e.source(), &e.sink(), |w| w == e.weight())

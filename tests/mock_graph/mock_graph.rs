@@ -143,6 +143,13 @@ impl<D: Directedness> MockGraph<D>
 
 		v_map
 	}
+
+	pub fn edges(&self) -> impl Iterator<Item = (MockVertex, MockVertex, &MockEdgeWeight)>
+	{
+		self.edges
+			.iter()
+			.map(|(so, si, w)| (MockVertex { value: *so }, MockVertex { value: *si }, w))
+	}
 }
 
 impl<D: Directedness> Debug for MockGraph<D>
