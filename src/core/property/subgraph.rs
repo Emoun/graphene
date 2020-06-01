@@ -20,7 +20,7 @@ pub trait Subgraph: Graph
 		// Check whether they share any vertex
 		for v in other.all_vertices()
 		{
-			if self.contains_vertex(v)
+			if self.contains_vertex(&v)
 			{
 				return Some((v, v));
 			}

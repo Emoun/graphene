@@ -54,9 +54,9 @@ fn same_vertex_weight(mock: MockGraph<MockDirectedness>) -> bool
 	unordered_equivalent_lists_equal(
 		&mock
 			.all_vertices()
-			.map(|v| (v_map[&v], mock.vertex_weight(v)))
+			.map(|v| (v_map[&v], mock.vertex_weight(&v)))
 			.collect(),
-		&g.all_vertices().map(|v| (v, g.vertex_weight(v))).collect(),
+		&g.all_vertices().map(|v| (v, g.vertex_weight(&v))).collect(),
 	)
 }
 
@@ -68,7 +68,7 @@ fn same_vertex_weight_mut(mock: ArbVertexIn<MockGraph<MockDirectedness>>) -> boo
 	let v = mock.get_vertex();
 	let (mut g, v_map) = adj_list_from_mock(&mock.release_all());
 
-	g.vertex_weight(v_map[&v]).map(|w| w as *const _)
+	g.vertex_weight(&v_map[&v]).map(|w| w as *const _)
 		== g.vertex_weight_mut(v_map[&v]).map(|w| w as *const _)
 }
 
@@ -125,10 +125,10 @@ mod module
 			) &&
 
 			// Check that one less vertex has the same weight as the one removed
-			( g.all_vertex_weights()
-				.filter(|&w| w == mock.vertex_weight(v_remove).unwrap()).count() ==
-				(mock.all_vertex_weights()
-					.filter(|&w| w == mock.vertex_weight(v_remove).unwrap()).count() - 1)
+			( g.all_vertices_weighted()
+				.filter(|(_,w)| *w == mock.vertex_weight(&v_remove).unwrap()).count() ==
+				(mock.all_vertices_weighted()
+					.filter(|(_,w)| *w == mock.vertex_weight(&v_remove).unwrap()).count() - 1)
 			)
 
 			// TODO: Test that the right edges were removed?

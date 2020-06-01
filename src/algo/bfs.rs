@@ -50,7 +50,7 @@ use std::collections::VecDeque;
 /// let mut dfs = Bfs::new(&graph);
 ///
 /// // We search for the first vertex with weight == 2.
-/// let found_vertex = dfs.find(|&v| graph.vertex_weight(v).unwrap() == &2).unwrap();
+/// let found_vertex = dfs.find(|&v| graph.vertex_weight(&v).unwrap() == &2).unwrap();
 /// assert_eq!(v2, found_vertex)
 /// ```
 ///

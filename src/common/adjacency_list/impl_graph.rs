@@ -147,7 +147,7 @@ where
 	where
 		F: Fn(&Self::EdgeWeight) -> bool,
 	{
-		if self.contains_vertex(*source) && self.contains_vertex(*sink)
+		if self.contains_vertex(source) && self.contains_vertex(sink)
 		{
 			let found = self
 				.vertices

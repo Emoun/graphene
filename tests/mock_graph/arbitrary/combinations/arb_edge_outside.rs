@@ -29,7 +29,7 @@ where
 		result.extend(
 			self.0
 				.shrink()
-				.filter(|g| !g.contains_vertex(self.1) || !g.contains_vertex(self.2))
+				.filter(|g| !g.contains_vertex(&self.1) || !g.contains_vertex(&self.2))
 				.map(|g| Self(g, self.1, self.2)),
 		);
 
@@ -37,13 +37,13 @@ where
 		result.extend(
 			self.1
 				.shrink()
-				.filter(|v| !self.0.contains_vertex(*v) || !self.0.contains_vertex(self.2))
+				.filter(|v| !self.0.contains_vertex(v) || !self.0.contains_vertex(&self.2))
 				.map(|v| Self(self.0.clone(), v, self.2)),
 		);
 		result.extend(
 			self.2
 				.shrink()
-				.filter(|v| !self.0.contains_vertex(self.1) || !self.0.contains_vertex(*v))
+				.filter(|v| !self.0.contains_vertex(&self.1) || !self.0.contains_vertex(v))
 				.map(|v| Self(self.0.clone(), self.1, v)),
 		);
 		Box::new(result.into_iter())

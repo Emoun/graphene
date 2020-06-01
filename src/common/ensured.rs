@@ -18,7 +18,7 @@ impl<G: Ensure> EnsuredGraph<G>
 {
 	pub fn contains_vertex(self, v: <G::Graph as Graph>::Vertex) -> Option<VertexInGraph<G>>
 	{
-		if self.0.graph().contains_vertex(v)
+		if self.0.graph().contains_vertex(&v)
 		{
 			Some(VertexInGraph::ensure_unvalidated(self.0, v))
 		}

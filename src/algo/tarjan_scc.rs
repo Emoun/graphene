@@ -114,10 +114,10 @@ use std::cmp::min;
 /// let tarj_scc1 = tarj.next().unwrap();
 /// let tarj_scc2 = tarj.next().unwrap();
 /// assert!(tarj.next().is_none());
-/// assert!(tarj_scc1.contains_vertex(v2) &&
-/// 		tarj_scc1.contains_vertex(v3));
-/// assert!(tarj_scc2.contains_vertex(v0) &&
-/// 		tarj_scc2.contains_vertex(v1));
+/// assert!(tarj_scc1.contains_vertex(&v2) &&
+/// 		tarj_scc1.contains_vertex(&v3));
+/// assert!(tarj_scc2.contains_vertex(&v0) &&
+/// 		tarj_scc2.contains_vertex(&v1));
 /// assert!(tarj_scc2.reaches(&tarj_scc1).is_some());
 /// ```
 ///

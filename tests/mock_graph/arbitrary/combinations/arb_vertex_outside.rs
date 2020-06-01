@@ -33,7 +33,7 @@ where
 		result.extend(
 			self.0
 				.shrink()
-				.filter(|g| !g.contains_vertex(self.1))
+				.filter(|g| !g.contains_vertex(&self.1))
 				.map(|g| ArbVertexOutside(g, self.1)),
 		);
 
@@ -42,7 +42,7 @@ where
 		result.extend(
 			self.1
 				.shrink()
-				.filter(|&v| self.0.contains_vertex(v))
+				.filter(|&v| self.0.contains_vertex(&v))
 				.map(|v| ArbVertexOutside(self.0.clone(), v)),
 		);
 

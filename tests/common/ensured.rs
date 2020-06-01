@@ -27,7 +27,7 @@ fn contains_vertex(graph: MockGraph<Directed>, v: MockVertex) -> bool
 {
 	let graph_clone = graph.clone();
 
-	let expected = graph.contains_vertex(v);
+	let expected = graph.contains_vertex(&v);
 	let result = graph_clone.ensured().contains_vertex(v);
 	let result_is_some = result.is_some();
 	let result_v = result.map_or(v, |graph| graph.get_vertex());

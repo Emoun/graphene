@@ -82,7 +82,7 @@ fn produces_only_valid_vertices(graph: ArbVertexIn<MockGraph<Directed>>) -> bool
 	{
 		for v in scc.all_vertices()
 		{
-			if !graph.contains_vertex(v)
+			if !graph.contains_vertex(&v)
 			{
 				return false;
 			}
@@ -104,7 +104,7 @@ fn produces_vertex_disjoint_components(graph: ArbVertexIn<MockGraph<Directed>>) 
 		{
 			for v in scc.all_vertices()
 			{
-				if scc2.contains_vertex(v)
+				if scc2.contains_vertex(&v)
 				{
 					return false;
 				}

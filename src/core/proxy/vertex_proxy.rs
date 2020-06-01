@@ -94,7 +94,7 @@ impl<C: Ensure> RemoveVertex for VertexProxyGraph<C>
 {
 	fn remove_vertex(&mut self, v: &Self::Vertex) -> Result<Self::VertexWeight, ()>
 	{
-		if self.contains_vertex(*v)
+		if self.contains_vertex(v)
 		{
 			match v
 			{

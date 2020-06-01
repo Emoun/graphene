@@ -144,19 +144,15 @@ pub trait Graph
 	{
 		Box::new(self.all_vertices_weighted().map(|(v, _)| v))
 	}
-	fn vertex_weight(&self, v: Self::Vertex) -> Option<&Self::VertexWeight>
+	fn vertex_weight(&self, v: &Self::Vertex) -> Option<&Self::VertexWeight>
 	{
 		self.all_vertices_weighted()
-			.find(|&(candidate, _)| candidate == v)
+			.find(|&(candidate, _)| candidate == *v)
 			.map(|(_, w)| w)
 	}
-	fn contains_vertex(&self, v: Self::Vertex) -> bool
+	fn contains_vertex(&self, v: &Self::Vertex) -> bool
 	{
 		self.vertex_weight(v).is_some()
-	}
-	fn all_vertex_weights<'a>(&'a self) -> Box<dyn 'a + Iterator<Item = &'a Self::VertexWeight>>
-	{
-		Box::new(self.all_vertices_weighted().map(|(_, w)| w))
 	}
 
 	/// Returns the weights of all edges that are sourced in v1 and sinked in
@@ -210,13 +206,7 @@ pub trait Graph
 		edges_incident_on!(self.all_edges(), v)
 	}
 
-	fn edge_valid<E>(&self, e: E) -> bool
-	where
-		E: Edge<Self::Vertex>,
-	{
-		self.contains_vertex(e.source()) && self.contains_vertex(e.sink())
-	}
-
+	/// Returns any vertices connected to the given one with an edge regardless of direction.
 	fn vertex_neighbors<'a>(
 		&'a self,
 		v: &'a Self::Vertex,
@@ -228,6 +218,7 @@ pub trait Graph
 		)
 	}
 
+	/// Returns whether the two vertices are connected by an edge in any direction.
 	fn neighbors(&self, v1: &Self::Vertex, v2: &Self::Vertex) -> bool
 	{
 		self.edges_between(v1, v2).next().is_some()

@@ -47,7 +47,7 @@ use crate::core::{property::HasVertex, Graph};
 /// let mut dfs = Dfs::new_simple(&graph);
 ///
 /// // We search for the first vertex with weight == 1.
-/// let found_vertex = dfs.find(|&v| graph.vertex_weight(v).unwrap() == &1).unwrap();
+/// let found_vertex = dfs.find(|&v| graph.vertex_weight(&v).unwrap() == &1).unwrap();
 /// assert_eq!(v1, found_vertex)
 /// ```
 ///

@@ -93,7 +93,7 @@ impl<C: Ensure> VertexInGraph<C>
 {
 	pub fn new(graph: C, v: <C::Graph as Graph>::Vertex) -> Option<Self>
 	{
-		if graph.graph().contains_vertex(v)
+		if graph.graph().contains_vertex(&v)
 		{
 			Some(Self(graph, v))
 		}
@@ -118,7 +118,7 @@ impl<C: Ensure> Ensure for VertexInGraph<C>
 
 	fn validate(c: &Self::Ensured, p: &<C::Graph as Graph>::Vertex) -> bool
 	{
-		c.graph().contains_vertex(*p)
+		c.graph().contains_vertex(p)
 	}
 }
 

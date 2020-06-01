@@ -72,7 +72,7 @@ where
 		{
 			panic!("Unique vertices aren't allowed: '{:?}', '{:?}'", v1, v2);
 		}
-		if !g.graph().contains_vertex(v2)
+		if !g.graph().contains_vertex(&v2)
 		{
 			panic!("Vertex not in graph: '{:?}'", v2);
 		}

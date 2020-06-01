@@ -130,7 +130,7 @@ impl<C: Ensure> AddEdge for EdgeProxyGraph<C>
 		_: Self::EdgeWeight,
 	) -> Result<(), ()>
 	{
-		if self.contains_vertex(*source) && self.contains_vertex(*sink)
+		if self.contains_vertex(source) && self.contains_vertex(sink)
 		{
 			self.new.push((*source, *sink));
 			Ok(())

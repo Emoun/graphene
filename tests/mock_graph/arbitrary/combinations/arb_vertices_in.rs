@@ -26,7 +26,7 @@ where
 	{
 		for &v in set.iter()
 		{
-			if !g.graph().contains_vertex(v)
+			if !g.graph().contains_vertex(&v)
 			{
 				panic!("Vertex not in graph: {:?}", v);
 			}

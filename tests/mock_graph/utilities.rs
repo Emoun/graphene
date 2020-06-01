@@ -120,7 +120,7 @@ where
 	for v in mock.all_vertices()
 	{
 		let new_v = g
-			.new_vertex_weighted(mock.vertex_weight(v).unwrap().clone())
+			.new_vertex_weighted(mock.vertex_weight(&v).unwrap().clone())
 			.unwrap();
 		vertex_map.insert(v, new_v);
 	}

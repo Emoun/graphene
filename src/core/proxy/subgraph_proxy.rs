@@ -31,7 +31,7 @@ impl<C: Ensure> SubgraphProxy<C>
 
 	pub fn expand(&mut self, v: <C::Graph as Graph>::Vertex) -> Result<(), ()>
 	{
-		if self.graph.graph().contains_vertex(v)
+		if self.graph.graph().contains_vertex(&v)
 		{
 			if !self.verts.contains(&v)
 			{
@@ -136,7 +136,7 @@ where
 		weight: Self::EdgeWeight,
 	) -> Result<(), ()>
 	{
-		if self.edge_valid((*source, *sink))
+		if self.contains_vertex(source) && self.contains_vertex(sink)
 		{
 			self.graph
 				.graph_mut()
@@ -193,7 +193,7 @@ where
 {
 	fn remove_vertex(&mut self, v: &Self::Vertex) -> Result<Self::VertexWeight, ()>
 	{
-		if self.contains_vertex(*v)
+		if self.contains_vertex(v)
 		{
 			let w = self.graph.graph_mut().remove_vertex(v)?;
 			let index = self
