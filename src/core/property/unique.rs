@@ -1,4 +1,4 @@
-use crate::core::{property::AddEdge, Directedness, Edge, Ensure, Graph, GraphDerefMut};
+use crate::core::{property::AddEdge, Directedness, Ensure, Graph, GraphDerefMut};
 
 /// A marker trait for graphs containing only unique edges.
 ///
@@ -45,20 +45,23 @@ impl<C: Ensure> Ensure for UniqueGraph<C>
 
 	fn validate(c: &Self::Ensured, _: &()) -> bool
 	{
-		let edges: Vec<_> = c.graph().all_edges().collect();
-		let mut iter = edges.iter();
-		while let Some(e) = iter.next()
+		let verts: Vec<_> = c.graph().all_vertices().collect();
+		let mut iter = verts.iter();
+		// Clone iter before every loop, so that loop-edges are also analyzed.
+		let mut iter_rest = iter.clone();
+
+		while let Some(v) = iter.next()
 		{
-			for e2 in iter.clone()
+			for v2 in iter_rest
 			{
-				if (e.source() == e2.source() && e.sink() == e2.sink())
-					|| (e.source() == e2.sink()
-						&& e.sink() == e2.source()
-						&& !<C::Graph as Graph>::Directedness::directed())
+				if c.graph().edges_between(&v, &v2).nth(1).is_some()
+					|| (<C::Graph as Graph>::Directedness::directed()
+						&& (v != v2) && c.graph().edges_between(&v2, &v).nth(1).is_some())
 				{
 					return false;
 				}
 			}
+			iter_rest = iter.clone();
 		}
 		true
 	}

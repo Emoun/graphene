@@ -6,7 +6,9 @@ use crate::mock_graph::{
 	MockGraph, MockVertex,
 };
 use duplicate::duplicate;
-use graphene::core::{property::HasVertex, Directed, Edge, Graph, GraphMut, Undirected};
+use graphene::core::{
+	property::HasVertex, Directed, Edge, Graph, GraphMut, ReleaseUnloaded, Undirected,
+};
 
 #[duplicate(
 	#[
@@ -73,8 +75,9 @@ mod module
 	fn returns_all_edges(g: arb_graph<base_graph>) -> bool
 	{
 		vertices_init;
-		let edges = g.0.method(vertices).collect();
-		let expected = g.0.all_edges().filter_map(closure).collect();
+		let g = g.release_all();
+		let edges = g.method(vertices).collect();
+		let expected = g.edges().filter_map(closure).collect();
 
 		unordered_equivalent_lists_equal(&edges, &expected)
 	}
