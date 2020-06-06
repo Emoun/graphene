@@ -54,9 +54,9 @@ impl<C: Ensure> Ensure for UniqueGraph<C>
 		{
 			for v2 in iter_rest
 			{
-				if c.graph().edges_between(&v, &v2).nth(1).is_some()
+				if c.graph().edges_between(v, v2).nth(1).is_some()
 					|| (<C::Graph as Graph>::Directedness::directed()
-						&& (v != v2) && c.graph().edges_between(&v2, &v).nth(1).is_some())
+						&& (v != v2) && c.graph().edges_between(v2, v).nth(1).is_some())
 				{
 					return false;
 				}

@@ -149,10 +149,10 @@ pub trait EdgeCount: Graph
 		{
 			for v2 in rest_iter
 			{
-				self.edges_between(&v, &v2).for_each(|_| inc());
+				self.edges_between(v, v2).for_each(|_| inc());
 				if Self::Directedness::directed()
 				{
-					self.edges_between(&v2, &v).for_each(|_| inc());
+					self.edges_between(v2, v).for_each(|_| inc());
 				}
 			}
 			rest_iter = iter.clone();
