@@ -1,45 +1,5 @@
 use crate::core::{trait_aliases::Id, Directedness, Edge};
-use std::iter::Iterator;
-
-#[macro_use]
-mod macros
-{
-	#[macro_export]
-	macro_rules! edges_incident_on {
-		($e:expr, $v:expr, $i1:ident, $i2:ident) => {
-			Box::new($e.into_iter().filter_map(move |e| {
-				if e.$i1() == *$v
-					{
-					Some((e.$i2(), e.2))
-					}
-				else if !Self::Directedness::directed() && e.$i2() == *$v
-					{
-					Some((e.$i1(), e.2))
-					}
-				else
-					{
-					None
-					}
-				}))
-		};
-		($e:expr, $v:expr) => {
-			Box::new($e.into_iter().filter_map(move |edge| {
-				if edge.source() == *$v
-					{
-					Some((edge.1, edge.2))
-					}
-				else if edge.sink() == *$v
-					{
-					Some((edge.0, edge.2))
-					}
-				else
-					{
-					None
-					}
-				}))
-		};
-	}
-}
+use std::{borrow::Borrow, iter::Iterator};
 
 /// The basic graph trait, providing vertex and edge inspection.
 ///
@@ -146,20 +106,23 @@ pub trait Graph
 	/// vertices I.e. all edges where e == (v1,v2,_) or e == (v2,v1,_)
 	fn edges_between<'a: 'b, 'b>(
 		&'a self,
-		source: &'b Self::Vertex,
-		sink: &'b Self::Vertex,
+		source: impl 'b + Borrow<Self::Vertex>,
+		sink: impl 'b + Borrow<Self::Vertex>,
 	) -> Box<dyn 'b + Iterator<Item = &'a Self::EdgeWeight>>
 	{
-		Box::new(self.edges_sourced_in(source).filter_map(move |(other, w)| {
-			if other == *sink
-			{
-				Some(w)
-			}
-			else
-			{
-				None
-			}
-		}))
+		// Filter out any edge that is not connected to both vertices
+		let relevant = self
+			.all_edges()
+			.filter(move |edge| {
+				(edge.source() == *source.borrow() && edge.sink() == *sink.borrow())
+					|| (!Self::Directedness::directed()
+						&& edge.source() == *sink.borrow()
+						&& edge.sink() == *source.borrow())
+			})
+			.map(|(_, _, w)| w);
+
+		// Return the result
+		Box::new(relevant)
 	}
 
 	/// Returns the sink and weight of any edge sourced in the given vertex.
@@ -169,10 +132,13 @@ pub trait Graph
 	/// `edges_incident_on`.
 	fn edges_sourced_in<'a: 'b, 'b>(
 		&'a self,
-		v: &'b Self::Vertex,
+		v: impl 'b + Borrow<Self::Vertex>,
 	) -> Box<dyn 'b + Iterator<Item = (Self::Vertex, &'a Self::EdgeWeight)>>
 	{
-		edges_incident_on!(self.all_edges(), v, source, sink)
+		Box::new(self.all_vertices().flat_map(move |v2| {
+			self.edges_between(v.borrow().clone(), v2.clone())
+				.map(move |w| (v2.clone(), w))
+		}))
 	}
 
 	/// Returns the source and weight of any edge sinked in the given vertex.
@@ -182,10 +148,13 @@ pub trait Graph
 	/// `edges_incident_on`.
 	fn edges_sinked_in<'a: 'b, 'b>(
 		&'a self,
-		v: &'b Self::Vertex,
+		v: impl 'b + Borrow<Self::Vertex>,
 	) -> Box<dyn 'b + Iterator<Item = (Self::Vertex, &'a Self::EdgeWeight)>>
 	{
-		edges_incident_on!(self.all_edges(), v, sink, source)
+		Box::new(self.all_vertices().flat_map(move |v2| {
+			self.edges_between(v2.clone(), v.borrow().clone())
+				.map(move |w| (v2.clone(), w))
+		}))
 	}
 
 	/// Returns the neighboring vertex and the weight of any edge incident
@@ -194,13 +163,13 @@ pub trait Graph
 	/// If the graph is directed, edge directions are ignored.
 	fn edges_incident_on<'a: 'b, 'b>(
 		&'a self,
-		v: &'b Self::Vertex,
+		v: impl 'b + Borrow<Self::Vertex>,
 	) -> Box<dyn 'b + Iterator<Item = (Self::Vertex, &'a Self::EdgeWeight)>>
 	{
 		Box::new(
-			self.edges_sourced_in(v).chain(
-				self.edges_sinked_in(v)
-					.filter(move |(v2, _)| Self::Directedness::directed() && v != v2),
+			self.edges_sourced_in(v.borrow().clone()).chain(
+				self.edges_sinked_in(v.borrow().clone())
+					.filter(move |(v2, _)| Self::Directedness::directed() && v.borrow() != v2),
 			),
 		)
 	}
@@ -254,59 +223,22 @@ pub trait GraphMut: Graph
 
 	fn edges_between_mut<'a: 'b, 'b>(
 		&'a mut self,
-		source: &'b Self::Vertex,
-		sink: &'b Self::Vertex,
+		source: impl 'b + Borrow<Self::Vertex>,
+		sink: impl 'b + Borrow<Self::Vertex>,
 	) -> Box<dyn 'b + Iterator<Item = &'a mut Self::EdgeWeight>>
 	{
-		Box::new(
-			self.edges_sourced_in_mut(source)
-				.filter_map(move |(other, w)| {
-					if other == *sink
-					{
-						Some(w)
-					}
-					else
-					{
-						None
-					}
-				}),
-		)
-	}
-	fn edges_sourced_in_mut<'a: 'b, 'b>(
-		&'a mut self,
-		v: &'b Self::Vertex,
-	) -> Box<dyn 'b + Iterator<Item = (Self::Vertex, &'a mut Self::EdgeWeight)>>
-	{
-		edges_incident_on!(self.all_edges_mut(), v, source, sink)
-	}
-	fn edges_sinked_in_mut<'a: 'b, 'b>(
-		&'a mut self,
-		v: &'b Self::Vertex,
-	) -> Box<dyn 'b + Iterator<Item = (Self::Vertex, &'a mut Self::EdgeWeight)>>
-	{
-		edges_incident_on!(self.all_edges_mut(), v, sink, source)
-	}
-	fn edges_incident_on_mut<'a: 'b, 'b>(
-		&'a mut self,
-		v: &'b Self::Vertex,
-	) -> Box<dyn 'b + Iterator<Item = (Self::Vertex, &'a mut Self::EdgeWeight)>>
-	{
-		// Why safe:
-		// No mutation if the graph is happening below. Therefore, we basically have
-		// immutable references.
-		// If the first mutable borrow goes out of scope (self.edges_sourced_in_mut(v))
-		// then its because the iterator has gone out of scope, which means the
-		// (self_copy) borrow will also go out of scope. Therefore, we effectively only
-		// have one mutable borrow.
-		// Additionally, the way chain works (or I think works), self_copy is only
-		// used after edges_sourced_in_mut is finished, which means its mutable
-		// borrow is no longer used and we can use self_copy without a problem.
-		let self_p = self as *mut Self;
-		let self_copy = unsafe { self_p.as_mut().unwrap() };
-		Box::new(self.edges_sourced_in_mut(v).chain({
-			self_copy
-				.edges_sinked_in_mut(v)
-				.filter(move |(v2, _)| Self::Directedness::directed() && v != v2)
-		}))
+		// Filter out any edge that is not connected to both vertices
+		let relevant = self
+			.all_edges_mut()
+			.filter(move |edge| {
+				(edge.source() == *source.borrow() && edge.sink() == *sink.borrow())
+					|| (!Self::Directedness::directed()
+						&& edge.source() == *sink.borrow()
+						&& edge.sink() == *source.borrow())
+			})
+			.map(|(_, _, w)| w);
+
+		// Return the result
+		Box::new(relevant)
 	}
 }
