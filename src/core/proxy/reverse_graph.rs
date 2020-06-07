@@ -3,6 +3,7 @@ use crate::core::{
 	Directed, Edge, EdgeWeighted, Ensure, Graph, GraphDerefMut, GraphMut,
 };
 use delegate::delegate;
+use std::borrow::Borrow;
 
 #[derive(Debug)]
 pub struct ReverseGraph<C: Ensure>(C)
@@ -34,6 +35,15 @@ where
 			fn all_vertices_weighted<'a>(&'a self) -> Box<dyn 'a + Iterator<Item=
 				(Self::Vertex, &'a Self::VertexWeight)>>;
 		}
+	}
+
+	fn edges_between<'a: 'b, 'b>(
+		&'a self,
+		source: impl 'b + Borrow<Self::Vertex>,
+		sink: impl 'b + Borrow<Self::Vertex>,
+	) -> Box<dyn 'b + Iterator<Item = &'a Self::EdgeWeight>>
+	{
+		self.0.graph().edges_between(sink, source)
 	}
 
 	fn all_edges<'a>(

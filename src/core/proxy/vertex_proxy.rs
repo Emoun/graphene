@@ -3,6 +3,7 @@ use crate::core::{
 	trait_aliases::Id,
 	Ensure, Graph,
 };
+use std::borrow::Borrow;
 
 #[derive(Copy, Clone, PartialEq, Eq)]
 pub enum ProxyVertex<V: Id>
@@ -62,6 +63,46 @@ impl<C: Ensure> Graph for VertexProxyGraph<C>
 				.map(|v| (ProxyVertex::Underlying(v), &()))
 				.chain((0..self.new_count).map(|v| (ProxyVertex::New(v), &()))),
 		)
+	}
+
+	fn edges_between<'a: 'b, 'b>(
+		&'a self,
+		source: impl 'b + Borrow<Self::Vertex>,
+		sink: impl 'b + Borrow<Self::Vertex>,
+	) -> Box<dyn 'b + Iterator<Item = &'a Self::EdgeWeight>>
+	{
+		struct EdgesBetween<'a, 'b, G>
+		where
+			'a: 'b,
+			G: Graph,
+		{
+			edges_between: Option<Box<dyn 'b + Iterator<Item = &'a G::EdgeWeight>>>,
+		}
+		impl<'a, 'b, G> Iterator for EdgesBetween<'a, 'b, G>
+		where
+			'a: 'b,
+			G: Graph,
+		{
+			type Item = &'a G::EdgeWeight;
+
+			fn next(&mut self) -> Option<Self::Item>
+			{
+				self.edges_between.as_mut()?.next()
+			}
+		}
+
+		let result = match (source.borrow(), sink.borrow())
+		{
+			(ProxyVertex::Underlying(so), ProxyVertex::Underlying(si))
+				if !(self.removed.contains(so) || self.removed.contains(si)) =>
+			{
+				Some(self.graph.graph().edges_between(so.clone(), si.clone()))
+			},
+			_ => None,
+		};
+		Box::new(EdgesBetween::<Self> {
+			edges_between: result,
+		})
 	}
 
 	fn all_edges<'a>(

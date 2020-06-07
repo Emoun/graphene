@@ -78,6 +78,17 @@ pub trait Graph
 	fn all_vertices_weighted<'a>(
 		&'a self,
 	) -> Box<dyn 'a + Iterator<Item = (Self::Vertex, &'a Self::VertexWeight)>>;
+	/// Returns the weights of all edges that are sourced in v1 and sinked in
+	/// v2. I.e. all edges where e == (v1,v2,_).
+	///
+	/// If the graph is undirected, returns all edges connecting the two
+	/// vertices I.e. all edges where e == (v1,v2,_) or e == (v2,v1,_)
+	fn edges_between<'a: 'b, 'b>(
+		&'a self,
+		source: impl 'b + Borrow<Self::Vertex>,
+		sink: impl 'b + Borrow<Self::Vertex>,
+	) -> Box<dyn 'b + Iterator<Item = &'a Self::EdgeWeight>>;
+
 	/// Returns copies of all current edges in the graph.
 	fn all_edges<'a>(
 		&'a self,
@@ -97,32 +108,6 @@ pub trait Graph
 	fn contains_vertex(&self, v: &Self::Vertex) -> bool
 	{
 		self.vertex_weight(v).is_some()
-	}
-
-	/// Returns the weights of all edges that are sourced in v1 and sinked in
-	/// v2. I.e. all edges where e == (v1,v2,_).
-	///
-	/// If the graph is undirected, returns all edges connecting the two
-	/// vertices I.e. all edges where e == (v1,v2,_) or e == (v2,v1,_)
-	fn edges_between<'a: 'b, 'b>(
-		&'a self,
-		source: impl 'b + Borrow<Self::Vertex>,
-		sink: impl 'b + Borrow<Self::Vertex>,
-	) -> Box<dyn 'b + Iterator<Item = &'a Self::EdgeWeight>>
-	{
-		// Filter out any edge that is not connected to both vertices
-		let relevant = self
-			.all_edges()
-			.filter(move |edge| {
-				(edge.source() == *source.borrow() && edge.sink() == *sink.borrow())
-					|| (!Self::Directedness::directed()
-						&& edge.source() == *sink.borrow()
-						&& edge.sink() == *source.borrow())
-			})
-			.map(|(_, _, w)| w);
-
-		// Return the result
-		Box::new(relevant)
 	}
 
 	/// Returns the sink and weight of any edge sourced in the given vertex.

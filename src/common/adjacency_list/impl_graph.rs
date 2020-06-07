@@ -5,6 +5,7 @@ use crate::{
 		Directedness, Graph, GraphMut,
 	},
 };
+use std::borrow::Borrow;
 
 impl<Vw, Ew, D> Graph for AdjListGraph<Vw, Ew, D>
 where
@@ -20,6 +21,51 @@ where
 	) -> Box<dyn 'a + Iterator<Item = (Self::Vertex, &'a Self::VertexWeight)>>
 	{
 		Box::new(self.vertices.iter().enumerate().map(|(v, (w, _))| (v, w)))
+	}
+
+	fn edges_between<'a: 'b, 'b>(
+		&'a self,
+		source: impl 'b + Borrow<Self::Vertex>,
+		sink: impl 'b + Borrow<Self::Vertex>,
+	) -> Box<dyn 'b + Iterator<Item = &'a Self::EdgeWeight>>
+	{
+		let source = source.borrow().clone();
+		let sink = sink.borrow().clone();
+
+		Box::new(
+			self.vertices
+				.get(source)
+				.into_iter()
+				.flat_map(move |(_, edges)| {
+					edges.iter().filter_map(move |(si, w)| {
+						if *si == sink
+						{
+							Some(w)
+						}
+						else
+						{
+							None
+						}
+					})
+				})
+				.chain(
+					self.vertices
+						.get(sink)
+						.into_iter()
+						.flat_map(move |(_, edges)| {
+							edges.iter().filter_map(move |(si, w)| {
+								if !Self::Directedness::directed() && *si != sink && *si == source
+								{
+									Some(w)
+								}
+								else
+								{
+									None
+								}
+							})
+						}),
+				),
+		)
 	}
 
 	fn all_edges<'a>(

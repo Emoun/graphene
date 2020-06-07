@@ -3,6 +3,7 @@ use crate::core::{
 	Directedness, Edge, Ensure, Graph, GraphDerefMut, GraphMut,
 };
 use delegate::delegate;
+use std::borrow::Borrow;
 
 /// A wrapper around a graph, that allows for addition and removal
 /// of edges, without mutating the underlying graph.
@@ -58,6 +59,32 @@ impl<C: Ensure> Graph for EdgeProxyGraph<C>
 				&'a self,
 			) -> Box<dyn 'a + Iterator<Item = (Self::Vertex, &'a Self::VertexWeight)>>;
 		}
+	}
+
+	fn edges_between<'a: 'b, 'b>(
+		&'a self,
+		source: impl 'b + Borrow<Self::Vertex>,
+		sink: impl 'b + Borrow<Self::Vertex>,
+	) -> Box<dyn 'b + Iterator<Item = &'a Self::EdgeWeight>>
+	{
+		let applicable = |so, si| {
+			(source.borrow() == so && sink.borrow() == si)
+				|| (!Self::Directedness::directed()
+					&& (source.borrow() == si && sink.borrow() == so))
+		};
+		let removed_count = self
+			.removed
+			.iter()
+			.filter(|(so, si)| applicable(so, si))
+			.count();
+		let added_count = self
+			.new
+			.iter()
+			.filter(|(so, si)| applicable(so, si))
+			.count();
+		let underlying_count = self.graph.graph().edges_between(source, sink).count();
+
+		Box::new((0..(underlying_count - removed_count + added_count)).map(|_| &()))
 	}
 
 	fn all_edges<'a>(

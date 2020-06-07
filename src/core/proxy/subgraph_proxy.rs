@@ -2,6 +2,7 @@ use crate::core::{
 	property::{AddEdge, NewVertex, RemoveEdge, RemoveVertex, Subgraph},
 	Edge, Ensure, Graph, GraphDerefMut, GraphMut,
 };
+use std::borrow::Borrow;
 
 /// A subgraph of another graph.
 ///
@@ -76,6 +77,22 @@ impl<C: Ensure> Graph for SubgraphProxy<C>
 				.graph()
 				.all_vertices_weighted()
 				.filter(move |(v, _)| self.verts.contains(v)),
+		)
+	}
+
+	fn edges_between<'a: 'b, 'b>(
+		&'a self,
+		source: impl 'b + Borrow<Self::Vertex>,
+		sink: impl 'b + Borrow<Self::Vertex>,
+	) -> Box<dyn 'b + Iterator<Item = &'a Self::EdgeWeight>>
+	{
+		Box::new(
+			self.graph
+				.graph()
+				.edges_between(source.borrow().clone(), sink.borrow().clone())
+				.filter(move |_| {
+					self.verts.contains(source.borrow()) && self.verts.contains(sink.borrow())
+				}),
 		)
 	}
 

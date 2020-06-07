@@ -7,6 +7,7 @@ use graphene::{
 	},
 };
 use std::{
+	borrow::Borrow,
 	collections::HashMap,
 	fmt::{Debug, Error, Formatter},
 	marker::PhantomData,
@@ -194,6 +195,27 @@ impl<D: Directedness> Graph for MockGraph<D>
 				.iter()
 				.map(|(&v, w)| (MockVertex { value: v }, w)),
 		)
+	}
+
+	fn edges_between<'a: 'b, 'b>(
+		&'a self,
+		source: impl 'b + Borrow<Self::Vertex>,
+		sink: impl 'b + Borrow<Self::Vertex>,
+	) -> Box<dyn 'b + Iterator<Item = &'a Self::EdgeWeight>>
+	{
+		let source = source.borrow().value;
+		let sink = sink.borrow().value;
+		Box::new(self.edges.iter().filter_map(move |(so, si, w)| {
+			if (source == *so && sink == *si)
+				|| (!Self::Directedness::directed() && (source == *si && sink == *so))
+			{
+				Some(w)
+			}
+			else
+			{
+				None
+			}
+		}))
 	}
 
 	fn all_edges<'a>(

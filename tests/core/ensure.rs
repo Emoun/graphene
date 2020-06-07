@@ -4,6 +4,7 @@
 use crate::mock_graph::MockVertex;
 use delegate::delegate;
 use graphene::core::{Ensure, Graph, GraphDeref, GraphDerefMut, GraphMut, Release};
+use std::borrow::Borrow;
 /// A mock property that doesn't use mutability.
 ///
 /// Its requirement is that the graph has exactly 1 vertex with a weight
@@ -72,6 +73,12 @@ impl<C: Ensure> Graph for MockEnsurer<C>
 			fn all_vertices_weighted<'a>(
 				&'a self,
 			) -> Box<dyn 'a + Iterator<Item = (Self::Vertex, &'a Self::VertexWeight)>>;
+
+			fn edges_between<'a: 'b, 'b>(
+				&'a self,
+				source: impl 'b + Borrow<Self::Vertex>,
+				sink: impl 'b + Borrow<Self::Vertex>,
+			) -> Box<dyn 'b + Iterator<Item = &'a Self::EdgeWeight>>;
 
 			fn all_edges<'a>(
 				&'a self,
@@ -165,6 +172,12 @@ impl<C: Ensure> Graph for MockUnloadedEnsurer<C>
 			fn all_vertices_weighted<'a>(
 				&'a self,
 			) -> Box<dyn 'a + Iterator<Item = (Self::Vertex, &'a Self::VertexWeight)>>;
+
+			fn edges_between<'a: 'b, 'b>(
+				&'a self,
+				source: impl 'b + Borrow<Self::Vertex>,
+				sink: impl 'b + Borrow<Self::Vertex>,
+			) -> Box<dyn 'b + Iterator<Item = &'a Self::EdgeWeight>>;
 
 			fn all_edges<'a>(
 				&'a self,
