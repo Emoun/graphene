@@ -95,18 +95,6 @@ impl<C: Ensure> Graph for SubgraphProxy<C>
 				}),
 		)
 	}
-
-	fn all_edges<'a>(
-		&'a self,
-	) -> Box<dyn 'a + Iterator<Item = (Self::Vertex, Self::Vertex, &'a Self::EdgeWeight)>>
-	{
-		Box::new(
-			self.graph
-				.graph()
-				.all_edges()
-				.filter(move |(v1, v2, _)| self.verts.contains(v1) && self.verts.contains(v2)),
-		)
-	}
 }
 
 impl<C: Ensure + GraphDerefMut> GraphMut for SubgraphProxy<C>

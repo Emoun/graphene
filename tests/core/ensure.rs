@@ -79,10 +79,6 @@ impl<C: Ensure> Graph for MockEnsurer<C>
 				source: impl 'b + Borrow<Self::Vertex>,
 				sink: impl 'b + Borrow<Self::Vertex>,
 			) -> Box<dyn 'b + Iterator<Item = &'a Self::EdgeWeight>>;
-
-			fn all_edges<'a>(
-				&'a self,
-			) -> Box<dyn 'a + Iterator<Item = (Self::Vertex, Self::Vertex, &'a Self::EdgeWeight)>>;
 		}
 	}
 }
@@ -178,10 +174,6 @@ impl<C: Ensure> Graph for MockUnloadedEnsurer<C>
 				source: impl 'b + Borrow<Self::Vertex>,
 				sink: impl 'b + Borrow<Self::Vertex>,
 			) -> Box<dyn 'b + Iterator<Item = &'a Self::EdgeWeight>>;
-
-			fn all_edges<'a>(
-				&'a self,
-			) -> Box<dyn 'a + Iterator<Item = (Self::Vertex, Self::Vertex, &'a Self::EdgeWeight)>>;
 		}
 	}
 }

@@ -67,21 +67,6 @@ where
 				),
 		)
 	}
-
-	fn all_edges<'a>(
-		&'a self,
-	) -> Box<dyn 'a + Iterator<Item = (Self::Vertex, Self::Vertex, &'a Self::EdgeWeight)>>
-	{
-		Box::new(
-			self.vertices
-				.iter()
-				.enumerate()
-				.flat_map(|(source_id, (_, out))| {
-					out.iter()
-						.map(move |(sink_idx, e_weight)| (source_id, *sink_idx, e_weight))
-				}),
-		)
-	}
 }
 
 impl<Vw, Ew, D> GraphMut for AdjListGraph<Vw, Ew, D>

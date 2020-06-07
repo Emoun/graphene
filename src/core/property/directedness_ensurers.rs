@@ -31,10 +31,6 @@ impl<C: Ensure> Graph for DirectedGraph<C>
 				&'a self,
 			) -> Box<dyn 'a + Iterator<Item = (Self::Vertex, &'a Self::VertexWeight)>>;
 
-			fn all_edges<'a>(
-				&'a self,
-			) -> Box<dyn 'a + Iterator<Item = (Self::Vertex, Self::Vertex, &'a Self::EdgeWeight)>>;
-
 			fn edges_between<'a: 'b, 'b>(
 				&'a self,
 				source: impl 'b + Borrow<Self::Vertex>,
@@ -77,10 +73,6 @@ impl<C: Ensure> Graph for UndirectedGraph<C>
 			fn all_vertices_weighted<'a>(
 				&'a self,
 			) -> Box<dyn 'a + Iterator<Item = (Self::Vertex, &'a Self::VertexWeight)>>;
-
-			fn all_edges<'a>(
-				&'a self,
-			) -> Box<dyn 'a + Iterator<Item = (Self::Vertex, Self::Vertex, &'a Self::EdgeWeight)>>;
 
 			fn edges_between<'a: 'b, 'b>(
 				&'a self,

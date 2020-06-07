@@ -89,11 +89,6 @@ pub trait Graph
 		sink: impl 'b + Borrow<Self::Vertex>,
 	) -> Box<dyn 'b + Iterator<Item = &'a Self::EdgeWeight>>;
 
-	/// Returns copies of all current edges in the graph.
-	fn all_edges<'a>(
-		&'a self,
-	) -> Box<dyn 'a + Iterator<Item = (Self::Vertex, Self::Vertex, &'a Self::EdgeWeight)>>;
-
 	// Optional methods
 	fn all_vertices<'a>(&'a self) -> Box<dyn 'a + Iterator<Item = Self::Vertex>>
 	{

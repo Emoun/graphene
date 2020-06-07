@@ -217,17 +217,6 @@ impl<D: Directedness> Graph for MockGraph<D>
 			}
 		}))
 	}
-
-	fn all_edges<'a>(
-		&'a self,
-	) -> Box<dyn 'a + Iterator<Item = (Self::Vertex, Self::Vertex, &'a Self::EdgeWeight)>>
-	{
-		Box::new(
-			self.edges
-				.iter()
-				.map(|(so, si, w)| (MockVertex { value: *so }, MockVertex { value: *si }, w)),
-		)
-	}
 }
 
 impl<D: Directedness> GraphMut for MockGraph<D>

@@ -248,11 +248,6 @@ macro_rules! impl_properties {
 							&'a self,
 						) -> Box<dyn 'a + Iterator<Item = (Self::Vertex, &'a Self::VertexWeight)>>;
 
-						fn all_edges<'a>(
-							&'a self,
-						) -> Box<dyn 'a + Iterator<
-							Item = (Self::Vertex, Self::Vertex, &'a Self::EdgeWeight)>>;
-
 						fn edges_between<'a: 'b, 'b>(
 							&'a self,
 							source: impl 'b + std::borrow::Borrow<Self::Vertex>,

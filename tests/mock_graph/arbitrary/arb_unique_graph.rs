@@ -135,7 +135,7 @@ impl<D: Directedness> Arbitrary for ArbNonUniqueGraph<D>
 		let mut graph = ArbUniqueGraph::arbitrary_guided(g, .., 1..).0.release_all();
 
 		// Duplicate a arbitrary number of additional edges (at least 1)
-		let original_edges: Vec<_> = graph.all_edges().map(|e| (e.source(), e.sink())).collect();
+		let original_edges: Vec<_> = graph.edges().map(|e| (e.source(), e.sink())).collect();
 		let duplicate_count = g.gen_range(1, original_edges.len() + 1);
 		for _ in 0..duplicate_count
 		{

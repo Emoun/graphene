@@ -86,40 +86,6 @@ impl<C: Ensure> Graph for EdgeProxyGraph<C>
 
 		Box::new((0..(underlying_count - removed_count + added_count)).map(|_| &()))
 	}
-
-	fn all_edges<'a>(
-		&'a self,
-	) -> Box<dyn 'a + Iterator<Item = (Self::Vertex, Self::Vertex, &'a Self::EdgeWeight)>>
-	{
-		let underlying_edges = self.graph.graph().all_edges();
-		let mut rem_used = Vec::with_capacity(self.removed.len());
-		rem_used.extend(self.removed.iter().map(|_| false));
-		let removed = underlying_edges
-			.filter(move |e| {
-				if let Some((idx, _)) = self.removed.iter().enumerate().find(|(idx, rem)| {
-					!rem_used[*idx]
-						&& ((rem.source() == e.source() && rem.sink() == e.sink())
-							|| (!Self::Directedness::directed()
-								&& rem.source() == e.sink() && rem.sink() == e.source()))
-				})
-				{
-					rem_used[idx] = true;
-					false
-				}
-				else
-				{
-					true
-				}
-			})
-			.map(|e| (e.source(), e.sink(), &()));
-		Box::new(
-			self.new
-				.iter()
-				.cloned()
-				.map(|e| (e.source(), e.sink(), &()))
-				.chain(removed),
-		)
-	}
 }
 
 impl<C: Ensure + GraphDerefMut> GraphMut for EdgeProxyGraph<C>
@@ -138,13 +104,7 @@ where
 		&'a mut self,
 	) -> Box<dyn 'a + Iterator<Item = (Self::Vertex, Self::Vertex, &'a mut Self::EdgeWeight)>>
 	{
-		Box::new(self.all_edges().map(|(so, si, w)| {
-			(so, si, {
-				let pointer = w as *const ();
-				let pointer_mut = pointer as *mut ();
-				unsafe { &mut *pointer_mut }
-			})
-		}))
+		unimplemented!()
 	}
 }
 

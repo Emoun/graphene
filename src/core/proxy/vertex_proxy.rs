@@ -104,21 +104,6 @@ impl<C: Ensure> Graph for VertexProxyGraph<C>
 			edges_between: result,
 		})
 	}
-
-	fn all_edges<'a>(
-		&'a self,
-	) -> Box<dyn 'a + Iterator<Item = (Self::Vertex, Self::Vertex, &'a Self::EdgeWeight)>>
-	{
-		Box::new(
-			self.graph
-                .graph()
-                .all_edges()
-                // Remove any edges connected to a removed vertex
-                .filter(move |(so, si, _)| !self.removed.contains(so) && !self.removed.contains(si))
-                // Map vertices to ProxyVertices
-                .map(|(so, si, w)| (ProxyVertex::Underlying(so), ProxyVertex::Underlying(si), w)),
-		)
-	}
 }
 
 impl<C: Ensure> NewVertex for VertexProxyGraph<C>

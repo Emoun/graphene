@@ -45,18 +45,6 @@ where
 	{
 		self.0.graph().edges_between(sink, source)
 	}
-
-	fn all_edges<'a>(
-		&'a self,
-	) -> Box<dyn 'a + Iterator<Item = (Self::Vertex, Self::Vertex, &'a Self::EdgeWeight)>>
-	{
-		Box::new(
-			self.0
-				.graph()
-				.all_edges()
-				.map(|e| (e.sink(), e.source(), e.weight_owned())),
-		)
-	}
 }
 
 impl<C: Ensure + GraphDerefMut> GraphMut for ReverseGraph<C>
