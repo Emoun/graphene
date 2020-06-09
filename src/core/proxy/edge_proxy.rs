@@ -100,11 +100,17 @@ where
 		}
 	}
 
-	fn all_edges_mut<'a>(
+	fn edges_between_mut<'a: 'b, 'b>(
 		&'a mut self,
-	) -> Box<dyn 'a + Iterator<Item = (Self::Vertex, Self::Vertex, &'a mut Self::EdgeWeight)>>
+		source: impl 'b + Borrow<Self::Vertex>,
+		sink: impl 'b + Borrow<Self::Vertex>,
+	) -> Box<dyn 'b + Iterator<Item = &'a mut Self::EdgeWeight>>
 	{
-		unimplemented!()
+		// Safe because &mut () can't mutate anything
+		Box::new(
+			self.edges_between(source, sink)
+				.map(|w| unsafe { &mut *((w as *const ()) as *mut ()) }),
+		)
 	}
 }
 

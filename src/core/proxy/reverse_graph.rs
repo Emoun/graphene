@@ -1,6 +1,6 @@
 use crate::core::{
 	property::{AddEdge, RemoveEdge},
-	Directed, Edge, EdgeWeighted, Ensure, Graph, GraphDerefMut, GraphMut,
+	Directed, Ensure, Graph, GraphDerefMut, GraphMut,
 };
 use delegate::delegate;
 use std::borrow::Borrow;
@@ -58,16 +58,13 @@ where
 		}
 	}
 
-	fn all_edges_mut<'a>(
+	fn edges_between_mut<'a: 'b, 'b>(
 		&'a mut self,
-	) -> Box<dyn 'a + Iterator<Item = (Self::Vertex, Self::Vertex, &'a mut Self::EdgeWeight)>>
+		source: impl 'b + Borrow<Self::Vertex>,
+		sink: impl 'b + Borrow<Self::Vertex>,
+	) -> Box<dyn 'b + Iterator<Item = &'a mut Self::EdgeWeight>>
 	{
-		Box::new(
-			self.0
-				.graph_mut()
-				.all_edges_mut()
-				.map(|e| (e.sink(), e.source(), e.weight_owned())),
-		)
+		Box::new(self.0.graph_mut().edges_between_mut(sink, source))
 	}
 }
 

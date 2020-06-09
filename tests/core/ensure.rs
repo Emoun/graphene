@@ -92,9 +92,11 @@ where
 				&'a mut self,
 			) -> Box<dyn 'a + Iterator<Item = (Self::Vertex, &'a mut Self::VertexWeight)>>;
 
-			fn all_edges_mut<'a>(
+			fn edges_between_mut<'a: 'b, 'b>(
 				&'a mut self,
-			) -> Box<dyn 'a + Iterator<Item = (Self::Vertex, Self::Vertex, &'a mut Self::EdgeWeight)>>;
+				source: impl 'b + Borrow<Self::Vertex>,
+				sink: impl 'b + Borrow<Self::Vertex>,
+			) -> Box<dyn 'b + Iterator<Item = &'a mut Self::EdgeWeight>>;
 		}
 	}
 }
@@ -188,11 +190,13 @@ where
 		self.0.graph_mut().all_vertices_weighted_mut()
 	}
 
-	fn all_edges_mut<'a>(
+	fn edges_between_mut<'a: 'b, 'b>(
 		&'a mut self,
-	) -> Box<dyn 'a + Iterator<Item = (Self::Vertex, Self::Vertex, &'a mut Self::EdgeWeight)>>
+		source: impl 'b + Borrow<Self::Vertex>,
+		sink: impl 'b + Borrow<Self::Vertex>,
+	) -> Box<dyn 'b + Iterator<Item = &'a mut Self::EdgeWeight>>
 	{
-		self.0.graph_mut().all_edges_mut()
+		self.0.graph_mut().edges_between_mut(source, sink)
 	}
 }
 impl<C: Ensure> MockProperty for MockUnloadedEnsurer<C>

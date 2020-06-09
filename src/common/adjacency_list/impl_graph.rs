@@ -85,17 +85,51 @@ where
 		)
 	}
 
-	fn all_edges_mut<'a>(
+	fn edges_between_mut<'a: 'b, 'b>(
 		&'a mut self,
-	) -> Box<dyn 'a + Iterator<Item = (Self::Vertex, Self::Vertex, &'a mut Self::EdgeWeight)>>
+		source: impl 'b + Borrow<Self::Vertex>,
+		sink: impl 'b + Borrow<Self::Vertex>,
+	) -> Box<dyn 'b + Iterator<Item = &'a mut Self::EdgeWeight>>
 	{
+		let source = source.borrow().clone();
+		let sink = sink.borrow().clone();
+
 		Box::new(
 			self.vertices
 				.iter_mut()
 				.enumerate()
-				.flat_map(|(source_id, (_, out))| {
-					out.iter_mut()
-						.map(move |(sink_idx, e_weight)| (source_id, *sink_idx, e_weight))
+				.filter_map(move |(so, (_, edges))| {
+					if source == so
+					{
+						Some((false, edges))
+					}
+					else if !Self::Directedness::directed() && (so == sink)
+					{
+						Some((true, edges))
+					}
+					else
+					{
+						None
+					}
+				})
+				.flat_map(|(sink_first, edges)| {
+					edges
+						.iter_mut()
+						.map(move |(si, weight)| (sink_first, si, weight))
+				})
+				.filter_map(move |(sink_first, si, weight)| {
+					if sink_first
+					{
+						if source == *si
+						{
+							return Some(weight);
+						}
+					}
+					else if sink == *si
+					{
+						return Some(weight);
+					}
+					None
 				}),
 		)
 	}

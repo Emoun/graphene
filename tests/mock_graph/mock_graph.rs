@@ -232,15 +232,25 @@ impl<D: Directedness> GraphMut for MockGraph<D>
 		)
 	}
 
-	fn all_edges_mut<'a>(
+	fn edges_between_mut<'a: 'b, 'b>(
 		&'a mut self,
-	) -> Box<dyn 'a + Iterator<Item = (Self::Vertex, Self::Vertex, &'a mut Self::EdgeWeight)>>
+		source: impl 'b + Borrow<Self::Vertex>,
+		sink: impl 'b + Borrow<Self::Vertex>,
+	) -> Box<dyn 'b + Iterator<Item = &'a mut Self::EdgeWeight>>
 	{
-		Box::new(
-			self.edges
-				.iter_mut()
-				.map(|(so, si, w)| (MockVertex { value: *so }, MockVertex { value: *si }, w)),
-		)
+		let source = source.borrow().value;
+		let sink = sink.borrow().value;
+		Box::new(self.edges.iter_mut().filter_map(move |(so, si, w)| {
+			if (source == *so && sink == *si)
+				|| (!Self::Directedness::directed() && (source == *si && sink == *so))
+			{
+				Some(w)
+			}
+			else
+			{
+				None
+			}
+		}))
 	}
 }
 

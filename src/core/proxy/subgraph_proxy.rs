@@ -115,17 +115,18 @@ where
 		)
 	}
 
-	fn all_edges_mut<'a>(
+	fn edges_between_mut<'a: 'b, 'b>(
 		&'a mut self,
-	) -> Box<dyn 'a + Iterator<Item = (Self::Vertex, Self::Vertex, &'a mut Self::EdgeWeight)>>
+		source: impl 'b + Borrow<Self::Vertex>,
+		sink: impl 'b + Borrow<Self::Vertex>,
+	) -> Box<dyn 'b + Iterator<Item = &'a mut Self::EdgeWeight>>
 	{
-		let verts = &self.verts;
-		let graph = self.graph.graph_mut();
-
+		let return_any = self.verts.contains(source.borrow()) && self.verts.contains(sink.borrow());
 		Box::new(
-			graph
-				.all_edges_mut()
-				.filter(move |(v1, v2, _)| verts.contains(v1) && verts.contains(v2)),
+			self.graph
+				.graph_mut()
+				.edges_between_mut(source, sink)
+				.filter(move |_| return_any),
 		)
 	}
 }
