@@ -28,7 +28,7 @@ use graphene::core::{property::HasVertex, Directed, Edge, Graph, ReleaseUnloaded
 			module					[ module_nested ]
 			method 					[ method_nested ]
 			vertices				[ &v ]
-			vertices_init			[ let v = g.get_vertex() ]
+			vertices_init			[ let v = g.get_vertex().clone() ]
 			vertices_init_invalid 	[ let v = g.1 ]
 			closure 				[ |e| if closure_nested {Some((e.other(v),e.2))} else {None} ]
 			arb_graph 				[ ArbVertexIn ]

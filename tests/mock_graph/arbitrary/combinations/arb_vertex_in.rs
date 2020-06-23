@@ -67,8 +67,8 @@ where
 		Box::new(
 			ArbTwoVerticesIn::<_, NonUnique>::new(
 				self.0.clone().release(),
-				self.get_vertex(),
-				self.get_vertex(),
+				self.get_vertex().clone(),
+				self.get_vertex().clone(),
 			)
 			.shrink_guided(limits)
 			.map(|g| g.0),

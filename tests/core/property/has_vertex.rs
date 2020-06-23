@@ -55,7 +55,7 @@ mod module
 			g: ArbTwoVerticesIn<MockGraph<MockDirectedness>, Unique>,
 		) -> bool
 		{
-			let v = g.get_vertex();
+			let v = g.get_vertex().clone();
 			let mut g = HasVertexGraph::ensure(g.release_all()).unwrap();
 
 			g.remove_vertex(&v).is_ok()
@@ -100,7 +100,7 @@ mod module
 		#[quickcheck]
 		fn reject_remove_vertex(g: ArbVertexIn<MockGraph<directedness>>)
 		{
-			let v = g.get_vertex();
+			let v = g.get_vertex().clone();
 			let mut g = VertexInGraph::ensure_unvalidated(g, v);
 
 			assert!(g.remove_vertex(&v).is_err())

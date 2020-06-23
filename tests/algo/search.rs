@@ -8,7 +8,7 @@ use graphene::{
 	algo::{Bfs, Dfs, Spfs},
 	core::{
 		property::{AddEdge, HasVertex, VertexInGraph},
-		Directed, Ensure, Graph, GraphDeref, ReleaseUnloaded, Undirected,
+		Directed, Ensure, Graph, GraphDeref, Release, Undirected,
 	},
 };
 use std::collections::HashSet;
@@ -49,7 +49,7 @@ mod module
 			let mut visited = HashSet::new();
 
 			// Add the starting vertex to ensure it is not produced.
-			visited.insert(mock.get_vertex());
+			visited.insert(mock.get_vertex().clone());
 
 			let mut visited_once = true;
 			search_algo_new(mock.graph()).for_each(|v| {
@@ -69,8 +69,7 @@ mod module
 		) -> bool
 		{
 			// Our starting connected component
-			let v = g1.get_vertex();
-			let mut graph = g1.release_all();
+			let (mut graph, (v, _)) = g1.release_all();
 
 			// First join the two graphs
 			let v_map = graph.join(&g2);
@@ -96,8 +95,7 @@ mod module
 		weight: MockEdgeWeight,
 	) -> bool
 	{
-		let v = comp.get_vertex();
-		let mut graph = comp.release_all();
+		let (mut graph, (v, _)) = comp.release_all();
 
 		// First join the two graphs
 		let v_map = graph.join(&g2);
@@ -124,11 +122,8 @@ mod module
 		weight: MockEdgeWeight,
 	) -> bool
 	{
-		let v = comp1.get_vertex();
-		let mut graph = comp1.release_all();
-
-		let v2 = comp2.get_vertex();
-		let g2 = comp2.release_all();
+		let (mut graph, (v, _)) = comp1.release_all();
+		let (g2, (v2, _)) = comp2.release_all();
 
 		// First join the two graphs
 		let v_map = graph.join(&g2);

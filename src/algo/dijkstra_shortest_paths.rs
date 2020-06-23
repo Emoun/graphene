@@ -29,7 +29,7 @@ where
 			queue: Vec::new(),
 			get_weight,
 		};
-		dijk.visit(graph.get_vertex(), W::zero());
+		dijk.visit(graph.get_vertex().clone(), W::zero());
 		dijk
 	}
 

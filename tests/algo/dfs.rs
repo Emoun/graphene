@@ -28,7 +28,7 @@ mod module
 	{
 		// Ensure the starting vertex is on the stack, so that it is the last
 		// to run 'on_exit'
-		let stack: Cell<Vec<MockVertex>> = Cell::new(vec![mock.get_vertex()]);
+		let stack: Cell<Vec<MockVertex>> = Cell::new(vec![mock.get_vertex().clone()]);
 		let mut success = true;
 
 		fn on_exit<G>(

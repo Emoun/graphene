@@ -16,26 +16,45 @@ pub trait HasVertex: Graph
 	/// to ensure that "wrapping" ensurers don't accidentally use it, instead
 	/// of actively delegating to the inner class, who might have its own
 	/// implementation.
-	fn get_vertex(&self) -> Self::Vertex;
+	fn get_vertex(&self) -> &Self::Vertex;
 }
 
 /// Ensures the underlying graph has at least 1 vertex.
 ///
 /// Gives no guarantees on which vertex is returned by any given call to
 /// `get_vertex` if the the graph has multiple vertices.
-#[derive(Clone, Debug)]
-pub struct HasVertexGraph<C: Ensure>(C);
+#[derive(Clone)]
+pub struct HasVertexGraph<C: Ensure>(C, <C::Graph as Graph>::Vertex);
 
 impl<C: Ensure> Ensure for HasVertexGraph<C>
 {
 	fn ensure_unvalidated(c: Self::Ensured, _: ()) -> Self
 	{
-		Self(c)
+		let v = c
+			.graph()
+			.all_vertices()
+			.next()
+			.expect("Does not have a vertex.");
+		Self(c, v)
 	}
 
 	fn validate(c: &Self::Ensured, _: &()) -> bool
 	{
 		c.graph().all_vertices().next().is_some()
+	}
+}
+
+impl<C> Debug for HasVertexGraph<C>
+where
+	C: Ensure + Debug,
+	<C::Graph as Graph>::Vertex: Debug,
+{
+	fn fmt(&self, f: &mut Formatter<'_>) -> Result<(), Error>
+	{
+		f.debug_tuple("VertexInGraph")
+			.field(&self.0)
+			.field(&self.1)
+			.finish()
 	}
 }
 
@@ -47,7 +66,17 @@ where
 	{
 		if self.all_vertices().nth(1).is_some()
 		{
-			self.0.graph_mut().remove_vertex(v)
+			let weight = self.0.graph_mut().remove_vertex(v)?;
+			if *v == self.1
+			{
+				self.1 = self
+					.0
+					.graph()
+					.all_vertices()
+					.next()
+					.expect("Does not have a vertex.");
+			}
+			Ok(weight)
 		}
 		else
 		{
@@ -58,11 +87,9 @@ where
 
 impl<C: Ensure> HasVertex for HasVertexGraph<C>
 {
-	fn get_vertex(&self) -> Self::Vertex
+	fn get_vertex(&self) -> &Self::Vertex
 	{
-		self.all_vertices()
-			.next()
-			.expect("HasVertexGraph has no vertices.")
+		&self.1
 	}
 }
 
@@ -126,9 +153,9 @@ where
 
 impl<C: Ensure, V: Borrow<<C::Graph as Graph>::Vertex>> HasVertex for VertexInGraph<C, V>
 {
-	fn get_vertex(&self) -> Self::Vertex
+	fn get_vertex(&self) -> &Self::Vertex
 	{
-		self.1.borrow().clone()
+		self.1.borrow()
 	}
 }
 

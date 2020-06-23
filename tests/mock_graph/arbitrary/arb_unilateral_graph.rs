@@ -83,7 +83,7 @@ impl GuidedArbGraph for ArbUnilatralGraph
 			// For larger graphs, we start by making a unilateral graph with 1 less vertex
 			// and get an edge
 			let arb = ArbVertexIn::<Self>::arbitrary_guided(g, v_min - 1..v_min, e_min..e_max);
-			let v_original = arb.get_vertex();
+			let v_original = arb.get_vertex().clone();
 			graph = (arb.0).release().0.release();
 
 			// Add a new vertex to the graph
@@ -97,7 +97,7 @@ impl GuidedArbGraph for ArbUnilatralGraph
 				// To ensure unilateralism, take all outgoing edges from the original vertex
 				// and move them to the new one.
 				let outgoing_sinks = graph
-					.edges_sourced_in(&v_original)
+					.edges_sourced_in(v_original)
 					.map(|(v, _)| v)
 					.collect::<Vec<_>>();
 				for sink in outgoing_sinks
@@ -115,7 +115,7 @@ impl GuidedArbGraph for ArbUnilatralGraph
 				// To ensure unilateralism, take all the incoming edges from the original vertex
 				// and move them to the new one.
 				let sources = graph
-					.edges_sinked_in(&v_original)
+					.edges_sinked_in(v_original)
 					.map(|(v, _)| v)
 					.collect::<Vec<_>>();
 				for source in sources
@@ -263,8 +263,8 @@ impl GuidedArbGraph for ArbNonUnilatralGraph
 				e_min / 2..e_max / 2,
 			);
 
-			let v1 = g1.get_vertex();
-			let v2 = g2.get_vertex();
+			let v1 = g1.get_vertex().clone();
+			let v2 = g2.get_vertex().clone();
 			graph = g1.0.release().0.release();
 			let g2 = g2.0.release().0.release();
 

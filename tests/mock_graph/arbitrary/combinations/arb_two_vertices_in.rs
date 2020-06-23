@@ -85,7 +85,7 @@ where
 
 	pub fn get_both(&self) -> (MockVertex, MockVertex)
 	{
-		(self.0.get_vertex(), self.1)
+		(self.0.get_vertex().clone(), self.1)
 	}
 }
 
@@ -149,7 +149,7 @@ where
 		Box::new(
 			ArbVerticesIn::new(
 				(self.0.clone()).0.release(),
-				HashSet::from_iter([self.get_vertex(), self.1].iter().cloned()),
+				HashSet::from_iter([self.get_vertex().clone(), self.1].iter().cloned()),
 			)
 			.shrink_guided(limits)
 			.map(|g| {
@@ -190,7 +190,7 @@ where
 			}
 			else
 			{
-				verts.filter(|&v| v != c.get_vertex()).next().unwrap()
+				verts.filter(|v| v != c.get_vertex()).next().unwrap()
 			}
 		};
 		Self(c, v2, PhantomData)

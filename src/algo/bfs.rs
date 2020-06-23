@@ -99,7 +99,7 @@ where
 	where
 		G: HasVertex,
 	{
-		let v = graph.get_vertex();
+		let v = graph.get_vertex().clone();
 
 		let mut result = Self {
 			graph,

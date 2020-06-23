@@ -58,7 +58,7 @@ mod module
 	#[quickcheck]
 	fn same_vertex_weight_mut(mock: ArbVertexIn<MockGraph<directedness>>) -> bool
 	{
-		let v = mock.get_vertex();
+		let v = mock.get_vertex().clone();
 		let (mut g, v_map) = adj_list_from_mock(&mock.release_all());
 
 		g.vertex_weight(&v_map[&v]).map(|w| w as *const _)
@@ -109,7 +109,7 @@ mod module
 	#[quickcheck]
 	fn remove_vertex(mock: ArbVertexIn<MockGraph<directedness>>) -> bool
 	{
-		let v_remove = mock.get_vertex();
+		let v_remove = mock.get_vertex().clone();
 		let mock = mock.release_all();
 		let (mut g, v_map) = adj_list_from_mock(&mock);
 		let v_removed = v_map[&v_remove];
@@ -129,7 +129,7 @@ mod module
 			// on the vertex
 			( g.edge_count() ==
 				(mock.edge_count() -
-					mock.edges_incident_on(&v_remove).count())
+					mock.edges_incident_on(v_remove).count())
 			) &&
 
 			// Check that one less vertex has the same weight as the one removed

@@ -41,12 +41,12 @@ mod module
 		e_weight: MockEdgeWeight,
 	) -> bool
 	{
-		let v = g.get_vertex();
+		let v = g.get_vertex().clone();
 		// To ensure we add a non-duplicate edge,
 		// we create a new vertex and add an edge to it from an existing one.
 		let v2 = g.new_vertex_weighted(v_weight).unwrap();
 		let accepted = g.add_edge_weighted(&v, &v2, e_weight).is_ok();
-		accepted && g.edges_between(&v, &v2).count() == 1
+		accepted && g.edges_between(v, &v2).count() == 1
 	}
 
 	/// Tests that a UniqueGraph rejects adding a duplicate edge

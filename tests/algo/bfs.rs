@@ -109,7 +109,7 @@ mod module
 			{
 				current = p;
 			}
-			if current != root
+			if current != *root
 			{
 				return false;
 			}
@@ -132,7 +132,7 @@ fn predecessor_path_reaches_root(graph: ArbVertexIn<ArbConnectedGraph<Directed>>
 		{
 			current = p;
 		}
-		if current != root
+		if current != *root
 		{
 			return false;
 		}

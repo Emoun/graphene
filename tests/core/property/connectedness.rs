@@ -107,8 +107,8 @@ mod module
 		e_weight: MockEdgeWeight,
 	) -> bool
 	{
-		let v1 = g1.get_vertex();
-		let v2 = g2.get_vertex();
+		let v1 = g1.get_vertex().clone();
+		let v2 = g2.get_vertex().clone();
 		let mut graph = g1.release_all();
 		// We start by joining 2 connected graphs into a unconnected graph with the 2
 		// components

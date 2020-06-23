@@ -534,7 +534,7 @@ macro_rules! impl_properties {
 			@implement {
 				delegate::delegate! {
 					to $crate::core::GraphDeref::graph(&self$($delegate)+) {
-						fn get_vertex(&self) -> Self::Vertex;
+						fn get_vertex(&self) -> &Self::Vertex;
 					}
 				}
 			}
