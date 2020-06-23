@@ -77,7 +77,7 @@ where
 			panic!("Vertex not in graph: '{:?}'", v2);
 		}
 		Self(
-			ArbVertexIn(VertexInGraph::new(g, v1).unwrap()),
+			ArbVertexIn(VertexInGraph::ensure(g, v1).unwrap()),
 			v2,
 			PhantomData,
 		)

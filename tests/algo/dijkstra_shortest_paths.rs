@@ -8,7 +8,7 @@ use graphene::{
 	algo::DijkstraShortestPaths,
 	core::{
 		property::{AddEdge, HasVertex, VertexInGraph},
-		Directed, Graph, GraphDeref, ReleaseUnloaded, Undirected,
+		Directed, Ensure, Graph, GraphDeref, ReleaseUnloaded, Undirected,
 	},
 };
 use std::collections::HashSet;
@@ -55,7 +55,7 @@ mod module
 		let v_map = graph.join(&g2);
 
 		// Ensure that no visited vertex comes from outside the start component
-		DijkstraShortestPaths::new(&VertexInGraph::new_unvalidated(graph, v), |w| w.value)
+		DijkstraShortestPaths::new(&VertexInGraph::ensure_unvalidated(graph, v), |w| w.value)
 			.all(|(_, v, _)| v_map.values().all(|&new_v| v != new_v))
 	}
 
@@ -130,7 +130,7 @@ fn directed_doesnt_visit_incoming_component(
 	}
 
 	// Ensure that no visited vertex comes from outside the start component
-	DijkstraShortestPaths::new(&VertexInGraph::new_unvalidated(graph, v), |w| w.value)
+	DijkstraShortestPaths::new(&VertexInGraph::ensure_unvalidated(graph, v), |w| w.value)
 		.all(|(_, v, _)| v_map.values().all(|&new_v| v != new_v))
 }
 
@@ -165,6 +165,6 @@ fn directed_visits_outgoing_component(
 
 	// Ensure that all vertices are visited
 	let count = graph.all_vertices().count() - 1;
-	DijkstraShortestPaths::new(&VertexInGraph::new_unvalidated(graph, v), |w| w.value).count()
+	DijkstraShortestPaths::new(&VertexInGraph::ensure_unvalidated(graph, v), |w| w.value).count()
 		== count
 }

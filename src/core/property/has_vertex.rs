@@ -93,26 +93,6 @@ where
 	}
 }
 
-impl<C: Ensure, V: Borrow<<C::Graph as Graph>::Vertex>> VertexInGraph<C, V>
-{
-	pub fn new(graph: C, v: V) -> Option<Self>
-	{
-		if graph.graph().contains_vertex(v.borrow())
-		{
-			Some(Self(graph, v))
-		}
-		else
-		{
-			None
-		}
-	}
-
-	pub fn new_unvalidated(graph: C, v: V) -> Self
-	{
-		Self(graph, v)
-	}
-}
-
 impl<C: Ensure, V: Borrow<<C::Graph as Graph>::Vertex>> Ensure for VertexInGraph<C, V>
 {
 	fn ensure_unvalidated(c: Self::Ensured, v: V) -> Self
