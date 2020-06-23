@@ -1,6 +1,6 @@
 use crate::mock_graph::{
 	arbitrary::{ArbTwoVerticesIn, GuidedArbGraph, Limit, NonUnique},
-	TestGraph,
+	MockVertex, TestGraph,
 };
 use graphene::{
 	core::{
@@ -21,7 +21,7 @@ use std::{
 /// Note: All graphs will have at least 1 vertex, meaning this type never
 /// includes the empty graph.
 #[derive(Clone, Debug)]
-pub struct ArbVertexIn<G>(pub VertexInGraph<G>)
+pub struct ArbVertexIn<G>(pub VertexInGraph<G, MockVertex>)
 where
 	G: GuidedArbGraph,
 	G::Graph: TestGraph;
@@ -80,7 +80,7 @@ impl_ensurer! {
 	use<G> ArbVertexIn<G>:
 	// Can never impl the following because MockGraph doesn't
 	Reflexive
-	as ( self.0) : VertexInGraph<G>
+	as ( self.0) : VertexInGraph<G, MockVertex>
 	where
 	G: GuidedArbGraph,
 	G::Graph:  TestGraph

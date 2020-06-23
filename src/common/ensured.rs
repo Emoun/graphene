@@ -16,7 +16,10 @@ pub struct EnsuredGraph<G: Ensure>(G);
 
 impl<G: Ensure> EnsuredGraph<G>
 {
-	pub fn contains_vertex(self, v: <G::Graph as Graph>::Vertex) -> Option<VertexInGraph<G>>
+	pub fn contains_vertex(
+		self,
+		v: <G::Graph as Graph>::Vertex,
+	) -> Option<VertexInGraph<G, <G::Graph as Graph>::Vertex>>
 	{
 		if self.0.graph().contains_vertex(&v)
 		{
@@ -36,7 +39,7 @@ where
 	pub fn new_vertex_weighted(
 		mut self,
 		w: <G::Graph as Graph>::VertexWeight,
-	) -> Result<VertexInGraph<G>, ()>
+	) -> Result<VertexInGraph<G, <G::Graph as Graph>::Vertex>, ()>
 	where
 		<G::Graph as Graph>::VertexWeight: Default,
 	{
@@ -44,7 +47,7 @@ where
 		Ok(VertexInGraph::ensure_unvalidated(self.0, v))
 	}
 
-	pub fn new_vertex(self) -> Result<VertexInGraph<G>, ()>
+	pub fn new_vertex(self) -> Result<VertexInGraph<G, <G::Graph as Graph>::Vertex>, ()>
 	where
 		<G::Graph as Graph>::VertexWeight: Default,
 	{
