@@ -12,7 +12,7 @@ use crate::{
 use duplicate::duplicate;
 use graphene::core::{
 	property::{EdgeCount, HasVertex, RemoveEdge, RemoveVertex},
-	Directed, Edge, EdgeWeighted, Graph, GraphMut, ReleaseUnloaded, Undirected,
+	Directed, Edge, Graph, GraphMut, ReleaseUnloaded, Undirected,
 };
 
 #[duplicate(
@@ -152,7 +152,7 @@ mod module
 		let mapped_source = v_map[&edge.source()];
 		let mapped_sink = v_map[&edge.sink()];
 
-		if g.remove_edge_where_weight(&mapped_source, &mapped_sink, |w| w == edge.weight_ref())
+		if g.remove_edge_where_weight(&mapped_source, &mapped_sink, |w| *w == edge.2)
 			.is_ok()
 		{
 			// Ensure that one less edge matches our edge
