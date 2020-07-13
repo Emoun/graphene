@@ -7,11 +7,11 @@ use graphene::{
 use std::collections::HashSet;
 
 #[duplicate(
-	module			directedness;
-	[ directed ]	[ Directed ];
-	[ undirected ]	[ Undirected ]
+	directedness;
+	[ Directed ];
+	[ Undirected ]
 )]
-mod module
+mod __
 {
 	use super::*;
 

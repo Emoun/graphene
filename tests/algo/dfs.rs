@@ -13,11 +13,11 @@ use graphene::{
 use std::cell::Cell;
 
 #[duplicate(
-	module			directedness;
-	[ directed ]	[ Directed ];
-	[ undirected ]	[ Undirected ]
+	directedness;
+	[ Directed ];
+	[ Undirected ]
 )]
-mod module
+mod __
 {
 	use super::*;
 

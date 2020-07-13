@@ -32,11 +32,11 @@ mod module
 	use super::*;
 
 	#[duplicate(
-		module2			directedness;
-		[ directed ]	[ Directed ];
-		[ undirected ]	[ Undirected ]
+		directedness;
+		[ Directed ];
+		[ Undirected ]
 	)]
-	mod module2
+	mod __
 	{
 		use super::*;
 

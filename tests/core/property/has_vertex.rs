@@ -8,11 +8,11 @@ use graphene::core::{
 };
 
 #[duplicate(
-	module			directedness;
-	[ directed ]	[ Directed ];
-	[ undirected ]	[ Undirected ]
+	directedness;
+	[ Directed ];
+	[ Undirected ]
 )]
-mod module
+mod __
 {
 	use super::*;
 	mod non_null
