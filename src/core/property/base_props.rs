@@ -1,5 +1,6 @@
 use crate::core::{Directedness, Graph};
 use num_traits::{One, PrimInt, Unsigned, Zero};
+use std::borrow::Borrow;
 
 /// A graph where new vertices can be added.
 ///
@@ -149,10 +150,10 @@ pub trait EdgeCount: Graph
 		{
 			for v2 in rest_iter
 			{
-				self.edges_between(v, v2).for_each(|_| inc());
+				self.edges_between(v.borrow(), v2.borrow()).for_each(|_| inc());
 				if Self::Directedness::directed()
 				{
-					self.edges_between(v2, v).for_each(|_| inc());
+					self.edges_between(v2.borrow(), v.borrow()).for_each(|_| inc());
 				}
 			}
 			rest_iter = iter.clone();

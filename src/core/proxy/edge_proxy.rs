@@ -52,12 +52,13 @@ impl<C: Ensure> Graph for EdgeProxyGraph<C>
 	type EdgeWeight = ();
 	type Vertex = <C::Graph as Graph>::Vertex;
 	type VertexWeight = <C::Graph as Graph>::VertexWeight;
+	type VertexRef = <C::Graph as Graph>::VertexRef;
 
 	delegate! {
 		to self.graph.graph() {
 			fn all_vertices_weighted<'a>(
 				&'a self,
-			) -> Box<dyn 'a + Iterator<Item = (Self::Vertex, &'a Self::VertexWeight)>>;
+			) -> Box<dyn 'a + Iterator<Item = (Self::VertexRef, &'a Self::VertexWeight)>>;
 		}
 	}
 

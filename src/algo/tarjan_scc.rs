@@ -57,6 +57,7 @@ use crate::{
 	},
 };
 use std::cmp::min;
+use std::borrow::Borrow;
 
 /// Implements Tarjan's [Strongly Connected Components](https://mathworld.wolfram.com/StronglyConnectedComponent.html) Algorithm.
 ///
@@ -155,7 +156,7 @@ where
 
 	/// We use this to keep track of which vertices we have check for
 	/// whether they have been visited.
-	unchecked: Box<dyn 'a + Iterator<Item = G::Vertex>>,
+	unchecked: Box<dyn 'a + Iterator<Item = G::VertexRef>>,
 }
 
 impl<'a, G> TarjanScc<'a, G>
@@ -265,7 +266,7 @@ where
 			else
 			{
 				let dfs = &mut self.dfs;
-				if !self.unchecked.any(|v| dfs.continue_from(v))
+				if !self.unchecked.any(|v| dfs.continue_from(v.borrow().clone()))
 				{
 					return None;
 				}

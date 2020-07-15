@@ -74,10 +74,12 @@ pub trait Graph
 	/// are valid assignments. Using any other type is undefined behaviour.
 	type Directedness: Directedness;
 
+	type VertexRef: Clone + Borrow<Self::Vertex>;
+	
 	/// Returns copies of all current vertex values in the graph.
 	fn all_vertices_weighted<'a>(
 		&'a self,
-	) -> Box<dyn 'a + Iterator<Item = (Self::Vertex, &'a Self::VertexWeight)>>;
+	) -> Box<dyn 'a + Iterator<Item = (Self::VertexRef, &'a Self::VertexWeight)>>;
 	/// Returns the weights of all edges that are sourced in v1 and sinked in
 	/// v2. I.e. all edges where e == (v1,v2,_).
 	///
@@ -90,14 +92,14 @@ pub trait Graph
 	) -> Box<dyn 'b + Iterator<Item = &'a Self::EdgeWeight>>;
 
 	// Optional methods
-	fn all_vertices<'a>(&'a self) -> Box<dyn 'a + Iterator<Item = Self::Vertex>>
+	fn all_vertices<'a>(&'a self) -> Box<dyn 'a + Iterator<Item = Self::VertexRef>>
 	{
 		Box::new(self.all_vertices_weighted().map(|(v, _)| v))
 	}
 	fn vertex_weight(&self, v: &Self::Vertex) -> Option<&Self::VertexWeight>
 	{
 		self.all_vertices_weighted()
-			.find(|&(candidate, _)| candidate == *v)
+			.find(|(candidate, _)| candidate.borrow() == v)
 			.map(|(_, w)| w)
 	}
 	fn contains_vertex(&self, v: &Self::Vertex) -> bool
@@ -116,8 +118,8 @@ pub trait Graph
 	) -> Box<dyn 'b + Iterator<Item = (Self::Vertex, &'a Self::EdgeWeight)>>
 	{
 		Box::new(self.all_vertices().flat_map(move |v2| {
-			self.edges_between(v.borrow().clone(), v2.clone())
-				.map(move |w| (v2.clone(), w))
+			self.edges_between(v.borrow().clone(), v2.borrow().clone())
+				.map(move |w| (v2.borrow().clone(), w))
 		}))
 	}
 
@@ -132,8 +134,8 @@ pub trait Graph
 	) -> Box<dyn 'b + Iterator<Item = (Self::Vertex, &'a Self::EdgeWeight)>>
 	{
 		Box::new(self.all_vertices().flat_map(move |v2| {
-			self.edges_between(v2.clone(), v.borrow().clone())
-				.map(move |w| (v2.clone(), w))
+			self.edges_between(v2.borrow().clone(), v.borrow().clone())
+				.map(move |w| (v2.borrow().clone(), w))
 		}))
 	}
 
@@ -159,11 +161,11 @@ pub trait Graph
 	fn vertex_neighbors<'a>(
 		&'a self,
 		v: &'a Self::Vertex,
-	) -> Box<dyn 'a + Iterator<Item = Self::Vertex>>
+	) -> Box<dyn 'a + Iterator<Item = Self::VertexRef>>
 	{
 		Box::new(
 			self.all_vertices()
-				.filter(move |other| self.neighbors(v, other)),
+				.filter(move |other| self.neighbors(v, other.borrow())),
 		)
 	}
 

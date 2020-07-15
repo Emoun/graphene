@@ -24,12 +24,13 @@ impl<C: Ensure> Graph for DirectedGraph<C>
 	type EdgeWeight = <C::Graph as Graph>::EdgeWeight;
 	type Vertex = <C::Graph as Graph>::Vertex;
 	type VertexWeight = <C::Graph as Graph>::VertexWeight;
+	type VertexRef = <C::Graph as Graph>::VertexRef;
 
 	delegate! {
 		to self.0.graph() {
 			fn all_vertices_weighted<'a>(
 				&'a self,
-			) -> Box<dyn 'a + Iterator<Item = (Self::Vertex, &'a Self::VertexWeight)>>;
+			) -> Box<dyn 'a + Iterator<Item = (Self::VertexRef, &'a Self::VertexWeight)>>;
 
 			fn edges_between<'a: 'b, 'b>(
 				&'a self,
@@ -67,12 +68,13 @@ impl<C: Ensure> Graph for UndirectedGraph<C>
 	type EdgeWeight = <C::Graph as Graph>::EdgeWeight;
 	type Vertex = <C::Graph as Graph>::Vertex;
 	type VertexWeight = <C::Graph as Graph>::VertexWeight;
+	type VertexRef = <C::Graph as Graph>::VertexRef;
 
 	delegate! {
 		to self.0.graph() {
 			fn all_vertices_weighted<'a>(
 				&'a self,
-			) -> Box<dyn 'a + Iterator<Item = (Self::Vertex, &'a Self::VertexWeight)>>;
+			) -> Box<dyn 'a + Iterator<Item = (Self::VertexRef, &'a Self::VertexWeight)>>;
 
 			fn edges_between<'a: 'b, 'b>(
 				&'a self,

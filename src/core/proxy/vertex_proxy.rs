@@ -50,6 +50,7 @@ impl<C: Ensure> Graph for VertexProxyGraph<C>
 	type EdgeWeight = <C::Graph as Graph>::EdgeWeight;
 	type Vertex = ProxyVertex<<C::Graph as Graph>::Vertex>;
 	type VertexWeight = ();
+	type VertexRef = ProxyVertex<<C::Graph as Graph>::Vertex>;
 
 	fn all_vertices_weighted<'a>(
 		&'a self,
@@ -59,8 +60,8 @@ impl<C: Ensure> Graph for VertexProxyGraph<C>
 			self.graph
 				.graph()
 				.all_vertices()
-				.filter(move |v| !self.removed.contains(v))
-				.map(|v| (ProxyVertex::Underlying(v), &()))
+				.filter(move |v| !self.removed.contains(v.borrow()))
+				.map(|v| (ProxyVertex::Underlying(v.borrow().clone()), &()))
 				.chain((0..self.new_count).map(|v| (ProxyVertex::New(v), &()))),
 		)
 	}

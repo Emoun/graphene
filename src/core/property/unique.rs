@@ -1,4 +1,5 @@
 use crate::core::{property::AddEdge, Directedness, Ensure, Graph, GraphDerefMut};
+use std::borrow::Borrow;
 
 /// A marker trait for graphs containing only unique edges.
 ///
@@ -54,9 +55,9 @@ impl<C: Ensure> Ensure for UniqueGraph<C>
 		{
 			for v2 in iter_rest
 			{
-				if c.graph().edges_between(v, v2).nth(1).is_some()
+				if c.graph().edges_between(v.borrow(), v2.borrow()).nth(1).is_some()
 					|| (<C::Graph as Graph>::Directedness::directed()
-						&& (v != v2) && c.graph().edges_between(v2, v).nth(1).is_some())
+						&& (v.borrow() != v2.borrow()) && c.graph().edges_between(v2.borrow(), v.borrow()).nth(1).is_some())
 				{
 					return false;
 				}

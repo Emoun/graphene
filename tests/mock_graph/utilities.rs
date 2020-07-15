@@ -118,6 +118,7 @@ where
 		Directedness = G::Directedness,
 		VertexWeight = MockVertexWeight,
 		EdgeWeight = MockEdgeWeight,
+		VertexRef = MockVertex
 	>,
 {
 	// Add all the vertices, remembering which mock vertices match which real

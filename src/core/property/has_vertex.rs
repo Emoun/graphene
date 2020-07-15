@@ -24,7 +24,7 @@ pub trait HasVertex: Graph
 /// Gives no guarantees on which vertex is returned by any given call to
 /// `get_vertex` if the the graph has multiple vertices.
 #[derive(Clone)]
-pub struct HasVertexGraph<C: Ensure>(C, <C::Graph as Graph>::Vertex);
+pub struct HasVertexGraph<C: Ensure>(C, <C::Graph as Graph>::VertexRef);
 
 impl<C: Ensure> Ensure for HasVertexGraph<C>
 {
@@ -47,7 +47,7 @@ impl<C: Ensure> Ensure for HasVertexGraph<C>
 impl<C> Debug for HasVertexGraph<C>
 where
 	C: Ensure + Debug,
-	<C::Graph as Graph>::Vertex: Debug,
+	<C::Graph as Graph>::VertexRef: Debug,
 {
 	fn fmt(&self, f: &mut Formatter<'_>) -> Result<(), Error>
 	{
@@ -67,7 +67,7 @@ where
 		if self.all_vertices().nth(1).is_some()
 		{
 			let weight = self.0.graph_mut().remove_vertex(v)?;
-			if *v == self.1
+			if v == self.1.borrow()
 			{
 				self.1 = self
 					.0
@@ -89,7 +89,7 @@ impl<C: Ensure> HasVertex for HasVertexGraph<C>
 {
 	fn get_vertex(&self) -> &Self::Vertex
 	{
-		&self.1
+		self.1.borrow()
 	}
 }
 

@@ -241,12 +241,14 @@ macro_rules! impl_properties {
 					$crate::core::GraphDeref>::Graph as $crate::core::Graph>::Vertex;
 				type VertexWeight = <<$delegate_type as
 					$crate::core::GraphDeref>::Graph as $crate::core::Graph>::VertexWeight;
-
+				type VertexRef = <<$delegate_type as
+					$crate::core::GraphDeref>::Graph as $crate::core::Graph>::VertexRef;
+				
 				delegate::delegate! {
 					to $crate::core::GraphDeref::graph(&self$($delegate)+){
 						fn all_vertices_weighted<'a>(
 							&'a self,
-						) -> Box<dyn 'a + Iterator<Item = (Self::Vertex, &'a Self::VertexWeight)>>;
+						) -> Box<dyn 'a + Iterator<Item = (Self::VertexRef, &'a Self::VertexWeight)>>;
 
 						fn edges_between<'a: 'b, 'b>(
 							&'a self,

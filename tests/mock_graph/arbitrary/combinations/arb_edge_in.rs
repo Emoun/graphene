@@ -12,6 +12,7 @@ use graphene::{
 use quickcheck::{Arbitrary, Gen};
 use rand::Rng;
 use std::{collections::HashSet, ops::RangeBounds};
+use std::borrow::Borrow;
 
 /// An arbitrary graph with an edge that is guaranteed to be in the graph (the
 /// weight is a clone)
@@ -124,7 +125,7 @@ fn all_edges<G: Graph>(graph: &G) -> impl Iterator<Item = (G::Vertex, G::Vertex,
 {
 	graph
 		.all_vertices()
-		.flat_map(move |v| graph.edges_sourced_in(v).map(move |(v2, w)| (v, v2, w)))
+		.flat_map(move |v| graph.edges_sourced_in(v.borrow().clone()).map(move |(v2, w)| (v.borrow().clone(), v2, w)))
 }
 
 // Extracts an edge from the given graph if it can.

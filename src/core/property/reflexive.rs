@@ -2,6 +2,7 @@ use crate::core::{
 	property::{AddEdge, NewVertex, RemoveEdge, RemoveVertex},
 	Ensure, Graph, GraphDerefMut,
 };
+use std::borrow::Borrow;
 
 /// A marker trait for a reflexive graph.
 ///
@@ -32,7 +33,7 @@ where
 	{
 		let g = c.graph();
 		g.all_vertices().all(|v| {
-			let mut between = g.edges_between(&v, &v);
+			let mut between = g.edges_between(v.borrow(), v.borrow());
 			if let Some(_) = between.next()
 			{
 				between.next().is_none()

@@ -1,4 +1,5 @@
 use crate::core::{property::AddEdge, Ensure, Graph, GraphDerefMut};
+use std::borrow::Borrow;
 
 /// A marker trait for graphs containing no graph loops.
 ///
@@ -23,7 +24,7 @@ impl<C: Ensure> Ensure for NoLoopsGraph<C>
 	{
 		c.graph()
 			.all_vertices()
-			.all(|v| c.graph().edges_between(&v, &v).next().is_none())
+			.all(|v| c.graph().edges_between(v.borrow(), v.borrow()).next().is_none())
 	}
 }
 

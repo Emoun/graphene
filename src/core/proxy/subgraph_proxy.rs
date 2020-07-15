@@ -67,16 +67,17 @@ impl<C: Ensure> Graph for SubgraphProxy<C>
 	type EdgeWeight = <C::Graph as Graph>::EdgeWeight;
 	type Vertex = <C::Graph as Graph>::Vertex;
 	type VertexWeight = <C::Graph as Graph>::VertexWeight;
+	type VertexRef = <C::Graph as Graph>::VertexRef;
 
 	fn all_vertices_weighted<'a>(
 		&'a self,
-	) -> Box<dyn 'a + Iterator<Item = (Self::Vertex, &'a Self::VertexWeight)>>
+	) -> Box<dyn 'a + Iterator<Item = (Self::VertexRef, &'a Self::VertexWeight)>>
 	{
 		Box::new(
 			self.graph
 				.graph()
 				.all_vertices_weighted()
-				.filter(move |(v, _)| self.verts.contains(v)),
+				.filter(move |(v, _)| self.verts.contains(v.borrow())),
 		)
 	}
 
