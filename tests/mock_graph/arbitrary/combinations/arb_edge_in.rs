@@ -11,8 +11,7 @@ use graphene::{
 };
 use quickcheck::{Arbitrary, Gen};
 use rand::Rng;
-use std::{collections::HashSet, ops::RangeBounds};
-use std::borrow::Borrow;
+use std::{borrow::Borrow, collections::HashSet, ops::RangeBounds};
 
 /// An arbitrary graph with an edge that is guaranteed to be in the graph (the
 /// weight is a clone)
@@ -121,15 +120,19 @@ where
 	}
 }
 // Extracts all edge from the given graph.
-fn all_edges<G: Graph>(graph: &G) -> impl Iterator<Item = (G::Vertex, G::Vertex, &G::EdgeWeight)>
+fn all_edges<G: Graph>(
+	graph: &G,
+) -> impl Iterator<Item = (G::VertexRef, G::VertexRef, &G::EdgeWeight)>
 {
-	graph
-		.all_vertices()
-		.flat_map(move |v| graph.edges_sourced_in(v.borrow().clone()).map(move |(v2, w)| (v.borrow().clone(), v2, w)))
+	graph.all_vertices().flat_map(move |v| {
+		graph
+			.edges_sourced_in(v.borrow().clone())
+			.map(move |(v2, w)| (v.clone(), v2, w))
+	})
 }
 
 // Extracts an edge from the given graph if it can.
-fn get_an_edge<G: Graph>(graph: &G) -> Option<(G::Vertex, G::Vertex, &G::EdgeWeight)>
+fn get_an_edge<G: Graph>(graph: &G) -> Option<(G::VertexRef, G::VertexRef, &G::EdgeWeight)>
 {
 	all_edges(graph).next()
 }

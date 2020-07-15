@@ -49,11 +49,22 @@ impl Directedness for MockDirectedness
 }
 
 pub trait TestGraph:
-	Clone + Graph<Vertex = MockVertex, VertexWeight = MockVertexWeight, EdgeWeight = MockEdgeWeight, VertexRef=MockVertex>
+	Clone
+	+ Graph<
+		Vertex = MockVertex,
+		VertexWeight = MockVertexWeight,
+		EdgeWeight = MockEdgeWeight,
+		VertexRef = MockVertex,
+	>
 {
 }
 impl<T> TestGraph for T where
 	T: Clone
-		+ Graph<Vertex = MockVertex, VertexWeight = MockVertexWeight, EdgeWeight = MockEdgeWeight, VertexRef = MockVertex>
+		+ Graph<
+			Vertex = MockVertex,
+			VertexWeight = MockVertexWeight,
+			EdgeWeight = MockEdgeWeight,
+			VertexRef = MockVertex,
+		>
 {
 }

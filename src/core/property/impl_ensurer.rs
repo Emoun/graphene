@@ -243,7 +243,7 @@ macro_rules! impl_properties {
 					$crate::core::GraphDeref>::Graph as $crate::core::Graph>::VertexWeight;
 				type VertexRef = <<$delegate_type as
 					$crate::core::GraphDeref>::Graph as $crate::core::Graph>::VertexRef;
-				
+
 				delegate::delegate! {
 					to $crate::core::GraphDeref::graph(&self$($delegate)+){
 						fn all_vertices_weighted<'a>(

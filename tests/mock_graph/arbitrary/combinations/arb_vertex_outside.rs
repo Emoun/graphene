@@ -7,11 +7,21 @@ use quickcheck::{Arbitrary, Gen};
 pub struct ArbVertexOutside<G>(pub G, pub MockVertex)
 where
 	G: Arbitrary
-		+ Graph<Vertex = MockVertex, VertexWeight = MockVertexWeight, EdgeWeight = MockEdgeWeight, VertexRef = MockVertex>;
+		+ Graph<
+			Vertex = MockVertex,
+			VertexWeight = MockVertexWeight,
+			EdgeWeight = MockEdgeWeight,
+			VertexRef = MockVertex,
+		>;
 impl<Gr> Arbitrary for ArbVertexOutside<Gr>
 where
 	Gr: Arbitrary
-		+ Graph<Vertex = MockVertex, VertexWeight = MockVertexWeight, EdgeWeight = MockEdgeWeight, VertexRef = MockVertex>,
+		+ Graph<
+			Vertex = MockVertex,
+			VertexWeight = MockVertexWeight,
+			EdgeWeight = MockEdgeWeight,
+			VertexRef = MockVertex,
+		>,
 {
 	fn arbitrary<G: Gen>(g: &mut G) -> Self
 	{

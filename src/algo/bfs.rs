@@ -1,5 +1,5 @@
 use crate::core::{property::HasVertex, Graph};
-use std::collections::VecDeque;
+use std::{borrow::Borrow, collections::VecDeque};
 
 /// Performs [breadth-first traversal](https://mathworld.wolfram.com/Breadth-FirstTraversal.html)
 /// of a graph's vertices.
@@ -165,9 +165,9 @@ where
 		self.graph
 			.edges_sourced_in(&v)
 			.filter_map(|(child, _)| {
-				if !visited.contains(&child)
+				if !visited.contains(child.borrow())
 				{
-					visited.push(child);
+					visited.push(child.borrow().clone());
 					Some(child)
 				}
 				else
@@ -176,8 +176,8 @@ where
 				}
 			})
 			.for_each(|child| {
-				queue.push_back(child);
-				pred.push((child, Some(v)))
+				queue.push_back(child.borrow().clone());
+				pred.push((child.borrow().clone(), Some(v)))
 			});
 	}
 }

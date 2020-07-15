@@ -11,7 +11,12 @@ fn adj_list_from_mock<G>(
 	HashMap<MockVertex, usize>,
 )
 where
-	G: Graph<Vertex = MockVertex, EdgeWeight = MockEdgeWeight, VertexWeight = MockVertexWeight, VertexRef = MockVertex>,
+	G: Graph<
+		Vertex = MockVertex,
+		EdgeWeight = MockEdgeWeight,
+		VertexWeight = MockVertexWeight,
+		VertexRef = MockVertex,
+	>,
 {
 	let mut g = AdjListGraph::new();
 	let map = auto_copy_from(&mut g, mock);

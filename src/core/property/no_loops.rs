@@ -22,9 +22,12 @@ impl<C: Ensure> Ensure for NoLoopsGraph<C>
 
 	fn validate(c: &Self::Ensured, _: &()) -> bool
 	{
-		c.graph()
-			.all_vertices()
-			.all(|v| c.graph().edges_between(v.borrow(), v.borrow()).next().is_none())
+		c.graph().all_vertices().all(|v| {
+			c.graph()
+				.edges_between(v.borrow(), v.borrow())
+				.next()
+				.is_none()
+		})
 	}
 }
 

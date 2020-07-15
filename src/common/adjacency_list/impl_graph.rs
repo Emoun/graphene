@@ -14,8 +14,8 @@ where
 	type Directedness = D;
 	type EdgeWeight = Ew;
 	type Vertex = usize;
-	type VertexWeight = Vw;
 	type VertexRef = Self::Vertex;
+	type VertexWeight = Vw;
 
 	fn all_vertices_weighted<'a>(
 		&'a self,

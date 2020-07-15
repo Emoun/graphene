@@ -66,9 +66,9 @@ impl<C: Ensure> Graph for MockEnsurer<C>
 	type Directedness = <C::Graph as Graph>::Directedness;
 	type EdgeWeight = <C::Graph as Graph>::EdgeWeight;
 	type Vertex = <C::Graph as Graph>::Vertex;
-	type VertexWeight = <C::Graph as Graph>::VertexWeight;
 	type VertexRef = <C::Graph as Graph>::VertexRef;
-	
+	type VertexWeight = <C::Graph as Graph>::VertexWeight;
+
 	delegate! {
 		to self.0.graph() {
 			fn all_vertices_weighted<'a>(
@@ -164,9 +164,9 @@ impl<C: Ensure> Graph for MockUnloadedEnsurer<C>
 	type Directedness = <C::Graph as Graph>::Directedness;
 	type EdgeWeight = <C::Graph as Graph>::EdgeWeight;
 	type Vertex = <C::Graph as Graph>::Vertex;
-	type VertexWeight = <C::Graph as Graph>::VertexWeight;
 	type VertexRef = <C::Graph as Graph>::VertexRef;
-	
+	type VertexWeight = <C::Graph as Graph>::VertexWeight;
+
 	delegate! {
 		to self.0.graph() {
 			fn all_vertices_weighted<'a>(

@@ -56,8 +56,7 @@ use crate::{
 		Directed, EnsureUnloaded, Graph,
 	},
 };
-use std::cmp::min;
-use std::borrow::Borrow;
+use std::{borrow::Borrow, cmp::min};
 
 /// Implements Tarjan's [Strongly Connected Components](https://mathworld.wolfram.com/StronglyConnectedComponent.html) Algorithm.
 ///
@@ -194,7 +193,7 @@ where
 			for e in g.edges_sourced_in(&v)
 			{
 				if let Some(&lowlink) = stack.iter().find_map(|(v2, lowlink)| {
-					if e.0 == *v2
+					if e.0.borrow() == v2
 					{
 						Some(lowlink)
 					}
@@ -266,7 +265,9 @@ where
 			else
 			{
 				let dfs = &mut self.dfs;
-				if !self.unchecked.any(|v| dfs.continue_from(v.borrow().clone()))
+				if !self
+					.unchecked
+					.any(|v| dfs.continue_from(v.borrow().clone()))
 				{
 					return None;
 				}

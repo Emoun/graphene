@@ -75,7 +75,7 @@ pub trait Graph
 	type Directedness: Directedness;
 
 	type VertexRef: Clone + Borrow<Self::Vertex>;
-	
+
 	/// Returns copies of all current vertex values in the graph.
 	fn all_vertices_weighted<'a>(
 		&'a self,
@@ -115,11 +115,11 @@ pub trait Graph
 	fn edges_sourced_in<'a: 'b, 'b>(
 		&'a self,
 		v: impl 'b + Borrow<Self::Vertex>,
-	) -> Box<dyn 'b + Iterator<Item = (Self::Vertex, &'a Self::EdgeWeight)>>
+	) -> Box<dyn 'b + Iterator<Item = (Self::VertexRef, &'a Self::EdgeWeight)>>
 	{
 		Box::new(self.all_vertices().flat_map(move |v2| {
 			self.edges_between(v.borrow().clone(), v2.borrow().clone())
-				.map(move |w| (v2.borrow().clone(), w))
+				.map(move |w| (v2.clone(), w))
 		}))
 	}
 
@@ -131,11 +131,11 @@ pub trait Graph
 	fn edges_sinked_in<'a: 'b, 'b>(
 		&'a self,
 		v: impl 'b + Borrow<Self::Vertex>,
-	) -> Box<dyn 'b + Iterator<Item = (Self::Vertex, &'a Self::EdgeWeight)>>
+	) -> Box<dyn 'b + Iterator<Item = (Self::VertexRef, &'a Self::EdgeWeight)>>
 	{
 		Box::new(self.all_vertices().flat_map(move |v2| {
 			self.edges_between(v2.borrow().clone(), v.borrow().clone())
-				.map(move |w| (v2.borrow().clone(), w))
+				.map(move |w| (v2.clone(), w))
 		}))
 	}
 
@@ -146,12 +146,14 @@ pub trait Graph
 	fn edges_incident_on<'a: 'b, 'b>(
 		&'a self,
 		v: impl 'b + Borrow<Self::Vertex>,
-	) -> Box<dyn 'b + Iterator<Item = (Self::Vertex, &'a Self::EdgeWeight)>>
+	) -> Box<dyn 'b + Iterator<Item = (Self::VertexRef, &'a Self::EdgeWeight)>>
 	{
 		Box::new(
 			self.edges_sourced_in(v.borrow().clone()).chain(
 				self.edges_sinked_in(v.borrow().clone())
-					.filter(move |(v2, _)| Self::Directedness::directed() && v.borrow() != v2),
+					.filter(move |(v2, _)| {
+						Self::Directedness::directed() && v.borrow() != v2.borrow()
+					}),
 			),
 		)
 	}

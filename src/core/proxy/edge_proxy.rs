@@ -51,8 +51,8 @@ impl<C: Ensure> Graph for EdgeProxyGraph<C>
 	type Directedness = <C::Graph as Graph>::Directedness;
 	type EdgeWeight = ();
 	type Vertex = <C::Graph as Graph>::Vertex;
-	type VertexWeight = <C::Graph as Graph>::VertexWeight;
 	type VertexRef = <C::Graph as Graph>::VertexRef;
+	type VertexWeight = <C::Graph as Graph>::VertexWeight;
 
 	delegate! {
 		to self.graph.graph() {

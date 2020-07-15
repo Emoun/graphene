@@ -46,9 +46,9 @@ impl<C: Ensure> SubgraphProxy<C>
 
 				for e in self.graph.graph().edges_sourced_in(&v)
 				{
-					if !self.verts.contains(&e.0)
+					if !self.verts.contains(e.0.borrow())
 					{
-						self.exit_edges.push((v, e.0));
+						self.exit_edges.push((v, e.0.borrow().clone()));
 					}
 				}
 			}
@@ -66,8 +66,8 @@ impl<C: Ensure> Graph for SubgraphProxy<C>
 	type Directedness = <C::Graph as Graph>::Directedness;
 	type EdgeWeight = <C::Graph as Graph>::EdgeWeight;
 	type Vertex = <C::Graph as Graph>::Vertex;
-	type VertexWeight = <C::Graph as Graph>::VertexWeight;
 	type VertexRef = <C::Graph as Graph>::VertexRef;
+	type VertexWeight = <C::Graph as Graph>::VertexWeight;
 
 	fn all_vertices_weighted<'a>(
 		&'a self,

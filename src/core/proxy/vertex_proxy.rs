@@ -49,8 +49,8 @@ impl<C: Ensure> Graph for VertexProxyGraph<C>
 	type Directedness = <C::Graph as Graph>::Directedness;
 	type EdgeWeight = <C::Graph as Graph>::EdgeWeight;
 	type Vertex = ProxyVertex<<C::Graph as Graph>::Vertex>;
-	type VertexWeight = ();
 	type VertexRef = ProxyVertex<<C::Graph as Graph>::Vertex>;
+	type VertexWeight = ();
 
 	fn all_vertices_weighted<'a>(
 		&'a self,

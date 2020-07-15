@@ -16,7 +16,7 @@ pub trait Subgraph: Graph
 			VertexWeight = Self::VertexWeight,
 			EdgeWeight = Self::EdgeWeight,
 			Directedness = Self::Directedness,
-			VertexRef = Self::VertexRef
+			VertexRef = Self::VertexRef,
 		>,
 	{
 		// Check whether they share any vertex

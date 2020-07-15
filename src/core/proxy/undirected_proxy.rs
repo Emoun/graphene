@@ -27,8 +27,8 @@ where
 	type Directedness = Undirected;
 	type EdgeWeight = <C::Graph as Graph>::EdgeWeight;
 	type Vertex = <C::Graph as Graph>::Vertex;
-	type VertexWeight = <C::Graph as Graph>::VertexWeight;
 	type VertexRef = <C::Graph as Graph>::VertexRef;
+	type VertexWeight = <C::Graph as Graph>::VertexWeight;
 
 	delegate! {
 		to self.0.graph() {

@@ -1,5 +1,6 @@
 use crate::core::{property::HasVertex, Edge, Graph};
 use num_traits::{PrimInt, Unsigned};
+use std::borrow::Borrow;
 
 /// [Dijkstra's shortest paths algorithm](https://mathworld.wolfram.com/DijkstrasAlgorithm.html)
 pub struct DijkstraShortestPaths<'a, G, W>
@@ -40,7 +41,7 @@ where
 		{
 			let edges = self.graph.edges_sourced_in(&v)
 				// Remove any edge to a visited vertex
-				.filter(|(sink, _)| !visited.contains(&sink));
+				.filter(|(sink, _)| !visited.contains(sink.borrow()));
 
 			for (sink, weight) in edges
 			{
@@ -48,17 +49,18 @@ where
 				if let Some((old_weight, old_edge)) = self
 					.queue
 					.iter_mut()
-					.find(|(_, (_, vert, _))| *vert == sink)
+					.find(|(_, (_, vert, _))| vert == sink.borrow())
 				{
 					if *old_weight > new_weight
 					{
 						*old_weight = new_weight;
-						*old_edge = (v, sink, weight);
+						*old_edge = (v, sink.borrow().clone(), weight);
 					}
 				}
 				else
 				{
-					self.queue.push((new_weight, (v, sink, weight)));
+					self.queue
+						.push((new_weight, (v, sink.borrow().clone(), weight)));
 				}
 			}
 		}

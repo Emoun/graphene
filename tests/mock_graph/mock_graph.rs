@@ -114,7 +114,7 @@ impl<D: Directedness> MockGraph<D>
 			VertexWeight = MockEdgeWeight,
 			EdgeWeight = MockEdgeWeight,
 			Directedness = D,
-			VertexRef = MockVertex
+			VertexRef = MockVertex,
 		>,
 	{
 		let mut v_map: HashMap<MockVertex, MockVertex> = HashMap::new();
@@ -185,9 +185,9 @@ impl<D: Directedness> Graph for MockGraph<D>
 	/// We hide u32 behind a struct to ensure our tests aren't dependent
 	/// on graphs using usize as ids
 	type Vertex = MockVertex;
-	type VertexWeight = MockVertexWeight;
 	type VertexRef = Self::Vertex;
-	
+	type VertexWeight = MockVertexWeight;
+
 	fn all_vertices_weighted<'a>(
 		&'a self,
 	) -> Box<dyn 'a + Iterator<Item = (Self::Vertex, &'a Self::VertexWeight)>>
