@@ -91,7 +91,7 @@ where
 		to self.0.graph_mut() {
 			fn all_vertices_weighted_mut<'a>(
 				&'a mut self,
-			) -> Box<dyn 'a + Iterator<Item = (Self::Vertex, &'a mut Self::VertexWeight)>>;
+			) -> Box<dyn 'a + Iterator<Item = (Self::VertexRef, &'a mut Self::VertexWeight)>>;
 
 			fn edges_between_mut<'a: 'b, 'b>(
 				&'a mut self,
@@ -187,7 +187,7 @@ where
 {
 	fn all_vertices_weighted_mut<'a>(
 		&'a mut self,
-	) -> Box<dyn 'a + Iterator<Item = (Self::Vertex, &'a mut Self::VertexWeight)>>
+	) -> Box<dyn 'a + Iterator<Item = (Self::VertexRef, &'a mut Self::VertexWeight)>>
 	{
 		self.0.graph_mut().all_vertices_weighted_mut()
 	}

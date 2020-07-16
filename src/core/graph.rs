@@ -96,13 +96,13 @@ pub trait Graph
 	{
 		Box::new(self.all_vertices_weighted().map(|(v, _)| v))
 	}
-	fn vertex_weight(&self, v: &Self::Vertex) -> Option<&Self::VertexWeight>
+	fn vertex_weight(&self, v: impl Borrow<Self::Vertex>) -> Option<&Self::VertexWeight>
 	{
 		self.all_vertices_weighted()
-			.find(|(candidate, _)| candidate.borrow() == v)
+			.find(|(candidate, _)| candidate.borrow() == v.borrow())
 			.map(|(_, w)| w)
 	}
-	fn contains_vertex(&self, v: &Self::Vertex) -> bool
+	fn contains_vertex(&self, v: impl Borrow<Self::Vertex>) -> bool
 	{
 		self.vertex_weight(v).is_some()
 	}
@@ -160,23 +160,28 @@ pub trait Graph
 
 	/// Returns any vertices connected to the given one with an edge regardless
 	/// of direction.
-	fn vertex_neighbors<'a>(
+	fn vertex_neighbors<'a: 'b, 'b>(
 		&'a self,
-		v: &'a Self::Vertex,
-	) -> Box<dyn 'a + Iterator<Item = Self::VertexRef>>
+		v: impl 'b + Borrow<Self::Vertex>,
+	) -> Box<dyn 'b + Iterator<Item = Self::VertexRef>>
 	{
 		Box::new(
 			self.all_vertices()
-				.filter(move |other| self.neighbors(v, other.borrow())),
+				.filter(move |other| self.neighbors(v.borrow(), other.borrow())),
 		)
 	}
 
 	/// Returns whether the two vertices are connected by an edge in any
 	/// direction.
-	fn neighbors(&self, v1: &Self::Vertex, v2: &Self::Vertex) -> bool
+	fn neighbors(&self, v1: impl Borrow<Self::Vertex>, v2: impl Borrow<Self::Vertex>) -> bool
 	{
-		self.edges_between(v1, v2).next().is_some()
-			|| (Self::Directedness::directed() && self.edges_between(v2, v1).next().is_some())
+		self.edges_between(v1.borrow(), v2.borrow())
+			.next()
+			.is_some() || (Self::Directedness::directed()
+			&& self
+				.edges_between(v2.borrow(), v1.borrow())
+				.next()
+				.is_some())
 	}
 }
 
@@ -190,7 +195,7 @@ pub trait GraphMut: Graph
 {
 	fn all_vertices_weighted_mut<'a>(
 		&'a mut self,
-	) -> Box<dyn 'a + Iterator<Item = (Self::Vertex, &'a mut Self::VertexWeight)>>;
+	) -> Box<dyn 'a + Iterator<Item = (Self::VertexRef, &'a mut Self::VertexWeight)>>;
 
 	fn edges_between_mut<'a: 'b, 'b>(
 		&'a mut self,
@@ -199,10 +204,11 @@ pub trait GraphMut: Graph
 	) -> Box<dyn 'b + Iterator<Item = &'a mut Self::EdgeWeight>>;
 
 	// Optional methods
-	fn vertex_weight_mut(&mut self, v: Self::Vertex) -> Option<&mut Self::VertexWeight>
+	fn vertex_weight_mut(&mut self, v: impl Borrow<Self::Vertex>)
+		-> Option<&mut Self::VertexWeight>
 	{
 		self.all_vertices_weighted_mut()
-			.find(|&(candidate, _)| candidate == v)
+			.find(|(candidate, _)| candidate.borrow() == v.borrow())
 			.map(|(_, w)| w)
 	}
 }

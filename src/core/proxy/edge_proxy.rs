@@ -97,7 +97,7 @@ where
 		to self.graph.graph_mut() {
 			fn all_vertices_weighted_mut<'a>(
 				&'a mut self,
-			) -> Box<dyn 'a + Iterator<Item = (Self::Vertex, &'a mut Self::VertexWeight)>>;
+			) -> Box<dyn 'a + Iterator<Item = (Self::VertexRef, &'a mut Self::VertexWeight)>>;
 		}
 	}
 

@@ -55,7 +55,7 @@ where
 	delegate! {
 		to self.0.graph_mut() {
 			fn all_vertices_weighted_mut<'a>(&'a mut self) -> Box<dyn 'a + Iterator<Item=
-				(Self::Vertex, &'a mut Self::VertexWeight)>>;
+				(Self::VertexRef, &'a mut Self::VertexWeight)>>;
 		}
 	}
 
