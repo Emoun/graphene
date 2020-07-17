@@ -209,7 +209,11 @@ where
 		}
 
 		// Push the start vertex on the stack with low-link = 0
-		let dfs = Dfs::new(graph, on_exit, vec![(graph.get_vertex().clone(), 0)]);
+		let dfs = Dfs::new(
+			graph,
+			on_exit,
+			vec![(graph.get_vertex().borrow().clone(), 0)],
+		);
 		Self {
 			dfs,
 			unchecked: graph.all_vertices(),

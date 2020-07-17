@@ -12,7 +12,7 @@ use graphene::{
 use quickcheck::{Arbitrary, Gen};
 use rand::Rng;
 use static_assertions::_core::marker::PhantomData;
-use std::{collections::HashSet, iter::FromIterator, ops::RangeBounds};
+use std::{borrow::Borrow, collections::HashSet, iter::FromIterator, ops::RangeBounds};
 
 /// Used with `ArbTwoVerticesIn` to choose whether the two vertices must be
 /// unique (`Unique`),
@@ -190,7 +190,10 @@ where
 			}
 			else
 			{
-				verts.filter(|v| v != c.get_vertex()).next().unwrap()
+				verts
+					.filter(|v| v != c.get_vertex().borrow())
+					.next()
+					.unwrap()
 			}
 		};
 		Self(c, v2, PhantomData)

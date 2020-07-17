@@ -16,7 +16,7 @@ pub trait HasVertex: Graph
 	/// to ensure that "wrapping" ensurers don't accidentally use it, instead
 	/// of actively delegating to the inner class, who might have its own
 	/// implementation.
-	fn get_vertex(&self) -> &Self::Vertex;
+	fn get_vertex(&self) -> Self::VertexRef;
 }
 
 /// Ensures the underlying graph has at least 1 vertex.
@@ -62,12 +62,12 @@ impl<C: Ensure + GraphDerefMut> RemoveVertex for HasVertexGraph<C>
 where
 	C::Graph: RemoveVertex,
 {
-	fn remove_vertex(&mut self, v: &Self::Vertex) -> Result<Self::VertexWeight, ()>
+	fn remove_vertex(&mut self, v: impl Borrow<Self::Vertex>) -> Result<Self::VertexWeight, ()>
 	{
 		if self.all_vertices().nth(1).is_some()
 		{
-			let weight = self.0.graph_mut().remove_vertex(v)?;
-			if v == self.1.borrow()
+			let weight = self.0.graph_mut().remove_vertex(v.borrow())?;
+			if v.borrow() == self.1.borrow()
 			{
 				self.1 = self
 					.0
@@ -87,9 +87,9 @@ where
 
 impl<C: Ensure> HasVertex for HasVertexGraph<C>
 {
-	fn get_vertex(&self) -> &Self::Vertex
+	fn get_vertex(&self) -> Self::VertexRef
 	{
-		self.1.borrow()
+		self.1.clone()
 	}
 }
 
@@ -103,13 +103,13 @@ impl_ensurer! {
 /// That vertex is guaranteed to be returned by any call to `get_vertex` and
 /// cannot be removed from the graph.
 #[derive(Clone)]
-pub struct VertexInGraph<C: Ensure, V: Borrow<<C::Graph as Graph>::Vertex>>(C, V);
+pub struct VertexInGraph<C: Ensure>(C, <C::Graph as Graph>::VertexRef);
 
-impl<C, V> Debug for VertexInGraph<C, V>
+impl<C> Debug for VertexInGraph<C>
 where
 	C: Ensure + Debug,
 	<C::Graph as Graph>::Vertex: Debug,
-	V: Borrow<<C::Graph as Graph>::Vertex> + Debug,
+	<C::Graph as Graph>::VertexRef: Debug,
 {
 	fn fmt(&self, f: &mut Formatter<'_>) -> Result<(), Error>
 	{
@@ -120,25 +120,24 @@ where
 	}
 }
 
-impl<C: Ensure, V: Borrow<<C::Graph as Graph>::Vertex>> Ensure for VertexInGraph<C, V>
+impl<C: Ensure> Ensure for VertexInGraph<C>
 {
-	fn ensure_unvalidated(c: Self::Ensured, v: V) -> Self
+	fn ensure_unvalidated(c: Self::Ensured, v: <C::Graph as Graph>::VertexRef) -> Self
 	{
 		Self(c, v)
 	}
 
-	fn validate(c: &Self::Ensured, p: &V) -> bool
+	fn validate(c: &Self::Ensured, p: &<C::Graph as Graph>::VertexRef) -> bool
 	{
 		c.graph().contains_vertex(p.borrow())
 	}
 }
 
-impl<C: Ensure + GraphDerefMut, V: Borrow<<C::Graph as Graph>::Vertex>> RemoveVertex
-	for VertexInGraph<C, V>
+impl<C: Ensure + GraphDerefMut> RemoveVertex for VertexInGraph<C>
 where
 	C::Graph: RemoveVertex,
 {
-	fn remove_vertex(&mut self, v: &Self::Vertex) -> Result<Self::VertexWeight, ()>
+	fn remove_vertex(&mut self, v: impl Borrow<Self::Vertex>) -> Result<Self::VertexWeight, ()>
 	{
 		if self.1.borrow() != v.borrow()
 		{
@@ -151,17 +150,16 @@ where
 	}
 }
 
-impl<C: Ensure, V: Borrow<<C::Graph as Graph>::Vertex>> HasVertex for VertexInGraph<C, V>
+impl<C: Ensure> HasVertex for VertexInGraph<C>
 {
-	fn get_vertex(&self) -> &Self::Vertex
+	fn get_vertex(&self) -> Self::VertexRef
 	{
-		self.1.borrow()
+		self.1.clone()
 	}
 }
 
 impl_ensurer! {
-	use<C,V> VertexInGraph<C,V>: Ensure, HasVertex, RemoveVertex
+	use<C> VertexInGraph<C>: Ensure, HasVertex, RemoveVertex
 	as (self.0) : C
-	as (self.1) : V
-	where V: Borrow<<C::Graph as Graph>::Vertex>
+	as (self.1) : <C::Graph as Graph>::VertexRef
 }

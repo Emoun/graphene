@@ -135,7 +135,7 @@ mod module
 		for (v1, v2) in verts1.iter().zip(verts2.iter())
 		{
 			graph
-				.add_edge_weighted(&v1, &v_map[v2], weight.clone())
+				.add_edge_weighted(v1, v_map[v2], weight.clone())
 				.unwrap();
 		}
 

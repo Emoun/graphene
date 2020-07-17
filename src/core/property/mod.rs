@@ -19,6 +19,7 @@ use crate::core::{
 	proxy::{EdgeProxyGraph, ProxyVertex, VertexProxyGraph},
 	Ensure,
 };
+use std::borrow::Borrow;
 
 /// Will try to remove an edge from the graph that holds for the given function.
 ///
@@ -80,7 +81,7 @@ where
 	let mut proxy = VertexProxyGraph::new(g2);
 
 	proxy
-		.remove_vertex(&ProxyVertex::Underlying(*v))
+		.remove_vertex(&ProxyVertex::Underlying(v.borrow().clone()))
 		.expect("Couldn't remove a vertex from the proxy");
 
 	if C::validate(&proxy, &())

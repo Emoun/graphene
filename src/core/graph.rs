@@ -92,6 +92,11 @@ pub trait Graph
 	) -> Box<dyn 'b + Iterator<Item = &'a Self::EdgeWeight>>;
 
 	// Optional methods
+	fn vertex_ref(&self, v: impl Borrow<Self::Vertex>) -> Option<Self::VertexRef>
+	{
+		self.all_vertices()
+			.find(|v_ref| v_ref.borrow() == v.borrow())
+	}
 	fn all_vertices<'a>(&'a self) -> Box<dyn 'a + Iterator<Item = Self::VertexRef>>
 	{
 		Box::new(self.all_vertices_weighted().map(|(v, _)| v))

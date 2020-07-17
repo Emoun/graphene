@@ -151,23 +151,23 @@ impl<Vw, Ew, D> RemoveVertex for AdjListGraph<Vw, Ew, D>
 where
 	D: Directedness,
 {
-	fn remove_vertex(&mut self, v: &Self::Vertex) -> Result<Self::VertexWeight, ()>
+	fn remove_vertex(&mut self, v: impl Borrow<Self::Vertex>) -> Result<Self::VertexWeight, ()>
 	{
-		if *v < self.vertices.len()
+		if *v.borrow() < self.vertices.len()
 		{
-			let neighbors: Vec<_> = self.vertex_neighbors(v).collect();
+			let neighbors: Vec<_> = self.vertex_neighbors(v.borrow()).collect();
 
 			for n in neighbors
 			{
-				while let Ok(_) = self.remove_edge(v, &n)
+				while let Ok(_) = self.remove_edge(v.borrow(), &n)
 				{}
 				if D::directed()
 				{
-					while let Ok(_) = self.remove_edge(&n, v)
+					while let Ok(_) = self.remove_edge(&n, v.borrow())
 					{}
 				}
 			}
-			Ok(self.vertices.remove(*v).0)
+			Ok(self.vertices.remove(*v.borrow()).0)
 		}
 		else
 		{
@@ -182,15 +182,17 @@ where
 {
 	fn add_edge_weighted(
 		&mut self,
-		source: &Self::Vertex,
-		sink: &Self::Vertex,
+		source: impl Borrow<Self::Vertex>,
+		sink: impl Borrow<Self::Vertex>,
 		weight: Self::EdgeWeight,
 	) -> Result<(), ()>
 	{
 		let len = self.vertices.len();
-		if *source < len && *sink < len
+		if *source.borrow() < len && *sink.borrow() < len
 		{
-			self.vertices[*source].1.push((*sink, weight));
+			self.vertices[*source.borrow()]
+				.1
+				.push((*sink.borrow(), weight));
 			Ok(())
 		}
 		else
@@ -206,14 +208,14 @@ where
 {
 	fn remove_edge_where_weight<F>(
 		&mut self,
-		source: &Self::Vertex,
-		sink: &Self::Vertex,
+		source: impl Borrow<Self::Vertex>,
+		sink: impl Borrow<Self::Vertex>,
 		f: F,
 	) -> Result<Self::EdgeWeight, ()>
 	where
 		F: Fn(&Self::EdgeWeight) -> bool,
 	{
-		if self.contains_vertex(source) && self.contains_vertex(sink)
+		if self.contains_vertex(source.borrow()) && self.contains_vertex(sink.borrow())
 		{
 			let found = self
 				.vertices
@@ -226,8 +228,9 @@ where
 						.map(move |(si_i, (si, w))| ((so_i, si_i, si, w)))
 				})
 				.find(|(so_i, _, si, w)| {
-					((so_i == source && *si == sink)
-						|| (!Self::Directedness::directed() && (so_i == sink && *si == source)))
+					((so_i == source.borrow() && *si == sink.borrow())
+						|| (!Self::Directedness::directed()
+							&& (so_i == sink.borrow() && *si == source.borrow())))
 						&& f(w)
 				});
 			if let Some((so_i, si_i, _, _)) = found

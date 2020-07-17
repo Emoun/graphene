@@ -1,6 +1,6 @@
 use crate::core::{
 	property::{AddEdge, NewVertex, RemoveEdge, RemoveVertex, Subgraph},
-	Edge, Ensure, Graph, GraphDerefMut, GraphMut,
+	Ensure, Graph, GraphDerefMut, GraphMut,
 };
 use std::borrow::Borrow;
 
@@ -14,9 +14,12 @@ pub struct SubgraphProxy<C: Ensure>
 	/// The underlying graph
 	graph: C,
 	/// Which vertices are part of this subgraph
-	verts: Vec<<C::Graph as Graph>::Vertex>,
+	verts: Vec<<C::Graph as Graph>::VertexRef>,
 	/// Edges who's sources are in this subgraph but who's sinks aren't.
-	exit_edges: Vec<(<C::Graph as Graph>::Vertex, <C::Graph as Graph>::Vertex)>,
+	exit_edges: Vec<(
+		<C::Graph as Graph>::VertexRef,
+		<C::Graph as Graph>::VertexRef,
+	)>,
 }
 
 impl<C: Ensure> SubgraphProxy<C>
@@ -30,25 +33,28 @@ impl<C: Ensure> SubgraphProxy<C>
 		}
 	}
 
-	pub fn expand(&mut self, v: <C::Graph as Graph>::Vertex) -> Result<(), ()>
+	pub fn expand(&mut self, v: impl Borrow<<C::Graph as Graph>::Vertex>) -> Result<(), ()>
 	{
-		if self.graph.graph().contains_vertex(&v)
+		if let Some(v) = self.graph.graph().vertex_ref(v.borrow())
 		{
-			if !self.verts.contains(&v)
+			if !self.contains_vertex(v.borrow())
 			{
-				self.verts.push(v);
+				self.verts.push(v.clone());
 
 				// Remove any exit edge that is sinked in the vertex
-				while let Some(idx) = self.exit_edges.iter().position(|e| e.sink() == v)
+				while let Some(idx) = self
+					.exit_edges
+					.iter()
+					.position(|(_, sink)| sink.borrow() == v.borrow())
 				{
 					self.exit_edges.remove(idx);
 				}
 
-				for e in self.graph.graph().edges_sourced_in(&v)
+				for e in self.graph.graph().edges_sourced_in(v.borrow())
 				{
-					if !self.verts.contains(e.0.borrow())
+					if !self.contains_vertex(e.0.borrow())
 					{
-						self.exit_edges.push((v, e.0.borrow().clone()));
+						self.exit_edges.push((v.clone(), e.0));
 					}
 				}
 			}
@@ -77,7 +83,7 @@ impl<C: Ensure> Graph for SubgraphProxy<C>
 			self.graph
 				.graph()
 				.all_vertices_weighted()
-				.filter(move |(v, _)| self.verts.contains(v.borrow())),
+				.filter(move |(v, _)| self.verts.iter().any(|v2| v2.borrow() == v.borrow())),
 		)
 	}
 
@@ -92,7 +98,7 @@ impl<C: Ensure> Graph for SubgraphProxy<C>
 				.graph()
 				.edges_between(source.borrow().clone(), sink.borrow().clone())
 				.filter(move |_| {
-					self.verts.contains(source.borrow()) && self.verts.contains(sink.borrow())
+					self.contains_vertex(source.borrow()) && self.contains_vertex(sink.borrow())
 				}),
 		)
 	}
@@ -112,7 +118,7 @@ where
 		Box::new(
 			graph
 				.all_vertices_weighted_mut()
-				.filter(move |(v, _)| verts.contains(v.borrow())),
+				.filter(move |(v, _)| verts.iter().any(|v2| v2.borrow() == v.borrow())),
 		)
 	}
 
@@ -122,7 +128,8 @@ where
 		sink: impl 'b + Borrow<Self::Vertex>,
 	) -> Box<dyn 'b + Iterator<Item = &'a mut Self::EdgeWeight>>
 	{
-		let return_any = self.verts.contains(source.borrow()) && self.verts.contains(sink.borrow());
+		let return_any =
+			self.contains_vertex(source.borrow()) && self.contains_vertex(sink.borrow());
 		Box::new(
 			self.graph
 				.graph_mut()
@@ -138,12 +145,12 @@ where
 {
 	fn add_edge_weighted(
 		&mut self,
-		source: &Self::Vertex,
-		sink: &Self::Vertex,
+		source: impl Borrow<Self::Vertex>,
+		sink: impl Borrow<Self::Vertex>,
 		weight: Self::EdgeWeight,
 	) -> Result<(), ()>
 	{
-		if self.contains_vertex(source) && self.contains_vertex(sink)
+		if self.contains_vertex(source.borrow()) && self.contains_vertex(sink.borrow())
 		{
 			self.graph
 				.graph_mut()
@@ -162,14 +169,14 @@ where
 {
 	fn remove_edge_where_weight<F>(
 		&mut self,
-		source: &Self::Vertex,
-		sink: &Self::Vertex,
+		source: impl Borrow<Self::Vertex>,
+		sink: impl Borrow<Self::Vertex>,
 		f: F,
 	) -> Result<Self::EdgeWeight, ()>
 	where
 		F: Fn(&Self::EdgeWeight) -> bool,
 	{
-		if self.verts.contains(source) && self.verts.contains(sink)
+		if self.contains_vertex(source.borrow()) && self.contains_vertex(sink.borrow())
 		{
 			self.graph
 				.graph_mut()
@@ -186,10 +193,11 @@ impl<C: Ensure + GraphDerefMut> NewVertex for SubgraphProxy<C>
 where
 	C::Graph: NewVertex,
 {
-	fn new_vertex_weighted(&mut self, w: Self::VertexWeight) -> Result<Self::Vertex, ()>
+	fn new_vertex_weighted(&mut self, w: Self::VertexWeight) -> Result<Self::VertexRef, ()>
 	{
 		let v = self.graph.graph_mut().new_vertex_weighted(w)?;
-		self.verts.push(v);
+		let v = self.graph.graph().vertex_ref(v).ok_or(())?;
+		self.verts.push(v.clone());
 		Ok(v)
 	}
 }
@@ -198,15 +206,15 @@ impl<C: Ensure + GraphDerefMut> RemoveVertex for SubgraphProxy<C>
 where
 	C::Graph: RemoveVertex,
 {
-	fn remove_vertex(&mut self, v: &Self::Vertex) -> Result<Self::VertexWeight, ()>
+	fn remove_vertex(&mut self, v: impl Borrow<Self::Vertex>) -> Result<Self::VertexWeight, ()>
 	{
-		if self.contains_vertex(v)
+		if self.contains_vertex(v.borrow())
 		{
-			let w = self.graph.graph_mut().remove_vertex(v)?;
+			let w = self.graph.graph_mut().remove_vertex(v.borrow())?;
 			let index = self
 				.verts
 				.iter()
-				.position(|&t| t == *v)
+				.position(|t| t.borrow() == v.borrow())
 				.expect("Couldn't find removed vertex in subgraph");
 			self.verts.remove(index);
 			Ok(w)
@@ -220,7 +228,8 @@ where
 
 impl<C: Ensure> Subgraph for SubgraphProxy<C>
 {
-	fn exit_edges<'a>(&'a self) -> Box<dyn 'a + Iterator<Item = (Self::Vertex, Self::Vertex)>>
+	fn exit_edges<'a>(&'a self)
+		-> Box<dyn 'a + Iterator<Item = (Self::VertexRef, Self::VertexRef)>>
 	{
 		Box::new(self.exit_edges.iter().cloned())
 	}

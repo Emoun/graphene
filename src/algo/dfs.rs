@@ -126,7 +126,7 @@ where
 	where
 		G: HasVertex,
 	{
-		let v = g.get_vertex().clone();
+		let v = g.get_vertex().borrow().clone();
 		let mut result = Self {
 			graph: g,
 			visited: Vec::new(),

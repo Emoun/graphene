@@ -18,10 +18,10 @@ impl<G: Ensure> EnsuredGraph<G>
 {
 	pub fn contains_vertex(
 		self,
-		v: <G::Graph as Graph>::Vertex,
-	) -> Result<VertexInGraph<G, <G::Graph as Graph>::Vertex>, <G::Graph as Graph>::Vertex>
+		v: <G::Graph as Graph>::VertexRef,
+	) -> Result<VertexInGraph<G>, <G::Graph as Graph>::VertexRef>
 	{
-		if self.0.graph().contains_vertex(&v)
+		if self.0.graph().contains_vertex(v.clone())
 		{
 			Ok(VertexInGraph::ensure_unvalidated(self.0, v))
 		}
@@ -39,7 +39,7 @@ where
 	pub fn new_vertex_weighted(
 		mut self,
 		w: <G::Graph as Graph>::VertexWeight,
-	) -> Result<VertexInGraph<G, <G::Graph as Graph>::Vertex>, ()>
+	) -> Result<VertexInGraph<G>, ()>
 	where
 		<G::Graph as Graph>::VertexWeight: Default,
 	{
@@ -47,7 +47,7 @@ where
 		Ok(VertexInGraph::ensure_unvalidated(self.0, v))
 	}
 
-	pub fn new_vertex(self) -> Result<VertexInGraph<G, <G::Graph as Graph>::Vertex>, ()>
+	pub fn new_vertex(self) -> Result<VertexInGraph<G>, ()>
 	where
 		<G::Graph as Graph>::VertexWeight: Default,
 	{

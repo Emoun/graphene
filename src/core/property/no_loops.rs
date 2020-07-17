@@ -37,12 +37,12 @@ where
 {
 	fn add_edge_weighted(
 		&mut self,
-		source: &Self::Vertex,
-		sink: &Self::Vertex,
+		source: impl Borrow<Self::Vertex>,
+		sink: impl Borrow<Self::Vertex>,
 		weight: Self::EdgeWeight,
 	) -> Result<(), ()>
 	{
-		if source == sink
+		if source.borrow() == sink.borrow()
 		{
 			Err(())
 		}

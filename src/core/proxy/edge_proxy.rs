@@ -119,14 +119,15 @@ impl<C: Ensure> AddEdge for EdgeProxyGraph<C>
 {
 	fn add_edge_weighted(
 		&mut self,
-		source: &Self::Vertex,
-		sink: &Self::Vertex,
+		source: impl Borrow<Self::Vertex>,
+		sink: impl Borrow<Self::Vertex>,
 		_: Self::EdgeWeight,
 	) -> Result<(), ()>
 	{
-		if self.contains_vertex(source) && self.contains_vertex(sink)
+		if self.contains_vertex(source.borrow()) && self.contains_vertex(sink.borrow())
 		{
-			self.new.push((*source, *sink));
+			self.new
+				.push((source.borrow().clone(), sink.borrow().clone()));
 			Ok(())
 		}
 		else
@@ -140,8 +141,8 @@ impl<C: Ensure> RemoveEdge for EdgeProxyGraph<C>
 {
 	fn remove_edge_where_weight<F>(
 		&mut self,
-		source: &Self::Vertex,
-		sink: &Self::Vertex,
+		source: impl Borrow<Self::Vertex>,
+		sink: impl Borrow<Self::Vertex>,
 		_: F,
 	) -> Result<Self::EdgeWeight, ()>
 	where
@@ -149,8 +150,9 @@ impl<C: Ensure> RemoveEdge for EdgeProxyGraph<C>
 	{
 		// First try to find a valid new vertex
 		let to_remove = self.new.iter().cloned().enumerate().find(|(_, e)| {
-			(e.source() == *source && e.sink() == *sink)
-				|| !Self::Directedness::directed() && (e.source() == *sink && e.sink() == *source)
+			(e.source() == *source.borrow() && e.sink() == *sink.borrow())
+				|| !Self::Directedness::directed()
+					&& (e.source() == *sink.borrow() && e.sink() == *source.borrow())
 		});
 
 		if let Some((idx, _)) = to_remove
@@ -161,9 +163,14 @@ impl<C: Ensure> RemoveEdge for EdgeProxyGraph<C>
 		else
 		{
 			// If no new vertex is valid, look through the existing ones.
-			if let Some(_) = self.graph.graph().edges_between(source, sink).next()
+			if let Some(_) = self
+				.graph
+				.graph()
+				.edges_between(source.borrow(), sink.borrow())
+				.next()
 			{
-				self.removed.push((*source, *sink));
+				self.removed
+					.push((source.borrow().clone(), sink.borrow().clone()));
 				Ok(())
 			}
 			else
@@ -178,9 +185,10 @@ impl<C: Ensure + GraphDerefMut> RemoveVertex for EdgeProxyGraph<C>
 where
 	C::Graph: RemoveVertex,
 {
-	fn remove_vertex(&mut self, v: &Self::Vertex) -> Result<Self::VertexWeight, ()>
+	fn remove_vertex(&mut self, v: impl Borrow<Self::Vertex>) -> Result<Self::VertexWeight, ()>
 	{
-		self.new.retain(|e| e.source() != *v && e.sink() != *v);
+		self.new
+			.retain(|e| e.source() != *v.borrow() && e.sink() != *v.borrow());
 		self.graph.graph_mut().remove_vertex(v)
 	}
 }

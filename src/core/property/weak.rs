@@ -6,6 +6,7 @@ use crate::core::{
 	proxy::UndirectedProxy,
 	Directed, Ensure, Graph, GraphDerefMut,
 };
+use std::borrow::Borrow;
 
 /// A marker trait for graphs that are weakly connected.
 ///
@@ -61,9 +62,9 @@ impl<C: Ensure + GraphDerefMut> RemoveVertex for WeakGraph<C>
 where
 	C::Graph: RemoveVertex<Directedness = Directed>,
 {
-	fn remove_vertex(&mut self, v: &Self::Vertex) -> Result<Self::VertexWeight, ()>
+	fn remove_vertex(&mut self, v: impl Borrow<Self::Vertex>) -> Result<Self::VertexWeight, ()>
 	{
-		proxy_remove_vertex::<WeakGraph<_>, _>(self.0.graph_mut(), v)
+		proxy_remove_vertex::<WeakGraph<_>, _>(self.0.graph_mut(), v.borrow())
 	}
 }
 
@@ -73,14 +74,19 @@ where
 {
 	fn remove_edge_where_weight<F>(
 		&mut self,
-		source: &Self::Vertex,
-		sink: &Self::Vertex,
+		source: impl Borrow<Self::Vertex>,
+		sink: impl Borrow<Self::Vertex>,
 		f: F,
 	) -> Result<Self::EdgeWeight, ()>
 	where
 		F: Fn(&Self::EdgeWeight) -> bool,
 	{
-		proxy_remove_edge_where_weight::<WeakGraph<_>, _, _>(self.0.graph_mut(), source, sink, f)
+		proxy_remove_edge_where_weight::<WeakGraph<_>, _, _>(
+			self.0.graph_mut(),
+			source.borrow(),
+			sink.borrow(),
+			f,
+		)
 	}
 }
 

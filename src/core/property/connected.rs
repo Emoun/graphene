@@ -9,6 +9,7 @@ use crate::{
 		Ensure, Graph, GraphDerefMut,
 	},
 };
+use std::borrow::Borrow;
 
 /// A marker trait for graphs that are connected.
 ///
@@ -69,9 +70,9 @@ impl<C: Ensure + GraphDerefMut> RemoveVertex for ConnectedGraph<C>
 where
 	C::Graph: RemoveVertex,
 {
-	fn remove_vertex(&mut self, v: &Self::Vertex) -> Result<Self::VertexWeight, ()>
+	fn remove_vertex(&mut self, v: impl Borrow<Self::Vertex>) -> Result<Self::VertexWeight, ()>
 	{
-		proxy_remove_vertex::<ConnectedGraph<_>, _>(self.0.graph_mut(), v)
+		proxy_remove_vertex::<ConnectedGraph<_>, _>(self.0.graph_mut(), v.borrow())
 	}
 }
 
@@ -81,8 +82,8 @@ where
 {
 	fn remove_edge_where_weight<F>(
 		&mut self,
-		source: &Self::Vertex,
-		sink: &Self::Vertex,
+		source: impl Borrow<Self::Vertex>,
+		sink: impl Borrow<Self::Vertex>,
 		f: F,
 	) -> Result<Self::EdgeWeight, ()>
 	where
@@ -90,8 +91,8 @@ where
 	{
 		proxy_remove_edge_where_weight::<ConnectedGraph<_>, _, _>(
 			self.0.graph_mut(),
-			source,
-			sink,
+			source.borrow(),
+			sink.borrow(),
 			f,
 		)
 	}

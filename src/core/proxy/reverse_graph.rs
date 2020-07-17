@@ -75,8 +75,8 @@ where
 {
 	fn add_edge_weighted(
 		&mut self,
-		source: &Self::Vertex,
-		sink: &Self::Vertex,
+		source: impl Borrow<Self::Vertex>,
+		sink: impl Borrow<Self::Vertex>,
 		weight: Self::EdgeWeight,
 	) -> Result<(), ()>
 	{
@@ -90,8 +90,8 @@ where
 {
 	fn remove_edge_where_weight<F>(
 		&mut self,
-		source: &Self::Vertex,
-		sink: &Self::Vertex,
+		source: impl Borrow<Self::Vertex>,
+		sink: impl Borrow<Self::Vertex>,
 		f: F,
 	) -> Result<Self::EdgeWeight, ()>
 	where

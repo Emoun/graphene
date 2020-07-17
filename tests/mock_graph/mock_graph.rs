@@ -276,9 +276,10 @@ impl<D: Directedness> NewVertex for MockGraph<D>
 }
 impl<D: Directedness> RemoveVertex for MockGraph<D>
 {
-	fn remove_vertex(&mut self, mock_v: &Self::Vertex) -> Result<Self::VertexWeight, ()>
+	fn remove_vertex(&mut self, mock_v: impl Borrow<Self::Vertex>)
+		-> Result<Self::VertexWeight, ()>
 	{
-		let v = mock_v.value;
+		let v = mock_v.borrow().value;
 		if let Some(weight) = self.vertices.remove(&v)
 		{
 			self.edges.retain(|e| e.source() != v && e.sink() != v);
@@ -296,14 +297,16 @@ impl<D: Directedness> AddEdge for MockGraph<D>
 {
 	fn add_edge_weighted(
 		&mut self,
-		source: &Self::Vertex,
-		sink: &Self::Vertex,
+		source: impl Borrow<Self::Vertex>,
+		sink: impl Borrow<Self::Vertex>,
 		weight: Self::EdgeWeight,
 	) -> Result<(), ()>
 	{
-		if self.vertices.contains_key(&source.value) && self.vertices.contains_key(&sink.value)
+		let source = source.borrow().value;
+		let sink = sink.borrow().value;
+		if self.vertices.contains_key(&source) && self.vertices.contains_key(&sink)
 		{
-			self.edges.push((source.value, sink.value, weight));
+			self.edges.push((source, sink, weight));
 			self.validate_is_graph();
 			Ok(())
 		}
@@ -318,16 +321,18 @@ impl<D: Directedness> RemoveEdge for MockGraph<D>
 {
 	fn remove_edge_where_weight<F>(
 		&mut self,
-		source: &Self::Vertex,
-		sink: &Self::Vertex,
+		source: impl Borrow<Self::Vertex>,
+		sink: impl Borrow<Self::Vertex>,
 		f: F,
 	) -> Result<Self::EdgeWeight, ()>
 	where
 		F: Fn(&Self::EdgeWeight) -> bool,
 	{
 		if let Some((idx, _)) = self.edges.iter().enumerate().find(|(_, (so, si, w))| {
-			((*so == source.value && *si == sink.value)
-				|| !Self::Directedness::directed() && (*so == sink.value && *si == source.value))
+			let source = source.borrow().value;
+			let sink = sink.borrow().value;
+			((*so == source && *si == sink)
+				|| !Self::Directedness::directed() && (*so == sink && *si == source))
 				&& f(w)
 		})
 		{

@@ -51,10 +51,10 @@ where
 	C::Graph: NewVertex + AddEdge,
 	<C::Graph as Graph>::EdgeWeight: Default,
 {
-	fn new_vertex_weighted(&mut self, w: Self::VertexWeight) -> Result<Self::Vertex, ()>
+	fn new_vertex_weighted(&mut self, w: Self::VertexWeight) -> Result<Self::VertexRef, ()>
 	{
 		let v = self.0.graph_mut().new_vertex_weighted(w)?;
-		self.0.graph_mut().add_edge(&v, &v)?;
+		self.0.graph_mut().add_edge(v.clone(), v.clone())?;
 		Ok(v)
 	}
 }
@@ -64,9 +64,9 @@ where
 	C::Graph: RemoveVertex + RemoveEdge,
 	<C::Graph as Graph>::EdgeWeight: Default,
 {
-	fn remove_vertex(&mut self, v: &Self::Vertex) -> Result<Self::VertexWeight, ()>
+	fn remove_vertex(&mut self, v: impl Borrow<Self::Vertex>) -> Result<Self::VertexWeight, ()>
 	{
-		self.0.graph_mut().remove_edge(v, v)?;
+		self.0.graph_mut().remove_edge(v.borrow(), v.borrow())?;
 		self.0.graph_mut().remove_vertex(v)
 	}
 }

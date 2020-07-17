@@ -311,7 +311,7 @@ macro_rules! impl_properties {
 				delegate::delegate! {
 					to $crate::core::GraphDerefMut::graph_mut(&mut self$($delegate)+){
 						fn new_vertex_weighted(&mut self, w: Self::VertexWeight)
-							-> Result<Self::Vertex, ()>;
+							-> Result<Self::VertexRef, ()>;
 					}
 				}
 			}
@@ -334,7 +334,7 @@ macro_rules! impl_properties {
 			@implement {
 				delegate::delegate! {
 					to $crate::core::GraphDerefMut::graph_mut(&mut self$($delegate)+) {
-						fn remove_vertex(&mut self, v: &Self::Vertex)
+						fn remove_vertex(&mut self, v: impl std::borrow::Borrow<Self::Vertex>)
 							-> Result<Self::VertexWeight, ()>;
 					}
 				}
@@ -360,8 +360,8 @@ macro_rules! impl_properties {
 					to $crate::core::GraphDerefMut::graph_mut(&mut self$($delegate)+) {
 						fn add_edge_weighted(
 							&mut self,
-							source: &Self::Vertex,
-							sink: &Self::Vertex,
+							source: impl std::borrow::Borrow<Self::Vertex>,
+							sink: impl std::borrow::Borrow<Self::Vertex>,
 							weight: Self::EdgeWeight,
 						) -> Result<(), ()>;
 					}
@@ -388,8 +388,8 @@ macro_rules! impl_properties {
 					to $crate::core::GraphDerefMut::graph_mut(&mut self$($delegate)+) {
 						fn remove_edge_where_weight<F>(
 							&mut self,
-							source: &Self::Vertex,
-							sink: &Self::Vertex,
+							source: impl std::borrow::Borrow<Self::Vertex>,
+							sink: impl std::borrow::Borrow<Self::Vertex>,
 							f: F,
 						) -> Result<Self::EdgeWeight, ()>
 							where
@@ -514,7 +514,7 @@ macro_rules! impl_properties {
 				delegate::delegate!{
 					to $crate::core::GraphDeref::graph(&self$($delegate)+) {
 						fn exit_edges<'a>(&'a self) -> Box<dyn 'a + Iterator<Item=
-							(Self::Vertex, Self::Vertex)>>;
+							(Self::VertexRef, Self::VertexRef)>>;
 					}
 				}
 			}
@@ -536,7 +536,7 @@ macro_rules! impl_properties {
 			@implement {
 				delegate::delegate! {
 					to $crate::core::GraphDeref::graph(&self$($delegate)+) {
-						fn get_vertex(&self) -> &Self::Vertex;
+						fn get_vertex(&self) -> Self::VertexRef;
 					}
 				}
 			}

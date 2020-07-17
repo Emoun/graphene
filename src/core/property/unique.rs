@@ -80,12 +80,15 @@ where
 {
 	fn add_edge_weighted(
 		&mut self,
-		source: &Self::Vertex,
-		sink: &Self::Vertex,
+		source: impl Borrow<Self::Vertex>,
+		sink: impl Borrow<Self::Vertex>,
 		weight: Self::EdgeWeight,
 	) -> Result<(), ()>
 	{
-		if self.edges_between(source, sink).next().is_some()
+		if self
+			.edges_between(source.borrow(), sink.borrow())
+			.next()
+			.is_some()
 		{
 			return Err(());
 		}

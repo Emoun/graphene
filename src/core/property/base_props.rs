@@ -11,13 +11,13 @@ pub trait NewVertex: Graph
 {
 	/// Adds a new vertex with the given weight to the graph.
 	/// Returns the id of the new vertex.
-	fn new_vertex_weighted(&mut self, w: Self::VertexWeight) -> Result<Self::Vertex, ()>;
+	fn new_vertex_weighted(&mut self, w: Self::VertexWeight) -> Result<Self::VertexRef, ()>;
 
 	// Optional methods
 	/// Adds a new vertex to the graph.
 	/// Returns the id of the new vertex.
 	/// The weight of the vertex is the default.
-	fn new_vertex(&mut self) -> Result<Self::Vertex, ()>
+	fn new_vertex(&mut self) -> Result<Self::VertexRef, ()>
 	where
 		Self::VertexWeight: Default,
 	{
@@ -33,7 +33,7 @@ pub trait RemoveVertex: Graph
 	/// Removes the given vertex from the graph, returning its weight.
 	/// If the vertex still has edges incident on it, they are also removed,
 	/// dropping their weights.
-	fn remove_vertex(&mut self, v: &Self::Vertex) -> Result<Self::VertexWeight, ()>;
+	fn remove_vertex(&mut self, v: impl Borrow<Self::Vertex>) -> Result<Self::VertexWeight, ()>;
 }
 
 pub trait AddEdge: Graph
@@ -41,8 +41,8 @@ pub trait AddEdge: Graph
 	/// Adds a copy of the given edge to the graph
 	fn add_edge_weighted(
 		&mut self,
-		source: &Self::Vertex,
-		sink: &Self::Vertex,
+		source: impl Borrow<Self::Vertex>,
+		sink: impl Borrow<Self::Vertex>,
 		weight: Self::EdgeWeight,
 	) -> Result<(), ()>;
 
@@ -67,7 +67,11 @@ pub trait AddEdge: Graph
 	/// ###`Err` properties:
 	///
 	/// - The graph is unchanged.
-	fn add_edge(&mut self, source: &Self::Vertex, sink: &Self::Vertex) -> Result<(), ()>
+	fn add_edge(
+		&mut self,
+		source: impl Borrow<Self::Vertex>,
+		sink: impl Borrow<Self::Vertex>,
+	) -> Result<(), ()>
 	where
 		Self::EdgeWeight: Default,
 	{
@@ -79,8 +83,8 @@ pub trait RemoveEdge: Graph
 {
 	fn remove_edge_where_weight<F>(
 		&mut self,
-		source: &Self::Vertex,
-		sink: &Self::Vertex,
+		source: impl Borrow<Self::Vertex>,
+		sink: impl Borrow<Self::Vertex>,
 		f: F,
 	) -> Result<Self::EdgeWeight, ()>
 	where
@@ -106,8 +110,8 @@ pub trait RemoveEdge: Graph
 	/// - The graph is unchanged.
 	fn remove_edge(
 		&mut self,
-		source: &Self::Vertex,
-		sink: &Self::Vertex,
+		source: impl Borrow<Self::Vertex>,
+		sink: impl Borrow<Self::Vertex>,
 	) -> Result<Self::EdgeWeight, ()>
 	{
 		self.remove_edge_where_weight(source, sink, |_| true)
