@@ -1,5 +1,4 @@
 //! Contains common graph implementations.
-//!
 
 mod adjacency_list;
 mod ensured;

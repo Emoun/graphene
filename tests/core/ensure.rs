@@ -1,5 +1,4 @@
 //! Tests the `Ensure` and `BaseGraph` combination for ensuring graphs.
-//!
 
 use crate::mock_graph::MockVertex;
 use delegate::delegate;

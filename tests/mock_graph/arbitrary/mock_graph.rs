@@ -4,7 +4,7 @@ use crate::mock_graph::{
 };
 use graphene::core::{
 	property::{AddEdge, DirectedGraph, NewVertex, RemoveEdge, RemoveVertex},
-	Directedness, Edge, EdgeDeref, EdgeWeighted, EnsureUnloaded, Graph,
+	Directedness, EdgeDeref, EnsureUnloaded, Graph,
 };
 use quickcheck::{Arbitrary, Gen};
 use rand::Rng;
@@ -197,13 +197,11 @@ impl<D: Directedness> MockGraph<D>
 		visited.push(start);
 		if D::directed()
 		{
-			for e in self
-				.edges_incident_on(start)
-				.filter(|e| e.source() == start)
+			for (e, _) in self.edges_sourced_in(start)
 			{
-				if !visited.contains(&e.sink())
+				if !visited.contains(&e)
 				{
-					if self.dfs_rec(e.sink(), end, visited)
+					if self.dfs_rec(e, end, visited)
 					{
 						return true; // early return of 'end' is found
 					}
@@ -212,16 +210,8 @@ impl<D: Directedness> MockGraph<D>
 		}
 		else
 		{
-			for e in self.edges_incident_on(start)
+			for (v_other, _) in self.edges_incident_on(start)
 			{
-				let v_other = if e.source() == start
-				{
-					e.sink()
-				}
-				else
-				{
-					e.source()
-				};
 				if !visited.contains(&v_other)
 				{
 					self.dfs_rec(v_other, end, visited);
@@ -276,14 +266,13 @@ impl<D: Directedness> MockGraph<D>
 				clone.remove_vertex(v).unwrap();
 				if let Ok(g) = DirectedGraph::ensure(self)
 				{
-					for (sink, w1) in g.edges_sourced_in(v).map(|e| (e.sink(), e.weight_owned()))
+					for (sink, w1) in g.edges_sourced_in(v)
 					{
 						if sink == v
 						{
 							continue;
 						}
-						for (source, w2) in
-							g.edges_sinked_in(v).map(|e| (e.source(), e.weight_owned()))
+						for (source, w2) in g.edges_sinked_in(v)
 						{
 							if source == v
 							{
@@ -296,10 +285,7 @@ impl<D: Directedness> MockGraph<D>
 				}
 				else
 				{
-					let neighbors: Vec<_> = self
-						.edges_incident_on(v)
-						.map(|e| (e.other(v), e.weight_owned()))
-						.collect();
+					let neighbors: Vec<_> = self.edges_incident_on(v).collect();
 					let mut neighbor_iter = neighbors.iter();
 					while let Some(&(v1, w1)) = neighbor_iter.next()
 					{

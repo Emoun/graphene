@@ -1,5 +1,5 @@
 use crate::core::{trait_aliases::Id, Directed, Directedness, Edge};
-use std::iter::Iterator;
+use std::{borrow::Borrow, iter::Iterator};
 
 #[macro_use]
 mod macros
@@ -134,50 +134,77 @@ pub trait Graph
 		Box::new(self.all_vertices_weighted().map(|(_, w)| w))
 	}
 
-	/// Returns all edges that are incident on both of the given vertices,
-	/// regardless of direction.
+	/// Returns the weights of all edges that are sourced in v1 and sinked in
+	/// v2. I.e. all edges where e == (v1,v2,_).
 	///
-	/// I.e. all edges where e == (v1,v2,_) or e == (v2,v1,_)
-	fn edges_between<'a>(
+	/// If the graph is undirected, returns all edges connecting the two
+	/// vertices I.e. all edges where e == (v1,v2,_) or e == (v2,v1,_)
+	fn edges_between<'a: 'b, 'b>(
 		&'a self,
-		v1: Self::Vertex,
-		v2: Self::Vertex,
-	) -> Box<dyn 'a + Iterator<Item = (Self::Vertex, Self::Vertex, &'a Self::EdgeWeight)>>
+		source: impl 'b + Borrow<Self::Vertex>,
+		sink: impl 'b + Borrow<Self::Vertex>,
+	) -> Box<dyn 'b + Iterator<Item = &'a Self::EdgeWeight>>
 	{
-		edges_between!(self.all_edges(), v1, v2)
+		Box::new(
+			self.all_edges()
+				.filter(move |(so, si, _)| {
+					(source.borrow() == so && sink.borrow() == si)
+						|| (!Self::Directedness::directed()
+							&& (source.borrow() == si && sink.borrow() == so))
+				})
+				.map(|(_, _, w)| w),
+		)
 	}
-	/// Returns all edges that are sourced in the given vertex.
-	///
+
+	/// Returns the sink and weight of any edge sourced in the given vertex.
 	/// I.e. all edges where `e == (v,_,_)`
 	///
-	/// Only available for directed graphs
-	fn edges_sourced_in<'a>(
+	/// If the graph is undirected, is semantically equivalent to
+	/// `edges_incident_on`.
+	fn edges_sourced_in<'a: 'b, 'b>(
 		&'a self,
-		v: Self::Vertex,
-	) -> Box<dyn 'a + Iterator<Item = (Self::Vertex, Self::Vertex, &'a Self::EdgeWeight)>>
-	where
-		Self: Graph<Directedness = Directed>,
+		v: impl 'b + Borrow<Self::Vertex>,
+	) -> Box<dyn 'b + Iterator<Item = (Self::Vertex, &'a Self::EdgeWeight)>>
 	{
-		edges_incident_on!(self.all_edges(), v, source)
+		Box::new(self.all_vertices().flat_map(move |v2| {
+			self.edges_between(v.borrow().clone(), v2.borrow().clone())
+				.map(move |w| (v2.clone(), w))
+		}))
 	}
-	/// Returns all edges that are sinked in the given vertex.
-	///
+
+	/// Returns the source and weight of any edge sinked in the given vertex.
 	/// I.e. all edges where `e == (_,v,_)`
-	fn edges_sinked_in<'a>(
+	///
+	/// If the graph is undirected, is semantically equivalent to
+	/// `edges_incident_on`.
+	fn edges_sinked_in<'a: 'b, 'b>(
 		&'a self,
-		v: Self::Vertex,
-	) -> Box<dyn 'a + Iterator<Item = (Self::Vertex, Self::Vertex, &'a Self::EdgeWeight)>>
-	where
-		Self: Graph<Directedness = Directed>,
+		v: impl 'b + Borrow<Self::Vertex>,
+	) -> Box<dyn 'b + Iterator<Item = (Self::Vertex, &'a Self::EdgeWeight)>>
 	{
-		edges_incident_on!(self.all_edges(), v, sink)
+		Box::new(self.all_vertices().flat_map(move |v2| {
+			self.edges_between(v2.borrow().clone(), v.borrow().clone())
+				.map(move |w| (v2.clone(), w))
+		}))
 	}
-	fn edges_incident_on<'a>(
+
+	/// Returns the neighboring vertex and the weight of any edge incident
+	/// on the given vertex.
+	///
+	/// If the graph is directed, edge directions are ignored.
+	fn edges_incident_on<'a: 'b, 'b>(
 		&'a self,
-		v: Self::Vertex,
-	) -> Box<dyn 'a + Iterator<Item = (Self::Vertex, Self::Vertex, &'a Self::EdgeWeight)>>
+		v: impl 'b + Borrow<Self::Vertex>,
+	) -> Box<dyn 'b + Iterator<Item = (Self::Vertex, &'a Self::EdgeWeight)>>
 	{
-		edges_incident_on!(self.all_edges(), v)
+		Box::new(
+			self.edges_sourced_in(v.borrow().clone()).chain(
+				self.edges_sinked_in(v.borrow().clone())
+					.filter(move |(v2, _)| {
+						Self::Directedness::directed() && v.borrow() != v2.borrow()
+					}),
+			),
+		)
 	}
 
 	fn edge_valid<E>(&self, e: E) -> bool

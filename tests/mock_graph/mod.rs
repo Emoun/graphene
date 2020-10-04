@@ -1,7 +1,4 @@
 //! Mock graph implementations to be used by tests.
-//!
-//!
-//!
 
 #[macro_use]
 pub mod utilities;

@@ -1,8 +1,6 @@
 //! Tests `Ensured` and `EnsuredGraph` to make sure
 //! the new versions of each method give the same result
 //! as the original.
-//!
-//!
 use crate::mock_graph::{MockGraph, MockVertex, MockVertexWeight};
 use duplicate::duplicate;
 use graphene::{

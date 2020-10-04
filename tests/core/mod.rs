@@ -1,6 +1,4 @@
 //! Testing for graphene::core.
-//!
-//!
 
 mod edge;
 mod ensure;

@@ -74,6 +74,7 @@ pub fn unordered_sublist_equal<L: PartialEq<R>, R>(sublist: &Vec<L>, superlist: 
 	unordered_sublist(sublist, superlist, |v_sub, v_super| v_sub == v_super)
 }
 
+#[allow(dead_code)]
 /// Returns whether the two lists are equivalent if the order of the elements is
 /// ignored.
 pub fn unordered_equivalent_lists<B, P, F1, F2>(l1: &Vec<B>, l2: &Vec<P>, e1: F1, e2: F2) -> bool

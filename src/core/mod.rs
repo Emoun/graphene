@@ -1,6 +1,5 @@
 //! Contains the basic traits and structs needed to define graphs and work on
 //! them.
-//!
 mod deref_graph;
 mod directedness;
 mod edge;

@@ -1,4 +1,4 @@
-use crate::core::{property::HasVertex, Directedness, Edge, Graph};
+use crate::core::{property::HasVertex, Graph};
 
 /// Performs [depth-first traversal](https://mathworld.wolfram.com/Depth-FirstTraversal.html)
 /// of a graph's vertices.
@@ -144,22 +144,8 @@ where
 		self.visited.push(to_return);
 
 		// Explore children
-		for e in self.graph.edges_incident_on(to_return.clone())
+		for (child, _) in self.graph.edges_sourced_in(to_return.clone())
 		{
-			let child = if to_return == e.source()
-			{
-				e.sink()
-			}
-			// In a directed graph, we have to skip incoming edges
-			else if G::Directedness::directed()
-			{
-				continue;
-			}
-			else
-			{
-				e.source()
-			};
-
 			if !self.visited(child.clone())
 			{
 				// Push to stack without exit mark

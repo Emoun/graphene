@@ -1,5 +1,4 @@
 //! Tests `Dfs`
-//!
 
 use crate::mock_graph::{
 	arbitrary::{ArbConnectedGraph, ArbVertexIn},

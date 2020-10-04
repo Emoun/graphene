@@ -1,6 +1,7 @@
 use crate::core::{
 	property::AddEdge, Directedness, Edge, EdgeWeighted, Ensure, Graph, GraphDerefMut,
 };
+use std::borrow::Borrow;
 
 /// A marker trait for graphs containing only unique edges.
 ///
@@ -14,9 +15,13 @@ use crate::core::{
 /// i.e. only one (v,v,_).
 pub trait Unique: Graph
 {
-	fn edge_between(&self, v1: Self::Vertex, v2: Self::Vertex) -> Option<&Self::EdgeWeight>
+	fn edge_between(
+		&self,
+		v1: impl Borrow<Self::Vertex>,
+		v2: impl Borrow<Self::Vertex>,
+	) -> Option<&Self::EdgeWeight>
 	{
-		self.edges_between(v1, v2).next().map(|(_, _, w)| w)
+		self.edges_between(v1, v2).next()
 	}
 }
 
@@ -72,9 +77,7 @@ where
 	{
 		if Self::Directedness::directed()
 		{
-			if self
-				.edges_between(e.source(), e.sink())
-				.any(|edge| e.source() == edge.source() && e.sink() == edge.sink())
+			if self.edges_between(e.source(), e.sink()).next().is_some()
 			{
 				return Err(());
 			}
