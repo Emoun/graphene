@@ -1,10 +1,11 @@
 use crate::{
 	common::AdjListGraph,
 	core::{
-		property::{AddEdge, NewVertex, RemoveEdge, RemoveVertex, VertexCount},
+		property::{AddEdge, EdgeCount, NewVertex, RemoveEdge, RemoveVertex, VertexCount},
 		Directedness, Edge, EdgeWeighted, Graph, GraphMut,
 	},
 };
+use std::borrow::Borrow;
 
 impl<Vw, Ew, D> Graph for AdjListGraph<Vw, Ew, D>
 where
@@ -22,18 +23,48 @@ where
 		Box::new(self.vertices.iter().enumerate().map(|(v, (w, _))| (v, w)))
 	}
 
-	fn all_edges<'a>(
+	fn edges_between<'a: 'b, 'b>(
 		&'a self,
-	) -> Box<dyn 'a + Iterator<Item = (Self::Vertex, Self::Vertex, &'a Self::EdgeWeight)>>
+		source: impl 'b + Borrow<Self::Vertex>,
+		sink: impl 'b + Borrow<Self::Vertex>,
+	) -> Box<dyn 'b + Iterator<Item = &'a Self::EdgeWeight>>
 	{
+		let source = source.borrow().clone();
+		let sink = sink.borrow().clone();
+
 		Box::new(
 			self.vertices
-				.iter()
-				.enumerate()
-				.flat_map(|(source_id, (_, out))| {
-					out.iter()
-						.map(move |(sink_idx, e_weight)| (source_id, *sink_idx, e_weight))
-				}),
+				.get(source)
+				.into_iter()
+				.flat_map(move |(_, edges)| {
+					edges.iter().filter_map(move |(si, w)| {
+						if *si == sink
+						{
+							Some(w)
+						}
+						else
+						{
+							None
+						}
+					})
+				})
+				.chain(
+					self.vertices
+						.get(sink)
+						.into_iter()
+						.flat_map(move |(_, edges)| {
+							edges.iter().filter_map(move |(si, w)| {
+								if !Self::Directedness::directed() && *si != sink && *si == source
+								{
+									Some(w)
+								}
+								else
+								{
+									None
+								}
+							})
+						}),
+				),
 		)
 	}
 }
@@ -54,17 +85,51 @@ where
 		)
 	}
 
-	fn all_edges_mut<'a>(
+	fn edges_between_mut<'a: 'b, 'b>(
 		&'a mut self,
-	) -> Box<dyn 'a + Iterator<Item = (Self::Vertex, Self::Vertex, &'a mut Self::EdgeWeight)>>
+		source: impl 'b + Borrow<Self::Vertex>,
+		sink: impl 'b + Borrow<Self::Vertex>,
+	) -> Box<dyn 'b + Iterator<Item = &'a mut Self::EdgeWeight>>
 	{
+		let source = source.borrow().clone();
+		let sink = sink.borrow().clone();
+
 		Box::new(
 			self.vertices
 				.iter_mut()
 				.enumerate()
-				.flat_map(|(source_id, (_, out))| {
-					out.iter_mut()
-						.map(move |(sink_idx, e_weight)| (source_id, *sink_idx, e_weight))
+				.filter_map(move |(so, (_, edges))| {
+					if source == so
+					{
+						Some((false, edges))
+					}
+					else if !Self::Directedness::directed() && (so == sink)
+					{
+						Some((true, edges))
+					}
+					else
+					{
+						None
+					}
+				})
+				.flat_map(|(sink_first, edges)| {
+					edges
+						.iter_mut()
+						.map(move |(si, weight)| (sink_first, si, weight))
+				})
+				.filter_map(move |(sink_first, si, weight)| {
+					if sink_first
+					{
+						if source == *si
+						{
+							return Some(weight);
+						}
+					}
+					else if sink == *si
+					{
+						return Some(weight);
+					}
+					None
 				}),
 		)
 	}
@@ -169,6 +234,20 @@ where
 	fn vertex_count(&self) -> Self::Count
 	{
 		self.vertices.len()
+	}
+}
+
+impl<Vw, Ew, D> EdgeCount for AdjListGraph<Vw, Ew, D>
+where
+	D: Directedness,
+{
+	type Count = usize;
+
+	fn edge_count(&self) -> Self::Count
+	{
+		self.vertices
+			.iter()
+			.fold(0, |count, (_, edges)| count + edges.len())
 	}
 }
 

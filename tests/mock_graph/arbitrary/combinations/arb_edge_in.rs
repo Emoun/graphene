@@ -5,8 +5,7 @@ use crate::mock_graph::{
 use graphene::{
 	core::{
 		property::{AddEdge, HasVertexGraph, RemoveEdge},
-		Edge, EdgeDeref, EdgeWeighted, EnsureUnloaded, Graph, GraphDerefMut, GraphMut,
-		ReleaseUnloaded,
+		Edge, EdgeDeref, EnsureUnloaded, Graph, GraphDerefMut, GraphMut, ReleaseUnloaded,
 	},
 	impl_ensurer,
 };
@@ -56,14 +55,9 @@ where
 			let mut clone = self.0.clone();
 			let edge = clone
 				.graph_mut()
-				.all_edges_mut()
-				.find(|e| {
-					e.source() == self.1.source()
-						&& e.sink() == self.1.sink()
-						&& e.weight() == self.1.weight_ref()
-				})
-				.unwrap()
-				.2;
+				.edges_between_mut(self.1.source(), self.1.sink())
+				.find(|w| **w == (self.1).2)
+				.unwrap();
 			*edge = shrunk.clone();
 			Self(clone, ((self.1).0, (self.1).1, shrunk))
 		}));
@@ -72,11 +66,7 @@ where
 		let mut without_edge = self.0.clone().release();
 		without_edge
 			.graph_mut()
-			.remove_edge_where(|e| {
-				e.source() == self.1.source()
-					&& e.sink() == self.1.sink()
-					&& e.weight() == self.1.weight_ref()
-			})
+			.remove_edge_where_weight((self.1.source(), self.1.sink()), |w| *w == (self.1).2)
 			.unwrap();
 		result.extend(
 			ArbTwoVerticesIn::<_, NonUnique>::new(without_edge, (self.1).0, (self.1).1)

@@ -3,6 +3,8 @@
 use crate::mock_graph::MockVertex;
 use delegate::delegate;
 use graphene::core::{Ensure, Graph, GraphDeref, GraphDerefMut, GraphMut, Release};
+use std::borrow::Borrow;
+
 /// A mock property that doesn't use mutability.
 ///
 /// Its requirement is that the graph has exactly 1 vertex with a weight
@@ -75,6 +77,12 @@ impl<C: Ensure> Graph for MockEnsurer<C>
 			fn all_edges<'a>(
 				&'a self,
 			) -> Box<dyn 'a + Iterator<Item = (Self::Vertex, Self::Vertex, &'a Self::EdgeWeight)>>;
+
+			fn edges_between<'a: 'b, 'b>(
+				&'a self,
+				source: impl 'b + Borrow<Self::Vertex>,
+				sink: impl 'b + Borrow<Self::Vertex>,
+			) -> Box<dyn 'b + Iterator<Item = &'a Self::EdgeWeight>>;
 		}
 	}
 }
@@ -88,9 +96,11 @@ where
 				&'a mut self,
 			) -> Box<dyn 'a + Iterator<Item = (Self::Vertex, &'a mut Self::VertexWeight)>>;
 
-			fn all_edges_mut<'a>(
+			fn edges_between_mut<'a: 'b, 'b>(
 				&'a mut self,
-			) -> Box<dyn 'a + Iterator<Item = (Self::Vertex, Self::Vertex, &'a mut Self::EdgeWeight)>>;
+				source: impl 'b + Borrow<Self::Vertex>,
+				sink: impl 'b + Borrow<Self::Vertex>,
+			) -> Box<dyn 'b + Iterator<Item = &'a mut Self::EdgeWeight>>;
 		}
 	}
 }
@@ -168,6 +178,12 @@ impl<C: Ensure> Graph for MockUnloadedEnsurer<C>
 			fn all_edges<'a>(
 				&'a self,
 			) -> Box<dyn 'a + Iterator<Item = (Self::Vertex, Self::Vertex, &'a Self::EdgeWeight)>>;
+
+			fn edges_between<'a: 'b, 'b>(
+				&'a self,
+				source: impl 'b + Borrow<Self::Vertex>,
+				sink: impl 'b + Borrow<Self::Vertex>,
+			) -> Box<dyn 'b + Iterator<Item = &'a Self::EdgeWeight>>;
 		}
 	}
 }
@@ -182,11 +198,13 @@ where
 		self.0.graph_mut().all_vertices_weighted_mut()
 	}
 
-	fn all_edges_mut<'a>(
+	fn edges_between_mut<'a: 'b, 'b>(
 		&'a mut self,
-	) -> Box<dyn 'a + Iterator<Item = (Self::Vertex, Self::Vertex, &'a mut Self::EdgeWeight)>>
+		source: impl 'b + Borrow<Self::Vertex>,
+		sink: impl 'b + Borrow<Self::Vertex>,
+	) -> Box<dyn 'b + Iterator<Item = &'a mut Self::EdgeWeight>>
 	{
-		self.0.graph_mut().all_edges_mut()
+		self.0.graph_mut().edges_between_mut(source, sink)
 	}
 }
 impl<C: Ensure> MockProperty for MockUnloadedEnsurer<C>

@@ -1,5 +1,6 @@
 use crate::core::{Directed, Directedness, Ensure, Graph, Undirected};
 use delegate::delegate;
+use std::borrow::Borrow;
 
 #[derive(Clone, Debug)]
 pub struct DirectedGraph<C: Ensure>(C);
@@ -30,9 +31,11 @@ impl<C: Ensure> Graph for DirectedGraph<C>
 				&'a self,
 			) -> Box<dyn 'a + Iterator<Item = (Self::Vertex, &'a Self::VertexWeight)>>;
 
-			fn all_edges<'a>(
+			fn edges_between<'a: 'b, 'b>(
 				&'a self,
-			) -> Box<dyn 'a + Iterator<Item = (Self::Vertex, Self::Vertex, &'a Self::EdgeWeight)>>;
+				source: impl 'b + Borrow<Self::Vertex>,
+				sink: impl 'b + Borrow<Self::Vertex>,
+			) -> Box<dyn 'b + Iterator<Item = &'a Self::EdgeWeight>>;
 		}
 	}
 }
@@ -71,9 +74,11 @@ impl<C: Ensure> Graph for UndirectedGraph<C>
 				&'a self,
 			) -> Box<dyn 'a + Iterator<Item = (Self::Vertex, &'a Self::VertexWeight)>>;
 
-			fn all_edges<'a>(
+			fn edges_between<'a: 'b, 'b>(
 				&'a self,
-			) -> Box<dyn 'a + Iterator<Item = (Self::Vertex, Self::Vertex, &'a Self::EdgeWeight)>>;
+				source: impl 'b + Borrow<Self::Vertex>,
+				sink: impl 'b + Borrow<Self::Vertex>,
+			) -> Box<dyn 'b + Iterator<Item = &'a Self::EdgeWeight>>;
 		}
 	}
 }

@@ -2,11 +2,12 @@ use crate::mock_graph::{MockEdgeWeight, MockVertex, MockVertexWeight};
 use graphene::{
 	base_graph,
 	core::{
-		property::{AddEdge, NewVertex, RemoveEdge, RemoveVertex},
+		property::{AddEdge, EdgeCount, NewVertex, RemoveEdge, RemoveVertex, VertexCount},
 		Directedness, Edge, EdgeWeighted, Graph, GraphMut,
 	},
 };
 use std::{
+	borrow::Borrow,
 	collections::HashMap,
 	fmt::{Debug, Error, Formatter},
 	marker::PhantomData,
@@ -186,6 +187,27 @@ impl<D: Directedness> Graph for MockGraph<D>
 				.map(|(so, si, w)| (MockVertex { value: *so }, MockVertex { value: *si }, w)),
 		)
 	}
+
+	fn edges_between<'a: 'b, 'b>(
+		&'a self,
+		source: impl 'b + Borrow<Self::Vertex>,
+		sink: impl 'b + Borrow<Self::Vertex>,
+	) -> Box<dyn 'b + Iterator<Item = &'a Self::EdgeWeight>>
+	{
+		let source = source.borrow().value;
+		let sink = sink.borrow().value;
+		Box::new(self.edges.iter().filter_map(move |(so, si, w)| {
+			if (source == *so && sink == *si)
+				|| (!Self::Directedness::directed() && (source == *si && sink == *so))
+			{
+				Some(w)
+			}
+			else
+			{
+				None
+			}
+		}))
+	}
 }
 
 impl<D: Directedness> GraphMut for MockGraph<D>
@@ -201,15 +223,25 @@ impl<D: Directedness> GraphMut for MockGraph<D>
 		)
 	}
 
-	fn all_edges_mut<'a>(
+	fn edges_between_mut<'a: 'b, 'b>(
 		&'a mut self,
-	) -> Box<dyn 'a + Iterator<Item = (Self::Vertex, Self::Vertex, &'a mut Self::EdgeWeight)>>
+		source: impl 'b + Borrow<Self::Vertex>,
+		sink: impl 'b + Borrow<Self::Vertex>,
+	) -> Box<dyn 'b + Iterator<Item = &'a mut Self::EdgeWeight>>
 	{
-		Box::new(
-			self.edges
-				.iter_mut()
-				.map(|(so, si, w)| (MockVertex { value: *so }, MockVertex { value: *si }, w)),
-		)
+		let source = source.borrow().value;
+		let sink = sink.borrow().value;
+		Box::new(self.edges.iter_mut().filter_map(move |(so, si, w)| {
+			if (source == *so && sink == *si)
+				|| (!Self::Directedness::directed() && (source == *si && sink == *so))
+			{
+				Some(w)
+			}
+			else
+			{
+				None
+			}
+		}))
 	}
 }
 
@@ -292,6 +324,26 @@ impl<D: Directedness> RemoveEdge for MockGraph<D>
 		{
 			Err(())
 		}
+	}
+}
+
+impl<D: Directedness> VertexCount for MockGraph<D>
+{
+	type Count = usize;
+
+	fn vertex_count(&self) -> Self::Count
+	{
+		self.vertices.len()
+	}
+}
+
+impl<D: Directedness> EdgeCount for MockGraph<D>
+{
+	type Count = usize;
+
+	fn edge_count(&self) -> Self::Count
+	{
+		self.edges.len()
 	}
 }
 

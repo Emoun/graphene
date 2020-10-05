@@ -3,6 +3,7 @@ use crate::core::{
 	Directedness, Edge, EdgeWeighted, Ensure, Graph, GraphDerefMut, GraphMut,
 };
 use delegate::delegate;
+use std::borrow::Borrow;
 
 /// A wrapper around a graph, that allows for addition and removal
 /// of edges, without mutating the underlying graph.
@@ -60,38 +61,30 @@ impl<C: Ensure> Graph for EdgeProxyGraph<C>
 		}
 	}
 
-	fn all_edges<'a>(
+	fn edges_between<'a: 'b, 'b>(
 		&'a self,
-	) -> Box<dyn 'a + Iterator<Item = (Self::Vertex, Self::Vertex, &'a Self::EdgeWeight)>>
+		source: impl 'b + Borrow<Self::Vertex>,
+		sink: impl 'b + Borrow<Self::Vertex>,
+	) -> Box<dyn 'b + Iterator<Item = &'a Self::EdgeWeight>>
 	{
-		let underlying_edges = self.graph.graph().all_edges();
-		let mut rem_used = Vec::with_capacity(self.removed.len());
-		rem_used.extend(self.removed.iter().map(|_| false));
-		let removed = underlying_edges
-			.filter(move |e| {
-				if let Some((idx, _)) = self.removed.iter().enumerate().find(|(idx, rem)| {
-					!rem_used[*idx]
-						&& ((rem.source() == e.source() && rem.sink() == e.sink())
-							|| (!Self::Directedness::directed()
-								&& rem.source() == e.sink() && rem.sink() == e.source()))
-				})
-				{
-					rem_used[idx] = true;
-					false
-				}
-				else
-				{
-					true
-				}
-			})
-			.map(|e| (e.source(), e.sink(), &()));
-		Box::new(
-			self.new
-				.iter()
-				.cloned()
-				.map(|e| (e.source(), e.sink(), &()))
-				.chain(removed),
-		)
+		let applicable = |so, si| {
+			(source.borrow() == so && sink.borrow() == si)
+				|| (!Self::Directedness::directed()
+					&& (source.borrow() == si && sink.borrow() == so))
+		};
+		let removed_count = self
+			.removed
+			.iter()
+			.filter(|(so, si)| applicable(so, si))
+			.count();
+		let added_count = self
+			.new
+			.iter()
+			.filter(|(so, si)| applicable(so, si))
+			.count();
+		let underlying_count = self.graph.graph().edges_between(source, sink).count();
+
+		Box::new((0..(underlying_count - removed_count + added_count)).map(|_| &()))
 	}
 }
 
@@ -107,17 +100,17 @@ where
 		}
 	}
 
-	fn all_edges_mut<'a>(
+	fn edges_between_mut<'a: 'b, 'b>(
 		&'a mut self,
-	) -> Box<dyn 'a + Iterator<Item = (Self::Vertex, Self::Vertex, &'a mut Self::EdgeWeight)>>
+		source: impl 'b + Borrow<Self::Vertex>,
+		sink: impl 'b + Borrow<Self::Vertex>,
+	) -> Box<dyn 'b + Iterator<Item = &'a mut Self::EdgeWeight>>
 	{
-		Box::new(self.all_edges().map(|(so, si, w)| {
-			(so, si, {
-				let pointer = w as *const ();
-				let pointer_mut = pointer as *mut ();
-				unsafe { &mut *pointer_mut }
-			})
-		}))
+		// Safe because &mut () can't mutate anything
+		Box::new(
+			self.edges_between(source, sink)
+				.map(|w| unsafe { &mut *((w as *const ()) as *mut ()) }),
+		)
 	}
 }
 

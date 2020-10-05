@@ -248,10 +248,11 @@ macro_rules! impl_properties {
 							&'a self,
 						) -> Box<dyn 'a + Iterator<Item = (Self::Vertex, &'a Self::VertexWeight)>>;
 
-						fn all_edges<'a>(
+						fn edges_between<'a: 'b, 'b>(
 							&'a self,
-						) -> Box<dyn 'a + Iterator<
-							Item = (Self::Vertex, Self::Vertex, &'a Self::EdgeWeight)>>;
+							source: impl 'b + std::borrow::Borrow<Self::Vertex>,
+							sink: impl 'b + std::borrow::Borrow<Self::Vertex>,
+						) -> Box<dyn 'b + Iterator<Item = &'a Self::EdgeWeight>>;
 					}
 				}
 			}
@@ -280,11 +281,11 @@ macro_rules! impl_properties {
 							Item = (Self::Vertex, &'a mut Self::VertexWeight)
 						>>;
 
-						fn all_edges_mut<'a>(
+						fn edges_between_mut<'a: 'b, 'b>(
 							&'a mut self,
-						) -> Box<dyn 'a + Iterator<
-							Item = (Self::Vertex, Self::Vertex, &'a mut Self::EdgeWeight)
-						>>;
+							source: impl 'b + std::borrow::Borrow<Self::Vertex>,
+							sink: impl 'b + std::borrow::Borrow<Self::Vertex>,
+						) -> Box<dyn 'b + Iterator<Item = &'a mut Self::EdgeWeight>>;
 					}
 				}
 			}

@@ -2,6 +2,7 @@ use crate::core::{
 	property::{AddEdge, NewVertex, RemoveEdge, RemoveVertex, Subgraph},
 	Edge, EdgeWeighted, Ensure, Graph, GraphDerefMut, GraphMut,
 };
+use std::borrow::Borrow;
 
 /// A subgraph of another graph.
 ///
@@ -80,15 +81,19 @@ impl<C: Ensure> Graph for SubgraphProxy<C>
 		)
 	}
 
-	fn all_edges<'a>(
+	fn edges_between<'a: 'b, 'b>(
 		&'a self,
-	) -> Box<dyn 'a + Iterator<Item = (Self::Vertex, Self::Vertex, &'a Self::EdgeWeight)>>
+		source: impl 'b + Borrow<Self::Vertex>,
+		sink: impl 'b + Borrow<Self::Vertex>,
+	) -> Box<dyn 'b + Iterator<Item = &'a Self::EdgeWeight>>
 	{
 		Box::new(
 			self.graph
 				.graph()
-				.all_edges()
-				.filter(move |(v1, v2, _)| self.verts.contains(v1) && self.verts.contains(v2)),
+				.edges_between(source.borrow().clone(), sink.borrow().clone())
+				.filter(move |_| {
+					self.contains_vertex(*source.borrow()) && self.contains_vertex(*sink.borrow())
+				}),
 		)
 	}
 }
@@ -111,17 +116,19 @@ where
 		)
 	}
 
-	fn all_edges_mut<'a>(
+	fn edges_between_mut<'a: 'b, 'b>(
 		&'a mut self,
-	) -> Box<dyn 'a + Iterator<Item = (Self::Vertex, Self::Vertex, &'a mut Self::EdgeWeight)>>
+		source: impl 'b + Borrow<Self::Vertex>,
+		sink: impl 'b + Borrow<Self::Vertex>,
+	) -> Box<dyn 'b + Iterator<Item = &'a mut Self::EdgeWeight>>
 	{
-		let verts = &self.verts;
-		let graph = self.graph.graph_mut();
-
+		let return_any =
+			self.contains_vertex(*source.borrow()) && self.contains_vertex(*sink.borrow());
 		Box::new(
-			graph
-				.all_edges_mut()
-				.filter(move |(v1, v2, _)| verts.contains(v1) && verts.contains(v2)),
+			self.graph
+				.graph_mut()
+				.edges_between_mut(source, sink)
+				.filter(move |_| return_any),
 		)
 	}
 }
