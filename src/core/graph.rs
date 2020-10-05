@@ -1,35 +1,5 @@
-use crate::core::{trait_aliases::Id, Directed, Directedness, Edge};
+use crate::core::{trait_aliases::Id, Directedness, Edge};
 use std::{borrow::Borrow, iter::Iterator};
-
-#[macro_use]
-mod macros
-{
-	#[macro_export]
-	macro_rules! edges_between {
-		($e:expr, $v1:expr, $v2:expr) => {{
-			// Filter out any edge that is not connected to both vertices
-			let relevant = $e.filter(move |edge| {
-				(edge.source() == $v1 && edge.sink() == $v2)
-					|| (edge.source() == $v2 && edge.sink() == $v1)
-			});
-
-			// Return the result
-			Box::new(relevant)
-			}};
-	}
-	#[macro_export]
-	macro_rules! edges_incident_on {
-		($e:expr, $v:expr, $i:ident) => {
-			Box::new($e.into_iter().filter(move |e| e.$i() == $v))
-		};
-		($e:expr, $v:expr) => {
-			Box::new(
-				$e.into_iter()
-					.filter(move |edge| (edge.source() == $v) || (edge.sink() == $v)),
-				)
-		};
-	}
-}
 
 /// The basic graph trait, providing vertex and edge inspection.
 ///
@@ -231,6 +201,26 @@ pub trait GraphMut: Graph
 		&'a mut self,
 	) -> Box<dyn 'a + Iterator<Item = (Self::Vertex, Self::Vertex, &'a mut Self::EdgeWeight)>>;
 
+	fn edges_between_mut<'a: 'b, 'b>(
+		&'a mut self,
+		source: impl 'b + Borrow<Self::Vertex>,
+		sink: impl 'b + Borrow<Self::Vertex>,
+	) -> Box<dyn 'b + Iterator<Item = &'a mut Self::EdgeWeight>>
+	{
+		Box::new(self.all_edges_mut().filter_map(move |(so, si, w)| {
+			if (source.borrow() == &so && sink.borrow() == &si)
+				|| (!Self::Directedness::directed()
+					|| (source.borrow() == &si && sink.borrow() == &so))
+			{
+				Some(w)
+			}
+			else
+			{
+				None
+			}
+		}))
+	}
+
 	// Optional methods
 
 	fn vertex_weight_mut(&mut self, v: Self::Vertex) -> Option<&mut Self::VertexWeight>
@@ -238,39 +228,5 @@ pub trait GraphMut: Graph
 		self.all_vertices_weighted_mut()
 			.find(|&(candidate, _)| candidate == v)
 			.map(|(_, w)| w)
-	}
-
-	fn edges_between_mut<'a>(
-		&'a mut self,
-		v1: Self::Vertex,
-		v2: Self::Vertex,
-	) -> Box<dyn 'a + Iterator<Item = (Self::Vertex, Self::Vertex, &'a mut Self::EdgeWeight)>>
-	{
-		edges_between!(self.all_edges_mut(), v1, v2)
-	}
-	fn edges_sourced_in_mut<'a>(
-		&'a mut self,
-		v: Self::Vertex,
-	) -> Box<dyn 'a + Iterator<Item = (Self::Vertex, Self::Vertex, &'a mut Self::EdgeWeight)>>
-	where
-		Self: Graph<Directedness = Directed>,
-	{
-		edges_incident_on!(self.all_edges_mut(), v, source)
-	}
-	fn edges_sinked_in_mut<'a>(
-		&'a mut self,
-		v: Self::Vertex,
-	) -> Box<dyn 'a + Iterator<Item = (Self::Vertex, Self::Vertex, &'a mut Self::EdgeWeight)>>
-	where
-		Self: Graph<Directedness = Directed>,
-	{
-		edges_incident_on!(self.all_edges_mut(), v, sink)
-	}
-	fn edges_incident_on_mut<'a>(
-		&'a mut self,
-		v: Self::Vertex,
-	) -> Box<dyn 'a + Iterator<Item = (Self::Vertex, Self::Vertex, &'a mut Self::EdgeWeight)>>
-	{
-		edges_incident_on!(self.all_edges_mut(), v)
 	}
 }
