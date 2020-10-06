@@ -11,7 +11,7 @@ use crate::{
 };
 use duplicate::duplicate;
 use graphene::core::{
-	property::{EdgeCount, HasVertex, RemoveEdge, RemoveVertex},
+	property::{EdgeCount, HasVertex, RemoveEdge, RemoveVertex, VertexCount},
 	Directed, Edge, Graph, GraphMut, ReleaseUnloaded, Undirected,
 };
 
@@ -118,24 +118,23 @@ mod __
 		}
 		else
 		{
-			// Check that the number of vertices decreased by 1
-			( g.all_vertices_weighted().count() ==
-				(mock.all_vertices().count() - 1)
-			) &&
-				
-				// Check that the number of edges decreased by same as the number that was incident
-				// on the vertex
-				( g.edge_count() ==
-					(mock.edge_count() -
-						mock.edges_incident_on(v_remove).count())
-				) &&
-				
-				// Check that one less vertex has the same weight as the one removed
-				( g.all_vertices_weighted()
-					.filter(|(_,w)| *w == mock.vertex_weight(v_remove).unwrap()).count() ==
-					(mock.all_vertices_weighted()
-						.filter(|(_,w)| *w == mock.vertex_weight(v_remove).unwrap()).count() - 1)
-				)
+			let removed_weight = mock.vertex_weight(v_remove).unwrap();
+
+			let expected_vertex_count = mock.vertex_count() - 1;
+			let expected_edge_count = mock.edge_count() - mock.edges_incident_on(v_remove).count();
+
+			let expected_vertices_with_removed_weight = mock
+				.all_vertex_weights()
+				.filter(|w| *w == removed_weight)
+				.count() - 1;
+			let actual_vertices_with_removed_weight = g
+				.all_vertex_weights()
+				.filter(|w| *w == removed_weight)
+				.count();
+
+			g.vertex_count() == expected_vertex_count
+				&& g.edge_count() == expected_edge_count
+				&& actual_vertices_with_removed_weight == expected_vertices_with_removed_weight
 
 			// TODO: Test that the right edges were removed?
 		}

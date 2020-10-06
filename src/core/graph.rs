@@ -123,13 +123,15 @@ pub trait Graph
 	{
 		Box::new(self.all_vertices_weighted().map(|(v, _)| v))
 	}
-	fn vertex_weight(&self, v: Self::Vertex) -> Option<&Self::VertexWeight>
+
+	fn vertex_weight<'a>(&'a self, v: impl Borrow<Self::Vertex>) -> Option<&'a Self::VertexWeight>
 	{
 		self.all_vertices_weighted()
-			.find(|&(candidate, _)| candidate == v)
+			.find(|&(candidate, _)| candidate == *v.borrow())
 			.map(|(_, w)| w)
 	}
-	fn contains_vertex(&self, v: Self::Vertex) -> bool
+
+	fn contains_vertex(&self, v: impl Borrow<Self::Vertex>) -> bool
 	{
 		self.vertex_weight(v).is_some()
 	}
@@ -217,10 +219,13 @@ pub trait GraphMut: Graph
 
 	// Optional methods
 
-	fn vertex_weight_mut(&mut self, v: Self::Vertex) -> Option<&mut Self::VertexWeight>
+	fn vertex_weight_mut<'a>(
+		&'a mut self,
+		v: impl Borrow<Self::Vertex>,
+	) -> Option<&'a mut Self::VertexWeight>
 	{
 		self.all_vertices_weighted_mut()
-			.find(|&(candidate, _)| candidate == v)
+			.find(|&(candidate, _)| candidate == *v.borrow())
 			.map(|(_, w)| w)
 	}
 }
