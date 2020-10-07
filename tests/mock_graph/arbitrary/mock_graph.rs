@@ -3,8 +3,8 @@ use crate::mock_graph::{
 	MockEdgeWeight, MockGraph, MockT, MockVertex, MockVertexWeight,
 };
 use graphene::core::{
-	property::{AddEdge, DirectedGraph, NewVertex, RemoveEdge, RemoveVertex},
-	Directedness, EdgeDeref, EnsureUnloaded, Graph,
+	property::{AddEdge, DirectedGraph, EdgeCount, NewVertex, RemoveEdge, RemoveVertex},
+	Directedness, Edge, EnsureUnloaded, Graph,
 };
 use quickcheck::{Arbitrary, Gen};
 use rand::Rng;
@@ -78,7 +78,7 @@ impl<D: Directedness> GuidedArbGraph for MockGraph<D>
 				let t_sink = vertices[g.gen_range(0, vertex_count)];
 				let t_weight = MockEdgeWeight::arbitrary(g);
 				graph
-					.add_edge_weighted((t_source, t_sink, t_weight))
+					.add_edge_weighted(&t_source, &t_sink, t_weight)
 					.unwrap();
 			}
 		}
@@ -97,16 +97,16 @@ impl<D: Directedness> GuidedArbGraph for MockGraph<D>
 
 		// Shrink by shrinking vertex weight
 		self.vertices
-            .iter()
-            //Get all possible shrinkages
-            .flat_map(|(v, weight)| weight.shrink().map(move |shrunk| (v, shrunk)))
-            //For each shrunk weight,
-            //create a new graph where the vertex has that weight
-            .for_each(|(v, shrunk_weight)| {
-                let mut new_graph = self.clone();
-                new_graph.vertices.insert(*v, shrunk_weight);
-                result.push(new_graph);
-            });
+			.iter()
+			//Get all possible shrinkages
+			.flat_map(|(v, weight)| weight.shrink().map(move |shrunk| (v, shrunk)))
+			//For each shrunk weight,
+			//create a new graph where the vertex has that weight
+			.for_each(|(v, shrunk_weight)| {
+				let mut new_graph = self.clone();
+				new_graph.vertices.insert(*v, shrunk_weight);
+				result.push(new_graph);
+			});
 
 		// Shrink by shrinking edge weight
 		self.all_edges().for_each(|(source, sink, ref weight)| {
@@ -115,9 +115,9 @@ impl<D: Directedness> GuidedArbGraph for MockGraph<D>
 			shrunk_weights.for_each(|s_w| {
 				let mut shrunk_graph = self.clone();
 				shrunk_graph
-					.remove_edge_where_weight((source, sink), |ref w| w.value == weight.value)
+					.remove_edge_where_weight(&source, &sink, |ref w| w.value == weight.value)
 					.unwrap();
-				shrunk_graph.add_edge_weighted((source, sink, s_w)).unwrap();
+				shrunk_graph.add_edge_weighted(&source, &sink, s_w).unwrap();
 				result.push(shrunk_graph);
 			});
 		});
@@ -130,7 +130,7 @@ impl<D: Directedness> GuidedArbGraph for MockGraph<D>
 				// Add to the result a copy of the graph
 				// without the edge
 				let mut shrunk_graph = self.clone();
-				shrunk_graph.remove_edge(e).unwrap();
+				shrunk_graph.remove_edge(&e.source(), &e.sink()).unwrap();
 				result.push(shrunk_graph);
 			}
 		}
@@ -143,13 +143,13 @@ impl<D: Directedness> GuidedArbGraph for MockGraph<D>
 		{
 			for v in self
 				.all_vertices()
-				// Dont touch untouchable vertices
+				// Don't touch untouchable vertices
 				.filter(|&v| !limits.contains(&Limit::VertexKeep(v)))
 			{
-				if self.edges_incident_on(v).next().is_none()
+				if self.edges_incident_on(&v).next().is_none()
 				{
 					let mut shrunk_graph = self.clone();
-					shrunk_graph.remove_vertex(v).unwrap();
+					shrunk_graph.remove_vertex(&v).unwrap();
 					result.push(shrunk_graph);
 				}
 			}
@@ -230,13 +230,14 @@ impl<D: Directedness> MockGraph<D>
 		F: Fn(&Self) -> bool,
 	{
 		if !limits.contains(&Limit::EdgeRemove)
-			&& !limits.contains(&Limit::EdgeMin(self.all_edges().count()))
+			&& !limits.contains(&Limit::EdgeMin(self.edge_count()))
 		{
 			result.extend(
 				self.all_edges()
 					.map(|e| {
 						let mut g = self.clone();
-						g.remove_edge_where_weight(e, |w| w == e.weight()).unwrap();
+						g.remove_edge_where_weight(&e.source(), &e.sink(), |w| w == e.2)
+							.unwrap();
 						g
 					})
 					.filter(|g| f(&g)),
@@ -263,29 +264,29 @@ impl<D: Directedness> MockGraph<D>
 				.filter(|v| !limits.contains(&Limit::VertexKeep(*v)))
 			{
 				let mut clone = self.clone();
-				clone.remove_vertex(v).unwrap();
+				clone.remove_vertex(&v).unwrap();
 				if let Ok(g) = DirectedGraph::ensure(self)
 				{
-					for (sink, w1) in g.edges_sourced_in(v)
+					for (sink, w1) in g.edges_sourced_in(&v)
 					{
 						if sink == v
 						{
 							continue;
 						}
-						for (source, w2) in g.edges_sinked_in(v)
+						for (source, w2) in g.edges_sinked_in(&v)
 						{
 							if source == v
 							{
 								continue;
 							}
-							clone.add_edge_weighted((source, sink, w1.clone())).unwrap();
-							clone.add_edge_weighted((source, sink, w2.clone())).unwrap();
+							clone.add_edge_weighted(&source, &sink, w1.clone()).unwrap();
+							clone.add_edge_weighted(&source, &sink, w2.clone()).unwrap();
 						}
 					}
 				}
 				else
 				{
-					let neighbors: Vec<_> = self.edges_incident_on(v).collect();
+					let neighbors: Vec<_> = self.edges_incident_on(&v).collect();
 					let mut neighbor_iter = neighbors.iter();
 					while let Some(&(v1, w1)) = neighbor_iter.next()
 					{
@@ -300,8 +301,8 @@ impl<D: Directedness> MockGraph<D>
 							{
 								continue;
 							}
-							clone.add_edge_weighted((v1, v2, w1.clone())).unwrap();
-							clone.add_edge_weighted((v1, v2, w2.clone())).unwrap();
+							clone.add_edge_weighted(&v1, &v2, w1.clone()).unwrap();
+							clone.add_edge_weighted(&v1, &v2, w2.clone()).unwrap();
 						}
 					}
 				}

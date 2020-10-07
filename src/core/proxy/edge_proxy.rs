@@ -1,6 +1,6 @@
 use crate::core::{
 	property::{AddEdge, RemoveEdge, RemoveVertex},
-	Directedness, Edge, EdgeWeighted, Ensure, Graph, GraphDerefMut, GraphMut,
+	Directedness, Edge, Ensure, Graph, GraphDerefMut, GraphMut,
 };
 use delegate::delegate;
 use std::borrow::Borrow;
@@ -116,13 +116,17 @@ where
 
 impl<C: Ensure> AddEdge for EdgeProxyGraph<C>
 {
-	fn add_edge_weighted<E>(&mut self, e: E) -> Result<(), ()>
-	where
-		E: EdgeWeighted<Self::Vertex, Self::EdgeWeight>,
+	fn add_edge_weighted(
+		&mut self,
+		source: impl Borrow<Self::Vertex>,
+		sink: impl Borrow<Self::Vertex>,
+		_: Self::EdgeWeight,
+	) -> Result<(), ()>
 	{
-		if self.contains_vertex(e.source()) && self.contains_vertex(e.sink())
+		if self.contains_vertex(source.borrow()) && self.contains_vertex(sink.borrow())
 		{
-			self.new.push((e.source(), e.sink()));
+			self.new
+				.push((source.borrow().clone(), sink.borrow().clone()));
 			Ok(())
 		}
 		else
@@ -134,37 +138,39 @@ impl<C: Ensure> AddEdge for EdgeProxyGraph<C>
 
 impl<C: Ensure> RemoveEdge for EdgeProxyGraph<C>
 {
-	fn remove_edge_where<F>(
+	fn remove_edge_where_weight<F>(
 		&mut self,
-		f: F,
-	) -> Result<(Self::Vertex, Self::Vertex, Self::EdgeWeight), ()>
+		source: impl Borrow<Self::Vertex>,
+		sink: impl Borrow<Self::Vertex>,
+		_: F,
+	) -> Result<Self::EdgeWeight, ()>
 	where
-		F: Fn((Self::Vertex, Self::Vertex, &Self::EdgeWeight)) -> bool,
+		F: Fn(&Self::EdgeWeight) -> bool,
 	{
 		// First try to find a valid new vertex
-		let to_remove = self
-			.new
-			.iter()
-			.cloned()
-			.enumerate()
-			.find(|(_, e)| f((e.source(), e.sink(), &())));
+		let to_remove = self.new.iter().cloned().enumerate().find(|(_, e)| {
+			(e.source() == *source.borrow() && e.sink() == *sink.borrow())
+				|| !Self::Directedness::directed()
+					&& (e.source() == *sink.borrow() && e.sink() == *source.borrow())
+		});
 
-		if let Some((idx, e)) = to_remove
+		if let Some((idx, _)) = to_remove
 		{
 			self.new.remove(idx);
-			Ok((e.source(), e.sink(), ()))
+			Ok(())
 		}
 		else
 		{
 			// If no new vertex is valid, look through the existing ones.
-			let to_remove = self
-				.all_edges()
-				.map(|e| (e.source(), e.sink()))
-				.find(|e| f((e.source(), e.sink(), &())));
-			if let Some(e) = to_remove
+			if let Some(_) = self
+				.graph
+				.graph()
+				.edges_between(source.borrow(), sink.borrow())
+				.next()
 			{
-				self.removed.push((e.source(), e.sink()));
-				Ok((e.source(), e.sink(), ()))
+				self.removed
+					.push((source.borrow().clone(), sink.borrow().clone()));
+				Ok(())
 			}
 			else
 			{
@@ -178,9 +184,10 @@ impl<C: Ensure + GraphDerefMut> RemoveVertex for EdgeProxyGraph<C>
 where
 	C::Graph: RemoveVertex,
 {
-	fn remove_vertex(&mut self, v: Self::Vertex) -> Result<Self::VertexWeight, ()>
+	fn remove_vertex(&mut self, v: impl Borrow<Self::Vertex>) -> Result<Self::VertexWeight, ()>
 	{
-		self.new.retain(|e| e.source() != v && e.sink() != v);
+		self.new
+			.retain(|e| e.source() != *v.borrow() && e.sink() != *v.borrow());
 		self.graph.graph_mut().remove_vertex(v)
 	}
 }

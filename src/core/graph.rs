@@ -1,4 +1,4 @@
-use crate::core::{trait_aliases::Id, Directedness, Edge};
+use crate::core::{trait_aliases::Id, Directedness};
 use std::{borrow::Borrow, iter::Iterator};
 
 /// The basic graph trait, providing vertex and edge inspection.
@@ -135,6 +135,12 @@ pub trait Graph
 	{
 		self.vertex_weight(v).is_some()
 	}
+
+	fn contains_vertices(&self, iter: impl IntoIterator<Item = impl Borrow<Self::Vertex>>) -> bool
+	{
+		iter.into_iter().all(|v| self.contains_vertex(v))
+	}
+
 	fn all_vertex_weights<'a>(&'a self) -> Box<dyn 'a + Iterator<Item = &'a Self::VertexWeight>>
 	{
 		Box::new(self.all_vertices_weighted().map(|(_, w)| w))
@@ -191,11 +197,30 @@ pub trait Graph
 		)
 	}
 
-	fn edge_valid<E>(&self, e: E) -> bool
-	where
-		E: Edge<Self::Vertex>,
+	/// Returns any vertices connected to the given one with an edge regardless
+	/// of direction.
+	fn vertex_neighbors<'a: 'b, 'b>(
+		&'a self,
+		v: impl 'b + Borrow<Self::Vertex>,
+	) -> Box<dyn 'b + Iterator<Item = Self::Vertex>>
 	{
-		self.contains_vertex(e.source()) && self.contains_vertex(e.sink())
+		Box::new(
+			self.all_vertices()
+				.filter(move |other| self.neighbors(v.borrow(), other.borrow())),
+		)
+	}
+
+	/// Returns whether the two vertices are connected by an edge in any
+	/// direction.
+	fn neighbors(&self, v1: impl Borrow<Self::Vertex>, v2: impl Borrow<Self::Vertex>) -> bool
+	{
+		self.edges_between(v1.borrow(), v2.borrow())
+			.next()
+			.is_some() || (Self::Directedness::directed()
+			&& self
+				.edges_between(v2.borrow(), v1.borrow())
+				.next()
+				.is_some())
 	}
 }
 

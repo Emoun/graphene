@@ -3,7 +3,7 @@ use graphene::{
 	base_graph,
 	core::{
 		property::{AddEdge, EdgeCount, NewVertex, RemoveEdge, RemoveVertex, VertexCount},
-		Directedness, Edge, EdgeWeighted, Graph, GraphMut,
+		Directedness, Edge, Graph, GraphMut,
 	},
 };
 use std::{
@@ -122,11 +122,24 @@ impl<D: Directedness> MockGraph<D>
 		{
 			let new_v = self.new_vertex_weighted(w.clone()).unwrap();
 			v_map.insert(v, new_v);
-		}
-		for (so, si, w) in other.all_edges()
-		{
-			self.add_edge_weighted((v_map[&so], v_map[&si], w.clone()))
-				.unwrap();
+
+			// Insert all edge to/from the finished vertices
+			for (v_done, new_v_done) in v_map.iter()
+			{
+				for e_w in other.edges_between(&v, v_done)
+				{
+					self.add_edge_weighted(&new_v, new_v_done, e_w.clone())
+						.unwrap();
+				}
+				if D::directed() && *v_done != v
+				{
+					for e_w in other.edges_between(v_done, &v)
+					{
+						self.add_edge_weighted(new_v_done, &new_v, e_w.clone())
+							.unwrap();
+					}
+				}
+			}
 		}
 
 		v_map
@@ -265,9 +278,10 @@ impl<D: Directedness> NewVertex for MockGraph<D>
 }
 impl<D: Directedness> RemoveVertex for MockGraph<D>
 {
-	fn remove_vertex(&mut self, mock_v: Self::Vertex) -> Result<Self::VertexWeight, ()>
+	fn remove_vertex(&mut self, mock_v: impl Borrow<Self::Vertex>)
+		-> Result<Self::VertexWeight, ()>
 	{
-		let v = mock_v.value;
+		let v = mock_v.borrow().value;
 		if let Some(weight) = self.vertices.remove(&v)
 		{
 			self.edges.retain(|e| e.source() != v && e.sink() != v);
@@ -283,15 +297,18 @@ impl<D: Directedness> RemoveVertex for MockGraph<D>
 
 impl<D: Directedness> AddEdge for MockGraph<D>
 {
-	fn add_edge_weighted<E>(&mut self, e: E) -> Result<(), ()>
-	where
-		E: EdgeWeighted<Self::Vertex, Self::EdgeWeight>,
+	fn add_edge_weighted(
+		&mut self,
+		source: impl Borrow<Self::Vertex>,
+		sink: impl Borrow<Self::Vertex>,
+		weight: Self::EdgeWeight,
+	) -> Result<(), ()>
 	{
-		if self.vertices.contains_key(&e.source().value)
-			&& self.vertices.contains_key(&e.sink().value)
+		let source = source.borrow().value;
+		let sink = sink.borrow().value;
+		if self.vertices.contains_key(&source) && self.vertices.contains_key(&sink)
 		{
-			self.edges
-				.push((e.source().value, e.sink().value, e.weight_owned()));
+			self.edges.push((source, sink, weight));
 			self.validate_is_graph();
 			Ok(())
 		}
@@ -304,21 +321,26 @@ impl<D: Directedness> AddEdge for MockGraph<D>
 
 impl<D: Directedness> RemoveEdge for MockGraph<D>
 {
-	fn remove_edge_where<F>(
+	fn remove_edge_where_weight<F>(
 		&mut self,
+		source: impl Borrow<Self::Vertex>,
+		sink: impl Borrow<Self::Vertex>,
 		f: F,
-	) -> Result<(Self::Vertex, Self::Vertex, Self::EdgeWeight), ()>
+	) -> Result<Self::EdgeWeight, ()>
 	where
-		F: Fn((Self::Vertex, Self::Vertex, &Self::EdgeWeight)) -> bool,
+		F: Fn(&Self::EdgeWeight) -> bool,
 	{
-		if let Some((idx, _)) =
-			self.edges.iter().enumerate().find(|(_, (so, si, w))| {
-				f((MockVertex { value: *so }, MockVertex { value: *si }, w))
-			})
+		if let Some((idx, _)) = self.edges.iter().enumerate().find(|(_, (so, si, w))| {
+			let source = source.borrow().value;
+			let sink = sink.borrow().value;
+			((*so == source && *si == sink)
+				|| !Self::Directedness::directed() && (*so == sink && *si == source))
+				&& f(w)
+		})
 		{
-			let (so, si, w) = self.edges.remove(idx);
+			let (_, _, w) = self.edges.remove(idx);
 			self.validate_is_graph();
-			Ok((MockVertex { value: so }, MockVertex { value: si }, w))
+			Ok(w)
 		}
 		else
 		{

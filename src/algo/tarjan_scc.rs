@@ -97,13 +97,13 @@ use std::cmp::min;
 /// let v3 = graph.new_vertex().unwrap();
 ///
 /// // First SCC has v0 and v1
-/// graph.add_edge((v0,v1)).unwrap();
-/// graph.add_edge((v1,v0)).unwrap();
+/// graph.add_edge(&v0,&v1).unwrap();
+/// graph.add_edge(&v1,&v0).unwrap();
 /// // Second SCC has v2 and v3
-/// graph.add_edge((v2,v3)).unwrap();
-/// graph.add_edge((v3,v2)).unwrap();
+/// graph.add_edge(&v2,&v3).unwrap();
+/// graph.add_edge(&v3,&v2).unwrap();
 /// // Connect first SCC to second
-/// graph.add_edge((v0,v2)).unwrap();
+/// graph.add_edge(&v0,&v2).unwrap();
 ///
 /// // We use `HasVertexGraph` because we don't care where we start
 /// let graph = HasVertexGraph::ensure(graph).unwrap();
@@ -114,10 +114,10 @@ use std::cmp::min;
 /// let tarj_scc1 = tarj.next().unwrap();
 /// let tarj_scc2 = tarj.next().unwrap();
 /// assert!(tarj.next().is_none());
-/// assert!(tarj_scc1.contains_vertex(v2) &&
-/// 		tarj_scc1.contains_vertex(v3));
-/// assert!(tarj_scc2.contains_vertex(v0) &&
-/// 		tarj_scc2.contains_vertex(v1));
+/// assert!(tarj_scc1.contains_vertex(&v2) &&
+/// 		tarj_scc1.contains_vertex(&v3));
+/// assert!(tarj_scc2.contains_vertex(&v0) &&
+/// 		tarj_scc2.contains_vertex(&v1));
 /// assert!(tarj_scc2.reaches(&tarj_scc1).is_some());
 /// ```
 ///

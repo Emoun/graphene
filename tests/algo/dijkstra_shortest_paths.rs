@@ -8,17 +8,15 @@ use graphene::{
 	algo::DijkstraShortestPaths,
 	core::{
 		property::{AddEdge, HasVertex, VertexInGraph},
-		Directed, Graph, GraphDeref, ReleaseUnloaded, Undirected,
+		Directed, Ensure, Graph, GraphDeref, Release, Undirected,
 	},
 };
 use std::collections::HashSet;
 
 #[duplicate(
-	module			directedness;
-	[ directed ]	[ Directed ];
-	[ undirected ]	[ Undirected ]
+	directedness; [ Directed ]; [ Undirected ]
 )]
-mod module
+mod __
 {
 	use super::*;
 	use std::collections::HashMap;
@@ -30,7 +28,7 @@ mod module
 	{
 		// Use a set to ensure we only count each vertex once
 		let mut visited = HashSet::new();
-		visited.insert(mock.get_vertex());
+		visited.insert(mock.get_vertex().clone());
 		let mut visited_once = true;
 		DijkstraShortestPaths::new(mock.graph(), |w| w.value).for_each(|(_, v, _)| {
 			visited_once &= visited.insert(v);
@@ -48,14 +46,13 @@ mod module
 	) -> bool
 	{
 		// Our starting connected component
-		let v = g1.get_vertex();
-		let mut graph = g1.release_all();
+		let (mut graph, (v, _)) = g1.release_all();
 
 		// First join the two graphs
 		let v_map = graph.join(&g2);
 
 		// Ensure that no visited vertex comes from outside the start component
-		DijkstraShortestPaths::new(&VertexInGraph::new_unvalidated(graph, v), |w| w.value)
+		DijkstraShortestPaths::new(&VertexInGraph::ensure_unvalidated(graph, v), |w| w.value)
 			.all(|(_, v, _)| v_map.values().all(|&new_v| v != new_v))
 	}
 
@@ -64,7 +61,7 @@ mod module
 	fn increasing_path_lengths(g: ArbVertexIn<MockGraph<directedness>>) -> bool
 	{
 		let mut path_weights = HashMap::new();
-		path_weights.insert(g.get_vertex(), 0);
+		path_weights.insert(g.get_vertex().clone(), 0);
 		let mut len = 0;
 
 		for (source, sink, w) in DijkstraShortestPaths::new(&g, |w| w.value)
@@ -86,7 +83,7 @@ mod module
 	fn path_source_already_seen(g: ArbVertexIn<MockGraph<directedness>>) -> bool
 	{
 		let mut seen = HashSet::new();
-		seen.insert(g.get_vertex());
+		seen.insert(g.get_vertex().clone());
 
 		for (source, sink, _) in DijkstraShortestPaths::new(&g, |w| w.value)
 		{
@@ -115,8 +112,7 @@ fn directed_doesnt_visit_incoming_component(
 	weight: MockEdgeWeight,
 ) -> bool
 {
-	let v = comp.get_vertex();
-	let mut graph = comp.release_all();
+	let (mut graph, (v, _)) = comp.release_all();
 
 	// First join the two graphs
 	let v_map = graph.join(&g2);
@@ -125,12 +121,12 @@ fn directed_doesnt_visit_incoming_component(
 	for (v1, v2) in verts.iter().zip(g2_verts.iter())
 	{
 		graph
-			.add_edge_weighted((v_map[v2], *v1, weight.clone()))
+			.add_edge_weighted(&v_map[v2], v1, weight.clone())
 			.unwrap();
 	}
 
 	// Ensure that no visited vertex comes from outside the start component
-	DijkstraShortestPaths::new(&VertexInGraph::new_unvalidated(graph, v), |w| w.value)
+	DijkstraShortestPaths::new(&VertexInGraph::ensure_unvalidated(graph, v), |w| w.value)
 		.all(|(_, v, _)| v_map.values().all(|&new_v| v != new_v))
 }
 
@@ -143,28 +139,26 @@ fn directed_visits_outgoing_component(
 	weight: MockEdgeWeight,
 ) -> bool
 {
-	let v = comp1.get_vertex();
-	let mut graph = comp1.release_all();
+	let (mut graph, (v, _)) = comp1.release_all();
 
-	let v2 = comp2.get_vertex();
-	let g2 = comp2.release_all();
+	let (g2, (v2, _)) = comp2.release_all();
 
 	// First join the two graphs
 	let v_map = graph.join(&g2);
 
 	// Add edges from start component to the other component
 	graph
-		.add_edge_weighted((v, v_map[&v2], weight.clone()))
+		.add_edge_weighted(&v, &v_map[&v2], weight.clone())
 		.unwrap();
 	for (v1, v2) in verts1.iter().zip(verts2.iter())
 	{
 		graph
-			.add_edge_weighted((*v1, v_map[v2], weight.clone()))
+			.add_edge_weighted(v1, &v_map[v2], weight.clone())
 			.unwrap();
 	}
 
 	// Ensure that all vertices are visited
 	let count = graph.all_vertices().count() - 1;
-	DijkstraShortestPaths::new(&VertexInGraph::new_unvalidated(graph, v), |w| w.value).count()
+	DijkstraShortestPaths::new(&VertexInGraph::ensure_unvalidated(graph, v), |w| w.value).count()
 		== count
 }

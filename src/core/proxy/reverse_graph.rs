@@ -1,6 +1,6 @@
 use crate::core::{
 	property::{AddEdge, RemoveEdge},
-	Directed, Edge, EdgeDeref, EdgeWeighted, Ensure, Graph, GraphDerefMut, GraphMut,
+	Directed, Ensure, Graph, GraphDerefMut, GraphMut,
 };
 use delegate::delegate;
 use std::borrow::Borrow;
@@ -72,13 +72,14 @@ impl<C: Ensure + GraphDerefMut> AddEdge for ReverseGraph<C>
 where
 	C::Graph: AddEdge<Directedness = Directed>,
 {
-	fn add_edge_weighted<E>(&mut self, e: E) -> Result<(), ()>
-	where
-		E: EdgeWeighted<Self::Vertex, Self::EdgeWeight>,
+	fn add_edge_weighted(
+		&mut self,
+		source: impl Borrow<Self::Vertex>,
+		sink: impl Borrow<Self::Vertex>,
+		weight: Self::EdgeWeight,
+	) -> Result<(), ()>
 	{
-		self.0
-			.graph_mut()
-			.add_edge_weighted((e.sink(), e.source(), e.weight_owned()))
+		self.0.graph_mut().add_edge_weighted(sink, source, weight)
 	}
 }
 
@@ -86,16 +87,16 @@ impl<C: Ensure + GraphDerefMut> RemoveEdge for ReverseGraph<C>
 where
 	C::Graph: RemoveEdge<Directedness = Directed>,
 {
-	fn remove_edge_where<F>(
+	fn remove_edge_where_weight<F>(
 		&mut self,
+		source: impl Borrow<Self::Vertex>,
+		sink: impl Borrow<Self::Vertex>,
 		f: F,
-	) -> Result<(Self::Vertex, Self::Vertex, Self::EdgeWeight), ()>
+	) -> Result<Self::EdgeWeight, ()>
 	where
-		F: Fn((Self::Vertex, Self::Vertex, &Self::EdgeWeight)) -> bool,
+		F: Fn(&Self::EdgeWeight) -> bool,
 	{
-		self.0
-			.graph_mut()
-			.remove_edge_where(|e| f((e.sink(), e.source(), e.weight())))
+		self.0.graph_mut().remove_edge_where_weight(source, sink, f)
 	}
 }
 

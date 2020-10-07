@@ -1,5 +1,8 @@
 use crate::core::{property::RemoveVertex, Ensure, Graph, GraphDerefMut};
-use std::fmt::{Debug, Error, Formatter};
+use std::{
+	borrow::Borrow,
+	fmt::{Debug, Error, Formatter},
+};
 
 /// A marker trait for graphs with at least 1 vertex.
 pub trait HasVertex: Graph
@@ -40,7 +43,7 @@ impl<C: Ensure + GraphDerefMut> RemoveVertex for HasVertexGraph<C>
 where
 	C::Graph: RemoveVertex,
 {
-	fn remove_vertex(&mut self, v: Self::Vertex) -> Result<Self::VertexWeight, ()>
+	fn remove_vertex(&mut self, v: impl Borrow<Self::Vertex>) -> Result<Self::VertexWeight, ()>
 	{
 		if self.all_vertices().nth(1).is_some()
 		{
@@ -126,9 +129,9 @@ impl<C: Ensure + GraphDerefMut> RemoveVertex for VertexInGraph<C>
 where
 	C::Graph: RemoveVertex,
 {
-	fn remove_vertex(&mut self, v: Self::Vertex) -> Result<Self::VertexWeight, ()>
+	fn remove_vertex(&mut self, v: impl Borrow<Self::Vertex>) -> Result<Self::VertexWeight, ()>
 	{
-		if self.1 != v
+		if self.1.borrow() != v.borrow()
 		{
 			self.0.graph_mut().remove_vertex(v)
 		}

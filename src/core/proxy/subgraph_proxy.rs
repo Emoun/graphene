@@ -1,6 +1,6 @@
 use crate::core::{
 	property::{AddEdge, NewVertex, RemoveEdge, RemoveVertex, Subgraph},
-	Edge, EdgeWeighted, Ensure, Graph, GraphDerefMut, GraphMut,
+	Edge, Ensure, Graph, GraphDerefMut, GraphMut,
 };
 use std::borrow::Borrow;
 
@@ -137,13 +137,18 @@ impl<C: Ensure + GraphDerefMut> AddEdge for SubgraphProxy<C>
 where
 	C::Graph: AddEdge,
 {
-	fn add_edge_weighted<E>(&mut self, e: E) -> Result<(), ()>
-	where
-		E: EdgeWeighted<Self::Vertex, Self::EdgeWeight>,
+	fn add_edge_weighted(
+		&mut self,
+		source: impl Borrow<Self::Vertex>,
+		sink: impl Borrow<Self::Vertex>,
+		weight: Self::EdgeWeight,
+	) -> Result<(), ()>
 	{
-		if self.edge_valid((e.source(), e.sink()))
+		if self.contains_vertex(source.borrow()) && self.contains_vertex(sink.borrow())
 		{
-			self.graph.graph_mut().add_edge_weighted(e)
+			self.graph
+				.graph_mut()
+				.add_edge_weighted(source, sink, weight)
 		}
 		else
 		{
@@ -156,17 +161,25 @@ impl<C: Ensure + GraphDerefMut> RemoveEdge for SubgraphProxy<C>
 where
 	C::Graph: RemoveEdge,
 {
-	fn remove_edge_where<F>(
+	fn remove_edge_where_weight<F>(
 		&mut self,
+		source: impl Borrow<Self::Vertex>,
+		sink: impl Borrow<Self::Vertex>,
 		f: F,
-	) -> Result<(Self::Vertex, Self::Vertex, Self::EdgeWeight), ()>
+	) -> Result<Self::EdgeWeight, ()>
 	where
-		F: Fn((Self::Vertex, Self::Vertex, &Self::EdgeWeight)) -> bool,
+		F: Fn(&Self::EdgeWeight) -> bool,
 	{
-		let verts = &self.verts;
-		self.graph
-			.graph_mut()
-			.remove_edge_where(|e| verts.contains(&e.0) && verts.contains(&e.1) && f(e))
+		if self.contains_vertex(source.borrow()) && self.contains_vertex(sink.borrow())
+		{
+			self.graph
+				.graph_mut()
+				.remove_edge_where_weight(source, sink, f)
+		}
+		else
+		{
+			Err(())
+		}
 	}
 }
 
@@ -186,15 +199,15 @@ impl<C: Ensure + GraphDerefMut> RemoveVertex for SubgraphProxy<C>
 where
 	C::Graph: RemoveVertex,
 {
-	fn remove_vertex(&mut self, v: Self::Vertex) -> Result<Self::VertexWeight, ()>
+	fn remove_vertex(&mut self, v: impl Borrow<Self::Vertex>) -> Result<Self::VertexWeight, ()>
 	{
-		if self.contains_vertex(v)
+		if self.contains_vertex(v.borrow())
 		{
-			let w = self.graph.graph_mut().remove_vertex(v)?;
+			let w = self.graph.graph_mut().remove_vertex(v.borrow())?;
 			let index = self
 				.verts
 				.iter()
-				.position(|&t| t == v)
+				.position(|t| t.borrow() == v.borrow())
 				.expect("Couldn't find removed vertex in subgraph");
 			self.verts.remove(index);
 			Ok(w)

@@ -2,7 +2,7 @@ use crate::{
 	common::AdjListGraph,
 	core::{
 		property::{AddEdge, EdgeCount, NewVertex, RemoveEdge, RemoveVertex, VertexCount},
-		Directedness, Edge, EdgeWeighted, Graph, GraphMut,
+		Directedness, Graph, GraphMut,
 	},
 };
 use std::borrow::Borrow;
@@ -150,15 +150,23 @@ impl<Vw, Ew, D> RemoveVertex for AdjListGraph<Vw, Ew, D>
 where
 	D: Directedness,
 {
-	fn remove_vertex(&mut self, v: Self::Vertex) -> Result<Self::VertexWeight, ()>
+	fn remove_vertex(&mut self, v: impl Borrow<Self::Vertex>) -> Result<Self::VertexWeight, ()>
 	{
-		if v < self.vertices.len()
+		if *v.borrow() < self.vertices.len()
 		{
-			while let Ok(_) = self.remove_edge_where(|e| e.sink() == v || e.source() == v)
+			let neighbors: Vec<_> = self.vertex_neighbors(v.borrow()).collect();
+
+			for n in neighbors
 			{
-				// Drop edge
+				while let Ok(_) = self.remove_edge(v.borrow(), &n)
+				{}
+				if D::directed()
+				{
+					while let Ok(_) = self.remove_edge(&n, v.borrow())
+					{}
+				}
 			}
-			Ok(self.vertices.remove(v).0)
+			Ok(self.vertices.remove(*v.borrow()).0)
 		}
 		else
 		{
@@ -171,16 +179,19 @@ impl<Vw, Ew, D> AddEdge for AdjListGraph<Vw, Ew, D>
 where
 	D: Directedness,
 {
-	fn add_edge_weighted<E>(&mut self, e: E) -> Result<(), ()>
-	where
-		E: EdgeWeighted<Self::Vertex, Self::EdgeWeight>,
+	fn add_edge_weighted(
+		&mut self,
+		source: impl Borrow<Self::Vertex>,
+		sink: impl Borrow<Self::Vertex>,
+		weight: Self::EdgeWeight,
+	) -> Result<(), ()>
 	{
 		let len = self.vertices.len();
-		if e.source() < len && e.sink() < len
+		if *source.borrow() < len && *sink.borrow() < len
 		{
-			self.vertices[e.source()]
+			self.vertices[*source.borrow()]
 				.1
-				.push((e.sink(), e.weight_owned()));
+				.push((*sink.borrow(), weight));
 			Ok(())
 		}
 		else
@@ -194,29 +205,42 @@ impl<Vw, Ew, D> RemoveEdge for AdjListGraph<Vw, Ew, D>
 where
 	D: Directedness,
 {
-	fn remove_edge_where<F>(
+	fn remove_edge_where_weight<F>(
 		&mut self,
+		source: impl Borrow<Self::Vertex>,
+		sink: impl Borrow<Self::Vertex>,
 		f: F,
-	) -> Result<(Self::Vertex, Self::Vertex, Self::EdgeWeight), ()>
+	) -> Result<Self::EdgeWeight, ()>
 	where
-		F: Fn((Self::Vertex, Self::Vertex, &Self::EdgeWeight)) -> bool,
+		F: Fn(&Self::EdgeWeight) -> bool,
 	{
-		let found = self
-			.vertices
-			.iter()
-			.enumerate()
-			.flat_map(|(so_i, (_, edges))| {
-				edges
-					.iter()
-					.enumerate()
-					.map(move |(si_i, (si, w))| ((so_i, si_i, si, w)))
-			})
-			.find(|(so_i, _, si, w)| f((*so_i, **si, w)));
-
-		if let Some((so, si_i, _, _)) = found
+		if self.contains_vertex(source.borrow()) && self.contains_vertex(sink.borrow())
 		{
-			let (si, w) = self.vertices[so].1.remove(si_i);
-			Ok((so, si, w))
+			let found = self
+				.vertices
+				.iter()
+				.enumerate()
+				.flat_map(|(so_i, (_, edges))| {
+					edges
+						.iter()
+						.enumerate()
+						.map(move |(si_i, (si, w))| ((so_i, si_i, si, w)))
+				})
+				.find(|(so_i, _, si, w)| {
+					((so_i == source.borrow() && *si == sink.borrow())
+						|| (!Self::Directedness::directed()
+							&& (so_i == sink.borrow() && *si == source.borrow())))
+						&& f(w)
+				});
+			if let Some((so_i, si_i, _, _)) = found
+			{
+				let (_, w) = self.vertices[so_i].1.remove(si_i);
+				Ok(w)
+			}
+			else
+			{
+				Err(())
+			}
 		}
 		else
 		{

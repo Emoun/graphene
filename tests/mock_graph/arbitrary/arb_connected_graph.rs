@@ -142,12 +142,12 @@ impl<D: Directedness> GuidedArbGraph for ArbConnectedGraph<D>
 
 		// Add edges connecting the two components
 		graph
-			.add_edge_weighted((v11, v_map[&v21], MockEdgeWeight::arbitrary(g)))
+			.add_edge_weighted(&v11, &v_map[&v21], MockEdgeWeight::arbitrary(g))
 			.unwrap();
 		if D::directed()
 		{
 			graph
-				.add_edge_weighted((v_map[&v22], v12, MockEdgeWeight::arbitrary(g)))
+				.add_edge_weighted(&v_map[&v22], &v12, MockEdgeWeight::arbitrary(g))
 				.unwrap();
 		}
 
@@ -317,13 +317,13 @@ impl GuidedArbGraph for ArbWeakGraph
 		if g.gen_bool(0.5)
 		{
 			graph
-				.add_edge_weighted((v1, v_map[&v2], MockEdgeWeight::arbitrary(g)))
+				.add_edge_weighted(&v1, &v_map[&v2], MockEdgeWeight::arbitrary(g))
 				.unwrap();
 		}
 		else
 		{
 			graph
-				.add_edge_weighted((v_map[&v2], v1, MockEdgeWeight::arbitrary(g)))
+				.add_edge_weighted(&v_map[&v2], &v1, MockEdgeWeight::arbitrary(g))
 				.unwrap();
 		}
 

@@ -1,6 +1,4 @@
-use crate::core::{
-	property::AddEdge, Directedness, Edge, EdgeWeighted, Ensure, Graph, GraphDerefMut,
-};
+use crate::core::{property::AddEdge, Directedness, Edge, Ensure, Graph, GraphDerefMut};
 use std::borrow::Borrow;
 
 /// A marker trait for graphs containing only unique edges.
@@ -71,25 +69,21 @@ impl<C: Ensure + GraphDerefMut> AddEdge for UniqueGraph<C>
 where
 	C::Graph: AddEdge,
 {
-	fn add_edge_weighted<E>(&mut self, e: E) -> Result<(), ()>
-	where
-		E: EdgeWeighted<Self::Vertex, Self::EdgeWeight>,
+	fn add_edge_weighted(
+		&mut self,
+		source: impl Borrow<Self::Vertex>,
+		sink: impl Borrow<Self::Vertex>,
+		weight: Self::EdgeWeight,
+	) -> Result<(), ()>
 	{
-		if Self::Directedness::directed()
+		if self
+			.edges_between(source.borrow(), sink.borrow())
+			.next()
+			.is_some()
 		{
-			if self.edges_between(e.source(), e.sink()).next().is_some()
-			{
-				return Err(());
-			}
+			return Err(());
 		}
-		else
-		{
-			if self.edges_between(e.source(), e.sink()).next().is_some()
-			{
-				return Err(());
-			}
-		}
-		self.0.graph_mut().add_edge_weighted(e)
+		self.0.graph_mut().add_edge_weighted(source, sink, weight)
 	}
 }
 

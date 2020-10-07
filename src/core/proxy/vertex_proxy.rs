@@ -118,11 +118,11 @@ impl<C: Ensure> NewVertex for VertexProxyGraph<C>
 
 impl<C: Ensure> RemoveVertex for VertexProxyGraph<C>
 {
-	fn remove_vertex(&mut self, v: Self::Vertex) -> Result<Self::VertexWeight, ()>
+	fn remove_vertex(&mut self, v: impl Borrow<Self::Vertex>) -> Result<Self::VertexWeight, ()>
 	{
-		if self.contains_vertex(v)
+		if self.contains_vertex(v.borrow())
 		{
-			match v
+			match v.borrow()
 			{
 				ProxyVertex::New(_) =>
 				{
@@ -131,7 +131,7 @@ impl<C: Ensure> RemoveVertex for VertexProxyGraph<C>
 				},
 				ProxyVertex::Underlying(v) =>
 				{
-					self.removed.push(v);
+					self.removed.push(*v);
 					Ok(())
 				},
 			}

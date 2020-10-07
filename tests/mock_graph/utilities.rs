@@ -1,9 +1,9 @@
 use crate::mock_graph::{MockEdgeWeight, MockVertex, MockVertexWeight};
 use graphene::core::{
 	property::{AddEdge, NewVertex},
-	Edge, EdgeDeref, Graph,
+	Directedness, Graph,
 };
-use std::collections::HashMap;
+use std::{borrow::Borrow, collections::HashMap};
 #[macro_export]
 macro_rules! holds_if{
 	{
@@ -95,6 +95,11 @@ pub fn unordered_equivalent_lists_equal<L: PartialEq<R>, R: PartialEq<L>>(
 	unordered_sublist_equal(l1, l2) && unordered_sublist_equal(l2, l1)
 }
 
+/// Copies the topology of the mock graph into `g`.
+///
+/// Each vertex in the mock gets a new vertex in `g`.
+/// All edges are copied to the respective new vertices.
+/// All weights are cloned.
 pub fn auto_copy_from<G, M>(g: &mut G, mock: &M) -> HashMap<MockVertex, G::Vertex>
 where
 	G: NewVertex<VertexWeight = MockVertexWeight, EdgeWeight = MockEdgeWeight> + AddEdge,
@@ -111,19 +116,28 @@ where
 	for v in mock.all_vertices()
 	{
 		let new_v = g
-			.new_vertex_weighted(mock.vertex_weight(v).unwrap().clone())
+			.new_vertex_weighted(mock.vertex_weight(&v).unwrap().clone())
 			.unwrap();
-		vertex_map.insert(v, new_v);
+		vertex_map.insert(v, new_v.clone());
+
+		// Insert all edge to/from the finished vertices
+		for (v_done, new_v_done) in vertex_map.iter()
+		{
+			for e_w in mock.edges_between(&v, v_done)
+			{
+				g.add_edge_weighted(new_v.borrow(), new_v_done.borrow(), e_w.clone())
+					.unwrap();
+			}
+			if G::Directedness::directed() && *v_done != v
+			{
+				for e_w in mock.edges_between(v_done, &v)
+				{
+					g.add_edge_weighted(new_v_done.borrow(), new_v.borrow(), e_w.clone())
+						.unwrap();
+				}
+			}
+		}
 	}
-	// Add all edges
-	for e in mock.all_edges()
-	{
-		g.add_edge_weighted((
-			vertex_map[&e.source()],
-			vertex_map[&e.sink()],
-			e.weight().clone(),
-		))
-		.unwrap();
-	}
+
 	vertex_map
 }

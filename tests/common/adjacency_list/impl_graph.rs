@@ -45,9 +45,9 @@ mod __
 		unordered_equivalent_lists_equal(
 			&mock
 				.all_vertices()
-				.map(|v| (v_map[&v], mock.vertex_weight(v)))
+				.map(|v| (v_map[&v], mock.vertex_weight(&v)))
 				.collect(),
-			&g.all_vertices().map(|v| (v, g.vertex_weight(v))).collect(),
+			&g.all_vertices().map(|v| (v, g.vertex_weight(&v))).collect(),
 		)
 	}
 
@@ -59,7 +59,7 @@ mod __
 		let v = mock.get_vertex().clone();
 		let (mut g, v_map) = adj_list_from_mock(&mock.release_all());
 
-		g.vertex_weight(v_map[&v]).map(|w| w as *const _)
+		g.vertex_weight(&v_map[&v]).map(|w| w as *const _)
 			== g.vertex_weight_mut(v_map[&v]).map(|w| w as *const _)
 	}
 
@@ -112,7 +112,7 @@ mod __
 		let (mut g, v_map) = adj_list_from_mock(&mock);
 		let v_removed = v_map[&v_remove];
 
-		if g.remove_vertex(v_removed).is_err()
+		if g.remove_vertex(&v_removed).is_err()
 		{
 			false
 		}
@@ -149,7 +149,7 @@ mod __
 		let mapped_source = v_map[&edge.source()];
 		let mapped_sink = v_map[&edge.sink()];
 
-		if g.remove_edge_where_weight((mapped_source, mapped_sink), |w| *w == edge.2)
+		if g.remove_edge_where_weight(&mapped_source, &mapped_sink, |w| *w == edge.2)
 			.is_ok()
 		{
 			// Ensure that one less edge matches our edge

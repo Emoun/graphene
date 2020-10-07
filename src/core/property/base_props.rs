@@ -1,4 +1,4 @@
-use crate::core::{Directedness, Edge, EdgeWeighted, Graph};
+use crate::core::{Directedness, Graph};
 use num_traits::{One, PrimInt, Unsigned, Zero};
 use std::borrow::Borrow;
 
@@ -22,20 +22,25 @@ pub trait NewVertex: Graph
 }
 
 /// A graph where vertices can be removed.
+///
+/// Removing a vertex may invalidate existing vertices.
 pub trait RemoveVertex: Graph
 {
 	/// Removes the given vertex from the graph, returning its weight.
 	/// If the vertex still has edges incident on it, they are also removed,
 	/// dropping their weights.
-	fn remove_vertex(&mut self, v: Self::Vertex) -> Result<Self::VertexWeight, ()>;
+	fn remove_vertex(&mut self, v: impl Borrow<Self::Vertex>) -> Result<Self::VertexWeight, ()>;
 }
 
 pub trait AddEdge: Graph
 {
 	/// Adds a copy of the given edge to the graph
-	fn add_edge_weighted<E>(&mut self, e: E) -> Result<(), ()>
-	where
-		E: EdgeWeighted<Self::Vertex, Self::EdgeWeight>;
+	fn add_edge_weighted(
+		&mut self,
+		source: impl Borrow<Self::Vertex>,
+		sink: impl Borrow<Self::Vertex>,
+		weight: Self::EdgeWeight,
+	) -> Result<(), ()>;
 
 	// Optional methods
 
@@ -58,29 +63,31 @@ pub trait AddEdge: Graph
 	/// ###`Err` properties:
 	///
 	/// - The graph is unchanged.
-	fn add_edge<E>(&mut self, e: E) -> Result<(), ()>
+	fn add_edge(
+		&mut self,
+		source: impl Borrow<Self::Vertex>,
+		sink: impl Borrow<Self::Vertex>,
+	) -> Result<(), ()>
 	where
-		E: Edge<Self::Vertex>,
 		Self::EdgeWeight: Default,
 	{
-		self.add_edge_weighted((e.source(), e.sink(), Self::EdgeWeight::default()))
+		self.add_edge_weighted(source, sink, Self::EdgeWeight::default())
 	}
 }
 
 pub trait RemoveEdge: Graph
 {
-	/// Removes an edge that matches the given predicate closure.
-	/// If no edge is found to match and successfully removed, returns error
-	/// but otherwise doesn't change the graph.
-	fn remove_edge_where<F>(
+	fn remove_edge_where_weight<F>(
 		&mut self,
+		source: impl Borrow<Self::Vertex>,
+		sink: impl Borrow<Self::Vertex>,
 		f: F,
-	) -> Result<(Self::Vertex, Self::Vertex, Self::EdgeWeight), ()>
+	) -> Result<Self::EdgeWeight, ()>
 	where
-		F: Fn((Self::Vertex, Self::Vertex, &Self::EdgeWeight)) -> bool;
+		F: Fn(&Self::EdgeWeight) -> bool;
 
 	// Optional methods
-	/// Removes the given edge from the graph if it exists.
+	/// Removes an edge source in v1 and sinked in v2.
 	///
 	/// ###Returns
 	/// - `Ok` if the edge was present before the call and was removed.
@@ -97,43 +104,13 @@ pub trait RemoveEdge: Graph
 	/// ###`Err` properties:
 	///
 	/// - The graph is unchanged.
-	fn remove_edge<E>(&mut self, e: E) -> Result<Self::EdgeWeight, ()>
-	where
-		E: Edge<Self::Vertex>,
-	{
-		self.remove_edge_where_weight(e, |_| true)
-	}
-
-	fn remove_edge_where_weight<E, F>(&mut self, e: E, f: F) -> Result<Self::EdgeWeight, ()>
-	where
-		E: Edge<Self::Vertex>,
-		F: Fn(&Self::EdgeWeight) -> bool,
-	{
-		self.remove_edge_where(|(so, si, w)| {
-			f(w) && ((so == e.source()) && (si == e.sink())
-				|| (!Self::Directedness::directed() && (so == e.sink()) && (si == e.source())))
-		})
-		.map(|removed_edge| removed_edge.2)
-	}
-
-	/// Tries to removes all edges that match the given predicate.
-	/// Stops either when no more edges match, or an edge that matched couldn't
-	/// be removed.
-	///
-	/// Returns the removed edges regardless.
-	fn remove_edge_where_all<F>(
+	fn remove_edge(
 		&mut self,
-		f: F,
-	) -> Vec<(Self::Vertex, Self::Vertex, Self::EdgeWeight)>
-	where
-		F: Fn((Self::Vertex, Self::Vertex, &Self::EdgeWeight)) -> bool,
+		source: impl Borrow<Self::Vertex>,
+		sink: impl Borrow<Self::Vertex>,
+	) -> Result<Self::EdgeWeight, ()>
 	{
-		let mut result = Vec::new();
-		while let Ok(e) = self.remove_edge_where(|e| f(e))
-		{
-			result.push(e);
-		}
-		result
+		self.remove_edge_where_weight(source, sink, |_| true)
 	}
 }
 

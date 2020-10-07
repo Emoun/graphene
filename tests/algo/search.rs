@@ -8,7 +8,7 @@ use graphene::{
 	algo::{Bfs, Dfs, Spfs},
 	core::{
 		property::{AddEdge, HasVertex, VertexInGraph},
-		Directed, Graph, GraphDeref, ReleaseUnloaded, Undirected,
+		Directed, Ensure, Graph, GraphDeref, Release, Undirected,
 	},
 };
 use std::collections::HashSet;
@@ -32,11 +32,9 @@ mod module
 	use super::*;
 
 	#[duplicate(
-		module2			directedness;
-		[ directed ]	[ Directed ];
-		[ undirected ]	[ Undirected ]
+		directedness; [ Directed ]; [ Undirected ]
 	)]
-	mod module2
+	mod __
 	{
 		use super::*;
 
@@ -49,7 +47,7 @@ mod module
 			let mut visited = HashSet::new();
 
 			// Add the starting vertex to ensure it is not produced.
-			visited.insert(mock.get_vertex());
+			visited.insert(mock.get_vertex().clone());
 
 			let mut visited_once = true;
 			search_algo_new(mock.graph()).for_each(|v| {
@@ -69,14 +67,13 @@ mod module
 		) -> bool
 		{
 			// Our starting connected component
-			let v = g1.get_vertex();
-			let mut graph = g1.release_all();
+			let (mut graph, (v, _)) = g1.release_all();
 
 			// First join the two graphs
 			let v_map = graph.join(&g2);
 
 			// Ensure that no visited vertex comes from outside the start component
-			search_algo_new(&VertexInGraph::new_unvalidated(graph, v))
+			search_algo_new(&VertexInGraph::ensure_unvalidated(graph, v))
 				.all(|visit| v_map.values().all(|&new_v| visit != new_v))
 		}
 	}
@@ -96,8 +93,7 @@ mod module
 		weight: MockEdgeWeight,
 	) -> bool
 	{
-		let v = comp.get_vertex();
-		let mut graph = comp.release_all();
+		let (mut graph, (v, _)) = comp.release_all();
 
 		// First join the two graphs
 		let v_map = graph.join(&g2);
@@ -106,12 +102,12 @@ mod module
 		for (v1, v2) in verts.iter().zip(g2_verts.iter())
 		{
 			graph
-				.add_edge_weighted((v_map[v2], *v1, weight.clone()))
+				.add_edge_weighted(&v_map[v2], v1, weight.clone())
 				.unwrap();
 		}
 
 		// Ensure that no visited vertex comes from outside the start component
-		search_algo_new(&VertexInGraph::new_unvalidated(graph, v))
+		search_algo_new(&VertexInGraph::ensure_unvalidated(graph, v))
 			.all(|visit| v_map.values().all(|&new_v| visit != new_v))
 	}
 
@@ -124,28 +120,25 @@ mod module
 		weight: MockEdgeWeight,
 	) -> bool
 	{
-		let v = comp1.get_vertex();
-		let mut graph = comp1.release_all();
-
-		let v2 = comp2.get_vertex();
-		let g2 = comp2.release_all();
+		let (mut graph, (v, _)) = comp1.release_all();
+		let (g2, (v2, _)) = comp2.release_all();
 
 		// First join the two graphs
 		let v_map = graph.join(&g2);
 
 		// Add edges from start component to the other component
 		graph
-			.add_edge_weighted((v, v_map[&v2], weight.clone()))
+			.add_edge_weighted(&v, &v_map[&v2], weight.clone())
 			.unwrap();
 		for (v1, v2) in verts1.iter().zip(verts2.iter())
 		{
 			graph
-				.add_edge_weighted((*v1, v_map[v2], weight.clone()))
+				.add_edge_weighted(v1, v_map[v2], weight.clone())
 				.unwrap();
 		}
 
 		// Ensure that all vertices are visited except the start
 		let count = graph.all_vertices().count() - 1;
-		search_algo_new(&VertexInGraph::new_unvalidated(graph, v)).count() == count
+		search_algo_new(&VertexInGraph::ensure_unvalidated(graph, v)).count() == count
 	}
 }

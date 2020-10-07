@@ -2,13 +2,14 @@ use crate::{
 	algo::Dfs,
 	core::{
 		property::{
-			proxy_remove_edge_where, proxy_remove_vertex, DirectedGraph, HasVertexGraph,
+			proxy_remove_edge_where_weight, proxy_remove_vertex, DirectedGraph, HasVertexGraph,
 			RemoveEdge, RemoveVertex, Unilateral, Weak,
 		},
 		proxy::ReverseGraph,
 		Ensure, Graph, GraphDerefMut,
 	},
 };
+use std::borrow::Borrow;
 
 /// A marker trait for graphs that are connected.
 ///
@@ -69,9 +70,9 @@ impl<C: Ensure + GraphDerefMut> RemoveVertex for ConnectedGraph<C>
 where
 	C::Graph: RemoveVertex,
 {
-	fn remove_vertex(&mut self, v: Self::Vertex) -> Result<Self::VertexWeight, ()>
+	fn remove_vertex(&mut self, v: impl Borrow<Self::Vertex>) -> Result<Self::VertexWeight, ()>
 	{
-		proxy_remove_vertex::<ConnectedGraph<_>, _>(self.0.graph_mut(), v)
+		proxy_remove_vertex::<ConnectedGraph<_>, _>(self.0.graph_mut(), v.borrow())
 	}
 }
 
@@ -79,14 +80,21 @@ impl<C: Ensure + GraphDerefMut> RemoveEdge for ConnectedGraph<C>
 where
 	C::Graph: RemoveEdge,
 {
-	fn remove_edge_where<F>(
+	fn remove_edge_where_weight<F>(
 		&mut self,
+		source: impl Borrow<Self::Vertex>,
+		sink: impl Borrow<Self::Vertex>,
 		f: F,
-	) -> Result<(Self::Vertex, Self::Vertex, Self::EdgeWeight), ()>
+	) -> Result<Self::EdgeWeight, ()>
 	where
-		F: Fn((Self::Vertex, Self::Vertex, &Self::EdgeWeight)) -> bool,
+		F: Fn(&Self::EdgeWeight) -> bool,
 	{
-		proxy_remove_edge_where::<ConnectedGraph<_>, _, _>(self.0.graph_mut(), f)
+		proxy_remove_edge_where_weight::<ConnectedGraph<_>, _, _>(
+			self.0.graph_mut(),
+			source.borrow(),
+			sink.borrow(),
+			f,
+		)
 	}
 }
 

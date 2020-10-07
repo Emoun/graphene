@@ -4,7 +4,7 @@ use crate::mock_graph::{
 };
 use graphene::{
 	core::{
-		property::{AddEdge, DirectedGraph, RemoveEdge, UniqueGraph},
+		property::{AddEdge, DirectedGraph, EdgeCount, RemoveEdge, UniqueGraph},
 		Directedness, Edge, EnsureUnloaded, Graph, GraphDeref, GraphDerefMut, ReleaseUnloaded,
 	},
 	impl_ensurer,
@@ -49,7 +49,7 @@ impl<D: Directedness> GuidedArbGraph for ArbUniqueGraph<D>
 				if g.gen_bool(edge_saturation)
 				{
 					graph
-						.add_edge_weighted((source, sink, MockEdgeWeight::arbitrary(g)))
+						.add_edge_weighted(&source, &sink, MockEdgeWeight::arbitrary(g))
 						.unwrap();
 				}
 			};
@@ -76,14 +76,14 @@ impl<D: Directedness> GuidedArbGraph for ArbUniqueGraph<D>
 					iter_rest = iter.clone()
 				}
 			}
-			if e_min == 1 && graph.all_edges().count() < 1
+			if e_min == 1 && graph.edge_count() < 1
 			{
 				graph
-					.add_edge_weighted((
-						verts[g.gen_range(0, verts.len())],
-						verts[g.gen_range(0, verts.len())],
+					.add_edge_weighted(
+						&verts[g.gen_range(0, verts.len())],
+						&verts[g.gen_range(0, verts.len())],
 						MockEdgeWeight::arbitrary(g),
-					))
+					)
 					.unwrap()
 			}
 		}
@@ -141,11 +141,11 @@ impl<D: Directedness> Arbitrary for ArbNonUniqueGraph<D>
 		{
 			let dup_edge = original_edges[g.gen_range(0, original_edges.len())];
 			graph
-				.add_edge_weighted((
-					dup_edge.source(),
-					dup_edge.sink(),
+				.add_edge_weighted(
+					&dup_edge.source(),
+					&dup_edge.sink(),
 					MockEdgeWeight::arbitrary(g),
-				))
+				)
 				.unwrap();
 		}
 		Self(graph, duplicate_count)
@@ -163,7 +163,7 @@ impl<D: Directedness> Arbitrary for ArbNonUniqueGraph<D>
 		// Shrink by removing an edge.
 		// Can only remove an edge if there are more than 2 (must have at least 2 edges
 		// duplicating each other.
-		if self.0.all_edges().count() > 2
+		if self.0.edge_count() > 2
 		{
 			for e in self.0.all_edges()
 			{
@@ -173,13 +173,13 @@ impl<D: Directedness> Arbitrary for ArbNonUniqueGraph<D>
 				let mut shrunk_dup_count = self.1;
 				if let Ok(g) = <DirectedGraph<&MockGraph<D>>>::ensure_all(&self.0)
 				{
-					if g.edges_sourced_in(e.source()).count() > 1
+					if g.edges_sourced_in(&e.source()).count() > 1
 					{
 						// Trying to remove a duplicate edge
 						if shrunk_dup_count > 1
 						{
 							shrunk_dup_count -= 1;
-							shrunk_graph.remove_edge(e).unwrap();
+							shrunk_graph.remove_edge(&e.source(), &e.sink()).unwrap();
 							result.push(Self(shrunk_graph, shrunk_dup_count));
 						}
 						else
@@ -191,19 +191,19 @@ impl<D: Directedness> Arbitrary for ArbNonUniqueGraph<D>
 					else
 					{
 						// A non-duplicate edge can be removed
-						shrunk_graph.remove_edge(e).unwrap();
+						shrunk_graph.remove_edge(&e.source(), &e.sink()).unwrap();
 						result.push(Self(shrunk_graph, shrunk_dup_count));
 					}
 				}
 				else
 				{
-					if self.0.edges_between(e.source(), e.sink()).count() > 1
+					if self.0.edges_between(&e.source(), &e.sink()).count() > 1
 					{
 						// Trying to remove a duplicate edge
 						if shrunk_dup_count > 1
 						{
 							shrunk_dup_count -= 1;
-							shrunk_graph.remove_edge(e).unwrap();
+							shrunk_graph.remove_edge(&e.source(), &e.sink()).unwrap();
 							result.push(Self(shrunk_graph, shrunk_dup_count));
 						}
 						else
@@ -215,7 +215,7 @@ impl<D: Directedness> Arbitrary for ArbNonUniqueGraph<D>
 					else
 					{
 						// A non-duplicate edge can be removed
-						shrunk_graph.remove_edge(e).unwrap();
+						shrunk_graph.remove_edge(&e.source(), &e.sink()).unwrap();
 						result.push(Self(shrunk_graph, shrunk_dup_count));
 					}
 				}

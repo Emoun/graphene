@@ -83,7 +83,7 @@ impl GuidedArbGraph for ArbUnilatralGraph
 			// For larger graphs, we start by making a unilateral graph with 1 less vertex
 			// and get an edge
 			let arb = ArbVertexIn::<Self>::arbitrary_guided(g, v_min - 1..v_min, e_min..e_max);
-			let v_original = arb.get_vertex();
+			let v_original = arb.get_vertex().clone();
 			graph = (arb.0).release().0.release();
 
 			// Add a new vertex to the graph
@@ -98,16 +98,16 @@ impl GuidedArbGraph for ArbUnilatralGraph
 				// and move them to the new one.
 				let outgoing_sinks = graph
 					.edges_sourced_in(v_original)
-					.map(|(e, _)| e)
+					.map(|(v, _)| v)
 					.collect::<Vec<_>>();
 				for sink in outgoing_sinks
 				{
-					let weight = graph.remove_edge((v_original, sink)).unwrap();
-					graph.add_edge_weighted((v, sink, weight)).unwrap();
+					let weight = graph.remove_edge(&v_original, &sink).unwrap();
+					graph.add_edge_weighted(&v, &sink, weight).unwrap();
 				}
 
 				graph
-					.add_edge_weighted((v_original, v, MockEdgeWeight::arbitrary(g)))
+					.add_edge_weighted(&v_original, &v, MockEdgeWeight::arbitrary(g))
 					.unwrap();
 			}
 			else
@@ -116,16 +116,16 @@ impl GuidedArbGraph for ArbUnilatralGraph
 				// and move them to the new one.
 				let sources = graph
 					.edges_sinked_in(v_original)
-					.map(|(e, _)| e)
+					.map(|(v, _)| v)
 					.collect::<Vec<_>>();
 				for source in sources
 				{
-					let weight = graph.remove_edge((source, v_original)).unwrap();
-					graph.add_edge_weighted((source, v, weight)).unwrap();
+					let weight = graph.remove_edge(&source, &v_original).unwrap();
+					graph.add_edge_weighted(&source, &v, weight).unwrap();
 				}
 
 				graph
-					.add_edge_weighted((v, v_original, MockEdgeWeight::arbitrary(g)))
+					.add_edge_weighted(&v, &v_original, MockEdgeWeight::arbitrary(g))
 					.unwrap();
 			}
 		}
@@ -137,13 +137,13 @@ impl GuidedArbGraph for ArbUnilatralGraph
 			if g.gen_bool(p)
 			{
 				graph
-					.add_edge_weighted((v, v_other, MockEdgeWeight::arbitrary(g)))
+					.add_edge_weighted(&v, &v_other, MockEdgeWeight::arbitrary(g))
 					.unwrap();
 			}
 			if g.gen_bool(p)
 			{
 				graph
-					.add_edge_weighted((v_other, v, MockEdgeWeight::arbitrary(g)))
+					.add_edge_weighted(&v_other, &v, MockEdgeWeight::arbitrary(g))
 					.unwrap();
 			}
 		}
@@ -263,8 +263,8 @@ impl GuidedArbGraph for ArbNonUnilatralGraph
 				e_min / 2..e_max / 2,
 			);
 
-			let v1 = g1.get_vertex();
-			let v2 = g2.get_vertex();
+			let v1 = g1.get_vertex().clone();
+			let v2 = g2.get_vertex().clone();
 			graph = g1.0.release().0.release();
 			let g2 = g2.0.release().0.release();
 
@@ -280,24 +280,24 @@ impl GuidedArbGraph for ArbNonUnilatralGraph
 			if g.gen_bool(0.5)
 			{
 				graph
-					.add_edge_weighted((v, v1, MockEdgeWeight::arbitrary(g)))
+					.add_edge_weighted(&v, &v1, MockEdgeWeight::arbitrary(g))
 					.unwrap();
 				if g.gen_bool(0.8)
 				{
 					graph
-						.add_edge_weighted((v, map[&v2], MockEdgeWeight::arbitrary(g)))
+						.add_edge_weighted(&v, &map[&v2], MockEdgeWeight::arbitrary(g))
 						.unwrap();
 				}
 			}
 			else
 			{
 				graph
-					.add_edge_weighted((v1, v, MockEdgeWeight::arbitrary(g)))
+					.add_edge_weighted(&v1, &v, MockEdgeWeight::arbitrary(g))
 					.unwrap();
 				if g.gen_bool(0.8)
 				{
 					graph
-						.add_edge_weighted((map[&v2], v, MockEdgeWeight::arbitrary(g)))
+						.add_edge_weighted(&map[&v2], &v, MockEdgeWeight::arbitrary(g))
 						.unwrap();
 				}
 			}
