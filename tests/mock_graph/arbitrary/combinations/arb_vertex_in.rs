@@ -5,7 +5,7 @@ use crate::mock_graph::{
 use graphene::{
 	core::{
 		property::{HasVertex, VertexInGraph},
-		Graph, GraphDerefMut, ReleaseUnloaded,
+		Ensure, Graph, GraphDerefMut, ReleaseUnloaded,
 	},
 	impl_ensurer,
 };
@@ -59,7 +59,7 @@ where
 		let verts: Vec<_> = graph.graph().all_vertices().collect();
 		let v = verts[g.gen_range(0, verts.len())];
 
-		Self(VertexInGraph::new_unvalidated(graph, v))
+		Self(VertexInGraph::ensure_unvalidated(graph, v))
 	}
 
 	fn shrink_guided(&self, limits: HashSet<Limit, RandomState>) -> Box<dyn Iterator<Item = Self>>

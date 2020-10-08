@@ -92,26 +92,6 @@ where
 	}
 }
 
-impl<C: Ensure> VertexInGraph<C>
-{
-	pub fn new(graph: C, v: <C::Graph as Graph>::Vertex) -> Option<Self>
-	{
-		if graph.graph().contains_vertex(v)
-		{
-			Some(Self(graph, v))
-		}
-		else
-		{
-			None
-		}
-	}
-
-	pub fn new_unvalidated(graph: C, v: <C::Graph as Graph>::Vertex) -> Self
-	{
-		Self(graph, v)
-	}
-}
-
 impl<C: Ensure> Ensure for VertexInGraph<C>
 {
 	fn ensure_unvalidated(c: Self::Ensured, v: <C::Graph as Graph>::Vertex) -> Self

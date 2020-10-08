@@ -37,8 +37,6 @@ where
 		mut self,
 		w: <G::Graph as Graph>::VertexWeight,
 	) -> Result<VertexInGraph<G>, ()>
-	where
-		<G::Graph as Graph>::VertexWeight: Default,
 	{
 		let v = self.0.graph_mut().new_vertex_weighted(w)?;
 		Ok(VertexInGraph::ensure_unvalidated(self.0, v))
