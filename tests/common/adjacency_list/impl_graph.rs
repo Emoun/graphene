@@ -1,5 +1,4 @@
 //! Tests the `Graph` and `AutoGraph` implementations of `AdjListGraph`
-//!
 
 use crate::{
 	common::adjacency_list::adj_list_from_mock,

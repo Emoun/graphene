@@ -54,7 +54,14 @@ mod __
 			stack.replace(s);
 		}
 
-		Dfs::new(&mock, on_exit, (&stack, &mut success)).for_each(|v| {
+		Dfs::new(
+			&mock,
+			Dfs::do_nothing_on_visit,
+			on_exit,
+			Dfs::do_nothing_on_explore,
+			(&stack, &mut success),
+		)
+		.for_each(|v| {
 			// When a vertex is produced by the Dfs, put it on the stack.
 			let mut s = stack.take();
 			s.push(v);

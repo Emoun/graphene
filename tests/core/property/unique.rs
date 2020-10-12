@@ -1,5 +1,4 @@
 //! Tests the `core::Unique` trait and its ensurer `core::UniqueGraph`.
-//!
 use crate::mock_graph::{
 	arbitrary::{ArbEdgeIn, ArbNonUniqueGraph, ArbUniqueGraph, ArbVertexIn},
 	MockEdgeWeight, MockVertexWeight,

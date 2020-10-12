@@ -11,8 +11,7 @@ use graphene::{
 };
 use quickcheck::{Arbitrary, Gen};
 use rand::Rng;
-use static_assertions::_core::marker::PhantomData;
-use std::{collections::HashSet, iter::FromIterator, ops::RangeBounds};
+use std::{collections::HashSet, iter::FromIterator, marker::PhantomData, ops::RangeBounds};
 
 /// Used with `ArbTwoVerticesIn` to choose whether the two vertices must be
 /// unique (`Unique`),
@@ -54,7 +53,7 @@ impl Uniqueness for NonUnique
 /// Note: All graphs will have at least 1 vertex for non-unique and 2 vertices
 /// for unique, meaning this type never includes the empty graph.
 #[derive(Clone, Debug)]
-pub struct ArbTwoVerticesIn<G, U = NonUnique>(pub ArbVertexIn<G>, MockVertex, PhantomData<U>)
+pub struct ArbTwoVerticesIn<G, U = NonUnique>(pub ArbVertexIn<G>, pub MockVertex, PhantomData<U>)
 where
 	G: GuidedArbGraph,
 	G::Graph: TestGraph,
@@ -86,6 +85,26 @@ where
 	pub fn get_both(&self) -> (MockVertex, MockVertex)
 	{
 		(self.0.get_vertex(), self.1)
+	}
+
+	pub fn get_two_vertices<Ge: Gen>(g: &mut Ge, graph: &G) -> (MockVertex, MockVertex)
+	{
+		let verts: Vec<_> = graph.graph().all_vertices().collect();
+		assert!(verts.len() >= (1 + (U::unique() as usize)));
+		let v1 = verts[g.gen_range(0, verts.len())];
+		let v2 = loop
+		{
+			let candidate = verts[g.gen_range(0, verts.len())];
+			if !U::unique()
+			{
+				break candidate;
+			}
+			if candidate != v1
+			{
+				break candidate;
+			}
+		};
+		(v1, v2)
 	}
 }
 
@@ -123,20 +142,7 @@ where
 		let v_min_min = 1 + (U::unique() as usize);
 		let v_min_max = if v_min_min < v_min { v_min } else { v_min_min };
 		let graph = Gr::arbitrary_guided(g, v_min_max..v_max, e_min..e_max);
-		let verts: Vec<_> = graph.graph().all_vertices().collect();
-		let v1 = verts[g.gen_range(0, verts.len())];
-		let v2 = loop
-		{
-			let candidate = verts[g.gen_range(0, verts.len())];
-			if !U::unique()
-			{
-				break candidate;
-			}
-			if candidate != v1
-			{
-				break candidate;
-			}
-		};
+		let (v1, v2) = Self::get_two_vertices(g, &graph);
 
 		Self::new(graph, v1, v2)
 	}

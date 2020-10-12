@@ -125,7 +125,10 @@ impl<D: Directedness> GuidedArbGraph for MockGraph<D>
 		// Shrink by removing an edge
 		if limits.iter().all(|l| l != &Limit::EdgeRemove)
 		{
-			for e in self.all_edges()
+			for e in self.all_edges().filter(|&(so, si, _)| {
+				!limits.contains(&Limit::EdgeKeep(so, si))
+					|| (!D::directed() && !limits.contains(&Limit::EdgeKeep(si, so)))
+			})
 			{
 				// Add to the result a copy of the graph
 				// without the edge

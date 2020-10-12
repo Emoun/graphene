@@ -209,7 +209,13 @@ where
 		}
 
 		// Push the start vertex on the stack with low-link = 0
-		let dfs = Dfs::new(graph, on_exit, vec![(graph.get_vertex(), 0)]);
+		let dfs = Dfs::new(
+			graph,
+			Dfs::do_nothing_on_visit,
+			on_exit,
+			Dfs::do_nothing_on_explore,
+			vec![(graph.get_vertex(), 0)],
+		);
 		Self {
 			dfs,
 			unchecked: graph.all_vertices(),

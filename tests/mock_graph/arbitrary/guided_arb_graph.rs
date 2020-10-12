@@ -27,6 +27,9 @@ pub enum Limit
 	/// Shrinkages shouldn't remove edges if it results in their count
 	/// becoming lower than the given.
 	EdgeMin(usize),
+
+	/// Shrinkages shouldn't remove any edge with the given source and sink
+	EdgeKeep(MockVertex, MockVertex),
 }
 
 impl Limit
@@ -97,20 +100,7 @@ where
 		};
 		let v_min = match v_range.start_bound()
 		{
-			Bound::Included(&x) =>
-			{
-				if e_min > 0 && x == 0
-				{
-					panic!(
-						"Cannot generate a graph with 0 vertices but minimum {} edges.",
-						e_min
-					)
-				}
-				else
-				{
-					x
-				}
-			},
+			Bound::Included(&x) => std::cmp::max(0 + ((e_min > 0) as usize), x),
 			Bound::Excluded(&x) => x + 1,
 			Bound::Unbounded =>
 			{
@@ -128,15 +118,22 @@ where
 		{
 			Bound::Included(&x) => x + 1,
 			Bound::Excluded(&x) => x,
-			Bound::Unbounded => g.size(),
+			Bound::Unbounded => std::cmp::max(g.size(), v_min + 1),
 		};
+		assert!(
+			!(v_max <= 1 && e_min > 0),
+			"Cannot generate a graph with 0 vertices but minimum {} edges.",
+			e_min
+		);
+		assert!(v_min < v_max, "{} >= {}", v_min, v_max);
+
 		let e_max = match e_range.end_bound()
 		{
 			Bound::Included(&x) => x + 1,
 			Bound::Excluded(&x) => x,
-			Bound::Unbounded => v_max,
+			Bound::Unbounded => std::cmp::max(g.size(), e_min + 1),
 		};
-		assert!(v_min < v_max, "{} >= {}", v_min, v_max);
+
 		assert!(e_min < e_max);
 		(v_min, v_max, e_min, e_max)
 	}

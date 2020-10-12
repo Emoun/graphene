@@ -110,18 +110,34 @@ where
 	/// popping.
 	stack: Vec<(G::Vertex, bool)>,
 
+	/// Function to call when visiting a vertex
+	on_visit: fn(&mut Self, G::Vertex),
+
 	/// Function to call when exiting a vertex.
 	///
 	/// Provides a reference to the graph, the vertex that is exiting,
 	/// and a mutable reference to the payload given to the Dfs.
 	on_exit: fn(&G, G::Vertex, &mut F),
+
+	/// Function to call when exploring an edge.
+	///
+	/// When a vertex is being visited, this function is called for
+	/// every outgoing edge, regardless of whether the sinked vertex
+	/// (second vertex argument) has already been visited.
+	on_explore: fn(&mut Self, G::Vertex, G::Vertex, &G::EdgeWeight),
 }
 
 impl<'a, G, F> Dfs<'a, G, F>
 where
 	G: 'a + Graph,
 {
-	pub fn new(g: &'a G, on_exit: fn(&G, G::Vertex, &mut F), payload: F) -> Self
+	pub fn new(
+		g: &'a G,
+		on_visit: fn(&mut Self, G::Vertex),
+		on_exit: fn(&G, G::Vertex, &mut F),
+		on_explore: fn(&mut Self, G::Vertex, G::Vertex, &G::EdgeWeight),
+		payload: F,
+	) -> Self
 	where
 		G: HasVertex,
 	{
@@ -130,7 +146,9 @@ where
 			graph: g,
 			visited: Vec::new(),
 			stack: vec![(v, true)],
+			on_visit,
 			on_exit,
+			on_explore,
 			payload,
 		};
 		// We never result the starting vertex, so throw it away
@@ -140,12 +158,14 @@ where
 
 	fn visit(&mut self, to_return: G::Vertex)
 	{
+		(self.on_visit)(self, to_return);
 		// Mark visited
 		self.visited.push(to_return);
 
 		// Explore children
-		for (child, _) in self.graph.edges_sourced_in(to_return.clone())
+		for (child, weight) in self.graph.edges_sourced_in(to_return.clone())
 		{
+			(self.on_explore)(self, to_return, child, weight);
 			if !self.visited(child.clone())
 			{
 				// Push to stack without exit mark
@@ -199,6 +219,12 @@ where
 			false
 		}
 	}
+
+	pub fn do_nothing_on_visit(_: &mut Self, _: G::Vertex) {}
+
+	pub fn do_nothing_on_exit(_: &G, _: G::Vertex, _: &mut F) {}
+
+	pub fn do_nothing_on_explore(_: &mut Self, _: G::Vertex, _: G::Vertex, _: &G::EdgeWeight) {}
 }
 
 impl<'a, G> Dfs<'a, G, ()>
@@ -222,8 +248,13 @@ where
 	/// [`get_vertex`]: ../core/property/trait.HasVertex.html#method.get_vertex
 	pub fn new_simple(g: &'a G) -> Self
 	{
-		fn do_nothing<G, T>(_: &G, _: T, _: &mut ()) {}
-		Self::new(g, do_nothing, ())
+		Self::new(
+			g,
+			Self::do_nothing_on_visit,
+			Self::do_nothing_on_exit,
+			Self::do_nothing_on_explore,
+			(),
+		)
 	}
 }
 

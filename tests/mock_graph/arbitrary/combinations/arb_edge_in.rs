@@ -36,8 +36,11 @@ where
 	) -> Self
 	{
 		let (v_min, v_max, e_min, e_max) = Self::validate_ranges(g, v_range, e_range);
-		let arb_graph =
-			Gr::arbitrary_guided(g, v_min..v_max, (if e_min < 1 { 1 } else { e_min })..e_max);
+		let (v_min, v_max, e_min, e_max) =
+			Self::validate_ranges(g, v_min..v_max, std::cmp::max(1, e_min)..e_max);
+
+		let arb_graph = Gr::arbitrary_guided(g, v_min..v_max, e_min..e_max);
+
 		let graph = arb_graph.graph();
 		let edge = graph
 			.all_edges()
@@ -45,6 +48,7 @@ where
 			.unwrap();
 
 		let edge_clone = (edge.source(), edge.sink(), edge.2.clone());
+
 		Self(HasVertexGraph::ensure_unvalidated(arb_graph), edge_clone)
 	}
 

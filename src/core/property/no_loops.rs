@@ -8,7 +8,6 @@ use std::borrow::Borrow;
 /// can be added to it.
 pub trait NoLoops: Graph
 {
-	fn no_loops_func(&self) {}
 }
 
 pub struct NoLoopsGraph<C: Ensure>(C);

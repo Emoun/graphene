@@ -1,5 +1,4 @@
 //! Tests the edge traits' API
-//!
 #![allow(unused_must_use)]
 
 use crate::mock_graph::{MockEdgeWeight, MockVertex};
