@@ -34,7 +34,7 @@ impl<C: Ensure> Ensure for AcyclicGraph<C>
 		}
 		fn on_explore<G: Graph>(
 			dfs: &mut Dfs<G, (Vec<G::Vertex>, &mut bool)>,
-			_: G::Vertex,
+			source: G::Vertex,
 			sink: G::Vertex,
 			_: &G::EdgeWeight,
 		)
@@ -45,7 +45,25 @@ impl<C: Ensure> Ensure for AcyclicGraph<C>
 			}
 			else
 			{
-				*dfs.payload.1 |= dfs.visited(sink);
+				// Check whether the second to last element is the same as the sink
+				// (the last element is the same as source, since on_visit is called
+				// before exploration)
+				if dfs.payload.0.len() >= 2
+					&& dfs
+						.payload
+						.0
+						.get(dfs.payload.0.len() - 2)
+						.map_or(false, |&v| v == sink)
+				{
+					// This is an edge to the direct predecessor
+					// Therefore, only counts as a cycle if there
+					// are multiple edge between these two
+					*dfs.payload.1 |= dfs.graph.edges_between(source, sink).nth(1).is_some();
+				}
+				else
+				{
+					*dfs.payload.1 |= dfs.visited(sink);
+				}
 			}
 		}
 		let mut result = false;

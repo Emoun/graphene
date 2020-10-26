@@ -6,65 +6,60 @@ use graphene::{
 	core::{Ensure, Graph, GraphDerefMut},
 	impl_ensurer,
 };
-use quickcheck::{Arbitrary, Gen};
+use quickcheck::Gen;
 use rand::Rng;
-use std::{collections::HashSet, ops::RangeBounds};
+use std::collections::HashSet;
 
 /// An arbitrary graph and an arbitrary set of vertices in it.
 #[derive(Clone, Debug)]
-pub struct ArbVerticesIn<G>(pub G, pub HashSet<MockVertex>)
+pub struct VerticesIn<G>(pub G, pub HashSet<MockVertex>)
 where
 	G: GuidedArbGraph,
 	G::Graph: TestGraph;
 
-impl<G> ArbVerticesIn<G>
+impl<G> Ensure for VerticesIn<G>
 where
 	G: GuidedArbGraph,
 	G::Graph: TestGraph,
 {
-	pub fn new(g: G, set: HashSet<MockVertex>) -> Self
+	fn ensure_unvalidated(c: Self::Ensured, _: ()) -> Self
 	{
-		for &v in set.iter()
-		{
-			if !g.graph().contains_vertex(v)
-			{
-				panic!("Vertex not in graph: {:?}", v);
-			}
-		}
+		Self(c, HashSet::new())
+	}
 
-		Self(g, set)
+	fn validate(_: &Self::Ensured, _: &()) -> bool
+	{
+		true
 	}
 }
 
-impl<Gr> Arbitrary for ArbVerticesIn<Gr>
+impl_ensurer! {
+	use<G> VerticesIn<G>: Ensure
+	as (self.0): G
+	where
+	G: GuidedArbGraph,
+	G::Graph: TestGraph
+}
+
+impl<Gr> GuidedArbGraph for VerticesIn<Gr>
 where
 	Gr: GuidedArbGraph + GraphDerefMut,
 	Gr::Graph: TestGraph,
 {
-	fn arbitrary<G: Gen>(g: &mut G) -> Self
-	{
-		Self::arbitrary_guided(g, .., ..)
-	}
-
-	fn shrink(&self) -> Box<dyn Iterator<Item = Self>>
-	{
-		self.shrink_guided(HashSet::new())
-	}
-}
-impl<Gr> GuidedArbGraph for ArbVerticesIn<Gr>
-where
-	Gr: GuidedArbGraph + GraphDerefMut,
-	Gr::Graph: TestGraph,
-{
-	fn arbitrary_guided<G: Gen>(
+	fn choose_size<G: Gen>(
 		g: &mut G,
-		v_range: impl RangeBounds<usize>,
-		e_range: impl RangeBounds<usize>,
-	) -> Self
+		v_min: usize,
+		v_max: usize,
+		e_min: usize,
+		e_max: usize,
+	) -> (usize, usize)
 	{
-		let graph = Gr::arbitrary_guided(g, v_range, e_range);
-		let v_count = graph.graph().all_vertices().count();
+		Gr::choose_size(g, v_min, v_max, e_min, e_max)
+	}
 
+	fn arbitrary_fixed<G: Gen>(g: &mut G, v_count: usize, e_count: usize) -> Self
+	{
+		let graph = Gr::arbitrary_fixed(g, v_count, e_count);
 		let mut set = HashSet::new();
 
 		if v_count > 0
@@ -79,7 +74,7 @@ where
 				}
 			}
 		}
-		Self::new(graph, set)
+		Self(graph, set)
 	}
 
 	fn shrink_guided(&self, mut limits: HashSet<Limit>) -> Box<dyn Iterator<Item = Self>>
@@ -95,7 +90,7 @@ where
 		result.extend(
 			arb_graph
 				.shrink_guided(limits.clone())
-				.map(|g| Self::new(g, self.1.clone())),
+				.map(|g| Self(g, self.1.clone())),
 		);
 
 		// The we simply remove one of the vertices and keep the rest
@@ -113,28 +108,4 @@ where
 		}
 		Box::new(result.into_iter())
 	}
-}
-
-impl<G> Ensure for ArbVerticesIn<G>
-where
-	G: GuidedArbGraph,
-	G::Graph: TestGraph,
-{
-	fn ensure_unvalidated(c: Self::Ensured, _: ()) -> Self
-	{
-		Self(c, HashSet::new())
-	}
-
-	fn validate(_: &Self::Ensured, _: &()) -> bool
-	{
-		true
-	}
-}
-
-impl_ensurer! {
-	use<G> ArbVerticesIn<G>: Ensure
-	as (self.0): G
-	where
-	G: GuidedArbGraph,
-	G::Graph: TestGraph
 }

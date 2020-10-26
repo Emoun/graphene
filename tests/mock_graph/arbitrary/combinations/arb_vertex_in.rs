@@ -1,87 +1,53 @@
 use crate::mock_graph::{
-	arbitrary::{ArbTwoVerticesIn, GuidedArbGraph, Limit, NonUnique},
+	arbitrary::{GuidedArbGraph, Limit},
 	TestGraph,
 };
-use graphene::{
-	core::{
-		property::{HasVertex, VertexInGraph},
-		Ensure, Graph, GraphDerefMut, ReleaseUnloaded,
-	},
-	impl_ensurer,
+use graphene::core::{
+	property::{HasVertex, VertexInGraph},
+	Ensure, Graph, ReleaseUnloaded,
 };
-use quickcheck::{Arbitrary, Gen};
+use quickcheck::Gen;
 use rand::Rng;
-use std::{
-	collections::{hash_map::RandomState, HashSet},
-	ops::RangeBounds,
-};
+use std::collections::HashSet;
 
-/// An arbitrary graph and a vertex in it.
-///
-/// Note: All graphs will have at least 1 vertex, meaning this type never
-/// includes the empty graph.
-#[derive(Clone, Debug)]
-pub struct ArbVertexIn<G>(pub VertexInGraph<G>)
+impl<Gr: GuidedArbGraph> GuidedArbGraph for VertexInGraph<Gr>
 where
-	G: GuidedArbGraph,
-	G::Graph: TestGraph;
-impl<Gr> Arbitrary for ArbVertexIn<Gr>
-where
-	Gr: GuidedArbGraph + GraphDerefMut,
 	Gr::Graph: TestGraph,
 {
-	fn arbitrary<G: Gen>(g: &mut G) -> Self
-	{
-		Self::arbitrary_guided(g, .., ..)
-	}
-
-	fn shrink(&self) -> Box<dyn Iterator<Item = Self>>
-	{
-		self.shrink_guided(HashSet::new())
-	}
-}
-impl<Gr> GuidedArbGraph for ArbVertexIn<Gr>
-where
-	Gr: GuidedArbGraph + GraphDerefMut,
-	Gr::Graph: TestGraph,
-{
-	fn arbitrary_guided<G: Gen>(
+	fn choose_size<G: Gen>(
 		g: &mut G,
-		v_range: impl RangeBounds<usize>,
-		e_range: impl RangeBounds<usize>,
-	) -> Self
+		v_min: usize,
+		v_max: usize,
+		e_min: usize,
+		e_max: usize,
+	) -> (usize, usize)
 	{
-		let (v_min, v_max, e_min, e_max) = Self::validate_ranges(g, v_range, e_range);
-
-		// Create a graph with at least 1 vertex
-		let v_min_max = if 1 < v_min { v_min } else { 1 };
-		let graph = Gr::arbitrary_guided(g, v_min_max..v_max, e_min..e_max);
-		let verts: Vec<_> = graph.graph().all_vertices().collect();
-		let v = verts[g.gen_range(0, verts.len())];
-
-		Self(VertexInGraph::ensure_unvalidated(graph, v))
+		assert!(v_max > 1);
+		Gr::choose_size(g, std::cmp::max(v_min, 1), v_max, e_min, e_max)
 	}
 
-	fn shrink_guided(&self, limits: HashSet<Limit, RandomState>) -> Box<dyn Iterator<Item = Self>>
+	fn arbitrary_fixed<G: Gen>(g: &mut G, v_count: usize, e_count: usize) -> Self
 	{
+		assert!(v_count >= 1);
+		let graph = Gr::arbitrary_fixed(g, v_count, e_count);
+		let v = graph
+			.graph()
+			.all_vertices()
+			.nth(g.gen_range(0, v_count))
+			.unwrap();
+
+		Self::ensure_unvalidated(graph, v)
+	}
+
+	fn shrink_guided(&self, mut limits: HashSet<Limit>) -> Box<dyn Iterator<Item = Self>>
+	{
+		let v = self.get_vertex();
+		limits.insert(Limit::VertexKeep(v));
 		Box::new(
-			ArbTwoVerticesIn::<_, NonUnique>::new(
-				self.0.clone().release(),
-				self.get_vertex(),
-				self.get_vertex(),
-			)
-			.shrink_guided(limits)
-			.map(|g| g.0),
+			self.clone()
+				.release()
+				.shrink_guided(limits)
+				.map(move |g| Self::ensure_unvalidated(g, v)),
 		)
 	}
-}
-
-impl_ensurer! {
-	use<G> ArbVertexIn<G>:
-	// Can never impl the following because MockGraph doesn't
-	Reflexive
-	as ( self.0) : VertexInGraph<G>
-	where
-	G: GuidedArbGraph,
-	G::Graph:  TestGraph
 }

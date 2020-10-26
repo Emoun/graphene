@@ -1,11 +1,16 @@
 //! Tests the edge lookup methods of `graphene::core::Graph`
 use crate::mock_graph::{
-	arbitrary::{ArbEdgeOutside, ArbTwoVerticesIn, ArbVertexIn, ArbVertexOutside},
+	arbitrary::{EdgeOutside, VertexOutside},
 	utilities::*,
 	MockGraph,
 };
 use duplicate::duplicate;
-use graphene::core::{property::HasVertex, Directed, Edge, Graph, ReleaseUnloaded, Undirected};
+use graphene::core::{
+	property::{HasVertex, VertexInGraph},
+	Directed, Edge, Graph, ReleaseUnloaded, Undirected,
+};
+
+use crate::mock_graph::arbitrary::{Arb, TwoVerticesIn};
 
 #[duplicate(
 	#[
@@ -30,8 +35,8 @@ use graphene::core::{property::HasVertex, Directed, Edge, Graph, ReleaseUnloaded
 			vertices_init			[ let v = g.get_vertex().clone() ]
 			vertices_init_invalid 	[ let v = g.1 ]
 			closure 				[ |e| if closure_nested {Some((e.other(v),e.2))} else {None} ]
-			arb_graph 				[ ArbVertexIn ]
-			arb_invalid_graph 		[ ArbVertexOutside ]
+			arb_graph 				[ VertexInGraph ]
+			arb_invalid_graph 		[ VertexOutside ]
 			base_graph 				[ MockGraph<directedness_nested> ]
 		]
 	]
@@ -55,8 +60,8 @@ use graphene::core::{property::HasVertex, Directed, Edge, Graph, ReleaseUnloaded
 					} else {None}
 				}
 			]
-			arb_graph 				[ ArbTwoVerticesIn ]
-			arb_invalid_graph 		[ ArbEdgeOutside ]
+			arb_graph 				[ TwoVerticesIn ]
+			arb_invalid_graph 		[ EdgeOutside ]
 			base_graph 				[ MockGraph<directedness> ]
 		]
 	]
@@ -67,7 +72,7 @@ mod module
 
 	/// Ensures that all edges are returned.
 	#[quickcheck]
-	fn returns_all_edges(g: arb_graph<base_graph>) -> bool
+	fn returns_all_edges(Arb(g): Arb<arb_graph<base_graph>>) -> bool
 	{
 		vertices_init;
 		let g = g.release_all();
@@ -77,9 +82,10 @@ mod module
 		unordered_equivalent_lists_equal(&edges, &expected)
 	}
 
-	/// Ensures that when the vertex is not in the graph, no edges are returned.
+	/// Ensures that when the vertex is not in the graph, no edges are
+	/// returned.
 	#[quickcheck]
-	fn invalid_vertex(g: arb_invalid_graph<base_graph>) -> bool
+	fn invalid_vertex(Arb(g): Arb<arb_invalid_graph<base_graph>>) -> bool
 	{
 		vertices_init_invalid;
 		let result = g.0.method(vertices).next().is_none();

@@ -1,12 +1,12 @@
 //! Tests the `core::Unique` trait and its ensurer `core::UniqueGraph`.
 use crate::mock_graph::{
-	arbitrary::{ArbEdgeIn, ArbNonUniqueGraph, ArbUniqueGraph, ArbVertexIn},
-	MockEdgeWeight, MockVertexWeight,
+	arbitrary::{Arb, EdgeInGraph, NonUniqueGraph},
+	MockEdgeWeight, MockGraph, MockVertexWeight,
 };
 use duplicate::duplicate;
 use graphene::core::{
-	property::{AddEdge, HasVertex, NewVertex, UniqueGraph},
-	Directed, Edge, EnsureUnloaded, Graph, ReleaseUnloaded, Undirected,
+	property::{AddEdge, HasVertex, NewVertex, UniqueGraph, VertexInGraph},
+	Directed, EnsureUnloaded, Graph, ReleaseUnloaded, Undirected,
 };
 
 #[duplicate(
@@ -18,14 +18,14 @@ mod __
 
 	/// Tests that UniqueGraph correctly identifies unique graphs.
 	#[quickcheck]
-	fn accept_unique(g: ArbUniqueGraph<directedness>) -> bool
+	fn accept_unique(g: Arb<UniqueGraph<MockGraph<directedness>>>) -> bool
 	{
 		UniqueGraph::validate(&g.0.release_all())
 	}
 
 	/// Tests that UniqueGraph correctly rejects non-unique graphs.
 	#[quickcheck]
-	fn reject_non_unique(g: ArbNonUniqueGraph<directedness>) -> bool
+	fn reject_non_unique(g: Arb<NonUniqueGraph<directedness>>) -> bool
 	{
 		!UniqueGraph::validate(&g.0)
 	}
@@ -33,7 +33,7 @@ mod __
 	/// Tests that a UniqueGraph accepts adding a non-duplicate edge
 	#[quickcheck]
 	fn accept_add_edge(
-		mut g: ArbVertexIn<ArbUniqueGraph<directedness>>,
+		Arb(mut g): Arb<VertexInGraph<UniqueGraph<MockGraph<directedness>>>>,
 		v_weight: MockVertexWeight,
 		e_weight: MockEdgeWeight,
 	) -> bool
@@ -49,10 +49,12 @@ mod __
 	/// Tests that a UniqueGraph rejects adding a duplicate edge
 	#[quickcheck]
 	fn reject_add_edge(
-		ArbEdgeIn(mut g, e): ArbEdgeIn<ArbUniqueGraph<directedness>>,
+		Arb(g): Arb<EdgeInGraph<UniqueGraph<MockGraph<directedness>>>>,
 		weight: MockEdgeWeight,
 	) -> bool
 	{
-		g.add_edge_weighted(&e.source(), &e.sink(), weight).is_err()
+		let source = g.get_vertex();
+		let EdgeInGraph(mut g, sink, _) = g;
+		g.add_edge_weighted(source, sink, weight).is_err()
 	}
 }

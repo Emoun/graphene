@@ -1,17 +1,17 @@
 use crate::mock_graph::{
-	arbitrary::{ArbVertexIn, ArbVerticesIn, GuidedArbGraph, Limit},
+	arbitrary::{GuidedArbGraph, Limit},
 	MockVertex, TestGraph,
 };
 use graphene::{
 	core::{
 		property::{HasVertex, VertexInGraph},
-		Ensure, Graph, GraphDeref, GraphDerefMut, ReleaseUnloaded,
+		Ensure, Graph, GraphDeref, ReleaseUnloaded,
 	},
 	impl_ensurer,
 };
-use quickcheck::{Arbitrary, Gen};
+use quickcheck::Gen;
 use rand::Rng;
-use std::{collections::HashSet, iter::FromIterator, marker::PhantomData, ops::RangeBounds};
+use std::{collections::HashSet, marker::PhantomData};
 
 /// Used with `ArbTwoVerticesIn` to choose whether the two vertices must be
 /// unique (`Unique`),
@@ -53,13 +53,13 @@ impl Uniqueness for NonUnique
 /// Note: All graphs will have at least 1 vertex for non-unique and 2 vertices
 /// for unique, meaning this type never includes the empty graph.
 #[derive(Clone, Debug)]
-pub struct ArbTwoVerticesIn<G, U = NonUnique>(pub ArbVertexIn<G>, pub MockVertex, PhantomData<U>)
+pub struct TwoVerticesIn<G, U = NonUnique>(pub VertexInGraph<G>, pub MockVertex, PhantomData<U>)
 where
 	G: GuidedArbGraph,
 	G::Graph: TestGraph,
 	U: Uniqueness;
 
-impl<G, U> ArbTwoVerticesIn<G, U>
+impl<G, U> TwoVerticesIn<G, U>
 where
 	G: GuidedArbGraph,
 	G::Graph: TestGraph,
@@ -75,11 +75,7 @@ where
 		{
 			panic!("Vertex not in graph: '{:?}'", v2);
 		}
-		Self(
-			ArbVertexIn(VertexInGraph::ensure(g, v1).unwrap()),
-			v2,
-			PhantomData,
-		)
+		Self(VertexInGraph::ensure(g, v1).unwrap(), v2, PhantomData)
 	}
 
 	pub fn get_both(&self) -> (MockVertex, MockVertex)
@@ -108,79 +104,7 @@ where
 	}
 }
 
-impl<Gr, U> Arbitrary for ArbTwoVerticesIn<Gr, U>
-where
-	Gr: GuidedArbGraph + GraphDerefMut,
-	Gr::Graph: TestGraph,
-	U: 'static + Uniqueness,
-{
-	fn arbitrary<G: Gen>(g: &mut G) -> Self
-	{
-		Self::arbitrary_guided(g, .., ..)
-	}
-
-	fn shrink(&self) -> Box<dyn Iterator<Item = Self>>
-	{
-		self.shrink_guided(HashSet::new())
-	}
-}
-impl<Gr, U> GuidedArbGraph for ArbTwoVerticesIn<Gr, U>
-where
-	Gr: GuidedArbGraph + GraphDerefMut,
-	Gr::Graph: TestGraph,
-	U: 'static + Uniqueness,
-{
-	fn arbitrary_guided<G: Gen>(
-		g: &mut G,
-		v_range: impl RangeBounds<usize>,
-		e_range: impl RangeBounds<usize>,
-	) -> Self
-	{
-		let (v_min, v_max, e_min, e_max) = Self::validate_ranges(g, v_range, e_range);
-
-		// Create a graph with at least 1 or 2 vertices (1 for non-unique, 2 for Unique)
-		let v_min_min = 1 + (U::unique() as usize);
-		let v_min_max = if v_min_min < v_min { v_min } else { v_min_min };
-		let graph = Gr::arbitrary_guided(g, v_min_max..v_max, e_min..e_max);
-		let (v1, v2) = Self::get_two_vertices(g, &graph);
-
-		Self::new(graph, v1, v2)
-	}
-
-	fn shrink_guided(&self, mut limits: HashSet<Limit>) -> Box<dyn Iterator<Item = Self>>
-	{
-		// Don't let it shrink to less than 1/2 vertices, can happen if self.1 and
-		// self.2 are equal
-		limits.insert(Limit::VertexMin(1 + (U::unique() as usize)));
-		Box::new(
-			ArbVerticesIn::new(
-				(self.0.clone()).0.release(),
-				HashSet::from_iter([self.get_vertex(), self.1].iter().cloned()),
-			)
-			.shrink_guided(limits)
-			.map(|g| {
-				if !U::unique()
-				{
-					// we cycle, such that when the set only contains 1 vertex, we can use the same
-					// one for both positions.
-					let mut set = g.1.iter().cycle();
-					let v1 = *set.next().unwrap();
-					let v2 = *set.next().unwrap();
-					Self::new(g.release(), v1, v2)
-				}
-				else
-				{
-					let mut set = g.1.iter();
-					let v1 = *set.next().unwrap();
-					let v2 = *set.next().unwrap();
-					Self::new(g.release(), v1, v2)
-				}
-			}),
-		)
-	}
-}
-
-impl<G, U> Ensure for ArbTwoVerticesIn<G, U>
+impl<G, U> Ensure for TwoVerticesIn<G, U>
 where
 	G: GuidedArbGraph,
 	G::Graph: TestGraph,
@@ -209,10 +133,70 @@ where
 }
 
 impl_ensurer! {
-	use<G,U> ArbTwoVerticesIn<G,U>: Ensure
-	as (self.0): ArbVertexIn<G>
+	use<G,U> TwoVerticesIn<G,U>: Ensure
+	as (self.0): VertexInGraph<G>
 	where
 	G: GuidedArbGraph,
 	G::Graph: TestGraph,
 	U: Uniqueness
+}
+
+impl<Gr, U> GuidedArbGraph for TwoVerticesIn<Gr, U>
+where
+	Gr: GuidedArbGraph,
+	Gr::Graph: TestGraph,
+	U: 'static + Uniqueness,
+{
+	fn choose_size<G: Gen>(
+		g: &mut G,
+		v_min: usize,
+		v_max: usize,
+		e_min: usize,
+		e_max: usize,
+	) -> (usize, usize)
+	{
+		let v_min = std::cmp::max(v_min, 1 + (U::unique() as usize));
+		assert!(v_max > v_min);
+		Gr::choose_size(g, std::cmp::max(v_min, 1), v_max, e_min, e_max)
+	}
+
+	fn arbitrary_fixed<G: Gen>(g: &mut G, v_count: usize, e_count: usize) -> Self
+	{
+		assert!(v_count >= 1 + (U::unique() as usize));
+
+		let graph = Gr::arbitrary_fixed(g, v_count, e_count);
+		let (v1, v2) = Self::get_two_vertices(g, &graph);
+
+		Self::new(graph, v1, v2)
+	}
+
+	fn shrink_guided(&self, limits: HashSet<Limit>) -> Box<dyn Iterator<Item = Self>>
+	{
+		let mut result = Vec::new();
+
+		// Shrink without removing the referenced vertices
+		let mut lims = limits.clone();
+		// We only need to limits the second vertex, as VertexInGraph
+		// will manage the first one isn't removed
+		lims.insert(Limit::VertexKeep(self.1));
+
+		result.extend(
+			self.0
+				.shrink_guided(lims)
+				.map(|g| Self(g, self.1, PhantomData)),
+		);
+
+		if !U::unique() && self.get_vertex() != self.1
+		{
+			// Shrink by making both vertices the same
+			result.push(Self(self.0.clone(), self.get_vertex(), PhantomData));
+			result.push(Self(
+				VertexInGraph::ensure(self.0.clone().release(), self.1).unwrap(),
+				self.1,
+				PhantomData,
+			));
+		}
+
+		Box::new(result.into_iter())
+	}
 }

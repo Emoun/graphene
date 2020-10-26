@@ -1,122 +1,38 @@
 use crate::mock_graph::{
-	arbitrary::{ArbTwoVerticesIn, GuidedArbGraph, Limit, NonUnique},
+	arbitrary::{GuidedArbGraph, Limit},
 	MockEdgeWeight, MockVertex, TestGraph,
 };
 use graphene::{
 	core::{
-		property::{AddEdge, HasVertexGraph, RemoveEdge},
-		Edge, EnsureUnloaded, Graph, GraphDerefMut, GraphMut, ReleaseUnloaded,
+		property::{AddEdge, HasVertex, RemoveEdge, VertexInGraph},
+		Directedness, Graph, GraphDerefMut, GraphMut,
 	},
 	impl_ensurer,
 };
 use quickcheck::{Arbitrary, Gen};
 use rand::Rng;
-use std::{collections::HashSet, ops::RangeBounds};
+use std::collections::HashSet;
 
 /// An arbitrary graph with an edge that is guaranteed to be in the graph (the
-/// weight is a clone)
+/// weight is a clone).
+/// The source of the edge can be accessed through `.get_vertex`, the sink `.1`,
+/// and the weight `.2`
 #[derive(Clone, Debug)]
-pub struct ArbEdgeIn<G>(
-	pub HasVertexGraph<G>,
-	pub (MockVertex, MockVertex, MockEdgeWeight),
-)
+pub struct EdgeInGraph<G: GuidedArbGraph>(pub VertexInGraph<G>, pub MockVertex, pub MockEdgeWeight)
 where
-	G: GuidedArbGraph,
 	G::Graph: TestGraph;
 
-impl<Gr> GuidedArbGraph for ArbEdgeIn<Gr>
-where
-	Gr: GuidedArbGraph + GraphDerefMut,
-	Gr::Graph: TestGraph + GraphMut + AddEdge + RemoveEdge,
-{
-	fn arbitrary_guided<G: Gen>(
-		g: &mut G,
-		v_range: impl RangeBounds<usize>,
-		e_range: impl RangeBounds<usize>,
-	) -> Self
-	{
-		let (v_min, v_max, e_min, e_max) = Self::validate_ranges(g, v_range, e_range);
-		let (v_min, v_max, e_min, e_max) =
-			Self::validate_ranges(g, v_min..v_max, std::cmp::max(1, e_min)..e_max);
-
-		let arb_graph = Gr::arbitrary_guided(g, v_min..v_max, e_min..e_max);
-
-		let graph = arb_graph.graph();
-		let edge = graph
-			.all_edges()
-			.nth(g.gen_range(0, graph.all_edges().count()))
-			.unwrap();
-
-		let edge_clone = (edge.source(), edge.sink(), edge.2.clone());
-
-		Self(HasVertexGraph::ensure_unvalidated(arb_graph), edge_clone)
-	}
-
-	fn shrink_guided(&self, _: HashSet<Limit>) -> Box<dyn Iterator<Item = Self>>
-	{
-		let mut result = Vec::new();
-		// 	First, we can simply shrink the weight
-		result.extend((self.1).2.shrink().map(|shrunk| {
-			let mut clone = self.0.clone();
-			let edge = clone
-				.graph_mut()
-				.edges_between_mut(self.1.source(), self.1.sink())
-				.find(|w| **w == (self.1).2)
-				.unwrap();
-			*edge = shrunk.clone();
-			Self(clone, ((self.1).0, (self.1).1, shrunk))
-		}));
-
-		// We shrink each vertex in the edge
-		let mut without_edge = self.0.clone().release();
-		without_edge
-			.graph_mut()
-			.remove_edge_where_weight(&self.1.source(), &self.1.sink(), |w| *w == (self.1).2)
-			.unwrap();
-		result.extend(
-			ArbTwoVerticesIn::<_, NonUnique>::new(without_edge, (self.1).0, (self.1).1)
-				.shrink()
-				.map(|mut g| {
-					let (v1, v2) = g.get_both();
-					g.graph_mut()
-						.add_edge_weighted(&v1, &v2, (self.1).2.clone())
-						.unwrap();
-					Self(
-						HasVertexGraph::ensure(g.release().release().release()).unwrap(),
-						(v1, v2, (self.1).2.clone()),
-					)
-				}),
-		);
-
-		Box::new(result.into_iter())
-	}
-}
-impl<Gr> Arbitrary for ArbEdgeIn<Gr>
-where
-	Gr: GuidedArbGraph + GraphDerefMut,
-	Gr::Graph: TestGraph + GraphMut + AddEdge + RemoveEdge,
-{
-	fn arbitrary<G: Gen>(g: &mut G) -> Self
-	{
-		Self::arbitrary_guided(g, .., 1..)
-	}
-
-	fn shrink(&self) -> Box<dyn Iterator<Item = Self>>
-	{
-		self.shrink_guided(HashSet::new())
-	}
-}
-
-impl<G> graphene::core::Ensure for ArbEdgeIn<G>
+impl<G> graphene::core::Ensure for EdgeInGraph<G>
 where
 	G: GuidedArbGraph,
 	G::Graph: TestGraph,
 {
 	fn ensure_unvalidated(c: Self::Ensured, _: ()) -> Self
 	{
-		let edge = c.all_edges().next().unwrap();
-		let edge_copy = (edge.0, edge.1, edge.2.clone());
-		Self(c, edge_copy)
+		let edge = c.edges_sourced_in(c.get_vertex()).next().unwrap();
+		let weight = edge.1.clone();
+		let sink = edge.0;
+		Self(c, sink, weight)
 	}
 
 	fn validate(c: &Self::Ensured, _: &()) -> bool
@@ -126,9 +42,113 @@ where
 }
 
 impl_ensurer! {
-	use<G> ArbEdgeIn<G>: Ensure
-	as (self.0): HasVertexGraph<G>
+	use<G> EdgeInGraph<G>: Ensure
+	as ( self.0) : VertexInGraph<G>
 	where
 	G: GuidedArbGraph,
 	G::Graph:  TestGraph
+}
+
+impl<Gr> GuidedArbGraph for EdgeInGraph<Gr>
+where
+	Gr: GuidedArbGraph + GraphDerefMut,
+	Gr::Graph: TestGraph + GraphMut + AddEdge + RemoveEdge,
+{
+	fn choose_size<G: Gen>(
+		g: &mut G,
+		v_min: usize,
+		v_max: usize,
+		e_min: usize,
+		e_max: usize,
+	) -> (usize, usize)
+	{
+		assert!(v_max > 1);
+		assert!(e_max > 1);
+		Gr::choose_size(
+			g,
+			std::cmp::max(v_min, 1),
+			v_max,
+			std::cmp::max(e_min, 1),
+			e_max,
+		)
+	}
+
+	fn arbitrary_fixed<G: Gen>(g: &mut G, v_count: usize, e_count: usize) -> Self
+	{
+		assert!(v_count >= 1);
+		assert!(e_count >= 1);
+
+		let graph = Gr::arbitrary_fixed(g, v_count, e_count);
+
+		let (source, sink, weight) = graph
+			.graph()
+			.all_edges()
+			.nth(g.gen_range(0, e_count))
+			.unwrap();
+		let weight = weight.clone();
+		Self(
+			graphene::core::Ensure::ensure_unvalidated(graph, source),
+			sink,
+			weight,
+		)
+	}
+
+	fn shrink_guided(&self, limits: HashSet<Limit>) -> Box<dyn Iterator<Item = Self>>
+	{
+		let v1 = self.get_vertex();
+		let v2 = self.1;
+		let mut result = Vec::new();
+
+		// First shrink anything except this edge (or any others
+		// with the same source sink)
+		let mut lims = limits.clone();
+		lims.insert(Limit::EdgeKeep(v1, v2));
+		result.extend(self.0.shrink_guided(lims).map(|g| {
+			let weight = g.edges_between(v1, v2).next().unwrap().clone();
+			Self(g, v2, weight.clone())
+		}));
+
+		// Now shrink by removing any extra edges
+		// and shrinking them (not at the same time)
+		if !limits.contains(&Limit::EdgeKeep(v1, v2))
+			&& (<Self as Graph>::Directedness::directed()
+				|| !limits.contains(&Limit::EdgeKeep(v2, v1)))
+		{
+			let mut saw_reference_edge_before = false;
+			let mut shrunk_reference_weight_before = false;
+			for w in self.edges_between(v1, v2)
+			{
+				// Remove edge
+				if !saw_reference_edge_before && w.value == self.2.value
+				{
+					// Cannot remove the reference edge, if its the only one
+					saw_reference_edge_before = true
+				}
+				else
+				{
+					let mut g = self.clone();
+					g.remove_edge_where_weight(v1, v2, |ref weight| w.value == weight.value)
+						.unwrap();
+					result.push(g);
+				}
+
+				// Shrink weight
+				self.2.shrink().for_each(|s_w| {
+					let mut shrunk_graph = self.clone();
+					*shrunk_graph
+						.edges_between_mut(v1, v2)
+						.find(|w| w.value == self.2.value)
+						.unwrap() = s_w.clone();
+					if !shrunk_reference_weight_before && self.2.value == w.value
+					{
+						shrunk_graph.2 = s_w;
+						// We only need to update the reference weight for one edge
+						shrunk_reference_weight_before = true;
+					}
+					result.push(shrunk_graph);
+				});
+			}
+		}
+		Box::new(result.into_iter())
+	}
 }

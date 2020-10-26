@@ -1,7 +1,7 @@
 //! Tests `Ensured` and `EnsuredGraph` to make sure
 //! the new versions of each method give the same result
 //! as the original.
-use crate::mock_graph::{MockGraph, MockVertex, MockVertexWeight};
+use crate::mock_graph::{arbitrary::Arb, MockGraph, MockVertex, MockVertexWeight};
 use duplicate::duplicate;
 use graphene::{
 	common::Ensured,
@@ -21,7 +21,7 @@ use graphene::{
 	contains_vertex; [contains_vertex]
 )]
 #[quickcheck]
-fn contains_vertex(graph: MockGraph<Directed>, v: MockVertex) -> bool
+fn contains_vertex(Arb(graph): Arb<MockGraph<Directed>>, v: MockVertex) -> bool
 {
 	let graph_clone = graph.clone();
 
@@ -41,7 +41,7 @@ fn contains_vertex(graph: MockGraph<Directed>, v: MockVertex) -> bool
 	[new_vertex]			[]
 )]
 #[quickcheck]
-fn new_vertex(mut graph: MockGraph<Directed>, _w: MockVertexWeight) -> bool
+fn new_vertex(Arb(mut graph): Arb<MockGraph<Directed>>, _w: MockVertexWeight) -> bool
 {
 	let graph_clone = graph.clone();
 

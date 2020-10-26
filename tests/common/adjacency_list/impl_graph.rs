@@ -3,15 +3,15 @@
 use crate::{
 	common::adjacency_list::adj_list_from_mock,
 	mock_graph::{
-		arbitrary::{ArbEdgeIn, ArbTwoVerticesIn, ArbVertexIn},
+		arbitrary::{Arb, EdgeInGraph, TwoVerticesIn},
 		utilities::unordered_equivalent_lists_equal,
 		MockGraph,
 	},
 };
 use duplicate::duplicate;
 use graphene::core::{
-	property::{EdgeCount, HasVertex, RemoveEdge, RemoveVertex, VertexCount},
-	Directed, Edge, Graph, GraphMut, ReleaseUnloaded, Undirected,
+	property::{EdgeCount, HasVertex, RemoveEdge, RemoveVertex, VertexCount, VertexInGraph},
+	Directed, Graph, GraphMut, ReleaseUnloaded, Undirected,
 };
 
 #[duplicate(
@@ -24,7 +24,7 @@ mod __
 	/// Tests that adding vertices to the graph results in the same vertices
 	/// being output by `all_vertices_weighted`
 	#[quickcheck]
-	fn same_vertices(mock: MockGraph<directedness>) -> bool
+	fn same_vertices(Arb(mock): Arb<MockGraph<directedness>>) -> bool
 	{
 		let (g, v_map) = adj_list_from_mock(&mock);
 
@@ -37,7 +37,7 @@ mod __
 	/// Tests that adding vertices to the graph results in the correct weights
 	/// for each.
 	#[quickcheck]
-	fn same_vertex_weight(mock: MockGraph<directedness>) -> bool
+	fn same_vertex_weight(Arb(mock): Arb<MockGraph<directedness>>) -> bool
 	{
 		let (g, v_map) = adj_list_from_mock(&mock);
 
@@ -53,7 +53,7 @@ mod __
 	/// Tests that the reference to vertex weights is the same regardless of
 	/// mutability
 	#[quickcheck]
-	fn same_vertex_weight_mut(mock: ArbVertexIn<MockGraph<directedness>>) -> bool
+	fn same_vertex_weight_mut(Arb(mock): Arb<VertexInGraph<MockGraph<directedness>>>) -> bool
 	{
 		let v = mock.get_vertex().clone();
 		let (mut g, v_map) = adj_list_from_mock(&mock.release_all());
@@ -65,7 +65,7 @@ mod __
 	/// Tests that when we create an AdjListGraph from a MockGraph,
 	/// any edge in the mock is in the AdjListGraph
 	#[quickcheck]
-	fn edges_between(mock: ArbTwoVerticesIn<MockGraph<directedness>>) -> bool
+	fn edges_between(Arb(mock): Arb<TwoVerticesIn<MockGraph<directedness>>>) -> bool
 	{
 		let (v1, v2) = mock.get_both();
 		let mock = mock.0.release_all();
@@ -80,7 +80,7 @@ mod __
 	/// Tests that `edges_between_mut` returns the same edges as its immutable
 	/// version
 	#[quickcheck]
-	fn edges_between_mut(mock: ArbTwoVerticesIn<MockGraph<directedness>>) -> bool
+	fn edges_between_mut(Arb(mock): Arb<TwoVerticesIn<MockGraph<directedness>>>) -> bool
 	{
 		let (v1, v2) = mock.get_both();
 		let mock = mock.0.release_all();
@@ -104,7 +104,7 @@ mod __
 
 	/// Tests that removing a vertex works as expected
 	#[quickcheck]
-	fn remove_vertex(mock: ArbVertexIn<MockGraph<directedness>>) -> bool
+	fn remove_vertex(Arb(mock): Arb<VertexInGraph<MockGraph<directedness>>>) -> bool
 	{
 		let v_remove = mock.get_vertex().clone();
 		let mock = mock.release_all();
@@ -141,22 +141,24 @@ mod __
 
 	/// Tests removing an edge
 	#[quickcheck]
-	fn remove_edge(ArbEdgeIn(mock, edge): ArbEdgeIn<MockGraph<directedness>>) -> bool
+	fn remove_edge(Arb(mock): Arb<EdgeInGraph<MockGraph<directedness>>>) -> bool
 	{
 		let (mut g, v_map) = adj_list_from_mock(&mock);
+		let source = mock.get_vertex();
+		let EdgeInGraph(mock, sink, weight) = mock;
 
-		let mapped_source = v_map[&edge.source()];
-		let mapped_sink = v_map[&edge.sink()];
+		let mapped_source = v_map[&source];
+		let mapped_sink = v_map[&sink];
 
-		if g.remove_edge_where_weight(&mapped_source, &mapped_sink, |w| *w == edge.2)
+		if g.remove_edge_where_weight(&mapped_source, &mapped_sink, |w| *w == weight)
 			.is_ok()
 		{
 			// Ensure that one less edge matches our edge
 			g.edges_between(&mapped_source, &mapped_sink)
-				.filter(|&w| *w == edge.2)
+				.filter(|&w| *w == weight)
 				.count() == (mock
-				.edges_between(&edge.source(), &edge.sink())
-				.filter(|&w| *w == edge.2)
+				.edges_between(source, sink)
+				.filter(|&w| *w == weight)
 				.count() - 1)
 		}
 		else

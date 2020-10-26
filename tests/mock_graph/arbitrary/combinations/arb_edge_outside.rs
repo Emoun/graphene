@@ -1,35 +1,78 @@
 use crate::mock_graph::{
-	arbitrary::ArbVertexOutside, MockEdgeWeight, MockVertex, MockVertexWeight,
+	arbitrary::{GuidedArbGraph, Limit, VertexOutside},
+	MockVertex, TestGraph,
 };
-use graphene::core::Graph;
+use graphene::{
+	core::{Ensure, Graph},
+	impl_ensurer,
+};
 use quickcheck::{Arbitrary, Gen};
+use std::collections::HashSet;
 
 /// An arbitrary graph and two vertices where at least one is not in the graph.
 #[derive(Clone, Debug)]
-pub struct ArbEdgeOutside<G>(pub G, pub MockVertex, pub MockVertex)
+pub struct EdgeOutside<G>(pub G, pub MockVertex, pub MockVertex)
 where
-	G: Arbitrary
-		+ Graph<Vertex = MockVertex, VertexWeight = MockVertexWeight, EdgeWeight = MockEdgeWeight>;
-impl<Gr> Arbitrary for ArbEdgeOutside<Gr>
+	G: GuidedArbGraph,
+	G::Graph: TestGraph;
+
+impl<G> Ensure for EdgeOutside<G>
 where
-	Gr: Arbitrary
-		+ Graph<Vertex = MockVertex, VertexWeight = MockVertexWeight, EdgeWeight = MockEdgeWeight>,
+	G: GuidedArbGraph,
+	G::Graph: TestGraph,
 {
-	fn arbitrary<G: Gen>(g: &mut G) -> Self
+	fn ensure_unvalidated(_c: Self::Ensured, _: ()) -> Self
 	{
-		let single_invalid = ArbVertexOutside::arbitrary(g);
+		unimplemented!()
+	}
+
+	fn validate(_c: &Self::Ensured, _: &()) -> bool
+	{
+		unimplemented!()
+	}
+}
+
+impl_ensurer! {
+	use<G> EdgeOutside<G>: Ensure
+	as (self.0): G
+	where
+	G: GuidedArbGraph,
+	G::Graph: TestGraph
+}
+
+impl<Gr> GuidedArbGraph for EdgeOutside<Gr>
+where
+	Gr: GuidedArbGraph,
+	Gr::Graph: TestGraph,
+{
+	fn choose_size<G: Gen>(
+		g: &mut G,
+		v_min: usize,
+		v_max: usize,
+		e_min: usize,
+		e_max: usize,
+	) -> (usize, usize)
+	{
+		Gr::choose_size(g, v_min, v_max, e_min, e_max)
+	}
+
+	fn arbitrary_fixed<G: Gen>(g: &mut G, v_count: usize, e_count: usize) -> Self
+	{
+		let single_invalid = VertexOutside::arbitrary_fixed(g, v_count, e_count);
 		Self(single_invalid.0, single_invalid.1, MockVertex::arbitrary(g))
 	}
 
-	fn shrink(&self) -> Box<dyn Iterator<Item = Self>>
+	fn shrink_guided(&self, limits: HashSet<Limit>) -> Box<dyn Iterator<Item = Self>>
 	{
 		let mut result = Vec::new();
 		// 	Shrink the graph, keeping only the shrunk graphs where the edge is still
 		// invalid.
 		result.extend(
 			self.0
-				.shrink()
-				.filter(|g| !g.contains_vertex(self.1) || !g.contains_vertex(self.2))
+				.shrink_guided(limits.clone())
+				.filter(|g| {
+					!g.graph().contains_vertex(self.1) || !g.graph().contains_vertex(self.2)
+				})
 				.map(|g| Self(g, self.1, self.2)),
 		);
 
@@ -37,13 +80,17 @@ where
 		result.extend(
 			self.1
 				.shrink()
-				.filter(|v| !self.0.contains_vertex(v) || !self.0.contains_vertex(self.2))
+				.filter(|v| {
+					!self.0.graph().contains_vertex(v) || !self.0.graph().contains_vertex(self.2)
+				})
 				.map(|v| Self(self.0.clone(), v, self.2)),
 		);
 		result.extend(
 			self.2
 				.shrink()
-				.filter(|v| !self.0.contains_vertex(self.1) || !self.0.contains_vertex(v))
+				.filter(|v| {
+					!self.0.graph().contains_vertex(self.1) || !self.0.graph().contains_vertex(v)
+				})
 				.map(|v| Self(self.0.clone(), self.1, v)),
 		);
 		Box::new(result.into_iter())

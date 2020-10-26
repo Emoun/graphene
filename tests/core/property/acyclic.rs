@@ -1,12 +1,12 @@
 //! Test the `core::property::Acyclic` trait and its ensurer
 
 use crate::mock_graph::{
-	arbitrary::{ArbAcyclicGraph, ArbCyclicGraph, ArbEdgeIn, ArbTwoReachableVerticesIn},
+	arbitrary::{Arb, EdgeInGraph, TwoReachableVerticesIn},
 	MockEdgeWeight, MockGraph,
 };
 use duplicate::duplicate;
 use graphene::core::{
-	property::{Acyclic, AcyclicGraph, AddEdge, NoLoops, RemoveEdge},
+	property::{Acyclic, AcyclicGraph, AddEdge, HasVertex, NoLoops, RemoveEdge},
 	Directed, EnsureUnloaded, Graph, ReleaseUnloaded, Undirected,
 };
 use static_assertions::assert_impl_all;
@@ -17,17 +17,18 @@ use static_assertions::assert_impl_all;
 mod __
 {
 	use super::*;
+	use crate::mock_graph::arbitrary::CyclicGraph;
 
 	/// Tests that AcyclicGraph correctly identifies acyclic graphs.
 	#[quickcheck]
-	fn accept_acyclic(g: ArbAcyclicGraph<directedness>) -> bool
+	fn accept_acyclic(g: Arb<AcyclicGraph<MockGraph<directedness>>>) -> bool
 	{
 		AcyclicGraph::validate(&g.0.release_all())
 	}
 
 	/// Tests that AcyclicGraph correctly rejects cyclic graphs.
 	#[quickcheck]
-	fn reject_cyclic(g: ArbCyclicGraph<directedness>) -> bool
+	fn reject_cyclic(g: Arb<CyclicGraph<directedness>>) -> bool
 	{
 		!AcyclicGraph::validate(&g.0)
 	}
@@ -35,12 +36,13 @@ mod __
 	/// Tests that a AcyclicGraph accepts adding an edge that doesn't
 	/// result in a cycle
 	#[quickcheck]
-	fn accept_add_edge(
-		ArbEdgeIn(g, (source, sink, _)): ArbEdgeIn<ArbAcyclicGraph<directedness>>,
-	) -> bool
+	fn accept_add_edge(Arb(g): Arb<EdgeInGraph<AcyclicGraph<MockGraph<directedness>>>>) -> bool
 	{
-		// We start by removing the edge, so that we can re-add it later
+		let source = g.get_vertex();
+		let sink = g.1;
 		let mut g = g.release_all();
+
+		// We start by removing the edge, so that we can re-add it later
 		let edge_count = g.edges_between(source, sink).count();
 		let weight = g.remove_edge(source, sink).unwrap();
 
@@ -53,7 +55,7 @@ mod __
 	/// Tests that a AcyclicGraph rejects adding an edge that results in a cycle
 	#[quickcheck]
 	fn reject_add_edge(
-		graph: ArbTwoReachableVerticesIn<ArbAcyclicGraph<directedness>>,
+		Arb(graph): Arb<TwoReachableVerticesIn<AcyclicGraph<MockGraph<directedness>>>>,
 		weight: MockEdgeWeight,
 	) -> bool
 	{

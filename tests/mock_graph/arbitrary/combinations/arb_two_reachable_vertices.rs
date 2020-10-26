@@ -1,5 +1,5 @@
 use crate::mock_graph::{
-	arbitrary::{ArbTwoVerticesIn, ArbVertexIn, GuidedArbGraph, Limit, NonUnique, Uniqueness},
+	arbitrary::{GuidedArbGraph, Limit, NonUnique, TwoVerticesIn, Uniqueness},
 	TestGraph,
 };
 use graphene::{
@@ -10,9 +10,9 @@ use graphene::{
 	},
 	impl_ensurer,
 };
-use quickcheck::{Arbitrary, Gen};
+use quickcheck::Gen;
 use rand::Rng;
-use std::{collections::HashSet, ops::RangeBounds};
+use std::collections::HashSet;
 
 /// An arbitrary graph and two vertices in it.
 ///
@@ -22,51 +22,48 @@ use std::{collections::HashSet, ops::RangeBounds};
 /// Note: All graphs will have at least 1 vertex for non-unique and 2 vertices
 /// for unique, meaning this type never includes the empty graph.
 #[derive(Clone, Debug)]
-pub struct ArbTwoReachableVerticesIn<G, U = NonUnique>(pub ArbTwoVerticesIn<G, U>)
+pub struct TwoReachableVerticesIn<G, U = NonUnique>(pub TwoVerticesIn<G, U>)
 where
 	G: GuidedArbGraph,
 	G::Graph: TestGraph,
 	U: Uniqueness;
 
-impl<Gr, U> Arbitrary for ArbTwoReachableVerticesIn<Gr, U>
-where
-	Gr: GuidedArbGraph + GraphDerefMut,
-	Gr::Graph: TestGraph + RemoveEdge + AddEdge,
-	U: 'static + Uniqueness,
-{
-	fn arbitrary<G: Gen>(g: &mut G) -> Self
-	{
-		Self::arbitrary_guided(g, .., ..)
-	}
-
-	fn shrink(&self) -> Box<dyn Iterator<Item = Self>>
-	{
-		self.shrink_guided(HashSet::new())
-	}
+impl_ensurer! {
+	use<G,U> TwoReachableVerticesIn<G,U>
+	as (self.0): TwoVerticesIn<G,U>
+	where
+	G: GuidedArbGraph,
+	G::Graph: TestGraph,
+	U: Uniqueness
 }
-impl<Gr, U> GuidedArbGraph for ArbTwoReachableVerticesIn<Gr, U>
+
+impl<Gr, U> GuidedArbGraph for TwoReachableVerticesIn<Gr, U>
 where
 	Gr: GuidedArbGraph + GraphDerefMut,
 	Gr::Graph: TestGraph + RemoveEdge + AddEdge,
 	U: 'static + Uniqueness,
 {
-	fn arbitrary_guided<G: Gen>(
+	fn choose_size<G: Gen>(
 		g: &mut G,
-		v_range: impl RangeBounds<usize>,
-		e_range: impl RangeBounds<usize>,
-	) -> Self
+		v_min: usize,
+		v_max: usize,
+		e_min: usize,
+		e_max: usize,
+	) -> (usize, usize)
 	{
-		let (v_min, v_max, e_min, e_max) = Self::validate_ranges(g, v_range, e_range);
-		let (v_min, v_max, e_min, e_max) = Self::validate_ranges(
-			g,
-			v_min..v_max,
-			std::cmp::max(e_min, 1)..std::cmp::max(e_max, 2),
-		);
+		assert!(e_max > 1);
 
+		// we need at least 1 edge. We'll delegate to TwoVerticesIn to ensure we get
+		// at least 1 or 2 vertices (depending on U).
+		TwoVerticesIn::<Gr, U>::choose_size(g, v_min, v_max, std::cmp::max(e_min, 1), e_max)
+	}
+
+	fn arbitrary_fixed<G: Gen>(g: &mut G, v_count: usize, e_count: usize) -> Self
+	{
 		// Create a graph with at least 1 or 2 vertices (1 for non-unique, 2 for Unique)
-		let v_min_min = 1 + (U::unique() as usize);
-		let v_min_max = if v_min_min < v_min { v_min } else { v_min_min };
-		let graph = Gr::arbitrary_guided(g, v_min_max..v_max, e_min..e_max);
+		let graph = TwoVerticesIn::<Gr, U>::arbitrary_fixed(g, v_count, e_count)
+			.release()
+			.release();
 
 		let mut vert_reachables: Vec<_> = graph
 			.graph()
@@ -100,7 +97,7 @@ where
 		// Choose a vertex that ends the path
 		let v2 = reachable[g.gen_range(0, reachable.len())];
 
-		Self(ArbTwoVerticesIn::new(graph, v1.clone(), v2))
+		Self(TwoVerticesIn::new(graph, v1.clone(), v2))
 	}
 
 	fn shrink_guided(&self, mut limits: HashSet<Limit>) -> Box<dyn Iterator<Item = Self>>
@@ -133,11 +130,12 @@ where
 		// the order of the vertices is the same (ArbTwoVerticesIn doesn't
 		// guarantee their order is maintained through shrink)
 		let clone = self.0.clone();
-		result.extend(clone.shrink_guided(limits.clone()).map(|mut g| {
-			g.0 = ArbVertexIn(VertexInGraph::ensure_unvalidated((g.0).0.release(), v1));
-			g.1 = v2;
-			Self(g)
-		}));
+		result.extend({
+			clone
+				.0
+				.shrink_guided(limits)
+				.map(|g| Self(TwoVerticesIn::new(g.release(), v1, v2)))
+		});
 
 		// Shrink by either removing superfluous edges from last link
 		// in the path, or removing v2
@@ -172,13 +170,4 @@ where
 		}
 		Box::new(result.into_iter())
 	}
-}
-
-impl_ensurer! {
-	use<G,U> ArbTwoReachableVerticesIn<G,U>
-	as (self.0): ArbTwoVerticesIn<G,U>
-	where
-	G: GuidedArbGraph,
-	G::Graph: TestGraph,
-	U: Uniqueness
 }

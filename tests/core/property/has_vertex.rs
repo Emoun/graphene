@@ -1,6 +1,9 @@
 /// Tests `HasVertexGraph` and `VertexInGraph`
-use crate::mock_graph::arbitrary::{ArbTwoVerticesIn, ArbVertexIn, Unique};
-use crate::mock_graph::{MockDirectedness, MockGraph, MockVertexWeight};
+use crate::mock_graph::arbitrary::Unique;
+use crate::mock_graph::{
+	arbitrary::{Arb, TwoVerticesIn},
+	MockDirectedness, MockGraph, MockVertexWeight,
+};
 use duplicate::duplicate;
 use graphene::core::{
 	property::{HasVertex, HasVertexGraph, NewVertex, RemoveVertex, VertexInGraph},
@@ -17,6 +20,7 @@ mod __
 	{
 		use super::*;
 		use graphene::core::{EnsureUnloaded, ReleaseUnloaded};
+
 		/// Tests that null graphs are rejected.
 		#[test]
 		fn reject_null()
@@ -28,7 +32,7 @@ mod __
 
 		/// Tests that graphs with at least 1 vertex are accepted.
 		#[quickcheck]
-		fn accept_non_null(g: ArbVertexIn<MockGraph<directedness>>) -> bool
+		fn accept_non_null(Arb(g): Arb<VertexInGraph<MockGraph<directedness>>>) -> bool
 		{
 			HasVertexGraph::validate(&g.release_all())
 		}
@@ -50,7 +54,7 @@ mod __
 		/// Tests that can remove a vertex if there are at least 2.
 		#[quickcheck]
 		fn non_null_accept_remove_vertex(
-			g: ArbTwoVerticesIn<MockGraph<MockDirectedness>, Unique>,
+			Arb(g): Arb<TwoVerticesIn<MockGraph<directedness>, Unique>>,
 		) -> bool
 		{
 			let v = g.get_vertex();
@@ -63,19 +67,19 @@ mod __
 	mod vertex_in
 	{
 		use super::*;
-		use crate::mock_graph::arbitrary::ArbVertexOutside;
+		use crate::mock_graph::arbitrary::VertexOutside;
 		use graphene::core::{Ensure, Release};
 
 		/// Tests that graphs with at least 1 vertex are accepted.
 		#[quickcheck]
-		fn accept_in_graph(g: ArbVertexIn<MockGraph<directedness>>) -> bool
+		fn accept_in_graph(Arb(g): Arb<VertexInGraph<MockGraph<directedness>>>) -> bool
 		{
 			VertexInGraph::validate(&g, &g.get_vertex())
 		}
 
 		/// Tests that vertices not in the graph are rejected.
 		#[quickcheck]
-		fn reject_not_in_graph(g: ArbVertexOutside<MockGraph<MockDirectedness>>) -> bool
+		fn reject_not_in_graph(Arb(g): Arb<VertexOutside<MockGraph<directedness>>>) -> bool
 		{
 			!VertexInGraph::validate(&g.0, &g.1)
 		}
@@ -84,7 +88,7 @@ mod __
 		/// VertexInGraph
 		#[quickcheck]
 		fn vertex_in_accept_remove_vertex(
-			g: ArbTwoVerticesIn<MockGraph<MockDirectedness>, Unique>,
+			Arb(g): Arb<TwoVerticesIn<MockGraph<MockDirectedness>, Unique>>,
 		) -> bool
 		{
 			let (v1, v2) = g.get_both();
@@ -96,7 +100,7 @@ mod __
 		/// Tests cannot remove a vertex if its the one guaranteed by
 		/// VertexInGraph
 		#[quickcheck]
-		fn reject_remove_vertex(g: ArbVertexIn<MockGraph<directedness>>)
+		fn reject_remove_vertex(Arb(g): Arb<VertexInGraph<MockGraph<directedness>>>)
 		{
 			let v = g.get_vertex();
 			let mut g = VertexInGraph::ensure_unvalidated(g, v);

@@ -1,6 +1,7 @@
 use crate::mock_graph::{MockVertex, TestGraph};
 use graphene::core::Ensure;
 use quickcheck::{Arbitrary, Gen};
+use rand::Rng;
 use std::{
 	collections::HashSet,
 	ops::{Bound, RangeBounds},
@@ -68,30 +69,17 @@ impl Limit
 
 /// A version of `quickcheck::Arbitrary` for Graphs that can be guided how to
 /// make the graph
-pub trait GuidedArbGraph: Arbitrary + Ensure
+pub trait GuidedArbGraph: Ensure + 'static + Send + Clone
 where
 	Self::Graph: TestGraph,
 {
-	/// Generates an arbitrary graph, where the number of vertices and edges is
-	/// within the given ranges.
-	///
-	/// If the minimum number of vertices is 0, a graph may be generated that
-	/// has no vertices and no edges, regardless of the range of edges.
-	///
-	/// The ranges are only guides, and adherence to them depends on
-	/// implementation.
 	fn arbitrary_guided<G: Gen>(
-		g: &mut G,
-		_v_range: impl RangeBounds<usize>,
-		_e_range: impl RangeBounds<usize>,
-	) -> Self;
-
-	fn validate_ranges<G: Gen>(
 		g: &mut G,
 		v_range: impl RangeBounds<usize>,
 		e_range: impl RangeBounds<usize>,
-	) -> (usize, usize, usize, usize)
+	) -> Self
 	{
+		// Validate ranges
 		let e_min = match e_range.start_bound()
 		{
 			Bound::Included(&x) => x,
@@ -135,8 +123,43 @@ where
 		};
 
 		assert!(e_min < e_max);
-		(v_min, v_max, e_min, e_max)
+
+		let (v_count, e_count) = Self::choose_size(g, v_min, v_max, e_min, e_max);
+		Self::arbitrary_fixed(g, v_count, e_count)
 	}
 
+	fn choose_size<G: Gen>(
+		g: &mut G,
+		v_min: usize,
+		v_max: usize,
+		e_min: usize,
+		e_max: usize,
+	) -> (usize, usize)
+	{
+		(g.gen_range(v_min, v_max), g.gen_range(e_min, e_max))
+	}
+
+	fn arbitrary_fixed<G: Gen>(g: &mut G, v_count: usize, e_count: usize) -> Self;
+
 	fn shrink_guided(&self, _limits: HashSet<Limit>) -> Box<dyn Iterator<Item = Self>>;
+}
+
+#[derive(Clone, Debug)]
+pub struct Arb<G: GuidedArbGraph>(pub G)
+where
+	G::Graph: TestGraph;
+
+impl<Gr: GuidedArbGraph> Arbitrary for Arb<Gr>
+where
+	Gr::Graph: TestGraph,
+{
+	fn arbitrary<G: Gen>(g: &mut G) -> Self
+	{
+		Arb(Gr::arbitrary_guided(g, .., ..))
+	}
+
+	fn shrink(&self) -> Box<dyn Iterator<Item = Self>>
+	{
+		Box::new(self.0.shrink_guided(HashSet::new()).map(|g| Arb(g)))
+	}
 }

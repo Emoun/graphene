@@ -1,13 +1,13 @@
 //! Tests `Dfs`
 
-use crate::mock_graph::{
-	arbitrary::{ArbConnectedGraph, ArbVertexIn},
-	MockVertex,
-};
+use crate::mock_graph::{arbitrary::Arb, MockGraph, MockVertex};
 use duplicate::duplicate;
 use graphene::{
 	algo::Dfs,
-	core::{property::HasVertex, Directed, Undirected},
+	core::{
+		property::{ConnectedGraph, HasVertex, VertexInGraph},
+		Directed, Undirected,
+	},
 };
 use std::cell::Cell;
 
@@ -21,7 +21,9 @@ mod __
 	/// Tests that the 'on_exit' closure is called in stack order compared to
 	/// the produced vertices.
 	#[quickcheck]
-	fn on_exit_stack_call_order(mock: ArbVertexIn<ArbConnectedGraph<directedness>>) -> bool
+	fn on_exit_stack_call_order(
+		Arb(mock): Arb<VertexInGraph<ConnectedGraph<MockGraph<directedness>>>>,
+	) -> bool
 	{
 		// Ensure the starting vertex is on the stack, so that it is the last
 		// to run 'on_exit'

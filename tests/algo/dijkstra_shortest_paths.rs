@@ -1,17 +1,15 @@
+use crate::mock_graph::arbitrary::{Arb, VerticesIn};
 /// tests `DijkstraShortestPath`
-use crate::mock_graph::{
-	arbitrary::{ArbConnectedGraph, ArbVertexIn, ArbVerticesIn},
-	MockEdgeWeight, MockGraph,
-};
+use crate::mock_graph::{MockEdgeWeight, MockGraph};
 use duplicate::duplicate;
 use graphene::{
 	algo::DijkstraShortestPaths,
 	core::{
-		property::{AddEdge, HasVertex, VertexInGraph},
+		property::{AddEdge, ConnectedGraph, HasVertex, VertexInGraph},
 		Directed, Ensure, Graph, GraphDeref, Release, Undirected,
 	},
 };
-use std::collections::HashSet;
+use std::collections::{HashMap, HashSet};
 
 #[duplicate(
 	directedness; [ Directed ]; [ Undirected ]
@@ -19,12 +17,13 @@ use std::collections::HashSet;
 mod __
 {
 	use super::*;
-	use std::collections::HashMap;
 
 	/// Tests that all vertices in a connected component are produced
 	/// exactly once.
 	#[quickcheck]
-	fn visits_component_once(mock: ArbVertexIn<ArbConnectedGraph<directedness>>) -> bool
+	fn visits_component_once(
+		Arb(mock): Arb<VertexInGraph<ConnectedGraph<MockGraph<directedness>>>>,
+	) -> bool
 	{
 		// Use a set to ensure we only count each vertex once
 		let mut visited = HashSet::new();
@@ -41,8 +40,8 @@ mod __
 	/// Tests that no vertices outside a connected component are produced
 	#[quickcheck]
 	fn visits_none_outside_component(
-		g1: ArbVertexIn<ArbConnectedGraph<directedness>>,
-		g2: MockGraph<directedness>,
+		Arb(g1): Arb<VertexInGraph<ConnectedGraph<MockGraph<directedness>>>>,
+		Arb(g2): Arb<MockGraph<directedness>>,
 	) -> bool
 	{
 		// Our starting connected component
@@ -58,7 +57,7 @@ mod __
 
 	/// Tests that the paths returned are always increasing.
 	#[quickcheck]
-	fn increasing_path_lengths(g: ArbVertexIn<MockGraph<directedness>>) -> bool
+	fn increasing_path_lengths(Arb(g): Arb<VertexInGraph<MockGraph<directedness>>>) -> bool
 	{
 		let mut path_weights = HashMap::new();
 		path_weights.insert(g.get_vertex().clone(), 0);
@@ -80,7 +79,7 @@ mod __
 
 	/// Next path must be sourced in a previously produced vertex
 	#[quickcheck]
-	fn path_source_already_seen(g: ArbVertexIn<MockGraph<directedness>>) -> bool
+	fn path_source_already_seen(Arb(g): Arb<VertexInGraph<MockGraph<directedness>>>) -> bool
 	{
 		let mut seen = HashSet::new();
 		seen.insert(g.get_vertex().clone());
@@ -107,8 +106,10 @@ mod __
 /// taken the wrong directed.
 #[quickcheck]
 fn directed_doesnt_visit_incoming_component(
-	ArbVerticesIn(comp, verts): ArbVerticesIn<ArbVertexIn<ArbConnectedGraph<Directed>>>,
-	ArbVerticesIn(g2, g2_verts): ArbVerticesIn<MockGraph<Directed>>,
+	Arb(VerticesIn(comp, verts)): Arb<
+		VerticesIn<VertexInGraph<ConnectedGraph<MockGraph<Directed>>>>,
+	>,
+	Arb(VerticesIn(g2, g2_verts)): Arb<VerticesIn<MockGraph<Directed>>>,
 	weight: MockEdgeWeight,
 ) -> bool
 {
@@ -134,8 +135,12 @@ fn directed_doesnt_visit_incoming_component(
 /// start component is also visited in full.
 #[quickcheck]
 fn directed_visits_outgoing_component(
-	ArbVerticesIn(comp1, verts1): ArbVerticesIn<ArbVertexIn<ArbConnectedGraph<Directed>>>,
-	ArbVerticesIn(comp2, verts2): ArbVerticesIn<ArbVertexIn<ArbConnectedGraph<Directed>>>,
+	Arb(VerticesIn(comp1, verts1)): Arb<
+		VerticesIn<VertexInGraph<ConnectedGraph<MockGraph<Directed>>>>,
+	>,
+	Arb(VerticesIn(comp2, verts2)): Arb<
+		VerticesIn<VertexInGraph<ConnectedGraph<MockGraph<Directed>>>>,
+	>,
 	weight: MockEdgeWeight,
 ) -> bool
 {

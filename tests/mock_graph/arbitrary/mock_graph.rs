@@ -8,7 +8,7 @@ use graphene::core::{
 };
 use quickcheck::{Arbitrary, Gen};
 use rand::Rng;
-use std::{collections::HashSet, ops::RangeBounds};
+use std::collections::HashSet;
 
 impl Arbitrary for MockVertex
 {
@@ -42,23 +42,15 @@ impl Arbitrary for MockT
 
 impl<D: Directedness> GuidedArbGraph for MockGraph<D>
 {
-	fn arbitrary_guided<G: Gen>(
-		g: &mut G,
-		v_range: impl RangeBounds<usize>,
-		e_range: impl RangeBounds<usize>,
-	) -> Self
+	fn arbitrary_fixed<G: Gen>(g: &mut G, v_count: usize, e_count: usize) -> Self
 	{
-		let (v_min, v_max, e_min, e_max) = Self::validate_ranges(g, v_range, e_range);
 		let mut graph = Self::empty();
 
-		// Decide the amount of vertices
-		let vertex_count = g.gen_range(v_min, v_max);
-
 		// If the amount of vertices is 0, no edges can be created.
-		if vertex_count > 0
+		if v_count > 0
 		{
 			// Create vertices
-			for _ in 0..vertex_count
+			for _ in 0..v_count
 			{
 				graph
 					.new_vertex_weighted(MockVertexWeight::arbitrary(g))
@@ -66,16 +58,12 @@ impl<D: Directedness> GuidedArbGraph for MockGraph<D>
 			}
 			let vertices = graph.all_vertices().collect::<Vec<_>>();
 
-			// Decide the amount of edges
-			let edge_count = g.gen_range(e_min, e_max);
-
 			// Create edges
-			// For each edge
-			for _ in 0..edge_count
+			for _ in 0..e_count
 			{
 				// Create a valid edge
-				let t_source = vertices[g.gen_range(0, vertex_count)];
-				let t_sink = vertices[g.gen_range(0, vertex_count)];
+				let t_source = vertices[g.gen_range(0, v_count)];
+				let t_sink = vertices[g.gen_range(0, v_count)];
 				let t_weight = MockEdgeWeight::arbitrary(g);
 				graph
 					.add_edge_weighted(&t_source, &t_sink, t_weight)
@@ -127,7 +115,7 @@ impl<D: Directedness> GuidedArbGraph for MockGraph<D>
 		{
 			for e in self.all_edges().filter(|&(so, si, _)| {
 				!limits.contains(&Limit::EdgeKeep(so, si))
-					|| (!D::directed() && !limits.contains(&Limit::EdgeKeep(si, so)))
+					&& (D::directed() || !limits.contains(&Limit::EdgeKeep(si, so)))
 			})
 			{
 				// Add to the result a copy of the graph
@@ -159,19 +147,6 @@ impl<D: Directedness> GuidedArbGraph for MockGraph<D>
 		}
 
 		Box::new(result.into_iter())
-	}
-}
-
-impl<D: Directedness> Arbitrary for MockGraph<D>
-{
-	fn arbitrary<G: Gen>(g: &mut G) -> Self
-	{
-		Self::arbitrary_guided(g, .., ..)
-	}
-
-	fn shrink(&self) -> Box<dyn Iterator<Item = Self>>
-	{
-		self.shrink_guided(HashSet::new())
 	}
 }
 

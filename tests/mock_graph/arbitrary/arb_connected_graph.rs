@@ -1,20 +1,17 @@
 use crate::mock_graph::{
 	arbitrary::{GuidedArbGraph, Limit},
-	MockEdgeWeight, MockGraph, MockVertex,
+	MockEdgeWeight, MockGraph, MockVertex, MockVertexWeight,
 };
 use graphene::{
 	core::{
-		property::{AddEdge, ConnectedGraph, WeakGraph},
-		Directed, Directedness, Graph, ReleaseUnloaded,
+		property::{AddEdge, ConnectedGraph, NewVertex, WeakGraph},
+		Directed, Directedness, EnsureUnloaded, Graph, ReleaseUnloaded, Undirected,
 	},
 	impl_ensurer,
 };
 use quickcheck::{Arbitrary, Gen};
 use rand::Rng;
-use std::{
-	collections::{hash_map::RandomState, HashSet},
-	ops::RangeBounds,
-};
+use std::collections::{HashMap, HashSet};
 
 /// This is very inefficient (but never-the-less correct)
 fn is_connected<D: Directedness>(graph: &MockGraph<D>) -> bool
@@ -76,88 +73,64 @@ fn is_weak(graph: &MockGraph<Directed>) -> bool
 	visited.len() == v_count
 }
 
-/// An arbitrary graph that is connected
-#[derive(Clone, Debug)]
-pub struct ArbConnectedGraph<D: Directedness>(pub ConnectedGraph<MockGraph<D>>);
-
-impl<D: Directedness> GuidedArbGraph for ArbConnectedGraph<D>
+impl GuidedArbGraph for ConnectedGraph<MockGraph<Directed>>
 {
-	fn arbitrary_guided<G: Gen>(
+	fn choose_size<G: Gen>(
 		g: &mut G,
-		v_range: impl RangeBounds<usize>,
-		e_range: impl RangeBounds<usize>,
-	) -> Self
+		v_min: usize,
+		v_max: usize,
+		e_min: usize,
+		e_max: usize,
+	) -> (usize, usize)
 	{
-		let (v_min, v_max, e_min, e_max) = Self::validate_ranges(g, v_range, e_range);
-		// If we are asked to make the singleton or empty graph, we just do
-		if v_max <= 2
+		assert!(e_max >= v_max);
+
+		let v_count = g.gen_range(v_min, v_max);
+
+		(v_count, g.gen_range(std::cmp::max(v_count, e_min), e_max))
+	}
+
+	fn arbitrary_fixed<G: Gen>(g: &mut G, v_count: usize, e_count: usize) -> Self
+	{
+		let mut graph = MockGraph::arbitrary_fixed(g, v_count, 0);
+
+		let verts: Vec<_> = graph.all_vertices().collect();
+		let mut v_iter = verts.iter();
+
+		// First, make a cycle if there are more than 1 vertex.
+		// For 1 or 0, they are trivially connected
+		if verts.len() > 1
 		{
-			return Self(ConnectedGraph::new(MockGraph::arbitrary_guided(
-				g,
-				v_min..v_max,
-				e_min..e_max,
-			)));
+			let mut v1 = v_iter.next().unwrap();
+			for v2 in v_iter.chain(Some(v1))
+			{
+				graph
+					.add_edge_weighted(v1, v2, MockEdgeWeight::arbitrary(g))
+					.unwrap();
+				v1 = v2;
+			}
 		}
 
-		// If the exact size of the graph hasn't been decided yet, do so.
-		if (v_min + 1) != v_max
+		// Add random edges as needed
+		if verts.len() >= 1
 		{
-			let v_count = g.gen_range(v_min, v_max);
-			return Self::arbitrary_guided(g, v_count..v_count + 1, e_min..e_max);
+			for _ in v_count..e_count
+			{
+				let v1 = verts[g.gen_range(0, verts.len())];
+				let v2 = verts[g.gen_range(0, verts.len())];
+				graph
+					.add_edge_weighted(v1, v2, MockEdgeWeight::arbitrary(g))
+					.unwrap();
+			}
 		}
 
-		let (v_count_1, v_count_2) = ((v_min / 2) + (v_min % 2), v_min / 2);
-		let e_min_2 = e_min / 2;
-		let e_min_1 = e_min_2 + (e_min % 2);
-		let e_max_2 = e_max / 2;
-		let e_max_1 = e_max_2 + (e_max % 2);
-
-		// We create two smaller connected graphs
-		let mut graph = Self::arbitrary_guided(g, v_count_1..v_count_1 + 1, e_min_1..e_max_1)
-			.0
-			.release();
-		let g2 = Self::arbitrary_guided(g, v_count_2..v_count_2 + 1, e_min_2..e_max_2).0;
-
-		// We find random vertices in each graph for later use
-		let v11 = graph
-			.all_vertices()
-			.nth(g.gen_range(0, graph.all_vertices().count()))
-			.unwrap();
-		let v12 = graph
-			.all_vertices()
-			.nth(g.gen_range(0, graph.all_vertices().count()))
-			.unwrap();
-		let v21 = g2
-			.all_vertices()
-			.nth(g.gen_range(0, g2.all_vertices().count()))
-			.unwrap();
-		let v22 = g2
-			.all_vertices()
-			.nth(g.gen_range(0, g2.all_vertices().count()))
-			.unwrap();
-
-		// Join the second into the first making an unconnected graph with the 2
-		// components
-		let v_map = graph.join(&g2);
-
-		// Add edges connecting the two components
-		graph
-			.add_edge_weighted(&v11, &v_map[&v21], MockEdgeWeight::arbitrary(g))
-			.unwrap();
-		if D::directed()
-		{
-			graph
-				.add_edge_weighted(&v_map[&v22], &v12, MockEdgeWeight::arbitrary(g))
-				.unwrap();
-		}
-
-		Self(ConnectedGraph::new(graph))
+		Self::ensure_unvalidated(graph)
 	}
 
 	fn shrink_guided(&self, limits: HashSet<Limit>) -> Box<dyn Iterator<Item = Self>>
 	{
 		let mut result = Vec::new();
-		let graph = self.0.clone().release();
+		let graph = self.clone().release();
 
 		// Shrink by removing any edge that isn't critical for connectedness
 		graph.shrink_by_removing_edge(&limits, &mut result, is_connected);
@@ -166,174 +139,136 @@ impl<D: Directedness> GuidedArbGraph for ArbConnectedGraph<D>
 
 		graph.shrink_values(&limits, &mut result);
 
-		Box::new(result.into_iter().map(|g| Self(ConnectedGraph::new(g))))
+		Box::new(result.into_iter().map(|g| Self::ensure_unvalidated(g)))
 	}
 }
 
-impl<D: Directedness> Arbitrary for ArbConnectedGraph<D>
+impl GuidedArbGraph for ConnectedGraph<MockGraph<Undirected>>
 {
-	fn arbitrary<G: Gen>(g: &mut G) -> Self
-	{
-		let graph = Self::arbitrary_guided(g, .., ..).0.release();
-		// 		assert!(is_connected(&graph));
-		Self(ConnectedGraph::new(graph))
-	}
-
-	fn shrink(&self) -> Box<dyn Iterator<Item = Self>>
-	{
-		self.shrink_guided(HashSet::new())
-	}
-}
-
-impl_ensurer! {
-	use<D> ArbConnectedGraph<D>:
-	// Can never impl the following because MockGraph doesn't
-	Reflexive
-	as (self.0): ConnectedGraph<MockGraph<D>>
-	where D: Directedness
-}
-
-/// An arbitrary graph that is unconnected
-#[derive(Clone, Debug)]
-pub struct ArbUnconnectedGraph<D: Directedness>(pub MockGraph<D>);
-
-impl<D: Directedness> Arbitrary for ArbUnconnectedGraph<D>
-{
-	fn arbitrary<G: Gen>(g: &mut G) -> Self
-	{
-		let graph = Self::arbitrary_guided(g, .., ..).0;
-		// 		assert!(is_connected(&graph));
-		Self(graph)
-	}
-
-	fn shrink(&self) -> Box<dyn Iterator<Item = Self>>
-	{
-		self.shrink_guided(HashSet::new())
-	}
-}
-
-impl<D: Directedness> GuidedArbGraph for ArbUnconnectedGraph<D>
-{
-	fn arbitrary_guided<G: Gen>(
+	fn choose_size<G: Gen>(
 		g: &mut G,
-		_v_range: impl RangeBounds<usize>,
-		_e_range: impl RangeBounds<usize>,
-	) -> Self
+		v_min: usize,
+		v_max: usize,
+		e_min: usize,
+		e_max: usize,
+	) -> (usize, usize)
 	{
-		// We merge 2 graphs into 1. This will ensure they are not connected.
-		// They must each have at least 1 vertex, otherwise the result
-		// might be trivially connected (<2 vertices)
-		let mut graph = MockGraph::arbitrary_guided(g, 1..(g.size() / 2), ..);
-		let g2 = <MockGraph<D>>::arbitrary_guided(g, 1..(g.size() / 2), ..);
-
-		// Join the two graph into one graph with no edges between the two parts
-		graph.join(&g2);
-
-		assert!(!is_connected(&graph));
-		Self(graph)
+		WeakGraph::choose_size(g, v_min, v_max, e_min, e_max)
 	}
 
-	fn shrink_guided(&self, _limits: HashSet<Limit, RandomState>)
-		-> Box<dyn Iterator<Item = Self>>
+	fn arbitrary_fixed<G: Gen>(g: &mut G, v_count: usize, e_count: usize) -> Self
 	{
-		let mut result = Vec::new();
+		// We simply copy a WeakGraph
+		let weak_graph = WeakGraph::arbitrary_fixed(g, v_count, e_count);
 
-		// We shrink the MockGraph, keeping only the shrunk graphs that are still
-		// unconnected
-		result.extend(
-			self.0
-				.shrink()
-				.filter(|g| !is_connected(&g))
-				.map(|g| Self(g)),
-		);
+		let mut graph = MockGraph::<Undirected>::empty();
+		let mut map = HashMap::new();
 
-		Box::new(result.into_iter())
-	}
-}
-
-impl_ensurer! {
-	use<D> ArbUnconnectedGraph<D>
-	as (self.0): MockGraph<D>
-	where D: Directedness
-}
-
-/// An arbitrary graph that is weakly connected
-#[derive(Clone, Debug)]
-pub struct ArbWeakGraph(pub WeakGraph<MockGraph<Directed>>);
-
-impl GuidedArbGraph for ArbWeakGraph
-{
-	fn arbitrary_guided<G: Gen>(
-		g: &mut G,
-		v_range: impl RangeBounds<usize>,
-		e_range: impl RangeBounds<usize>,
-	) -> Self
-	{
-		let (v_min, v_max, e_min, e_max) = Self::validate_ranges(g, v_range, e_range);
-		// If we are asked to make the singleton or empty graph, we just do
-		if v_max <= 2
+		for (v, w) in weak_graph.all_vertices_weighted()
 		{
-			return Self(WeakGraph::new(MockGraph::arbitrary_guided(
-				g,
-				v_min..v_max,
-				e_min..e_max,
-			)));
+			let new_v = graph.new_vertex_weighted(w.clone()).unwrap();
+			map.insert(v, new_v);
 		}
 
-		// If the exact size of the graph hasn't been decided yet, do so.
-		if (v_min + 1) != v_max
-		{
-			let v_count = g.gen_range(v_min, v_max);
-			return Self::arbitrary_guided(g, v_count..v_count + 1, e_min..e_max);
-		}
-
-		let (v_count_1, v_count_2) = ((v_min / 2) + (v_min % 2), v_min / 2);
-		let e_min_2 = e_min / 2;
-		let e_min_1 = e_min_2 + (e_min % 2);
-		let e_max_2 = e_max / 2;
-		let e_max_1 = e_max_2 + (e_max % 2);
-
-		// We create two smaller weak graphs
-		let mut graph = Self::arbitrary_guided(g, v_count_1..v_count_1 + 1, e_min_1..e_max_1)
-			.0
-			.release();
-		let g2 = Self::arbitrary_guided(g, v_count_2..v_count_2 + 1, e_min_2..e_max_2).0;
-
-		// We find random vertices in each graph for later use
-		let v1 = graph
-			.all_vertices()
-			.nth(g.gen_range(0, graph.all_vertices().count()))
-			.unwrap();
-		let v2 = g2
-			.all_vertices()
-			.nth(g.gen_range(0, g2.all_vertices().count()))
-			.unwrap();
-
-		// Join the second into the first making an unconnected graph with the 2
-		// components
-		let v_map = graph.join(&g2);
-
-		// Add edges connecting the two components
-		if g.gen_bool(0.5)
+		for (v1, v2, w) in weak_graph.all_edges()
 		{
 			graph
-				.add_edge_weighted(&v1, &v_map[&v2], MockEdgeWeight::arbitrary(g))
-				.unwrap();
-		}
-		else
-		{
-			graph
-				.add_edge_weighted(&v_map[&v2], &v1, MockEdgeWeight::arbitrary(g))
-				.unwrap();
+				.add_edge_weighted(map[&v1], map[&v2], w.clone())
+				.unwrap()
 		}
 
-		Self(WeakGraph::new(graph))
+		Self::ensure_unvalidated(graph)
 	}
 
 	fn shrink_guided(&self, limits: HashSet<Limit>) -> Box<dyn Iterator<Item = Self>>
 	{
 		let mut result = Vec::new();
-		let graph = self.0.clone().release();
+		let graph = self.clone().release();
+
+		// Shrink by removing any edge that isn't critical for connectedness
+		graph.shrink_by_removing_edge(&limits, &mut result, is_connected);
+
+		graph.shrink_by_replacing_vertex_with_edges(&limits, &mut result);
+
+		graph.shrink_values(&limits, &mut result);
+
+		Box::new(result.into_iter().map(|g| Self::ensure_unvalidated(g)))
+	}
+}
+
+impl GuidedArbGraph for WeakGraph<MockGraph<Directed>>
+{
+	fn choose_size<G: Gen>(
+		g: &mut G,
+		v_min: usize,
+		v_max: usize,
+		e_min: usize,
+		e_max: usize,
+	) -> (usize, usize)
+	{
+		assert!(e_max > (v_max - 1));
+
+		let v_count = g.gen_range(v_min, v_max);
+
+		(
+			v_count,
+			g.gen_range(std::cmp::max(v_count.saturating_sub(1), e_min), e_max),
+		)
+	}
+
+	fn arbitrary_fixed<G: Gen>(g: &mut G, v_count: usize, e_count: usize) -> Self
+	{
+		assert!(e_count >= (v_count.saturating_sub(1)));
+
+		Self::ensure_unvalidated(
+			if v_count < 2
+			{
+				MockGraph::arbitrary_fixed(g, v_count, 0)
+			}
+			else
+			{
+				// We make a graph with 1 less vertex and all weakly connected
+				let mut graph = Self::arbitrary_fixed(g, v_count - 1, v_count - 2).release();
+
+				// We add the last vertex, and connect it randomly
+				let mut existing_verts: Vec<_> = graph.all_vertices().collect();
+				let v = graph
+					.new_vertex_weighted(MockVertexWeight::arbitrary(g))
+					.unwrap();
+				let v2 = existing_verts[g.gen_range(0, existing_verts.len())];
+				let weight = MockEdgeWeight::arbitrary(g);
+
+				if g.gen_bool(0.5)
+				{
+					graph.add_edge_weighted(v, v2, weight).unwrap();
+				}
+				else
+				{
+					graph.add_edge_weighted(v2, v, weight).unwrap();
+				}
+
+				// Add new vertex to list
+				existing_verts.push(v);
+
+				// Add edges as needed
+				for _ in (v_count - 1)..e_count
+				{
+					let v1 = existing_verts[g.gen_range(0, existing_verts.len())];
+					let v2 = existing_verts[g.gen_range(0, existing_verts.len())];
+					graph
+						.add_edge_weighted(v1, v2, MockEdgeWeight::arbitrary(g))
+						.unwrap();
+				}
+
+				graph
+			},
+		)
+	}
+
+	fn shrink_guided(&self, limits: HashSet<Limit>) -> Box<dyn Iterator<Item = Self>>
+	{
+		let mut result = Vec::new();
+		let graph = self.clone().release();
 
 		// Shrink by removing any edge that isn't critical for connectedness
 		graph.shrink_by_removing_edge(&limits, &mut result, is_weak);
@@ -342,30 +277,77 @@ impl GuidedArbGraph for ArbWeakGraph
 
 		graph.shrink_values(&limits, &mut result);
 
-		Box::new(result.into_iter().map(|g| Self(WeakGraph::new(g))))
+		Box::new(result.into_iter().map(|g| Self::ensure_unvalidated(g)))
 	}
 }
 
-impl Arbitrary for ArbWeakGraph
-{
-	fn arbitrary<G: Gen>(g: &mut G) -> Self
-	{
-		let graph = Self::arbitrary_guided(g, .., ..).0.release();
-		assert!(is_weak(&graph));
-		Self(WeakGraph::new(graph))
-	}
-
-	fn shrink(&self) -> Box<dyn Iterator<Item = Self>>
-	{
-		self.shrink_guided(HashSet::new())
-	}
-}
+/// An arbitrary graph that is unconnected
+#[derive(Clone, Debug)]
+pub struct UnconnectedGraph<D: Directedness>(pub MockGraph<D>);
 
 impl_ensurer! {
-	ArbWeakGraph:
-	// A new vertex wouldn't be connected to the rest of the graph
-	NewVertex,
-	// Can never impl the following
-	Unique, NoLoops, Reflexive, Unilateral, Connected, Subgraph, HasVertex
-	as (self.0) : WeakGraph<MockGraph<Directed>>
+	use<D> UnconnectedGraph<D>
+	as (self.0): MockGraph<D>
+	where D: Directedness
+}
+
+impl<D: Directedness> GuidedArbGraph for UnconnectedGraph<D>
+{
+	fn choose_size<G: Gen>(
+		g: &mut G,
+		v_min: usize,
+		v_max: usize,
+		e_min: usize,
+		e_max: usize,
+	) -> (usize, usize)
+	{
+		// Ensure we have at least 2 vertices, otherwise, its trivially connected
+		assert!(v_max > 2);
+
+		MockGraph::<D>::choose_size(g, std::cmp::max(2, v_min), v_max, e_min, e_max)
+	}
+
+	fn arbitrary_fixed<G: Gen>(g: &mut G, v_count: usize, e_count: usize) -> Self
+	{
+		assert!(v_count > 1);
+
+		// We merge 2 graphs into 1. This will ensure they are not connected.
+		let v_count_1 = g.gen_range(1, v_count);
+		let v_count_2 = v_count - v_count_1;
+
+		let e_count_1 = if e_count > 0
+		{
+			g.gen_range(0, e_count)
+		}
+		else
+		{
+			0
+		};
+		let e_count_2 = e_count - e_count_1;
+
+		let mut graph = MockGraph::arbitrary_fixed(g, v_count_1, e_count_1);
+		let g2 = MockGraph::arbitrary_fixed(g, v_count_2, e_count_2);
+
+		// Join the two graph into one graph with no edges between the two parts
+		graph.join(&g2);
+
+		assert!(!is_connected(&graph));
+		Self(graph)
+	}
+
+	fn shrink_guided(&self, limits: HashSet<Limit>) -> Box<dyn Iterator<Item = Self>>
+	{
+		let mut result = Vec::new();
+
+		// We shrink the MockGraph, keeping only the shrunk graphs that are still
+		// unconnected
+		result.extend(
+			self.0
+				.shrink_guided(limits)
+				.filter(|g| !is_connected(&g))
+				.map(|g| Self(g)),
+		);
+
+		Box::new(result.into_iter())
+	}
 }
