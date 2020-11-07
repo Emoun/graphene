@@ -8,6 +8,5 @@ mod graph;
 #[macro_use]
 pub mod property;
 pub mod proxy;
-pub mod trait_aliases;
 
 pub use self::{deref_graph::*, directedness::*, edge::*, ensure::*, graph::*};

@@ -1,5 +1,3 @@
-use crate::core::trait_aliases::Id;
-
 /// An edge in a [graph](trait.Graph.html) with vertices of type `V`.
 ///
 /// An edge is simply a pair of vertices in a graph.
@@ -12,7 +10,7 @@ use crate::core::trait_aliases::Id;
 /// simply use a pair. The triple can be used if the edge is weighted
 pub trait Edge<V>
 where
-	V: Id,
+	V: Copy + Eq,
 {
 	/// The source vertex of the edge.
 	fn source(&self) -> V;
@@ -43,7 +41,7 @@ where
 
 impl<V> Edge<V> for (V, V)
 where
-	V: Id,
+	V: Copy + Eq,
 {
 	fn source(&self) -> V
 	{
@@ -57,7 +55,7 @@ where
 }
 impl<V, W> Edge<V> for (V, V, W)
 where
-	V: Id,
+	V: Copy + Eq,
 {
 	fn source(&self) -> V
 	{

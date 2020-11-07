@@ -1,4 +1,4 @@
-use crate::core::{trait_aliases::Id, Directedness};
+use crate::core::Directedness;
 use std::{borrow::Borrow, iter::Iterator};
 
 /// The basic graph trait, providing vertex and edge inspection.
@@ -55,7 +55,7 @@ pub trait Graph
 	/// (therefore must implement [`Copy`](https://doc.rust-lang.org/std/marker/trait.Copy.html)).
 	/// Whether two vertices are equal is also a very common operation and
 	/// should therefore also be light-weight.
-	type Vertex: Id;
+	type Vertex: Copy + Eq;
 
 	/// The weight associated with each vertex.
 	///

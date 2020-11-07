@@ -1,12 +1,11 @@
 use crate::core::{
 	property::{NewVertex, RemoveVertex},
-	trait_aliases::Id,
 	Ensure, Graph,
 };
 use std::borrow::Borrow;
 
 #[derive(Copy, Clone, PartialEq, Eq)]
-pub enum ProxyVertex<V: Id>
+pub enum ProxyVertex<V: Copy + Eq>
 {
 	Underlying(V),
 	New(usize),
