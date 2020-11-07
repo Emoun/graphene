@@ -1,6 +1,6 @@
 //! Tests the `core::Unique` trait and its ensurer `core::UniqueGraph`.
 use crate::mock_graph::{
-	arbitrary::{Arb, EdgeInGraph, NonUniqueGraph},
+	arbitrary::{Arb, EdgeIn, NonUniqueGraph},
 	MockEdgeWeight, MockGraph, MockVertexWeight,
 };
 use duplicate::duplicate;
@@ -49,12 +49,12 @@ mod __
 	/// Tests that a UniqueGraph rejects adding a duplicate edge
 	#[quickcheck]
 	fn reject_add_edge(
-		Arb(g): Arb<EdgeInGraph<UniqueGraph<MockGraph<directedness>>>>,
+		Arb(g): Arb<EdgeIn<UniqueGraph<MockGraph<directedness>>>>,
 		weight: MockEdgeWeight,
 	) -> bool
 	{
 		let source = g.get_vertex();
-		let EdgeInGraph(mut g, sink, _) = g;
+		let EdgeIn(mut g, sink, _) = g;
 		g.add_edge_weighted(source, sink, weight).is_err()
 	}
 }

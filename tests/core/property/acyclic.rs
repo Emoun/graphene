@@ -1,7 +1,7 @@
 //! Test the `core::property::Acyclic` trait and its ensurer
 
 use crate::mock_graph::{
-	arbitrary::{Arb, EdgeInGraph, TwoReachableVerticesIn},
+	arbitrary::{Arb, EdgeIn, TwoReachableVerticesIn},
 	MockEdgeWeight, MockGraph,
 };
 use duplicate::duplicate;
@@ -36,7 +36,7 @@ mod __
 	/// Tests that a AcyclicGraph accepts adding an edge that doesn't
 	/// result in a cycle
 	#[quickcheck]
-	fn accept_add_edge(Arb(g): Arb<EdgeInGraph<AcyclicGraph<MockGraph<directedness>>>>) -> bool
+	fn accept_add_edge(Arb(g): Arb<EdgeIn<AcyclicGraph<MockGraph<directedness>>>>) -> bool
 	{
 		let source = g.get_vertex();
 		let sink = g.1;

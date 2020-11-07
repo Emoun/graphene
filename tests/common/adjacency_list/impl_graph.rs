@@ -3,7 +3,7 @@
 use crate::{
 	common::adjacency_list::adj_list_from_mock,
 	mock_graph::{
-		arbitrary::{Arb, EdgeInGraph, TwoVerticesIn},
+		arbitrary::{Arb, EdgeIn, TwoVerticesIn},
 		utilities::unordered_equivalent_lists_equal,
 		MockGraph,
 	},
@@ -141,11 +141,11 @@ mod __
 
 	/// Tests removing an edge
 	#[quickcheck]
-	fn remove_edge(Arb(mock): Arb<EdgeInGraph<MockGraph<directedness>>>) -> bool
+	fn remove_edge(Arb(mock): Arb<EdgeIn<MockGraph<directedness>>>) -> bool
 	{
 		let (mut g, v_map) = adj_list_from_mock(&mock);
 		let source = mock.get_vertex();
-		let EdgeInGraph(mock, sink, weight) = mock;
+		let EdgeIn(mock, sink, weight) = mock;
 
 		let mapped_source = v_map[&source];
 		let mapped_sink = v_map[&sink];

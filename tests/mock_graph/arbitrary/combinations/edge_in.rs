@@ -18,11 +18,11 @@ use std::collections::HashSet;
 /// The source of the edge can be accessed through `.get_vertex`, the sink `.1`,
 /// and the weight `.2`
 #[derive(Clone, Debug)]
-pub struct EdgeInGraph<G: GuidedArbGraph>(pub VertexInGraph<G>, pub MockVertex, pub MockEdgeWeight)
+pub struct EdgeIn<G: GuidedArbGraph>(pub VertexInGraph<G>, pub MockVertex, pub MockEdgeWeight)
 where
 	G::Graph: TestGraph;
 
-impl<G> graphene::core::Ensure for EdgeInGraph<G>
+impl<G> graphene::core::Ensure for EdgeIn<G>
 where
 	G: GuidedArbGraph,
 	G::Graph: TestGraph,
@@ -42,14 +42,14 @@ where
 }
 
 impl_ensurer! {
-	use<G> EdgeInGraph<G>: Ensure
+	use<G> EdgeIn<G>: Ensure
 	as ( self.0) : VertexInGraph<G>
 	where
 	G: GuidedArbGraph,
 	G::Graph:  TestGraph
 }
 
-impl<Gr> GuidedArbGraph for EdgeInGraph<Gr>
+impl<Gr> GuidedArbGraph for EdgeIn<Gr>
 where
 	Gr: GuidedArbGraph + GraphDerefMut,
 	Gr::Graph: TestGraph + GraphMut + AddEdge + RemoveEdge,
