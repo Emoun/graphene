@@ -23,7 +23,7 @@ pub trait HasVertex: Graph
 ///
 /// Gives no guarantees on which vertex is returned by any given call to
 /// `get_vertex` if the the graph has multiple vertices.
-#[derive(Clone, Debug)]
+#[derive(Clone)]
 pub struct HasVertexGraph<C: Ensure>(C);
 
 impl<C: Ensure> Ensure for HasVertexGraph<C>
@@ -77,6 +77,22 @@ impl_ensurer! {
 /// cannot be removed from the graph.
 #[derive(Clone)]
 pub struct VertexInGraph<C: Ensure>(C, <C::Graph as Graph>::Vertex);
+
+impl<C: Ensure> VertexInGraph<C>
+{
+	pub fn set_vertex(&mut self, v: impl Borrow<<C::Graph as Graph>::Vertex>) -> Result<(), ()>
+	{
+		if self.0.graph().contains_vertex(v.borrow())
+		{
+			self.1 = v.borrow().clone();
+			Ok(())
+		}
+		else
+		{
+			Err(())
+		}
+	}
+}
 
 impl<C: Ensure> Debug for VertexInGraph<C>
 where

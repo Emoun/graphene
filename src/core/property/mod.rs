@@ -7,6 +7,7 @@ mod directedness_ensurers;
 mod has_vertex;
 mod no_loops;
 mod reflexive;
+mod rooted;
 mod subgraph;
 mod unilateral;
 mod unique;
@@ -14,7 +15,8 @@ mod weak;
 
 pub use self::{
 	acyclic::*, base_props::*, connected::*, directedness_ensurers::*, has_vertex::*,
-	impl_ensurer::*, no_loops::*, reflexive::*, subgraph::*, unilateral::*, unique::*, weak::*,
+	impl_ensurer::*, no_loops::*, reflexive::*, rooted::*, subgraph::*, unilateral::*, unique::*,
+	weak::*,
 };
 use crate::core::{
 	proxy::{EdgeProxyGraph, ProxyVertex, VertexProxyGraph},

@@ -2,5 +2,5 @@
 
 mod acyclic;
 mod connectedness;
-mod has_vertex;
+mod has_vertex_rooted;
 mod unique;

@@ -45,6 +45,17 @@ where
 	Gr: GuidedArbGraph,
 	Gr::Graph: TestGraph,
 {
+	fn choose_size<G: Gen>(
+		g: &mut G,
+		v_min: usize,
+		v_max: usize,
+		e_min: usize,
+		e_max: usize,
+	) -> (usize, usize)
+	{
+		Gr::choose_size(g, v_min, v_max, e_min, e_max)
+	}
+
 	fn arbitrary_fixed<G: Gen>(g: &mut G, v_count: usize, e_count: usize) -> Self
 	{
 		let graph = Gr::arbitrary_fixed(g, v_count, e_count);
