@@ -1,0 +1,46 @@
+name: Rust
+
+on:
+  push: 
+    branches: '**'
+    tags:
+      - '[0-9]+.[0-9]+.[0-9]+'
+      - '[0-9]+.[0-9]+.[0-9]+-**'
+  pull_request:
+
+env:
+  CARGO_TERM_COLOR: always
+
+jobs:
+  test:
+    name: Test (${{matrix.rust-version}})
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        rust-version: [stable, beta, nightly]
+    env:
+      QUICKCHECK_GENERATOR_SIZE: 50 
+      QUICKCHECK_TESTS: 1000
+    steps:
+      - uses: actions/checkout@v2
+      - name: Run Tests
+        run: "cargo test --verbose"
+      - name: Build Documentation
+        run: cargo doc
+      
+  rustfmt:
+    name: Rustfmt
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        rust-version: [nightly-2020-11-25]
+    
+    steps:
+      - uses: actions/checkout@v2
+      - name: Install
+        run: |
+          rustup toolchain install ${{matrix.rust-version}}
+          rustup component add --toolchain ${{matrix.rust-version}} rustfmt
+      - name: Check
+        run: cargo +${{matrix.rust-version}} fmt -- --check
