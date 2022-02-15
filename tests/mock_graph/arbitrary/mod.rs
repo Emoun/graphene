@@ -7,6 +7,5 @@ mod unique_graph;
 mod vertex_in_graph;
 
 pub use self::{
-	acyclic_graph::*, combinations::*, connected_graph::*, guided_arb_graph::*, mock_graph::*,
-	unique_graph::*, vertex_in_graph::*,
+	acyclic_graph::*, combinations::*, connected_graph::*, guided_arb_graph::*, unique_graph::*,
 };

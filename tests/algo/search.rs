@@ -1,7 +1,7 @@
 use crate::mock_graph::arbitrary::Arb;
 /// Common tests for all 'searching' algorithms.
 use crate::mock_graph::{MockEdgeWeight, MockGraph};
-use duplicate::duplicate;
+use duplicate::duplicate_item;
 use graphene::{
 	algo::{Bfs, Dfs, Spfs},
 	core::{
@@ -19,7 +19,7 @@ fn spfs_new<G: HasVertex<EdgeWeight = MockEdgeWeight>>(g: &G) -> Spfs<G, u32>
 	Spfs::new(g, |v| v.value)
 }
 
-#[duplicate(
+#[duplicate_item(
 	module		search_algo_new;
 	[ dfs ]		[ Dfs::new_simple ];
 	[ bfs ]		[ Bfs::new ];
@@ -30,7 +30,7 @@ mod module
 	use super::*;
 	use crate::mock_graph::arbitrary::VerticesIn;
 
-	#[duplicate(
+	#[duplicate_item(
 		directedness; [ Directed ]; [ Undirected ]
 	)]
 	mod __

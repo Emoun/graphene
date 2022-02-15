@@ -23,9 +23,7 @@ use std::borrow::Borrow;
 /// For undirected graph, simply use `ConnectedGraph`.
 ///
 /// For type safety reasons, the trait itself does not restrict directedness.
-pub trait Unilateral: Weak
-{
-}
+pub trait Unilateral: Weak {}
 
 #[derive(Clone, Debug)]
 pub struct UnilateralGraph<C: Ensure>(C)

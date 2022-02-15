@@ -69,9 +69,9 @@ impl<C: Ensure> Graph for SubgraphProxy<C>
 	type Vertex = <C::Graph as Graph>::Vertex;
 	type VertexWeight = <C::Graph as Graph>::VertexWeight;
 
-	fn all_vertices_weighted<'a>(
-		&'a self,
-	) -> Box<dyn 'a + Iterator<Item = (Self::Vertex, &'a Self::VertexWeight)>>
+	fn all_vertices_weighted(
+		&self,
+	) -> Box<dyn '_ + Iterator<Item = (Self::Vertex, &Self::VertexWeight)>>
 	{
 		Box::new(
 			self.graph

@@ -6,9 +6,7 @@ use std::borrow::Borrow;
 /// In graph theory, a loop is an edge that connects a vertex to itself.
 /// This trait guarantees that there are no loops in the graph and that no loops
 /// can be added to it.
-pub trait NoLoops: Graph
-{
-}
+pub trait NoLoops: Graph {}
 
 pub struct NoLoopsGraph<C: Ensure>(C);
 

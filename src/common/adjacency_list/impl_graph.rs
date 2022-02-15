@@ -16,9 +16,9 @@ where
 	type Vertex = usize;
 	type VertexWeight = Vw;
 
-	fn all_vertices_weighted<'a>(
-		&'a self,
-	) -> Box<dyn 'a + Iterator<Item = (Self::Vertex, &'a Self::VertexWeight)>>
+	fn all_vertices_weighted(
+		&self,
+	) -> Box<dyn '_ + Iterator<Item = (Self::Vertex, &Self::VertexWeight)>>
 	{
 		Box::new(self.vertices.iter().enumerate().map(|(v, (w, _))| (v, w)))
 	}

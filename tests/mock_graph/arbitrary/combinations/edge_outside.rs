@@ -76,7 +76,8 @@ where
 				.map(|g| Self(g, self.1, self.2)),
 		);
 
-		// 	We then shrink the vertices, ensuring that at least one of them stays invalid
+		// 	We then shrink the vertices, ensuring that at least one of them stays
+		// invalid
 		result.extend(
 			self.1
 				.shrink()

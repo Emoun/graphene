@@ -75,9 +75,9 @@ pub trait Graph
 	type Directedness: Directedness;
 
 	/// Returns copies of all current vertex values in the graph.
-	fn all_vertices_weighted<'a>(
-		&'a self,
-	) -> Box<dyn 'a + Iterator<Item = (Self::Vertex, &'a Self::VertexWeight)>>;
+	fn all_vertices_weighted(
+		&self,
+	) -> Box<dyn '_ + Iterator<Item = (Self::Vertex, &Self::VertexWeight)>>;
 
 	/// Returns the weights of all edges that are sourced in v1 and sinked in
 	/// v2. I.e. all edges where e == (v1,v2,_).
@@ -216,11 +216,12 @@ pub trait Graph
 	{
 		self.edges_between(v1.borrow(), v2.borrow())
 			.next()
-			.is_some() || (Self::Directedness::directed()
-			&& self
-				.edges_between(v2.borrow(), v1.borrow())
-				.next()
-				.is_some())
+			.is_some()
+			|| (Self::Directedness::directed()
+				&& self
+					.edges_between(v2.borrow(), v1.borrow())
+					.next()
+					.is_some())
 	}
 }
 
@@ -232,9 +233,9 @@ pub trait Graph
 /// methods plus some additional utilities.
 pub trait GraphMut: Graph
 {
-	fn all_vertices_weighted_mut<'a>(
-		&'a mut self,
-	) -> Box<dyn 'a + Iterator<Item = (Self::Vertex, &'a mut Self::VertexWeight)>>;
+	fn all_vertices_weighted_mut(
+		&mut self,
+	) -> Box<dyn '_ + Iterator<Item = (Self::Vertex, &mut Self::VertexWeight)>>;
 
 	fn edges_between_mut<'a: 'b, 'b>(
 		&'a mut self,

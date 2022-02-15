@@ -4,7 +4,7 @@ use crate::mock_graph::{
 	utilities::*,
 	MockGraph,
 };
-use duplicate::duplicate;
+use duplicate::duplicate_item;
 use graphene::core::{
 	property::{HasVertex, VertexInGraph},
 	Directed, Edge, Graph, ReleaseUnloaded, Undirected,
@@ -12,22 +12,24 @@ use graphene::core::{
 
 use crate::mock_graph::arbitrary::{Arb, TwoVerticesIn};
 
-#[duplicate(
-	#[
-		module_nested				method_nested		closure_nested		directedness_nested;
-		[edges_sourced_in_directed]	[edges_sourced_in]	[e.source() == v]	[ Directed ];
-		[edges_sinked_in_directed]	[edges_sinked_in]	[e.sink() == v]		[ Directed ];
-		[edges_incident_directed]	[edges_incident_on]	[e.source() == v
-															|| e.sink() == v]	[ Directed ];
-		#[
-			module							method;
-			[edges_sourced_in_undirected]	[edges_sourced_in];
-			[edges_sinked_in_undirected]	[edges_sinked_in];
-			[edges_incident_undirected]		[edges_incident_on];
-		][
-			[module]	[method]	[e.source() == v || e.sink() == v]	[ Undirected ];
+#[duplicate_item(
+	duplicate!{
+		[
+			module_nested				method_nested		closure_nested		directedness_nested;
+			[edges_sourced_in_directed]	[edges_sourced_in]	[e.source() == v]	[ Directed ];
+			[edges_sinked_in_directed]	[edges_sinked_in]	[e.sink() == v]		[ Directed ];
+			[edges_incident_directed]	[edges_incident_on]	[e.source() == v
+																|| e.sink() == v]	[ Directed ];
+			duplicate!{
+				[
+					module							method;
+					[edges_sourced_in_undirected]	[edges_sourced_in];
+					[edges_sinked_in_undirected]	[edges_sinked_in];
+					[edges_incident_undirected]		[edges_incident_on];
+				]
+				[module]	[method]	[e.source() == v || e.sink() == v]	[ Undirected ];
+			}
 		]
-	][
 		[
 			module					[ module_nested ]
 			method 					[ method_nested ]
@@ -39,12 +41,13 @@ use crate::mock_graph::arbitrary::{Arb, TwoVerticesIn};
 			arb_invalid_graph 		[ VertexOutside ]
 			base_graph 				[ MockGraph<directedness_nested> ]
 		]
-	]
-	#[
-		module_nested				directedness 	closure_additional;
-		[edges_between_directed] 	[Directed]		[ false ];
-		[edges_between_undirected] 	[Undirected]	[ (e.source() == _v2 && e.sink() == v) ];
-	][
+	}
+	duplicate!{
+		[
+			module_nested				directedness 	closure_additional;
+			[edges_between_directed] 	[Directed]		[ false ];
+			[edges_between_undirected] 	[Undirected]	[ (e.source() == _v2 && e.sink() == v) ];
+		]
 		[
 			module					[module_nested]
 			method 					[edges_between]
@@ -64,7 +67,7 @@ use crate::mock_graph::arbitrary::{Arb, TwoVerticesIn};
 			arb_invalid_graph 		[ EdgeOutside ]
 			base_graph 				[ MockGraph<directedness> ]
 		]
-	]
+	}
 )]
 mod module
 {

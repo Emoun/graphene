@@ -15,9 +15,7 @@ use std::borrow::Borrow;
 ///
 /// A graph is connected if there is a path from any vertex to any other vertex.
 /// Graphs with one or zero vertices count as connected.
-pub trait Connected: Unilateral
-{
-}
+pub trait Connected: Unilateral {}
 
 #[derive(Clone, Debug)]
 pub struct ConnectedGraph<C: Ensure>(C);

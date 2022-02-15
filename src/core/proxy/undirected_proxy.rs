@@ -31,9 +31,9 @@ where
 
 	delegate! {
 		to self.0.graph() {
-			fn all_vertices_weighted<'a>(
-				&'a self,
-			) -> Box<dyn 'a + Iterator<Item = (Self::Vertex, &'a Self::VertexWeight)>>;
+			fn all_vertices_weighted(
+				&self,
+			) -> Box<dyn '_ + Iterator<Item = (Self::Vertex, &Self::VertexWeight)>>;
 		}
 	}
 

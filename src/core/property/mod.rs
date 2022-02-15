@@ -14,9 +14,8 @@ mod unique;
 mod weak;
 
 pub use self::{
-	acyclic::*, base_props::*, connected::*, directedness_ensurers::*, has_vertex::*,
-	impl_ensurer::*, no_loops::*, reflexive::*, rooted::*, subgraph::*, unilateral::*, unique::*,
-	weak::*,
+	acyclic::*, base_props::*, connected::*, directedness_ensurers::*, has_vertex::*, no_loops::*,
+	reflexive::*, rooted::*, subgraph::*, unilateral::*, unique::*, weak::*,
 };
 use crate::core::{
 	proxy::{EdgeProxyGraph, ProxyVertex, VertexProxyGraph},

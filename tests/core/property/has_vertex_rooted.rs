@@ -4,7 +4,7 @@ use crate::mock_graph::{
 	arbitrary::{Arb, TwoVerticesIn},
 	MockGraph, MockVertexWeight,
 };
-use duplicate::duplicate;
+use duplicate::duplicate_item;
 use graphene::core::{
 	property::{
 		HasVertex, HasVertexGraph, NewVertex, RemoveVertex, Rooted, RootedGraph, VertexInGraph,
@@ -12,7 +12,7 @@ use graphene::core::{
 	Directed, Undirected,
 };
 
-#[duplicate(
+#[duplicate_item(
 	directedness; [ Directed ]; [ Undirected ]
 )]
 mod __
@@ -65,7 +65,7 @@ mod __
 		}
 	}
 
-	#[duplicate(
+	#[duplicate_item(
 		GraphStruct 		get_method 		set_method;
 		[ VertexInGraph ] 	[ get_vertex ] 	[ set_vertex ];
 		[ RootedGraph ] 	[ root ] 		[ set_root ]

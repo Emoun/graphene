@@ -1,7 +1,7 @@
 //! Tests `Dfs`
 
 use crate::mock_graph::{arbitrary::Arb, MockGraph, MockVertex};
-use duplicate::duplicate;
+use duplicate::duplicate_item;
 use graphene::{
 	algo::Dfs,
 	core::{
@@ -11,7 +11,7 @@ use graphene::{
 };
 use std::cell::Cell;
 
-#[duplicate(
+#[duplicate_item(
 	directedness; [ Directed ]; [ Undirected ]
 )]
 mod __

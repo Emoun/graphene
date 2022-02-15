@@ -3,7 +3,7 @@ use crate::core::{
 	Directedness, Edge, Ensure, Graph, GraphDerefMut, GraphMut,
 };
 use delegate::delegate;
-use std::borrow::Borrow;
+use std::{borrow::Borrow, cell::UnsafeCell};
 
 /// A wrapper around a graph, that allows for addition and removal
 /// of edges, without mutating the underlying graph.
@@ -55,9 +55,9 @@ impl<C: Ensure> Graph for EdgeProxyGraph<C>
 
 	delegate! {
 		to self.graph.graph() {
-			fn all_vertices_weighted<'a>(
-				&'a self,
-			) -> Box<dyn 'a + Iterator<Item = (Self::Vertex, &'a Self::VertexWeight)>>;
+			fn all_vertices_weighted(
+				&self,
+			) -> Box<dyn '_ + Iterator<Item = (Self::Vertex, &Self::VertexWeight)>>;
 		}
 	}
 
@@ -94,9 +94,9 @@ where
 {
 	delegate! {
 		to self.graph.graph_mut() {
-			fn all_vertices_weighted_mut<'a>(
-				&'a mut self,
-			) -> Box<dyn 'a + Iterator<Item = (Self::Vertex, &'a mut Self::VertexWeight)>>;
+			fn all_vertices_weighted_mut(
+				&mut self,
+			) -> Box<dyn '_ + Iterator<Item = (Self::Vertex, &mut Self::VertexWeight)>>;
 		}
 	}
 
@@ -109,7 +109,7 @@ where
 		// Safe because &mut () can't mutate anything
 		Box::new(
 			self.edges_between(source, sink)
-				.map(|w| unsafe { &mut *((w as *const ()) as *mut ()) }),
+				.map(|_| unsafe { &mut *UnsafeCell::new(()).get() }),
 		)
 	}
 }

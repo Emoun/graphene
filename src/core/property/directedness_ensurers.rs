@@ -27,9 +27,9 @@ impl<C: Ensure> Graph for DirectedGraph<C>
 
 	delegate! {
 		to self.0.graph() {
-			fn all_vertices_weighted<'a>(
-				&'a self,
-			) -> Box<dyn 'a + Iterator<Item = (Self::Vertex, &'a Self::VertexWeight)>>;
+			fn all_vertices_weighted(
+				&self,
+			) -> Box<dyn '_ + Iterator<Item = (Self::Vertex, &Self::VertexWeight)>>;
 
 			fn edges_between<'a: 'b, 'b>(
 				&'a self,
@@ -70,9 +70,9 @@ impl<C: Ensure> Graph for UndirectedGraph<C>
 
 	delegate! {
 		to self.0.graph() {
-			fn all_vertices_weighted<'a>(
-				&'a self,
-			) -> Box<dyn 'a + Iterator<Item = (Self::Vertex, &'a Self::VertexWeight)>>;
+			fn all_vertices_weighted(
+				&self,
+			) -> Box<dyn '_ + Iterator<Item = (Self::Vertex, &Self::VertexWeight)>>;
 
 			fn edges_between<'a: 'b, 'b>(
 				&'a self,

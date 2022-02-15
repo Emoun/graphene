@@ -4,14 +4,14 @@ use crate::mock_graph::{
 	arbitrary::{Arb, EdgeIn, TwoReachableVerticesIn},
 	MockEdgeWeight, MockGraph,
 };
-use duplicate::duplicate;
+use duplicate::duplicate_item;
 use graphene::core::{
 	property::{Acyclic, AcyclicGraph, AddEdge, HasVertex, NoLoops, RemoveEdge},
 	Directed, EnsureUnloaded, Graph, ReleaseUnloaded, Undirected,
 };
 use static_assertions::assert_impl_all;
 
-#[duplicate(
+#[duplicate_item(
 	directedness; [ Directed ]; [ Undirected ]
 )]
 mod __

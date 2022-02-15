@@ -8,9 +8,7 @@ use crate::{
 use std::borrow::Borrow;
 
 /// An acyclic graph
-pub trait Acyclic: NoLoops
-{
-}
+pub trait Acyclic: NoLoops {}
 
 #[derive(Clone, Debug)]
 pub struct AcyclicGraph<C: Ensure>(C);

@@ -2,7 +2,7 @@
 name = "graphene"
 version = "0.1.5"
 authors = ["Emad Jacob Maroun <emoun.open@gmail.com>"]
-edition = "2018"
+edition = "2021"
 
 description = "A general purpose, extensible Graph Theory data type and algorithm library for Rust."
 
@@ -19,7 +19,7 @@ categories = ["data-structures","algorithms"]
 travis-ci = {repository = "Emoun/graphene"}
 
 [dependencies]
-delegate = "0.4.2"
+delegate = "0.13.1"
 tt-equal = "0.1"
 tt-call = "1.0"
 num-traits = "0.2"
@@ -29,4 +29,4 @@ rand = "0.7"
 quickcheck = "0.9"
 quickcheck_macros = "0.9"
 static_assertions = "1.1.0"
-duplicate = "0.2.9"
+duplicate = "2.0.0"

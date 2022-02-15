@@ -244,9 +244,9 @@ macro_rules! impl_properties {
 
 				delegate::delegate! {
 					to $crate::core::GraphDeref::graph(&self$($delegate)+){
-						fn all_vertices_weighted<'a>(
-							&'a self,
-						) -> Box<dyn 'a + Iterator<Item = (Self::Vertex, &'a Self::VertexWeight)>>;
+						fn all_vertices_weighted(
+							&self,
+						) -> Box<dyn '_ + Iterator<Item = (Self::Vertex, &Self::VertexWeight)>>;
 
 						fn edges_between<'a: 'b, 'b>(
 							&'a self,
@@ -275,11 +275,9 @@ macro_rules! impl_properties {
 			@implement {
 				delegate::delegate! {
 					to $crate::core::GraphDerefMut::graph_mut(&mut self$($delegate)+) {
-						fn all_vertices_weighted_mut<'a>(
-							&'a mut self,
-						) -> Box<dyn 'a + Iterator<
-							Item = (Self::Vertex, &'a mut Self::VertexWeight)
-						>>;
+						fn all_vertices_weighted_mut(
+							&mut self,
+						) -> Box<dyn '_ + Iterator<Item = (Self::Vertex, &mut Self::VertexWeight)>>;
 
 						fn edges_between_mut<'a: 'b, 'b>(
 							&'a mut self,
@@ -511,7 +509,7 @@ macro_rules! impl_properties {
 			@implement {
 				delegate::delegate!{
 					to $crate::core::GraphDeref::graph(&self$($delegate)+) {
-						fn exit_edges<'a>(&'a self) -> Box<dyn 'a + Iterator<Item=
+						fn exit_edges(&self) -> Box<dyn '_ + Iterator<Item=
 							(Self::Vertex, Self::Vertex)>>;
 					}
 				}

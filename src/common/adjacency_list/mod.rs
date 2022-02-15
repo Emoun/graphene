@@ -1,6 +1,5 @@
 mod impl_graph;
 
-pub use self::impl_graph::*;
 use crate::core::{Directed, Directedness};
 use std::marker::PhantomData;
 

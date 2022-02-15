@@ -1,7 +1,7 @@
 use crate::mock_graph::arbitrary::{Arb, VerticesIn};
 /// tests `DijkstraShortestPath`
 use crate::mock_graph::{MockEdgeWeight, MockGraph};
-use duplicate::duplicate;
+use duplicate::duplicate_item;
 use graphene::{
 	algo::DijkstraShortestPaths,
 	core::{
@@ -11,7 +11,7 @@ use graphene::{
 };
 use std::collections::{HashMap, HashSet};
 
-#[duplicate(
+#[duplicate_item(
 	directedness; [ Directed ]; [ Undirected ]
 )]
 mod __

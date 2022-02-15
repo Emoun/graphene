@@ -70,13 +70,13 @@ impl<C: Ensure> Graph for MockEnsurer<C>
 
 	delegate! {
 		to self.0.graph() {
-			fn all_vertices_weighted<'a>(
-				&'a self,
-			) -> Box<dyn 'a + Iterator<Item = (Self::Vertex, &'a Self::VertexWeight)>>;
+			fn all_vertices_weighted(
+				&self,
+			) -> Box<dyn '_ + Iterator<Item = (Self::Vertex, &Self::VertexWeight)>>;
 
-			fn all_edges<'a>(
-				&'a self,
-			) -> Box<dyn 'a + Iterator<Item = (Self::Vertex, Self::Vertex, &'a Self::EdgeWeight)>>;
+			fn all_edges(
+				&self,
+			) -> Box<dyn '_ + Iterator<Item = (Self::Vertex, Self::Vertex, &Self::EdgeWeight)>>;
 
 			fn edges_between<'a: 'b, 'b>(
 				&'a self,
@@ -92,9 +92,9 @@ where
 {
 	delegate! {
 		to self.0.graph_mut() {
-			fn all_vertices_weighted_mut<'a>(
-				&'a mut self,
-			) -> Box<dyn 'a + Iterator<Item = (Self::Vertex, &'a mut Self::VertexWeight)>>;
+			fn all_vertices_weighted_mut(
+				&mut self,
+			) -> Box<dyn '_ + Iterator<Item = (Self::Vertex, &mut Self::VertexWeight)>>;
 
 			fn edges_between_mut<'a: 'b, 'b>(
 				&'a mut self,
@@ -171,13 +171,13 @@ impl<C: Ensure> Graph for MockUnloadedEnsurer<C>
 
 	delegate! {
 		to self.0.graph() {
-			fn all_vertices_weighted<'a>(
-				&'a self,
-			) -> Box<dyn 'a + Iterator<Item = (Self::Vertex, &'a Self::VertexWeight)>>;
+			fn all_vertices_weighted(
+				&self,
+			) -> Box<dyn '_ + Iterator<Item = (Self::Vertex, &Self::VertexWeight)>>;
 
-			fn all_edges<'a>(
-				&'a self,
-			) -> Box<dyn 'a + Iterator<Item = (Self::Vertex, Self::Vertex, &'a Self::EdgeWeight)>>;
+			fn all_edges(
+				&self,
+			) -> Box<dyn '_ + Iterator<Item = (Self::Vertex, Self::Vertex, &Self::EdgeWeight)>>;
 
 			fn edges_between<'a: 'b, 'b>(
 				&'a self,

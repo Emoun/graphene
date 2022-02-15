@@ -32,8 +32,8 @@ where
 
 	delegate! {
 		to self.0.graph() {
-			fn all_vertices_weighted<'a>(&'a self) -> Box<dyn 'a + Iterator<Item=
-				(Self::Vertex, &'a Self::VertexWeight)>>;
+			fn all_vertices_weighted(&self) -> Box<dyn '_ + Iterator<Item=
+				(Self::Vertex, &Self::VertexWeight)>>;
 		}
 	}
 
@@ -53,8 +53,8 @@ where
 {
 	delegate! {
 		to self.0.graph_mut() {
-			fn all_vertices_weighted_mut<'a>(&'a mut self) -> Box<dyn 'a + Iterator<Item=
-				(Self::Vertex, &'a mut Self::VertexWeight)>>;
+			fn all_vertices_weighted_mut(&mut self) -> Box<dyn '_ + Iterator<Item=
+				(Self::Vertex, &mut Self::VertexWeight)>>;
 		}
 	}
 

@@ -2,7 +2,7 @@
 //! the new versions of each method give the same result
 //! as the original.
 use crate::mock_graph::{arbitrary::Arb, MockGraph, MockVertex, MockVertexWeight};
-use duplicate::duplicate;
+use duplicate::duplicate_item;
 use graphene::{
 	common::Ensured,
 	core::{
@@ -17,7 +17,7 @@ use graphene::{
 /// for both calls. This will ensure even through one of them is
 /// renamed (using a tool to find and rename usages automatically), this
 /// will fail to compile if the other isn't renamed too.
-#[duplicate(
+#[duplicate_item(
 	contains_vertex; [contains_vertex]
 )]
 #[quickcheck]
@@ -35,7 +35,7 @@ fn contains_vertex(Arb(graph): Arb<MockGraph<Directed>>, v: MockVertex) -> bool
 
 /// Tests that `new_vertex` and `new_vertex_weighted` for EnsureGraph are
 /// identical to their originals.
-#[duplicate(
+#[duplicate_item(
 	new_vertex				arguments;
 	[new_vertex_weighted]	[_w.clone()];
 	[new_vertex]			[]
