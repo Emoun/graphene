@@ -4,7 +4,7 @@ use crate::mock_graph::{
 	arbitrary::{Arb, TwoVerticesIn, UnconnectedGraph},
 	MockDirectedness, MockEdgeWeight, MockGraph, MockVertexWeight,
 };
-use duplicate::duplicate;
+use duplicate::duplicate_item;
 use graphene::core::{
 	property::{
 		AddEdge, Connected, ConnectedGraph, HasVertex, NewVertex, RemoveEdge, RemoveVertex,
@@ -14,12 +14,13 @@ use graphene::core::{
 };
 use static_assertions::assert_impl_all;
 
-#[duplicate(
-	#[
-		module_connected		directedness;
-		[connected_directed]	[Directed];
-		[connected_undirected]	[Undirected]
-	][
+#[duplicate_item(
+	duplicate!{
+		[
+			module_connected		directedness;
+			[connected_directed]	[Directed];
+			[connected_undirected]	[Undirected]
+		]
 		[
 			module				[ module_connected ]
 			connected_graph		[ ConnectedGraph ]
@@ -27,7 +28,7 @@ use static_assertions::assert_impl_all;
 			arb_unconnected		[ UnconnectedGraph<directedness> ]
 			arb_reject_remove	[ ConnectedGraph<MockGraph<directedness>> ]
 		]
-	]
+	}
 	[
 		module				[ unilateral ]
 		connected_graph		[ UnilateralGraph ]

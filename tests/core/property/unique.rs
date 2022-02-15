@@ -3,13 +3,13 @@ use crate::mock_graph::{
 	arbitrary::{Arb, EdgeIn, NonUniqueGraph},
 	MockEdgeWeight, MockGraph, MockVertexWeight,
 };
-use duplicate::duplicate;
+use duplicate::duplicate_item;
 use graphene::core::{
 	property::{AddEdge, HasVertex, NewVertex, UniqueGraph, VertexInGraph},
 	Directed, EnsureUnloaded, Graph, ReleaseUnloaded, Undirected,
 };
 
-#[duplicate(
+#[duplicate_item(
 	directedness; [ Directed ]; [ Undirected ]
 )]
 mod __

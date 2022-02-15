@@ -8,13 +8,13 @@ use crate::{
 		MockGraph,
 	},
 };
-use duplicate::duplicate;
+use duplicate::duplicate_item;
 use graphene::core::{
 	property::{EdgeCount, HasVertex, RemoveEdge, RemoveVertex, VertexCount, VertexInGraph},
 	Directed, Graph, GraphMut, ReleaseUnloaded, Undirected,
 };
 
-#[duplicate(
+#[duplicate_item(
 	directedness; [Directed]; [Undirected];
 )]
 mod __
