@@ -3,7 +3,7 @@ use crate::core::{Edge, Graph};
 pub trait Subgraph: Graph
 {
 	/// Edges who's sources are in this subgraph but who's sinks aren't.
-	fn exit_edges(&self) -> Box<dyn '_ + Iterator<Item = (Self::Vertex, Self::Vertex)>>;
+	fn exit_edges(&self) -> impl '_ + Iterator<Item = (Self::Vertex, Self::Vertex)>;
 
 	/// Whether this subgraph can reach a vertex in the other subgraph, either
 	/// by sharing a vertex with it, or having an axit edge to one of its

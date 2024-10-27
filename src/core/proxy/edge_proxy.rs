@@ -57,7 +57,7 @@ impl<C: Ensure> Graph for EdgeProxyGraph<C>
 		to self.graph.graph() {
 			fn all_vertices_weighted(
 				&self,
-			) -> Box<dyn '_ + Iterator<Item = (Self::Vertex, &Self::VertexWeight)>>;
+			) -> impl Iterator<Item = (Self::Vertex, &Self::VertexWeight)>;
 		}
 	}
 
@@ -65,7 +65,7 @@ impl<C: Ensure> Graph for EdgeProxyGraph<C>
 		&'a self,
 		source: impl 'b + Borrow<Self::Vertex>,
 		sink: impl 'b + Borrow<Self::Vertex>,
-	) -> Box<dyn 'b + Iterator<Item = &'a Self::EdgeWeight>>
+	) -> impl 'b + Iterator<Item = &'a Self::EdgeWeight>
 	{
 		let applicable = |so, si| {
 			(source.borrow() == so && sink.borrow() == si)
@@ -84,7 +84,7 @@ impl<C: Ensure> Graph for EdgeProxyGraph<C>
 			.count();
 		let underlying_count = self.graph.graph().edges_between(source, sink).count();
 
-		Box::new((0..(underlying_count - removed_count + added_count)).map(|_| &()))
+		(0..(underlying_count - removed_count + added_count)).map(|_| &())
 	}
 }
 
@@ -96,7 +96,7 @@ where
 		to self.graph.graph_mut() {
 			fn all_vertices_weighted_mut(
 				&mut self,
-			) -> Box<dyn '_ + Iterator<Item = (Self::Vertex, &mut Self::VertexWeight)>>;
+			) -> impl '_ + Iterator<Item = (Self::Vertex, &mut Self::VertexWeight)>;
 		}
 	}
 
@@ -104,13 +104,11 @@ where
 		&'a mut self,
 		source: impl 'b + Borrow<Self::Vertex>,
 		sink: impl 'b + Borrow<Self::Vertex>,
-	) -> Box<dyn 'b + Iterator<Item = &'a mut Self::EdgeWeight>>
+	) -> impl 'b + Iterator<Item = &'a mut Self::EdgeWeight>
 	{
 		// Safe because &mut () can't mutate anything
-		Box::new(
-			self.edges_between(source, sink)
-				.map(|_| unsafe { &mut *UnsafeCell::new(()).get() }),
-		)
+		self.edges_between(source, sink)
+			.map(|_| unsafe { &mut *UnsafeCell::new(()).get() })
 	}
 }
 

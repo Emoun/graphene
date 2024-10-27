@@ -29,13 +29,13 @@ impl<C: Ensure> Graph for DirectedGraph<C>
 		to self.0.graph() {
 			fn all_vertices_weighted(
 				&self,
-			) -> Box<dyn '_ + Iterator<Item = (Self::Vertex, &Self::VertexWeight)>>;
+			) -> impl Iterator<Item = (Self::Vertex, &Self::VertexWeight)>;
 
 			fn edges_between<'a: 'b, 'b>(
 				&'a self,
 				source: impl 'b + Borrow<Self::Vertex>,
 				sink: impl 'b + Borrow<Self::Vertex>,
-			) -> Box<dyn 'b + Iterator<Item = &'a Self::EdgeWeight>>;
+			) ->  impl 'b + Iterator<Item = &'a Self::EdgeWeight>;
 		}
 	}
 }
@@ -72,13 +72,13 @@ impl<C: Ensure> Graph for UndirectedGraph<C>
 		to self.0.graph() {
 			fn all_vertices_weighted(
 				&self,
-			) -> Box<dyn '_ + Iterator<Item = (Self::Vertex, &Self::VertexWeight)>>;
+			) -> impl Iterator<Item = (Self::Vertex, &Self::VertexWeight)>;
 
 			fn edges_between<'a: 'b, 'b>(
 				&'a self,
 				source: impl 'b + Borrow<Self::Vertex>,
 				sink: impl 'b + Borrow<Self::Vertex>,
-			) -> Box<dyn 'b + Iterator<Item = &'a Self::EdgeWeight>>;
+			) ->  impl 'b + Iterator<Item = &'a Self::EdgeWeight>;
 		}
 	}
 }

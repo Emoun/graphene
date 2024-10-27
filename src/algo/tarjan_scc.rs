@@ -218,7 +218,7 @@ where
 		);
 		Self {
 			dfs,
-			unchecked: graph.all_vertices(),
+			unchecked: Box::new(graph.all_vertices()),
 		}
 	}
 }

@@ -246,13 +246,13 @@ macro_rules! impl_properties {
 					to $crate::core::GraphDeref::graph(&self$($delegate)+){
 						fn all_vertices_weighted(
 							&self,
-						) -> Box<dyn '_ + Iterator<Item = (Self::Vertex, &Self::VertexWeight)>>;
+						) -> impl Iterator<Item = (Self::Vertex, &Self::VertexWeight)>;
 
 						fn edges_between<'a: 'b, 'b>(
 							&'a self,
 							source: impl 'b + std::borrow::Borrow<Self::Vertex>,
 							sink: impl 'b + std::borrow::Borrow<Self::Vertex>,
-						) -> Box<dyn 'b + Iterator<Item = &'a Self::EdgeWeight>>;
+						) -> impl 'b + Iterator<Item = &'a Self::EdgeWeight>;
 					}
 				}
 			}
@@ -277,13 +277,13 @@ macro_rules! impl_properties {
 					to $crate::core::GraphDerefMut::graph_mut(&mut self$($delegate)+) {
 						fn all_vertices_weighted_mut(
 							&mut self,
-						) -> Box<dyn '_ + Iterator<Item = (Self::Vertex, &mut Self::VertexWeight)>>;
+						) -> impl '_ + Iterator<Item = (Self::Vertex, &mut Self::VertexWeight)>;
 
 						fn edges_between_mut<'a: 'b, 'b>(
 							&'a mut self,
 							source: impl 'b + std::borrow::Borrow<Self::Vertex>,
 							sink: impl 'b + std::borrow::Borrow<Self::Vertex>,
-						) -> Box<dyn 'b + Iterator<Item = &'a mut Self::EdgeWeight>>;
+						) -> impl 'b + Iterator<Item = &'a mut Self::EdgeWeight>;
 					}
 				}
 			}
@@ -509,8 +509,8 @@ macro_rules! impl_properties {
 			@implement {
 				delegate::delegate!{
 					to $crate::core::GraphDeref::graph(&self$($delegate)+) {
-						fn exit_edges(&self) -> Box<dyn '_ + Iterator<Item=
-							(Self::Vertex, Self::Vertex)>>;
+						fn exit_edges(&self)
+							-> impl '_ + Iterator<Item=(Self::Vertex, Self::Vertex)>;
 					}
 				}
 			}

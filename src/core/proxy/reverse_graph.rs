@@ -32,8 +32,8 @@ where
 
 	delegate! {
 		to self.0.graph() {
-			fn all_vertices_weighted(&self) -> Box<dyn '_ + Iterator<Item=
-				(Self::Vertex, &Self::VertexWeight)>>;
+			fn all_vertices_weighted(&self) ->
+				impl Iterator<Item = (Self::Vertex, &Self::VertexWeight)>;
 		}
 	}
 
@@ -41,7 +41,7 @@ where
 		&'a self,
 		source: impl 'b + Borrow<Self::Vertex>,
 		sink: impl 'b + Borrow<Self::Vertex>,
-	) -> Box<dyn 'b + Iterator<Item = &'a Self::EdgeWeight>>
+	) -> impl 'b + Iterator<Item = &'a Self::EdgeWeight>
 	{
 		self.0.graph().edges_between(sink, source)
 	}
@@ -53,8 +53,8 @@ where
 {
 	delegate! {
 		to self.0.graph_mut() {
-			fn all_vertices_weighted_mut(&mut self) -> Box<dyn '_ + Iterator<Item=
-				(Self::Vertex, &mut Self::VertexWeight)>>;
+			fn all_vertices_weighted_mut(&mut self)
+				-> impl '_ + Iterator<Item = (Self::Vertex, &mut Self::VertexWeight)>;
 		}
 	}
 
@@ -62,9 +62,9 @@ where
 		&'a mut self,
 		source: impl 'b + Borrow<Self::Vertex>,
 		sink: impl 'b + Borrow<Self::Vertex>,
-	) -> Box<dyn 'b + Iterator<Item = &'a mut Self::EdgeWeight>>
+	) -> impl 'b + Iterator<Item = &'a mut Self::EdgeWeight>
 	{
-		Box::new(self.0.graph_mut().edges_between_mut(sink, source))
+		self.0.graph_mut().edges_between_mut(sink, source)
 	}
 }
 

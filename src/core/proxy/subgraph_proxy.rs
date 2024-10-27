@@ -69,32 +69,26 @@ impl<C: Ensure> Graph for SubgraphProxy<C>
 	type Vertex = <C::Graph as Graph>::Vertex;
 	type VertexWeight = <C::Graph as Graph>::VertexWeight;
 
-	fn all_vertices_weighted(
-		&self,
-	) -> Box<dyn '_ + Iterator<Item = (Self::Vertex, &Self::VertexWeight)>>
+	fn all_vertices_weighted(&self) -> impl Iterator<Item = (Self::Vertex, &Self::VertexWeight)>
 	{
-		Box::new(
-			self.graph
-				.graph()
-				.all_vertices_weighted()
-				.filter(move |(v, _)| self.verts.contains(v)),
-		)
+		self.graph
+			.graph()
+			.all_vertices_weighted()
+			.filter(move |(v, _)| self.verts.contains(v))
 	}
 
 	fn edges_between<'a: 'b, 'b>(
 		&'a self,
 		source: impl 'b + Borrow<Self::Vertex>,
 		sink: impl 'b + Borrow<Self::Vertex>,
-	) -> Box<dyn 'b + Iterator<Item = &'a Self::EdgeWeight>>
+	) -> impl 'b + Iterator<Item = &'a Self::EdgeWeight>
 	{
-		Box::new(
-			self.graph
-				.graph()
-				.edges_between(source.borrow().clone(), sink.borrow().clone())
-				.filter(move |_| {
-					self.contains_vertex(*source.borrow()) && self.contains_vertex(*sink.borrow())
-				}),
-		)
+		self.graph
+			.graph()
+			.edges_between(source.borrow().clone(), sink.borrow().clone())
+			.filter(move |_| {
+				self.contains_vertex(*source.borrow()) && self.contains_vertex(*sink.borrow())
+			})
 	}
 }
 
@@ -102,34 +96,30 @@ impl<C: Ensure + GraphDerefMut> GraphMut for SubgraphProxy<C>
 where
 	C::Graph: GraphMut,
 {
-	fn all_vertices_weighted_mut<'a>(
-		&'a mut self,
-	) -> Box<dyn 'a + Iterator<Item = (Self::Vertex, &'a mut Self::VertexWeight)>>
+	fn all_vertices_weighted_mut(
+		&mut self,
+	) -> impl '_ + Iterator<Item = (Self::Vertex, &mut Self::VertexWeight)>
 	{
 		let verts = &self.verts;
 		let graph = self.graph.graph_mut();
 
-		Box::new(
-			graph
-				.all_vertices_weighted_mut()
-				.filter(move |(v, _)| verts.contains(v)),
-		)
+		graph
+			.all_vertices_weighted_mut()
+			.filter(move |(v, _)| verts.contains(v))
 	}
 
 	fn edges_between_mut<'a: 'b, 'b>(
 		&'a mut self,
 		source: impl 'b + Borrow<Self::Vertex>,
 		sink: impl 'b + Borrow<Self::Vertex>,
-	) -> Box<dyn 'b + Iterator<Item = &'a mut Self::EdgeWeight>>
+	) -> impl 'b + Iterator<Item = &'a mut Self::EdgeWeight>
 	{
 		let return_any =
 			self.contains_vertex(*source.borrow()) && self.contains_vertex(*sink.borrow());
-		Box::new(
-			self.graph
-				.graph_mut()
-				.edges_between_mut(source, sink)
-				.filter(move |_| return_any),
-		)
+		self.graph
+			.graph_mut()
+			.edges_between_mut(source, sink)
+			.filter(move |_| return_any)
 	}
 }
 
@@ -221,9 +211,9 @@ where
 
 impl<C: Ensure> Subgraph for SubgraphProxy<C>
 {
-	fn exit_edges<'a>(&'a self) -> Box<dyn 'a + Iterator<Item = (Self::Vertex, Self::Vertex)>>
+	fn exit_edges<'a>(&'a self) -> impl 'a + Iterator<Item = (Self::Vertex, Self::Vertex)>
 	{
-		Box::new(self.exit_edges.iter().cloned())
+		self.exit_edges.iter().cloned()
 	}
 }
 

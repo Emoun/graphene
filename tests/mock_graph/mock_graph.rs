@@ -179,37 +179,31 @@ impl<D: Directedness> Graph for MockGraph<D>
 	type Vertex = MockVertex;
 	type VertexWeight = MockVertexWeight;
 
-	fn all_vertices_weighted<'a>(
-		&'a self,
-	) -> Box<dyn 'a + Iterator<Item = (Self::Vertex, &'a Self::VertexWeight)>>
+	fn all_vertices_weighted(&self) -> impl Iterator<Item = (Self::Vertex, &Self::VertexWeight)>
 	{
-		Box::new(
-			self.vertices
-				.iter()
-				.map(|(&v, w)| (MockVertex { value: v }, w)),
-		)
+		self.vertices
+			.iter()
+			.map(|(&v, w)| (MockVertex { value: v }, w))
 	}
 
-	fn all_edges<'a>(
-		&'a self,
-	) -> Box<dyn 'a + Iterator<Item = (Self::Vertex, Self::Vertex, &'a Self::EdgeWeight)>>
+	fn all_edges(
+		&self,
+	) -> impl '_ + Iterator<Item = (Self::Vertex, Self::Vertex, &Self::EdgeWeight)>
 	{
-		Box::new(
-			self.edges
-				.iter()
-				.map(|(so, si, w)| (MockVertex { value: *so }, MockVertex { value: *si }, w)),
-		)
+		self.edges
+			.iter()
+			.map(|(so, si, w)| (MockVertex { value: *so }, MockVertex { value: *si }, w))
 	}
 
 	fn edges_between<'a: 'b, 'b>(
 		&'a self,
 		source: impl 'b + Borrow<Self::Vertex>,
 		sink: impl 'b + Borrow<Self::Vertex>,
-	) -> Box<dyn 'b + Iterator<Item = &'a Self::EdgeWeight>>
+	) -> impl 'b + Iterator<Item = &'a Self::EdgeWeight>
 	{
 		let source = source.borrow().value;
 		let sink = sink.borrow().value;
-		Box::new(self.edges.iter().filter_map(move |(so, si, w)| {
+		self.edges.iter().filter_map(move |(so, si, w)| {
 			if (source == *so && sink == *si)
 				|| (!Self::Directedness::directed() && (source == *si && sink == *so))
 			{
@@ -219,32 +213,30 @@ impl<D: Directedness> Graph for MockGraph<D>
 			{
 				None
 			}
-		}))
+		})
 	}
 }
 
 impl<D: Directedness> GraphMut for MockGraph<D>
 {
-	fn all_vertices_weighted_mut<'a>(
-		&'a mut self,
-	) -> Box<dyn 'a + Iterator<Item = (Self::Vertex, &'a mut Self::VertexWeight)>>
+	fn all_vertices_weighted_mut(
+		&mut self,
+	) -> impl '_ + Iterator<Item = (Self::Vertex, &mut Self::VertexWeight)>
 	{
-		Box::new(
-			self.vertices
-				.iter_mut()
-				.map(|(&v, w)| (MockVertex { value: v }, w)),
-		)
+		self.vertices
+			.iter_mut()
+			.map(|(&v, w)| (MockVertex { value: v }, w))
 	}
 
 	fn edges_between_mut<'a: 'b, 'b>(
 		&'a mut self,
 		source: impl 'b + Borrow<Self::Vertex>,
 		sink: impl 'b + Borrow<Self::Vertex>,
-	) -> Box<dyn 'b + Iterator<Item = &'a mut Self::EdgeWeight>>
+	) -> impl 'b + Iterator<Item = &'a mut Self::EdgeWeight>
 	{
 		let source = source.borrow().value;
 		let sink = sink.borrow().value;
-		Box::new(self.edges.iter_mut().filter_map(move |(so, si, w)| {
+		self.edges.iter_mut().filter_map(move |(so, si, w)| {
 			if (source == *so && sink == *si)
 				|| (!Self::Directedness::directed() && (source == *si && sink == *so))
 			{
@@ -254,7 +246,7 @@ impl<D: Directedness> GraphMut for MockGraph<D>
 			{
 				None
 			}
-		}))
+		})
 	}
 }
 

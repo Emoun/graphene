@@ -16,56 +16,52 @@ where
 	type Vertex = usize;
 	type VertexWeight = Vw;
 
-	fn all_vertices_weighted(
-		&self,
-	) -> Box<dyn '_ + Iterator<Item = (Self::Vertex, &Self::VertexWeight)>>
+	fn all_vertices_weighted(&self) -> impl Iterator<Item = (Self::Vertex, &Self::VertexWeight)>
 	{
-		Box::new(self.vertices.iter().enumerate().map(|(v, (w, _))| (v, w)))
+		self.vertices.iter().enumerate().map(|(v, (w, _))| (v, w))
 	}
 
 	fn edges_between<'a: 'b, 'b>(
 		&'a self,
 		source: impl 'b + Borrow<Self::Vertex>,
 		sink: impl 'b + Borrow<Self::Vertex>,
-	) -> Box<dyn 'b + Iterator<Item = &'a Self::EdgeWeight>>
+	) -> impl 'b + Iterator<Item = &'a Self::EdgeWeight>
 	{
 		let source = source.borrow().clone();
 		let sink = sink.borrow().clone();
 
-		Box::new(
-			self.vertices
-				.get(source)
-				.into_iter()
-				.flat_map(move |(_, edges)| {
-					edges.iter().filter_map(move |(si, w)| {
-						if *si == sink
-						{
-							Some(w)
-						}
-						else
-						{
-							None
-						}
-					})
+		self.vertices
+			.get(source)
+			.into_iter()
+			.flat_map(move |(_, edges)| {
+				edges.iter().filter_map(move |(si, w)| {
+					if *si == sink
+					{
+						Some(w)
+					}
+					else
+					{
+						None
+					}
 				})
-				.chain(
-					self.vertices
-						.get(sink)
-						.into_iter()
-						.flat_map(move |(_, edges)| {
-							edges.iter().filter_map(move |(si, w)| {
-								if !Self::Directedness::directed() && *si != sink && *si == source
-								{
-									Some(w)
-								}
-								else
-								{
-									None
-								}
-							})
-						}),
-				),
-		)
+			})
+			.chain(
+				self.vertices
+					.get(sink)
+					.into_iter()
+					.flat_map(move |(_, edges)| {
+						edges.iter().filter_map(move |(si, w)| {
+							if !Self::Directedness::directed() && *si != sink && *si == source
+							{
+								Some(w)
+							}
+							else
+							{
+								None
+							}
+						})
+					}),
+			)
 	}
 }
 
@@ -73,65 +69,61 @@ impl<Vw, Ew, D> GraphMut for AdjListGraph<Vw, Ew, D>
 where
 	D: Directedness,
 {
-	fn all_vertices_weighted_mut<'a>(
-		&'a mut self,
-	) -> Box<dyn 'a + Iterator<Item = (Self::Vertex, &'a mut Self::VertexWeight)>>
+	fn all_vertices_weighted_mut(
+		&mut self,
+	) -> impl '_ + Iterator<Item = (Self::Vertex, &mut Self::VertexWeight)>
 	{
-		Box::new(
-			self.vertices
-				.iter_mut()
-				.enumerate()
-				.map(|(v, (w, _))| (v, w)),
-		)
+		self.vertices
+			.iter_mut()
+			.enumerate()
+			.map(|(v, (w, _))| (v, w))
 	}
 
 	fn edges_between_mut<'a: 'b, 'b>(
 		&'a mut self,
 		source: impl 'b + Borrow<Self::Vertex>,
 		sink: impl 'b + Borrow<Self::Vertex>,
-	) -> Box<dyn 'b + Iterator<Item = &'a mut Self::EdgeWeight>>
+	) -> impl 'b + Iterator<Item = &'a mut Self::EdgeWeight>
 	{
 		let source = source.borrow().clone();
 		let sink = sink.borrow().clone();
 
-		Box::new(
-			self.vertices
-				.iter_mut()
-				.enumerate()
-				.filter_map(move |(so, (_, edges))| {
-					if source == so
-					{
-						Some((false, edges))
-					}
-					else if !Self::Directedness::directed() && (so == sink)
-					{
-						Some((true, edges))
-					}
-					else
-					{
-						None
-					}
-				})
-				.flat_map(|(sink_first, edges)| {
-					edges
-						.iter_mut()
-						.map(move |(si, weight)| (sink_first, si, weight))
-				})
-				.filter_map(move |(sink_first, si, weight)| {
-					if sink_first
-					{
-						if source == *si
-						{
-							return Some(weight);
-						}
-					}
-					else if sink == *si
+		self.vertices
+			.iter_mut()
+			.enumerate()
+			.filter_map(move |(so, (_, edges))| {
+				if source == so
+				{
+					Some((false, edges))
+				}
+				else if !Self::Directedness::directed() && (so == sink)
+				{
+					Some((true, edges))
+				}
+				else
+				{
+					None
+				}
+			})
+			.flat_map(|(sink_first, edges)| {
+				edges
+					.iter_mut()
+					.map(move |(si, weight)| (sink_first, si, weight))
+			})
+			.filter_map(move |(sink_first, si, weight)| {
+				if sink_first
+				{
+					if source == *si
 					{
 						return Some(weight);
 					}
-					None
-				}),
-		)
+				}
+				else if sink == *si
+				{
+					return Some(weight);
+				}
+				None
+			})
 	}
 }
 

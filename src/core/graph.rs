@@ -75,53 +75,49 @@ pub trait Graph
 	type Directedness: Directedness;
 
 	/// Returns copies of all current vertex values in the graph.
-	fn all_vertices_weighted(
-		&self,
-	) -> Box<dyn '_ + Iterator<Item = (Self::Vertex, &Self::VertexWeight)>>;
+	fn all_vertices_weighted(&self) -> impl Iterator<Item = (Self::Vertex, &Self::VertexWeight)>;
 
 	/// Returns the weights of all edges that are sourced in v1 and sinked in
 	/// v2. I.e. all edges where e == (v1,v2,_).
 	///
 	/// If the graph is undirected, returns all edges connecting the two
-	/// vertices I.e. all edges where e == (v1,v2,_) or e == (v2,v1,_)
+	/// vertices. I.e. all edges where e == (v1,v2,_) or e == (v2,v1,_)
 	fn edges_between<'a: 'b, 'b>(
 		&'a self,
 		source: impl 'b + Borrow<Self::Vertex>,
 		sink: impl 'b + Borrow<Self::Vertex>,
-	) -> Box<dyn 'b + Iterator<Item = &'a Self::EdgeWeight>>;
+	) -> impl 'b + Iterator<Item = &'a Self::EdgeWeight>;
 
 	// Optional methods
 
 	/// Returns copies of all current edges in the graph.
-	fn all_edges<'a>(
-		&'a self,
-	) -> Box<dyn 'a + Iterator<Item = (Self::Vertex, Self::Vertex, &'a Self::EdgeWeight)>>
+	fn all_edges(
+		&self,
+	) -> impl '_ + Iterator<Item = (Self::Vertex, Self::Vertex, &Self::EdgeWeight)>
 	{
 		let mut finished = Vec::new();
-		Box::new(
-			self.all_vertices()
-				.flat_map(move |v| self.edges_sourced_in(v).map(move |(v2, w)| (v, v2, w)))
-				.filter(move |(so, si, _)| {
-					if finished.last().is_none() || finished.last().unwrap() != so
-					{
-						finished.push(so.clone());
-					}
+		self.all_vertices()
+			.flat_map(move |v| self.edges_sourced_in(v).map(move |(v2, w)| (v, v2, w)))
+			.filter(move |(so, si, _)| {
+				if finished.last().is_none() || finished.last().unwrap() != so
+				{
+					finished.push(so.clone());
+				}
 
-					if !Self::Directedness::directed()
-					{
-						si == so || !finished.contains(&si)
-					}
-					else
-					{
-						true
-					}
-				}),
-		)
+				if !Self::Directedness::directed()
+				{
+					si == so || !finished.contains(&si)
+				}
+				else
+				{
+					true
+				}
+			})
 	}
 
-	fn all_vertices<'a>(&'a self) -> Box<dyn 'a + Iterator<Item = Self::Vertex>>
+	fn all_vertices(&self) -> impl '_ + Iterator<Item = Self::Vertex>
 	{
-		Box::new(self.all_vertices_weighted().map(|(v, _)| v))
+		self.all_vertices_weighted().map(|(v, _)| v)
 	}
 
 	fn vertex_weight(&self, v: impl Borrow<Self::Vertex>) -> Option<&Self::VertexWeight>
@@ -141,9 +137,9 @@ pub trait Graph
 		iter.into_iter().all(|v| self.contains_vertex(v))
 	}
 
-	fn all_vertex_weights<'a>(&'a self) -> Box<dyn 'a + Iterator<Item = &'a Self::VertexWeight>>
+	fn all_vertex_weights(&self) -> impl '_ + Iterator<Item = &Self::VertexWeight>
 	{
-		Box::new(self.all_vertices_weighted().map(|(_, w)| w))
+		self.all_vertices_weighted().map(|(_, w)| w)
 	}
 
 	/// Returns the sink and weight of any edge sourced in the given vertex.
@@ -154,12 +150,12 @@ pub trait Graph
 	fn edges_sourced_in<'a: 'b, 'b>(
 		&'a self,
 		v: impl 'b + Borrow<Self::Vertex>,
-	) -> Box<dyn 'b + Iterator<Item = (Self::Vertex, &'a Self::EdgeWeight)>>
+	) -> impl 'b + Iterator<Item = (Self::Vertex, &'a Self::EdgeWeight)>
 	{
-		Box::new(self.all_vertices().flat_map(move |v2| {
+		self.all_vertices().flat_map(move |v2| {
 			self.edges_between(v.borrow().clone(), v2.borrow().clone())
 				.map(move |w| (v2.clone(), w))
-		}))
+		})
 	}
 
 	/// Returns the source and weight of any edge sinked in the given vertex.
@@ -170,12 +166,12 @@ pub trait Graph
 	fn edges_sinked_in<'a: 'b, 'b>(
 		&'a self,
 		v: impl 'b + Borrow<Self::Vertex>,
-	) -> Box<dyn 'b + Iterator<Item = (Self::Vertex, &'a Self::EdgeWeight)>>
+	) -> impl 'b + Iterator<Item = (Self::Vertex, &'a Self::EdgeWeight)>
 	{
-		Box::new(self.all_vertices().flat_map(move |v2| {
+		self.all_vertices().flat_map(move |v2| {
 			self.edges_between(v2.borrow().clone(), v.borrow().clone())
 				.map(move |w| (v2.clone(), w))
-		}))
+		})
 	}
 
 	/// Returns the neighboring vertex and the weight of any edge incident
@@ -185,15 +181,11 @@ pub trait Graph
 	fn edges_incident_on<'a: 'b, 'b>(
 		&'a self,
 		v: impl 'b + Borrow<Self::Vertex>,
-	) -> Box<dyn 'b + Iterator<Item = (Self::Vertex, &'a Self::EdgeWeight)>>
+	) -> impl 'b + Iterator<Item = (Self::Vertex, &'a Self::EdgeWeight)>
 	{
-		Box::new(
-			self.edges_sourced_in(v.borrow().clone()).chain(
-				self.edges_sinked_in(v.borrow().clone())
-					.filter(move |(v2, _)| {
-						Self::Directedness::directed() && v.borrow() != v2.borrow()
-					}),
-			),
+		self.edges_sourced_in(v.borrow().clone()).chain(
+			self.edges_sinked_in(v.borrow().clone())
+				.filter(move |(v2, _)| Self::Directedness::directed() && v.borrow() != v2.borrow()),
 		)
 	}
 
@@ -202,12 +194,10 @@ pub trait Graph
 	fn vertex_neighbors<'a: 'b, 'b>(
 		&'a self,
 		v: impl 'b + Borrow<Self::Vertex>,
-	) -> Box<dyn 'b + Iterator<Item = Self::Vertex>>
+	) -> impl 'b + Iterator<Item = Self::Vertex>
 	{
-		Box::new(
-			self.all_vertices()
-				.filter(move |other| self.neighbors(v.borrow(), other.borrow())),
-		)
+		self.all_vertices()
+			.filter(move |other| self.neighbors(v.borrow(), other.borrow()))
 	}
 
 	/// Returns whether the two vertices are connected by an edge in any
@@ -235,13 +225,13 @@ pub trait GraphMut: Graph
 {
 	fn all_vertices_weighted_mut(
 		&mut self,
-	) -> Box<dyn '_ + Iterator<Item = (Self::Vertex, &mut Self::VertexWeight)>>;
+	) -> impl '_ + Iterator<Item = (Self::Vertex, &mut Self::VertexWeight)>;
 
 	fn edges_between_mut<'a: 'b, 'b>(
 		&'a mut self,
 		source: impl 'b + Borrow<Self::Vertex>,
 		sink: impl 'b + Borrow<Self::Vertex>,
-	) -> Box<dyn 'b + Iterator<Item = &'a mut Self::EdgeWeight>>;
+	) -> impl 'b + Iterator<Item = &'a mut Self::EdgeWeight>;
 
 	// Optional methods
 

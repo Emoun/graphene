@@ -72,17 +72,17 @@ impl<C: Ensure> Graph for MockEnsurer<C>
 		to self.0.graph() {
 			fn all_vertices_weighted(
 				&self,
-			) -> Box<dyn '_ + Iterator<Item = (Self::Vertex, &Self::VertexWeight)>>;
+			) -> impl Iterator<Item = (Self::Vertex, &Self::VertexWeight)>;
 
 			fn all_edges(
 				&self,
-			) -> Box<dyn '_ + Iterator<Item = (Self::Vertex, Self::Vertex, &Self::EdgeWeight)>>;
+			) -> impl '_ + Iterator<Item = (Self::Vertex, Self::Vertex, &Self::EdgeWeight)>;
 
 			fn edges_between<'a: 'b, 'b>(
 				&'a self,
 				source: impl 'b + Borrow<Self::Vertex>,
 				sink: impl 'b + Borrow<Self::Vertex>,
-			) -> Box<dyn 'b + Iterator<Item = &'a Self::EdgeWeight>>;
+			) -> impl 'b + Iterator<Item = &'a Self::EdgeWeight>;
 		}
 	}
 }
@@ -94,13 +94,13 @@ where
 		to self.0.graph_mut() {
 			fn all_vertices_weighted_mut(
 				&mut self,
-			) -> Box<dyn '_ + Iterator<Item = (Self::Vertex, &mut Self::VertexWeight)>>;
+			) -> impl '_ + Iterator<Item = (Self::Vertex, &mut Self::VertexWeight)>;
 
 			fn edges_between_mut<'a: 'b, 'b>(
 				&'a mut self,
 				source: impl 'b + Borrow<Self::Vertex>,
 				sink: impl 'b + Borrow<Self::Vertex>,
-			) -> Box<dyn 'b + Iterator<Item = &'a mut Self::EdgeWeight>>;
+			) -> impl 'b + Iterator<Item = &'a mut Self::EdgeWeight>;
 		}
 	}
 }
@@ -173,17 +173,17 @@ impl<C: Ensure> Graph for MockUnloadedEnsurer<C>
 		to self.0.graph() {
 			fn all_vertices_weighted(
 				&self,
-			) -> Box<dyn '_ + Iterator<Item = (Self::Vertex, &Self::VertexWeight)>>;
+			) -> impl Iterator<Item = (Self::Vertex, &Self::VertexWeight)>;
 
 			fn all_edges(
 				&self,
-			) -> Box<dyn '_ + Iterator<Item = (Self::Vertex, Self::Vertex, &Self::EdgeWeight)>>;
+			) -> impl '_ + Iterator<Item = (Self::Vertex, Self::Vertex, &Self::EdgeWeight)>;
 
 			fn edges_between<'a: 'b, 'b>(
 				&'a self,
 				source: impl 'b + Borrow<Self::Vertex>,
 				sink: impl 'b + Borrow<Self::Vertex>,
-			) -> Box<dyn 'b + Iterator<Item = &'a Self::EdgeWeight>>;
+			) -> impl 'b + Iterator<Item = &'a Self::EdgeWeight>;
 		}
 	}
 }
@@ -191,9 +191,9 @@ impl<C: Ensure + GraphDerefMut> GraphMut for MockUnloadedEnsurer<C>
 where
 	C::Graph: GraphMut,
 {
-	fn all_vertices_weighted_mut<'a>(
-		&'a mut self,
-	) -> Box<dyn 'a + Iterator<Item = (Self::Vertex, &'a mut Self::VertexWeight)>>
+	fn all_vertices_weighted_mut(
+		&mut self,
+	) -> impl '_ + Iterator<Item = (Self::Vertex, &mut Self::VertexWeight)>
 	{
 		self.0.graph_mut().all_vertices_weighted_mut()
 	}
@@ -202,7 +202,7 @@ where
 		&'a mut self,
 		source: impl 'b + Borrow<Self::Vertex>,
 		sink: impl 'b + Borrow<Self::Vertex>,
-	) -> Box<dyn 'b + Iterator<Item = &'a mut Self::EdgeWeight>>
+	) -> impl 'b + Iterator<Item = &'a mut Self::EdgeWeight>
 	{
 		self.0.graph_mut().edges_between_mut(source, sink)
 	}
