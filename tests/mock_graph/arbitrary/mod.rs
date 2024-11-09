@@ -3,6 +3,7 @@ mod combinations;
 mod connected_graph;
 mod guided_arb_graph;
 mod mock_graph;
+mod simple;
 mod unique_graph;
 mod vertex_in_graph;
 

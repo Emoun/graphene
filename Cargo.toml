@@ -23,10 +23,10 @@ delegate = "0.13.1"
 tt-equal = "0.1"
 tt-call = "1.0"
 num-traits = "0.2"
+duplicate = "2.0.0"
 
 [dev-dependencies]
 rand = "0.7"
 quickcheck = "0.9"
 quickcheck_macros = "0.9"
 static_assertions = "1.1.0"
-duplicate = "2.0.0"

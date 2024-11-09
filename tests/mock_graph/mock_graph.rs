@@ -1,4 +1,4 @@
-use crate::mock_graph::{MockEdgeWeight, MockVertex, MockVertexWeight};
+use crate::mock_graph::{MockEdgeWeight, MockType, MockVertex, MockVertexWeight};
 use graphene::{
 	base_graph,
 	core::{
@@ -21,18 +21,18 @@ use std::{
 ///
 /// Will panic if it runs out of ids.
 #[derive(Clone)]
-pub struct MockGraph<D: Directedness>
+pub struct MockGraph<D: Directedness, Ew: MockType = MockEdgeWeight>
 {
 	/// The number to give the next new vertex.
 	pub next_id: usize,
 	/// The weights of the vertices in the graph.
 	pub vertices: HashMap<usize, MockVertexWeight>,
 	/// All edges in the graph, regardless of directedness.
-	pub edges: Vec<(usize, usize, MockEdgeWeight)>,
+	pub edges: Vec<(usize, usize, Ew)>,
 	phantom: PhantomData<D>,
 }
 
-impl<D: Directedness> MockGraph<D>
+impl<D: Directedness, Ew: MockType> MockGraph<D, Ew>
 {
 	/// Validates the internal integrity of the graph.
 	///
@@ -112,7 +112,7 @@ impl<D: Directedness> MockGraph<D>
 		G: Graph<
 			Vertex = MockVertex,
 			VertexWeight = MockEdgeWeight,
-			EdgeWeight = MockEdgeWeight,
+			EdgeWeight = Ew,
 			Directedness = D,
 		>,
 	{
@@ -146,7 +146,7 @@ impl<D: Directedness> MockGraph<D>
 	}
 }
 
-impl<D: Directedness> Debug for MockGraph<D>
+impl<D: Directedness, Ew: MockType> Debug for MockGraph<D, Ew>
 {
 	fn fmt(&self, f: &mut Formatter) -> Result<(), Error>
 	{
@@ -163,17 +163,17 @@ impl<D: Directedness> Debug for MockGraph<D>
 		edges.sort_by_key(|(v, _, _)| *v);
 		for (so, si, w) in &edges
 		{
-			f.write_fmt(format_args!("({:?}, {:?}, {:?}), ", so, si, w.value))?;
+			f.write_fmt(format_args!("({:?}, {:?}, {:?}), ", so, si, w))?;
 		}
 		f.write_str("] }")?;
 		Ok(())
 	}
 }
 
-impl<D: Directedness> Graph for MockGraph<D>
+impl<D: Directedness, Ew: MockType> Graph for MockGraph<D, Ew>
 {
 	type Directedness = D;
-	type EdgeWeight = MockEdgeWeight;
+	type EdgeWeight = Ew;
 	/// We hide u32 behind a struct to ensure our tests aren't dependent
 	/// on graphs using usize as ids
 	type Vertex = MockVertex;
@@ -217,7 +217,7 @@ impl<D: Directedness> Graph for MockGraph<D>
 	}
 }
 
-impl<D: Directedness> GraphMut for MockGraph<D>
+impl<D: Directedness, Ew: MockType> GraphMut for MockGraph<D, Ew>
 {
 	fn all_vertices_weighted_mut(
 		&mut self,
@@ -250,7 +250,7 @@ impl<D: Directedness> GraphMut for MockGraph<D>
 	}
 }
 
-impl<D: Directedness> NewVertex for MockGraph<D>
+impl<D: Directedness, Ew: MockType> NewVertex for MockGraph<D, Ew>
 {
 	fn new_vertex_weighted(&mut self, w: Self::VertexWeight) -> Result<Self::Vertex, ()>
 	{
@@ -268,7 +268,7 @@ impl<D: Directedness> NewVertex for MockGraph<D>
 		}
 	}
 }
-impl<D: Directedness> RemoveVertex for MockGraph<D>
+impl<D: Directedness, Ew: MockType> RemoveVertex for MockGraph<D, Ew>
 {
 	fn remove_vertex(&mut self, mock_v: impl Borrow<Self::Vertex>)
 		-> Result<Self::VertexWeight, ()>
@@ -287,7 +287,7 @@ impl<D: Directedness> RemoveVertex for MockGraph<D>
 	}
 }
 
-impl<D: Directedness> AddEdge for MockGraph<D>
+impl<D: Directedness, Ew: MockType> AddEdge for MockGraph<D, Ew>
 {
 	fn add_edge_weighted(
 		&mut self,
@@ -311,7 +311,7 @@ impl<D: Directedness> AddEdge for MockGraph<D>
 	}
 }
 
-impl<D: Directedness> RemoveEdge for MockGraph<D>
+impl<D: Directedness, Ew: MockType> RemoveEdge for MockGraph<D, Ew>
 {
 	fn remove_edge_where_weight<F>(
 		&mut self,
@@ -341,7 +341,7 @@ impl<D: Directedness> RemoveEdge for MockGraph<D>
 	}
 }
 
-impl<D: Directedness> VertexCount for MockGraph<D>
+impl<D: Directedness, Ew: MockType> VertexCount for MockGraph<D, Ew>
 {
 	type Count = usize;
 
@@ -351,7 +351,7 @@ impl<D: Directedness> VertexCount for MockGraph<D>
 	}
 }
 
-impl<D: Directedness> EdgeCount for MockGraph<D>
+impl<D: Directedness, Ew: MockType> EdgeCount for MockGraph<D, Ew>
 {
 	type Count = usize;
 
@@ -362,6 +362,6 @@ impl<D: Directedness> EdgeCount for MockGraph<D>
 }
 
 base_graph! {
-	use<D> MockGraph<D>
-	where D: Directedness
+	use<D,Ew> MockGraph<D,Ew>
+	where D: Directedness, Ew: MockType
 }

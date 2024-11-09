@@ -1,6 +1,6 @@
 use crate::mock_graph::{
 	arbitrary::{GuidedArbGraph, Limit},
-	MockVertex, TestGraph,
+	MockType, MockVertex, TestGraph,
 };
 use graphene::{
 	core::{
@@ -11,7 +11,7 @@ use graphene::{
 };
 use quickcheck::Gen;
 use rand::Rng;
-use std::{collections::HashSet, marker::PhantomData};
+use std::{collections::HashSet, fmt::Debug, marker::PhantomData};
 
 /// Used with `ArbTwoVerticesIn` to choose whether the two vertices must be
 /// unique (`Unique`),
@@ -57,12 +57,14 @@ pub struct TwoVerticesIn<G, U = NonUnique>(pub VertexInGraph<G>, pub MockVertex,
 where
 	G: GuidedArbGraph,
 	G::Graph: TestGraph,
+	<G::Graph as Graph>::EdgeWeight: MockType,
 	U: Uniqueness;
 
 impl<G, U> TwoVerticesIn<G, U>
 where
 	G: GuidedArbGraph,
 	G::Graph: TestGraph,
+	<G::Graph as Graph>::EdgeWeight: MockType,
 	U: Uniqueness,
 {
 	pub fn new(g: G, v1: MockVertex, v2: MockVertex) -> Self
@@ -108,6 +110,7 @@ impl<G, U> Ensure for TwoVerticesIn<G, U>
 where
 	G: GuidedArbGraph,
 	G::Graph: TestGraph,
+	<G::Graph as Graph>::EdgeWeight: MockType,
 	U: Uniqueness,
 {
 	fn ensure_unvalidated(c: Self::Ensured, _: ()) -> Self
@@ -138,6 +141,7 @@ impl_ensurer! {
 	where
 	G: GuidedArbGraph,
 	G::Graph: TestGraph,
+	<G::Graph as Graph>::EdgeWeight: MockType,
 	U: Uniqueness
 }
 
@@ -145,6 +149,7 @@ impl<Gr, U> GuidedArbGraph for TwoVerticesIn<Gr, U>
 where
 	Gr: GuidedArbGraph,
 	Gr::Graph: TestGraph,
+	<Gr::Graph as Graph>::EdgeWeight: MockType,
 	U: 'static + Uniqueness,
 {
 	fn choose_size<G: Gen>(

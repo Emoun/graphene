@@ -1,6 +1,6 @@
 use crate::mock_graph::{
 	arbitrary::{GuidedArbGraph, Limit},
-	MockEdgeWeight, MockGraph, MockT, MockVertex, MockVertexWeight,
+	MockGraph, MockT, MockType, MockVertex, MockVertexWeight,
 };
 use graphene::core::{
 	property::{AddEdge, DirectedGraph, EdgeCount, NewVertex, RemoveEdge, RemoveVertex},
@@ -40,7 +40,7 @@ impl Arbitrary for MockT
 	}
 }
 
-impl<D: Directedness> GuidedArbGraph for MockGraph<D>
+impl<D: Directedness, Ew: MockType> GuidedArbGraph for MockGraph<D, Ew>
 {
 	fn arbitrary_fixed<G: Gen>(g: &mut G, v_count: usize, e_count: usize) -> Self
 	{
@@ -64,7 +64,7 @@ impl<D: Directedness> GuidedArbGraph for MockGraph<D>
 				// Create a valid edge
 				let t_source = vertices[g.gen_range(0, v_count)];
 				let t_sink = vertices[g.gen_range(0, v_count)];
-				let t_weight = MockEdgeWeight::arbitrary(g);
+				let t_weight = Ew::arbitrary(g);
 				graph
 					.add_edge_weighted(&t_source, &t_sink, t_weight)
 					.unwrap();
@@ -103,7 +103,7 @@ impl<D: Directedness> GuidedArbGraph for MockGraph<D>
 			shrunk_weights.for_each(|s_w| {
 				let mut shrunk_graph = self.clone();
 				shrunk_graph
-					.remove_edge_where_weight(&source, &sink, |ref w| w.value == weight.value)
+					.remove_edge_where_weight(&source, &sink, |ref w| w == weight)
 					.unwrap();
 				shrunk_graph.add_edge_weighted(&source, &sink, s_w).unwrap();
 				result.push(shrunk_graph);
@@ -150,7 +150,7 @@ impl<D: Directedness> GuidedArbGraph for MockGraph<D>
 	}
 }
 
-impl<D: Directedness> MockGraph<D>
+impl<D: Directedness, Ew: MockType> MockGraph<D, Ew>
 {
 	/// Performs Depth First Search recursively tracking which vertices have
 	/// been visited in the 'visited' argument.

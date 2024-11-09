@@ -1,6 +1,6 @@
 use crate::mock_graph::{
 	arbitrary::{GuidedArbGraph, Limit},
-	MockVertex, TestGraph,
+	MockType, MockVertex, TestGraph,
 };
 use graphene::{
 	core::{Ensure, Graph, GraphDerefMut},
@@ -8,19 +8,21 @@ use graphene::{
 };
 use quickcheck::Gen;
 use rand::Rng;
-use std::collections::HashSet;
+use std::{collections::HashSet, fmt::Debug};
 
 /// An arbitrary graph and an arbitrary set of vertices in it.
 #[derive(Clone, Debug)]
 pub struct VerticesIn<G>(pub G, pub HashSet<MockVertex>)
 where
 	G: GuidedArbGraph,
-	G::Graph: TestGraph;
+	G::Graph: TestGraph,
+	<G::Graph as Graph>::EdgeWeight: MockType;
 
 impl<G> Ensure for VerticesIn<G>
 where
 	G: GuidedArbGraph,
 	G::Graph: TestGraph,
+	<G::Graph as Graph>::EdgeWeight: MockType,
 {
 	fn ensure_unvalidated(c: Self::Ensured, _: ()) -> Self
 	{
@@ -38,13 +40,15 @@ impl_ensurer! {
 	as (self.0): G
 	where
 	G: GuidedArbGraph,
-	G::Graph: TestGraph
+	G::Graph: TestGraph,
+	<G::Graph as Graph>::EdgeWeight: MockType
 }
 
 impl<Gr> GuidedArbGraph for VerticesIn<Gr>
 where
 	Gr: GuidedArbGraph + GraphDerefMut,
 	Gr::Graph: TestGraph,
+	<Gr::Graph as Graph>::EdgeWeight: MockType,
 {
 	fn choose_size<G: Gen>(
 		g: &mut G,

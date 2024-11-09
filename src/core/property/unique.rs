@@ -21,6 +21,17 @@ pub trait Unique: Graph
 	{
 		self.edges_between(v1, v2).next()
 	}
+
+	/// Returns whether the given edge can be added to the graph without
+	/// violating uniqueness
+	fn can_add_edge<G: Graph>(
+		graph: &G,
+		source: impl Borrow<G::Vertex>,
+		sink: impl Borrow<G::Vertex>,
+	) -> bool
+	{
+		graph.edges_between(source, sink).next().is_none()
+	}
 }
 
 #[derive(Clone, Debug)]
@@ -76,10 +87,7 @@ where
 		weight: Self::EdgeWeight,
 	) -> Result<(), ()>
 	{
-		if self
-			.edges_between(source.borrow(), sink.borrow())
-			.next()
-			.is_some()
+		if !Self::can_add_edge(self, source.borrow(), sink.borrow())
 		{
 			return Err(());
 		}
@@ -92,5 +100,4 @@ impl<C: Ensure> Unique for UniqueGraph<C> {}
 impl_ensurer! {
 	use<C> UniqueGraph<C>: Ensure, Unique, AddEdge
 	as (self.0) : C
-	where C: Ensure
 }

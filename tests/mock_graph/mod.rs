@@ -7,13 +7,25 @@ mod mock_graph;
 
 pub use self::mock_graph::*;
 use graphene::core::{Directedness, Graph};
+use quickcheck::Arbitrary;
+use std::fmt::Debug;
 
+/// A trait alias for all types used in testing graphs.
+pub trait MockType: Debug + Clone + PartialEq + Send + Arbitrary {}
+impl MockType for () {}
+
+/// A mock type for graph vertices.
+///
+/// Does not use `MockT` because the requirements on graph vertices are stricter
+/// than the rest of the associated types. (e.g., requires `Eq`)
 #[derive(Copy, Clone, Eq, PartialEq, Debug, Hash)]
 pub struct MockVertex
 {
 	pub value: usize,
 }
+impl MockType for MockVertex {}
 
+/// A mock type for various uses
 #[derive(Debug, Clone, PartialEq)]
 pub struct MockT
 {
@@ -29,6 +41,7 @@ impl Default for MockT
 		}
 	}
 }
+impl MockType for MockT {}
 
 pub type MockEdgeWeight = MockT;
 pub type MockVertexWeight = MockT;
@@ -45,12 +58,14 @@ impl Directedness for MockDirectedness
 	}
 }
 
-pub trait TestGraph:
-	Clone + Graph<Vertex = MockVertex, VertexWeight = MockVertexWeight, EdgeWeight = MockEdgeWeight>
+pub trait TestGraph: Clone + Graph<Vertex = MockVertex, VertexWeight = MockVertexWeight>
+where
+	Self::EdgeWeight: MockType,
 {
 }
-impl<T> TestGraph for T where
-	T: Clone
-		+ Graph<Vertex = MockVertex, VertexWeight = MockVertexWeight, EdgeWeight = MockEdgeWeight>
+impl<T> TestGraph for T
+where
+	T: Clone + Graph<Vertex = MockVertex, VertexWeight = MockVertexWeight>,
+	<T as Graph>::EdgeWeight: MockType,
 {
 }

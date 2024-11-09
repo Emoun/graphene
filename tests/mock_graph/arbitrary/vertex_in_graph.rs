@@ -1,6 +1,6 @@
 use crate::mock_graph::{
 	arbitrary::{GuidedArbGraph, Limit},
-	TestGraph,
+	MockType, TestGraph,
 };
 use graphene::core::{
 	property::{HasVertex, VertexInGraph},
@@ -13,6 +13,7 @@ use std::collections::HashSet;
 impl<Gr: GuidedArbGraph> GuidedArbGraph for VertexInGraph<Gr>
 where
 	Gr::Graph: TestGraph,
+	<Gr::Graph as Graph>::EdgeWeight: MockType,
 {
 	fn choose_size<G: Gen>(
 		g: &mut G,

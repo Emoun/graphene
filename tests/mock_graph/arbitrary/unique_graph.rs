@@ -1,6 +1,6 @@
 use crate::mock_graph::{
 	arbitrary::{GuidedArbGraph, Limit},
-	MockEdgeWeight, MockGraph,
+	MockGraph, MockType,
 };
 use graphene::{
 	core::{
@@ -9,11 +9,11 @@ use graphene::{
 	},
 	impl_ensurer,
 };
-use quickcheck::{Arbitrary, Gen};
+use quickcheck::Gen;
 use rand::Rng;
 use std::collections::HashSet;
 
-impl<D: Directedness> GuidedArbGraph for UniqueGraph<MockGraph<D>>
+impl<D: Directedness, Ew: MockType> GuidedArbGraph for UniqueGraph<MockGraph<D, Ew>>
 {
 	fn choose_size<G: Gen>(
 		g: &mut G,
@@ -24,7 +24,7 @@ impl<D: Directedness> GuidedArbGraph for UniqueGraph<MockGraph<D>>
 	) -> (usize, usize)
 	{
 		// Used to calculate the maximum possible number of edges
-		// in a unique graph with a number number of vertices
+		// in a unique graph with a number of vertices
 		let max_allowed =
 			|v: usize| v + ((v * (v.saturating_sub(1))) / (2 - (D::directed() as usize)));
 
@@ -46,8 +46,7 @@ impl<D: Directedness> GuidedArbGraph for UniqueGraph<MockGraph<D>>
 
 	fn arbitrary_fixed<G: Gen>(g: &mut G, v_count: usize, e_count: usize) -> Self
 	{
-		// Assert we are not expected to add more edges than is theoretically possible.
-		let mut graph = MockGraph::arbitrary_fixed(g, v_count, 0);
+		let mut graph = MockGraph::<D, Ew>::arbitrary_fixed(g, v_count, 0);
 		let verts: Vec<_> = graph.all_vertices().collect();
 		let mut edges_added = 0;
 
@@ -59,9 +58,7 @@ impl<D: Directedness> GuidedArbGraph for UniqueGraph<MockGraph<D>>
 
 			if graph.edges_between(v1, v2).count() == 0
 			{
-				graph
-					.add_edge_weighted(v1, v2, MockEdgeWeight::arbitrary(g))
-					.unwrap();
+				graph.add_edge_weighted(v1, v2, Ew::arbitrary(g)).unwrap();
 				edges_added += 1;
 			}
 		}
@@ -82,17 +79,17 @@ impl<D: Directedness> GuidedArbGraph for UniqueGraph<MockGraph<D>>
 
 /// An arbitrary graph that is __not__ unique
 #[derive(Clone, Debug)]
-pub struct NonUniqueGraph<D: Directedness>(pub MockGraph<D>);
+pub struct NonUniqueGraph<D: Directedness, Ew: MockType>(pub MockGraph<D, Ew>);
 
 impl_ensurer! {
-	use<D> NonUniqueGraph<D>:
+	use<D,Ew> NonUniqueGraph<D,Ew>:
 	// Can never impl the following because MockGraph doesn't
 	Reflexive
-	as (self.0) : MockGraph<D>
-	where D: Directedness
+	as (self.0) : MockGraph<D, Ew>
+	where D: Directedness, Ew:MockType
 }
 
-impl<D: Directedness> GuidedArbGraph for NonUniqueGraph<D>
+impl<D: Directedness, Ew: MockType> GuidedArbGraph for NonUniqueGraph<D, Ew>
 {
 	fn choose_size<G: Gen>(
 		g: &mut G,
@@ -118,7 +115,7 @@ impl<D: Directedness> GuidedArbGraph for NonUniqueGraph<D>
 		assert!(e_count >= 2);
 
 		// Create a graph with 1 less edge
-		let mut graph = MockGraph::arbitrary_fixed(g, v_count, e_count - 1);
+		let mut graph = MockGraph::<D, Ew>::arbitrary_fixed(g, v_count, e_count - 1);
 
 		// Duplicate an arbitrary edge
 		let (source, sink, _) = graph
@@ -126,7 +123,7 @@ impl<D: Directedness> GuidedArbGraph for NonUniqueGraph<D>
 			.nth(g.gen_range(0, graph.edge_count()))
 			.unwrap();
 		graph
-			.add_edge_weighted(source, sink, MockEdgeWeight::arbitrary(g))
+			.add_edge_weighted(source, sink, Ew::arbitrary(g))
 			.unwrap();
 
 		Self(graph)

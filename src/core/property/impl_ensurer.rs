@@ -5,7 +5,7 @@
 ///
 /// Supported property traits:
 /// Directed, Undirected, Unique, NoLoops, Reflexive, Weak, Unilateral,
-/// Connected, Subgraph
+/// Connected, Subgraph, Simple
 ///
 /// Warning: The Ensure implementation assumes the struct has 1 public member.
 /// If this is not the case, implement it yourself.
@@ -563,6 +563,22 @@ macro_rules! impl_properties {
 					}
 				}
 			}
+		}
+
+		// Simple
+		$crate::impl_properties!{
+			@struct [ $struct ]
+			@generic [ $($generics)* ]
+			@delegate [ $delegate_type ]
+			$(@exclude [ $($exclude_props)* ])?
+			$(@include [ $($include_props)* ])?
+			@bounds [
+				<$delegate_type as $crate::core::GraphDeref>::Graph:
+					$crate::core::property::Simple,
+				$($bounds)*
+			]
+			@trait_id Simple [$crate::core::property]
+			@implement {}
 		}
 	};
 

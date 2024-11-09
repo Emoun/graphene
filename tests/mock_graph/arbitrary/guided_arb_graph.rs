@@ -1,9 +1,10 @@
-use crate::mock_graph::{MockVertex, TestGraph};
-use graphene::core::Ensure;
+use crate::mock_graph::{MockType, MockVertex, TestGraph};
+use graphene::core::{Ensure, Graph};
 use quickcheck::{Arbitrary, Gen};
 use rand::Rng;
 use std::{
 	collections::HashSet,
+	fmt::Debug,
 	ops::{Bound, RangeBounds},
 };
 
@@ -72,6 +73,7 @@ impl Limit
 pub trait GuidedArbGraph: Ensure + 'static + Send + Clone
 where
 	Self::Graph: TestGraph,
+	<Self::Graph as Graph>::EdgeWeight: MockType,
 {
 	fn arbitrary_guided<G: Gen>(
 		g: &mut G,
@@ -147,11 +149,13 @@ where
 #[derive(Clone, Debug)]
 pub struct Arb<G: GuidedArbGraph>(pub G)
 where
-	G::Graph: TestGraph;
+	G::Graph: TestGraph,
+	<G::Graph as Graph>::EdgeWeight: MockType;
 
 impl<Gr: GuidedArbGraph> Arbitrary for Arb<Gr>
 where
 	Gr::Graph: TestGraph,
+	<Gr::Graph as Graph>::EdgeWeight: MockType,
 {
 	fn arbitrary<G: Gen>(g: &mut G) -> Self
 	{

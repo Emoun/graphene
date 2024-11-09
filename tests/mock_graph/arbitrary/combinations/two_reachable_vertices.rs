@@ -1,6 +1,6 @@
 use crate::mock_graph::{
 	arbitrary::{GuidedArbGraph, Limit, NonUnique, TwoVerticesIn, Uniqueness},
-	TestGraph,
+	MockType, TestGraph,
 };
 use graphene::{
 	algo::{Bfs, Dfs},
@@ -12,7 +12,7 @@ use graphene::{
 };
 use quickcheck::Gen;
 use rand::Rng;
-use std::collections::HashSet;
+use std::{collections::HashSet, fmt::Debug};
 
 /// An arbitrary graph and two vertices in it.
 ///
@@ -26,6 +26,7 @@ pub struct TwoReachableVerticesIn<G, U = NonUnique>(pub TwoVerticesIn<G, U>)
 where
 	G: GuidedArbGraph,
 	G::Graph: TestGraph,
+	<G::Graph as Graph>::EdgeWeight: MockType,
 	U: Uniqueness;
 
 impl_ensurer! {
@@ -34,6 +35,7 @@ impl_ensurer! {
 	where
 	G: GuidedArbGraph,
 	G::Graph: TestGraph,
+	<G::Graph as Graph>::EdgeWeight: MockType,
 	U: Uniqueness
 }
 
@@ -41,6 +43,7 @@ impl<Gr, U> GuidedArbGraph for TwoReachableVerticesIn<Gr, U>
 where
 	Gr: GuidedArbGraph + GraphDerefMut,
 	Gr::Graph: TestGraph + RemoveEdge + AddEdge,
+	<Gr::Graph as Graph>::EdgeWeight: MockType,
 	U: 'static + Uniqueness,
 {
 	fn choose_size<G: Gen>(

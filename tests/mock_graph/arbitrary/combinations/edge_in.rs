@@ -1,6 +1,6 @@
 use crate::mock_graph::{
 	arbitrary::{GuidedArbGraph, Limit},
-	MockEdgeWeight, MockVertex, TestGraph,
+	MockType, MockVertex, TestGraph,
 };
 use graphene::{
 	core::{
@@ -11,21 +11,27 @@ use graphene::{
 };
 use quickcheck::{Arbitrary, Gen};
 use rand::Rng;
-use std::collections::HashSet;
+use std::{collections::HashSet, fmt::Debug};
 
 /// An arbitrary graph with an edge that is guaranteed to be in the graph (the
 /// weight is a clone).
 /// The source of the edge can be accessed through `.get_vertex`, the sink `.1`,
 /// and the weight `.2`
 #[derive(Clone, Debug)]
-pub struct EdgeIn<G: GuidedArbGraph>(pub VertexInGraph<G>, pub MockVertex, pub MockEdgeWeight)
+pub struct EdgeIn<G: GuidedArbGraph>(
+	pub VertexInGraph<G>,
+	pub MockVertex,
+	pub <G::Graph as Graph>::EdgeWeight,
+)
 where
-	G::Graph: TestGraph;
+	G::Graph: TestGraph,
+	<G::Graph as Graph>::EdgeWeight: MockType;
 
 impl<G> graphene::core::Ensure for EdgeIn<G>
 where
 	G: GuidedArbGraph,
 	G::Graph: TestGraph,
+	<G::Graph as Graph>::EdgeWeight: MockType,
 {
 	fn ensure_unvalidated(c: Self::Ensured, _: ()) -> Self
 	{
@@ -46,13 +52,15 @@ impl_ensurer! {
 	as ( self.0) : VertexInGraph<G>
 	where
 	G: GuidedArbGraph,
-	G::Graph:  TestGraph
+	G::Graph: TestGraph,
+	<G::Graph as Graph>::EdgeWeight: MockType
 }
 
 impl<Gr> GuidedArbGraph for EdgeIn<Gr>
 where
 	Gr: GuidedArbGraph + GraphDerefMut,
 	Gr::Graph: TestGraph + GraphMut + AddEdge + RemoveEdge,
+	<Gr::Graph as Graph>::EdgeWeight: MockType,
 {
 	fn choose_size<G: Gen>(
 		g: &mut G,
@@ -119,7 +127,7 @@ where
 			for w in self.edges_between(v1, v2)
 			{
 				// Remove edge
-				if !saw_reference_edge_before && w.value == self.2.value
+				if !saw_reference_edge_before && *w == self.2
 				{
 					// Cannot remove the reference edge, if its the only one
 					saw_reference_edge_before = true
@@ -127,7 +135,7 @@ where
 				else
 				{
 					let mut g = self.clone();
-					g.remove_edge_where_weight(v1, v2, |ref weight| w.value == weight.value)
+					g.remove_edge_where_weight(v1, v2, |ref weight| w == *weight)
 						.unwrap();
 					result.push(g);
 				}
@@ -137,9 +145,9 @@ where
 					let mut shrunk_graph = self.clone();
 					*shrunk_graph
 						.edges_between_mut(v1, v2)
-						.find(|w| w.value == self.2.value)
+						.find(|w| **w == self.2)
 						.unwrap() = s_w.clone();
-					if !shrunk_reference_weight_before && self.2.value == w.value
+					if !shrunk_reference_weight_before && self.2 == *w
 					{
 						shrunk_graph.2 = s_w;
 						// We only need to update the reference weight for one edge

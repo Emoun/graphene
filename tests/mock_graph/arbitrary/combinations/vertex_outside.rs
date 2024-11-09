@@ -1,25 +1,27 @@
 use crate::mock_graph::{
 	arbitrary::{GuidedArbGraph, Limit},
-	MockVertex, TestGraph,
+	MockType, MockVertex, TestGraph,
 };
 use graphene::{
 	core::{Ensure, Graph},
 	impl_ensurer,
 };
 use quickcheck::{Arbitrary, Gen};
-use std::collections::HashSet;
+use std::{collections::HashSet, fmt::Debug};
 
 /// An arbitrary graph and a vertex that is guaranteed to not be in it.
 #[derive(Clone, Debug)]
 pub struct VertexOutside<G>(pub G, pub MockVertex)
 where
 	G: GuidedArbGraph,
-	G::Graph: TestGraph;
+	G::Graph: TestGraph,
+	<G::Graph as Graph>::EdgeWeight: MockType;
 
 impl<G> Ensure for VertexOutside<G>
 where
 	G: GuidedArbGraph,
 	G::Graph: TestGraph,
+	<G::Graph as Graph>::EdgeWeight: MockType,
 {
 	fn ensure_unvalidated(_c: Self::Ensured, _: ()) -> Self
 	{
@@ -38,12 +40,14 @@ impl_ensurer! {
 	where
 	G: GuidedArbGraph,
 	G::Graph: TestGraph,
+	<G::Graph as Graph>::EdgeWeight: MockType
 }
 
 impl<Gr> GuidedArbGraph for VertexOutside<Gr>
 where
 	Gr: GuidedArbGraph,
 	Gr::Graph: TestGraph,
+	<Gr::Graph as Graph>::EdgeWeight: MockType,
 {
 	fn choose_size<G: Gen>(
 		g: &mut G,
