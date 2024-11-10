@@ -9,9 +9,9 @@ where
 {
 	graph: &'a G,
 	visited: Vec<G::Vertex>,
-	// We keep is sorted with the lowest weight at the end for efficiency.
+	// We keep it sorted with the lowest weight at the end for efficiency.
 	queue: Vec<(W, (G::Vertex, G::Vertex, &'a G::EdgeWeight))>,
-	get_weight: fn(&G::EdgeWeight) -> W,
+	get_distance: fn(&G::EdgeWeight) -> W,
 }
 
 impl<'a, G, W> DijkstraShortestPaths<'a, G, W>
@@ -19,7 +19,7 @@ where
 	G: 'a + Graph,
 	W: PrimInt + Unsigned,
 {
-	pub fn new(graph: &'a G, get_weight: fn(&G::EdgeWeight) -> W) -> Self
+	pub fn new(graph: &'a G, get_distance: fn(&G::EdgeWeight) -> W) -> Self
 	where
 		G: HasVertex,
 	{
@@ -27,7 +27,7 @@ where
 			graph,
 			visited: Vec::new(),
 			queue: Vec::new(),
-			get_weight,
+			get_distance,
 		};
 		dijk.visit(graph.get_vertex(), W::zero());
 		dijk
@@ -43,7 +43,7 @@ where
 
 		for (sink, weight) in edges
 		{
-			let new_weight = w + (self.get_weight)(weight);
+			let new_weight = w + (self.get_distance)(weight);
 			if let Some((old_weight, old_edge)) = self
 				.queue
 				.iter_mut()
@@ -61,6 +61,26 @@ where
 			}
 		}
 		self.queue.sort_by(|(w1, _), (w2, _)| w2.cmp(w1));
+	}
+
+	/// Returns the vertices reachable from the designated vertex and the
+	/// weighted distance to them
+	pub fn distances(
+		graph: &'a G,
+		get_distance: fn(&G::EdgeWeight) -> W,
+	) -> impl 'a + Iterator<Item = (G::Vertex, W)>
+	where
+		G: HasVertex,
+		W: 'a,
+	{
+		let mut distances = vec![(graph.get_vertex(), W::zero())];
+
+		DijkstraShortestPaths::new(graph, get_distance).map(move |(so, si, w)| {
+			let dist = distances.iter().find(|(v, _)| so == *v).unwrap().1;
+			let new_dist = dist + get_distance(w);
+			distances.push((si, new_dist));
+			(si, new_dist)
+		})
 	}
 }
 

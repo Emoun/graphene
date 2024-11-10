@@ -22,7 +22,7 @@ pub trait HasVertex: Graph
 /// Ensures the underlying graph has at least 1 vertex.
 ///
 /// Gives no guarantees on which vertex is returned by any given call to
-/// `get_vertex` if the the graph has multiple vertices.
+/// `get_vertex` if the graph has multiple vertices.
 #[derive(Clone)]
 pub struct HasVertexGraph<C: Ensure>(C);
 

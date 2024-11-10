@@ -51,7 +51,7 @@ pub trait Graph
 {
 	/// Type of the graphs vertices.
 	///
-	/// This type should be lightweight, as its passed around by-value
+	/// This type should be lightweight, as it's passed around by-value
 	/// (therefore must implement [`Copy`](https://doc.rust-lang.org/std/marker/trait.Copy.html)).
 	/// Whether two vertices are equal is also a very common operation and
 	/// should therefore also be light-weight.

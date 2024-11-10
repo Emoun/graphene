@@ -395,6 +395,44 @@ macro_rules! impl_properties {
 			}
 		}
 
+		// VertexCount
+		$crate::impl_properties!{
+			@struct [ $struct ]
+			@generic [ $($generics)* ]
+			@delegate [ $delegate_type ]
+			$(@exclude [ $($exclude_props)* ])?
+			$(@include [ $($include_props)* ])?
+			@bounds [
+				<$delegate_type as $crate::core::GraphDeref>::Graph:
+					$crate::core::property::VertexCount,
+				$($bounds)*
+			]
+			@trait_id VertexCount [$crate::core::property]
+			@implement {
+				type Count = <<$delegate_type as $crate::core::GraphDeref>::Graph
+					as $crate::core::property::VertexCount>::Count;
+			}
+		}
+
+		// EdgeCount
+		$crate::impl_properties!{
+			@struct [ $struct ]
+			@generic [ $($generics)* ]
+			@delegate [ $delegate_type ]
+			$(@exclude [ $($exclude_props)* ])?
+			$(@include [ $($include_props)* ])?
+			@bounds [
+				<$delegate_type as $crate::core::GraphDeref>::Graph:
+					$crate::core::property::EdgeCount,
+				$($bounds)*
+			]
+			@trait_id EdgeCount [$crate::core::property]
+			@implement {
+				type Count = <<$delegate_type as $crate::core::GraphDeref>::Graph
+					as $crate::core::property::EdgeCount>::Count;
+			}
+		}
+
 		// Unique
 		$crate::impl_properties!{
 			@struct [ $struct ]

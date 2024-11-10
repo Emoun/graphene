@@ -5,7 +5,7 @@
 /// For undirected graphs, which vertex is which has no meaning.
 /// For directed graphs, an edge points from the `source` to the `sink`.
 ///
-/// This trait has a blanket implementation implementation for any pair `(V,V)`
+/// This trait has a blanket implementation for any pair `(V,V)`
 /// or triple `(V,V,W)`. Therefore, the easiest way to create an edge is to
 /// simply use a pair. The triple can be used if the edge is weighted
 pub trait Edge<V>

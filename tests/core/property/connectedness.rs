@@ -5,12 +5,15 @@ use crate::mock_graph::{
 	MockDirectedness, MockEdgeWeight, MockGraph, MockVertexWeight,
 };
 use duplicate::duplicate_item;
-use graphene::core::{
-	property::{
-		AddEdge, Connected, ConnectedGraph, HasVertex, NewVertex, RemoveEdge, RemoveVertex,
-		Unilateral, UnilateralGraph, VertexInGraph, Weak, WeakGraph,
+use graphene::{
+	algo::DijkstraShortestPaths,
+	core::{
+		property::{
+			AddEdge, Connected, ConnectedGraph, HasVertex, NewVertex, RemoveEdge, RemoveVertex,
+			Unilateral, UnilateralGraph, VertexInGraph, Weak, WeakGraph,
+		},
+		Directed, Graph, Undirected,
 	},
-	Directed, EnsureUnloaded, ReleaseUnloaded, Undirected,
 };
 use static_assertions::assert_impl_all;
 
@@ -47,6 +50,7 @@ use static_assertions::assert_impl_all;
 mod module
 {
 	use super::*;
+	use graphene::core::{EnsureUnloaded, ReleaseUnloaded};
 
 	/// Tests that the graph correctly identifies graphs with its connectedness.
 	#[quickcheck]
@@ -224,6 +228,53 @@ mod module
 
 		// We now try to remove the the added vertex
 		connected.remove_vertex(&new_v).is_err()
+	}
+}
+
+#[duplicate_item(directedness; [Directed]; [Undirected])]
+mod __
+{
+	use super::*;
+	use graphene::core::Ensure;
+
+	/// Tests `eccentricity_weighted`
+	#[quickcheck]
+	fn eccentricity_weighted(
+		Arb(g): Arb<VertexInGraph<ConnectedGraph<MockGraph<directedness>>>>,
+	) -> bool
+	{
+		let eccentricity = g.eccentricity_weighted(|w| w.value);
+		DijkstraShortestPaths::distances(&g, |w| w.value).all(|(_, dist)| dist <= eccentricity)
+	}
+
+	/// Tests `diameter_weighted`
+	#[quickcheck]
+	fn diameter_weighted(Arb(g): Arb<ConnectedGraph<MockGraph<directedness>>>) -> bool
+	{
+		let diameter = g.diameter_weighted(|w| w.value);
+		g.all_vertices().all(|v| {
+			VertexInGraph::ensure_unvalidated(&g, v).eccentricity_weighted(|w| w.value) <= diameter
+		})
+	}
+
+	/// Tests `radius_weighted`
+	#[quickcheck]
+	fn radius_weighted(Arb(g): Arb<ConnectedGraph<MockGraph<directedness>>>) -> bool
+	{
+		let radius = g.radius_weighted(|w| w.value);
+		g.all_vertices().all(|v| {
+			VertexInGraph::ensure_unvalidated(&g, v).eccentricity_weighted(|w| w.value) >= radius
+		})
+	}
+
+	/// Tests `centers_weighted`
+	#[quickcheck]
+	fn centers_weighted(Arb(g): Arb<ConnectedGraph<MockGraph<directedness>>>) -> bool
+	{
+		let radius = g.radius_weighted(|w| w.value);
+		g.centers_weighted(|w| w.value).all(|v| {
+			VertexInGraph::ensure_unvalidated(&g, v).eccentricity_weighted(|w| w.value) == radius
+		})
 	}
 }
 
