@@ -1,26 +1,25 @@
 use crate::core::{property::HasVertex, Edge, Graph};
-use num_traits::{PrimInt, Unsigned};
+use num_traits::{PrimInt, Unsigned, Zero};
 use std::borrow::Borrow;
 
 /// [Dijkstra's shortest paths algorithm](https://mathworld.wolfram.com/DijkstrasAlgorithm.html)
-pub struct DijkstraShortestPaths<'a, G, W>
+pub struct DijkstraShortestPaths<'a, G>
 where
 	G: 'a + Graph,
-	W: PrimInt + Unsigned,
+	G::EdgeWeight: PrimInt + Unsigned,
 {
 	graph: &'a G,
 	visited: Vec<G::Vertex>,
 	// We keep it sorted with the lowest weight at the end for efficiency.
-	queue: Vec<(W, (G::Vertex, G::Vertex, G::EdgeWeightRef<'a>))>,
-	get_distance: fn(&G::EdgeWeight) -> W,
+	queue: Vec<(G::EdgeWeight, (G::Vertex, G::Vertex, G::EdgeWeightRef<'a>))>,
 }
 
-impl<'a, G, W> DijkstraShortestPaths<'a, G, W>
+impl<'a, G> DijkstraShortestPaths<'a, G>
 where
 	G: 'a + Graph,
-	W: PrimInt + Unsigned,
+	G::EdgeWeight: PrimInt + Unsigned,
 {
-	pub fn new(graph: &'a G, get_distance: fn(&G::EdgeWeight) -> W) -> Self
+	pub fn new(graph: &'a G) -> Self
 	where
 		G: HasVertex,
 	{
@@ -28,13 +27,12 @@ where
 			graph,
 			visited: Vec::new(),
 			queue: Vec::new(),
-			get_distance,
 		};
-		dijk.visit(graph.get_vertex(), W::zero());
+		dijk.visit(graph.get_vertex(), G::EdgeWeight::zero());
 		dijk
 	}
 
-	fn visit(&mut self, v: G::Vertex, w: W)
+	fn visit(&mut self, v: G::Vertex, w: G::EdgeWeight)
 	{
 		self.visited.push(v);
 		let visited = &self.visited;
@@ -44,7 +42,7 @@ where
 
 		for (sink, weight) in edges
 		{
-			let new_weight = w + (self.get_distance)(weight.borrow());
+			let new_weight = w + *weight.borrow();
 			if let Some((old_weight, old_edge)) = self
 				.queue
 				.iter_mut()
@@ -66,42 +64,25 @@ where
 
 	/// Returns the vertices reachable from the designated vertex and the
 	/// weighted distance to them
-	pub fn distances(
-		graph: &'a G,
-		get_distance: fn(&G::EdgeWeight) -> W,
-	) -> impl 'a + Iterator<Item = (G::Vertex, W)>
+	pub fn distances(graph: &'a G) -> impl 'a + Iterator<Item = (G::Vertex, G::EdgeWeight)>
 	where
 		G: HasVertex,
-		W: 'a,
 	{
-		let mut distances = vec![(graph.get_vertex(), W::zero())];
+		let mut distances = vec![(graph.get_vertex(), G::EdgeWeight::zero())];
 
-		DijkstraShortestPaths::new(graph, get_distance).map(move |(so, si, w)| {
+		DijkstraShortestPaths::new(graph).map(move |(so, si, w)| {
 			let dist = distances.iter().find(|(v, _)| so == *v).unwrap().1;
-			let new_dist = dist + get_distance(w.borrow());
+			let new_dist = dist + *w.borrow();
 			distances.push((si, new_dist));
 			(si, new_dist)
 		})
 	}
 }
 
-impl<'a, G> DijkstraShortestPaths<'a, G, G::EdgeWeight>
+impl<'a, G> Iterator for DijkstraShortestPaths<'a, G>
 where
 	G: 'a + Graph,
 	G::EdgeWeight: PrimInt + Unsigned,
-{
-	pub fn new_simple(graph: &'a G) -> Self
-	where
-		G: HasVertex,
-	{
-		Self::new(graph, Clone::clone)
-	}
-}
-
-impl<'a, G, W> Iterator for DijkstraShortestPaths<'a, G, W>
-where
-	G: 'a + Graph,
-	W: PrimInt + Unsigned,
 {
 	type Item = (G::Vertex, G::Vertex, G::EdgeWeightRef<'a>);
 
@@ -118,46 +99,33 @@ where
 /// Shortest-Path-First search
 ///
 /// next() doesn't return the starting vertex.
-pub struct Spfs<'a, G, W>
-where
-	G: 'a + Graph,
-	W: PrimInt + Unsigned,
-{
-	dijk: DijkstraShortestPaths<'a, G, W>,
-}
-
-impl<'a, G, W> Spfs<'a, G, W>
-where
-	G: 'a + Graph,
-	W: PrimInt + Unsigned,
-{
-	pub fn new(graph: &'a G, get_weight: fn(&G::EdgeWeight) -> W) -> Self
-	where
-		G: HasVertex,
-	{
-		Self {
-			dijk: DijkstraShortestPaths::new(graph, get_weight),
-		}
-	}
-}
-
-impl<'a, G> Spfs<'a, G, G::EdgeWeight>
+pub struct Spfs<'a, G>
 where
 	G: 'a + Graph,
 	G::EdgeWeight: PrimInt + Unsigned,
 {
-	pub fn new_simple(graph: &'a G) -> Self
+	dijk: DijkstraShortestPaths<'a, G>,
+}
+
+impl<'a, G> Spfs<'a, G>
+where
+	G: 'a + Graph,
+	G::EdgeWeight: PrimInt + Unsigned,
+{
+	pub fn new(graph: &'a G) -> Self
 	where
 		G: HasVertex,
 	{
-		Self::new(graph, Clone::clone)
+		Self {
+			dijk: DijkstraShortestPaths::new(graph),
+		}
 	}
 }
 
-impl<'a, G, W> Iterator for Spfs<'a, G, W>
+impl<'a, G> Iterator for Spfs<'a, G>
 where
 	G: 'a + Graph,
-	W: PrimInt + Unsigned,
+	G::EdgeWeight: PrimInt + Unsigned,
 {
 	type Item = G::Vertex;
 

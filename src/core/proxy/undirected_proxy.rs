@@ -41,11 +41,11 @@ where
 		}
 	}
 
-	fn edges_between<'a: 'b, 'b>(
-		&'a self,
-		source: impl 'b + Borrow<Self::Vertex>,
-		sink: impl 'b + Borrow<Self::Vertex>,
-	) -> impl 'b + Iterator<Item = Self::EdgeWeightRef<'a>>
+	fn edges_between(
+		&self,
+		source: impl Borrow<Self::Vertex>,
+		sink: impl Borrow<Self::Vertex>,
+	) -> impl Iterator<Item = Self::EdgeWeightRef<'_>>
 	{
 		self.0
 			.graph()

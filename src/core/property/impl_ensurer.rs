@@ -254,11 +254,11 @@ macro_rules! impl_properties {
 							&self,
 						) -> impl Iterator<Item = (Self::Vertex, &Self::VertexWeight)>;
 
-						fn edges_between<'a: 'b, 'b>(
-							&'a self,
-							source: impl 'b + std::borrow::Borrow<Self::Vertex>,
-							sink: impl 'b + std::borrow::Borrow<Self::Vertex>,
-						) -> impl 'b + Iterator<Item = Self::EdgeWeightRef<'a>>;
+						fn edges_between(
+							&self,
+							source: impl std::borrow::Borrow<Self::Vertex>,
+							sink: impl std::borrow::Borrow<Self::Vertex>,
+						) -> impl Iterator<Item = Self::EdgeWeightRef<'_>>;
 					}
 				}
 			}
@@ -283,13 +283,13 @@ macro_rules! impl_properties {
 					to $crate::core::GraphDerefMut::graph_mut(&mut self$($delegate)+) {
 						fn all_vertices_weighted_mut(
 							&mut self,
-						) -> impl '_ + Iterator<Item = (Self::Vertex, &mut Self::VertexWeight)>;
+						) -> impl Iterator<Item = (Self::Vertex, &mut Self::VertexWeight)>;
 
-						fn edges_between_mut<'a: 'b, 'b>(
-							&'a mut self,
-							source: impl 'b + std::borrow::Borrow<Self::Vertex>,
-							sink: impl 'b + std::borrow::Borrow<Self::Vertex>,
-						) -> impl 'b + Iterator<Item = &'a mut Self::EdgeWeight>;
+						fn edges_between_mut(
+							&mut self,
+							source: impl std::borrow::Borrow<Self::Vertex>,
+							sink: impl std::borrow::Borrow<Self::Vertex>,
+						) -> impl Iterator<Item = &mut Self::EdgeWeight>;
 					}
 				}
 			}

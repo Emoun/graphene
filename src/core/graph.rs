@@ -91,18 +91,18 @@ pub trait Graph
 	///
 	/// If the graph is undirected, returns all edges connecting the two
 	/// vertices. I.e. all edges where e == (v1,v2,_) or e == (v2,v1,_)
-	fn edges_between<'a: 'b, 'b>(
-		&'a self,
-		source: impl 'b + Borrow<Self::Vertex>,
-		sink: impl 'b + Borrow<Self::Vertex>,
-	) -> impl 'b + Iterator<Item = Self::EdgeWeightRef<'a>>;
+	fn edges_between(
+		&self,
+		source: impl Borrow<Self::Vertex>,
+		sink: impl Borrow<Self::Vertex>,
+	) -> impl Iterator<Item = Self::EdgeWeightRef<'_>>;
 
 	// Optional methods
 
 	/// Returns copies of all current edges in the graph.
 	fn all_edges(
 		&self,
-	) -> impl '_ + Iterator<Item = (Self::Vertex, Self::Vertex, Self::EdgeWeightRef<'_>)>
+	) -> impl Iterator<Item = (Self::Vertex, Self::Vertex, Self::EdgeWeightRef<'_>)>
 	{
 		let mut finished = Vec::new();
 		self.all_vertices()
@@ -124,7 +124,7 @@ pub trait Graph
 			})
 	}
 
-	fn all_vertices(&self) -> impl '_ + Iterator<Item = Self::Vertex>
+	fn all_vertices(&self) -> impl Iterator<Item = Self::Vertex>
 	{
 		self.all_vertices_weighted().map(|(v, _)| v)
 	}
@@ -146,7 +146,7 @@ pub trait Graph
 		iter.into_iter().all(|v| self.contains_vertex(v))
 	}
 
-	fn all_vertex_weights(&self) -> impl '_ + Iterator<Item = &Self::VertexWeight>
+	fn all_vertex_weights(&self) -> impl Iterator<Item = &Self::VertexWeight>
 	{
 		self.all_vertices_weighted().map(|(_, w)| w)
 	}
@@ -156,10 +156,10 @@ pub trait Graph
 	///
 	/// If the graph is undirected, is semantically equivalent to
 	/// `edges_incident_on`.
-	fn edges_sourced_in<'a: 'b, 'b>(
-		&'a self,
-		v: impl 'b + Borrow<Self::Vertex>,
-	) -> impl 'b + Iterator<Item = (Self::Vertex, Self::EdgeWeightRef<'a>)>
+	fn edges_sourced_in(
+		&self,
+		v: impl Borrow<Self::Vertex>,
+	) -> impl Iterator<Item = (Self::Vertex, Self::EdgeWeightRef<'_>)>
 	{
 		self.all_vertices().flat_map(move |v2| {
 			self.edges_between(v.borrow().clone(), v2.borrow().clone())
@@ -172,10 +172,10 @@ pub trait Graph
 	///
 	/// If the graph is undirected, is semantically equivalent to
 	/// `edges_incident_on`.
-	fn edges_sinked_in<'a: 'b, 'b>(
-		&'a self,
-		v: impl 'b + Borrow<Self::Vertex>,
-	) -> impl 'b + Iterator<Item = (Self::Vertex, Self::EdgeWeightRef<'a>)>
+	fn edges_sinked_in(
+		&self,
+		v: impl Borrow<Self::Vertex>,
+	) -> impl Iterator<Item = (Self::Vertex, Self::EdgeWeightRef<'_>)>
 	{
 		self.all_vertices().flat_map(move |v2| {
 			self.edges_between(v2.borrow().clone(), v.borrow().clone())
@@ -187,10 +187,10 @@ pub trait Graph
 	/// on the given vertex.
 	///
 	/// If the graph is directed, edge directions are ignored.
-	fn edges_incident_on<'a: 'b, 'b>(
-		&'a self,
-		v: impl 'b + Borrow<Self::Vertex>,
-	) -> impl 'b + Iterator<Item = (Self::Vertex, Self::EdgeWeightRef<'a>)>
+	fn edges_incident_on(
+		&self,
+		v: impl Borrow<Self::Vertex>,
+	) -> impl Iterator<Item = (Self::Vertex, Self::EdgeWeightRef<'_>)>
 	{
 		self.edges_sourced_in(v.borrow().clone()).chain(
 			self.edges_sinked_in(v.borrow().clone())
@@ -200,10 +200,7 @@ pub trait Graph
 
 	/// Returns any vertices connected to the given one with an edge regardless
 	/// of direction.
-	fn vertex_neighbors<'a: 'b, 'b>(
-		&'a self,
-		v: impl 'b + Borrow<Self::Vertex>,
-	) -> impl 'b + Iterator<Item = Self::Vertex>
+	fn vertex_neighbors(&self, v: impl Borrow<Self::Vertex>) -> impl Iterator<Item = Self::Vertex>
 	{
 		self.all_vertices()
 			.filter(move |other| self.neighbors(v.borrow(), other.borrow()))
@@ -234,13 +231,13 @@ pub trait GraphMut: Graph
 {
 	fn all_vertices_weighted_mut(
 		&mut self,
-	) -> impl '_ + Iterator<Item = (Self::Vertex, &mut Self::VertexWeight)>;
+	) -> impl Iterator<Item = (Self::Vertex, &mut Self::VertexWeight)>;
 
-	fn edges_between_mut<'a: 'b, 'b>(
-		&'a mut self,
-		source: impl 'b + Borrow<Self::Vertex>,
-		sink: impl 'b + Borrow<Self::Vertex>,
-	) -> impl 'b + Iterator<Item = &'a mut Self::EdgeWeight>;
+	fn edges_between_mut(
+		&mut self,
+		source: impl Borrow<Self::Vertex>,
+		sink: impl Borrow<Self::Vertex>,
+	) -> impl Iterator<Item = &mut Self::EdgeWeight>;
 
 	// Optional methods
 

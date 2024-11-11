@@ -6,24 +6,21 @@ use graphene::{
 	algo::{Bfs, Dfs, Spfs},
 	core::{
 		property::{AddEdge, ConnectedGraph, HasVertex, VertexInGraph},
+		proxy::EdgeWeightMap,
 		Directed, Ensure, Graph, GraphDeref, Release, Undirected,
 	},
 };
 use std::collections::HashSet;
 
-/// Constructs a new Spfs for graphs with MockEdgeWeight edge weights.
-///
-/// Used in the duplicate to instantiate `Spfs`
-fn spfs_new<G: HasVertex<EdgeWeight = MockEdgeWeight>>(g: &G) -> Spfs<G, u32>
-{
-	Spfs::new(g, |v| v.value)
-}
-
 #[duplicate_item(
-	module		search_algo_new;
-	[ dfs ]		[ Dfs::new_simple ];
-	[ bfs ]		[ Bfs::new ];
-	[ spfs ]	[ spfs_new ]
+	module		search_algo_new(graph);
+	[ dfs ]		[ Dfs::new_simple(graph) ];
+	[ bfs ]		[ Bfs::new(graph) ];
+	[ spfs ]	[
+		let ref_graph = graph;
+		let map_graph = EdgeWeightMap::new(ref_graph, |_,_,w| w.value);
+		Spfs::new(&map_graph)
+	]
 )]
 mod module
 {
@@ -51,7 +48,7 @@ mod module
 			visited.insert(mock.get_vertex().clone());
 
 			let mut visited_once = true;
-			search_algo_new(mock.graph()).for_each(|v| {
+			search_algo_new([mock.graph()]).for_each(|v| {
 				// Track whether we have seen the vertex before
 				visited_once &= visited.insert(v);
 			});
@@ -74,7 +71,7 @@ mod module
 			let v_map = graph.join(&g2);
 
 			// Ensure that no visited vertex comes from outside the start component
-			search_algo_new(&VertexInGraph::ensure_unvalidated(graph, v))
+			search_algo_new([&VertexInGraph::ensure_unvalidated(graph, v)])
 				.all(|visit| v_map.values().all(|&new_v| visit != new_v))
 		}
 	}
@@ -110,7 +107,7 @@ mod module
 		}
 
 		// Ensure that no visited vertex comes from outside the start component
-		search_algo_new(&VertexInGraph::ensure_unvalidated(graph, v))
+		search_algo_new([&VertexInGraph::ensure_unvalidated(graph, v)])
 			.all(|visit| v_map.values().all(|&new_v| visit != new_v))
 	}
 
@@ -146,6 +143,6 @@ mod module
 
 		// Ensure that all vertices are visited except the start
 		let count = graph.all_vertices().count() - 1;
-		search_algo_new(&VertexInGraph::ensure_unvalidated(graph, v)).count() == count
+		search_algo_new([&VertexInGraph::ensure_unvalidated(graph, v)]).count() == count
 	}
 }

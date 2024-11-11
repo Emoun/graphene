@@ -25,11 +25,11 @@ where
 		self.vertices.iter().enumerate().map(|(v, (w, _))| (v, w))
 	}
 
-	fn edges_between<'a: 'b, 'b>(
-		&'a self,
-		source: impl 'b + Borrow<Self::Vertex>,
-		sink: impl 'b + Borrow<Self::Vertex>,
-	) -> impl 'b + Iterator<Item = Self::EdgeWeightRef<'a>>
+	fn edges_between(
+		&self,
+		source: impl Borrow<Self::Vertex>,
+		sink: impl Borrow<Self::Vertex>,
+	) -> impl Iterator<Item = Self::EdgeWeightRef<'_>>
 	{
 		let source = source.borrow().clone();
 		let sink = sink.borrow().clone();
@@ -75,7 +75,7 @@ where
 {
 	fn all_vertices_weighted_mut(
 		&mut self,
-	) -> impl '_ + Iterator<Item = (Self::Vertex, &mut Self::VertexWeight)>
+	) -> impl Iterator<Item = (Self::Vertex, &mut Self::VertexWeight)>
 	{
 		self.vertices
 			.iter_mut()
@@ -83,11 +83,11 @@ where
 			.map(|(v, (w, _))| (v, w))
 	}
 
-	fn edges_between_mut<'a: 'b, 'b>(
-		&'a mut self,
-		source: impl 'b + Borrow<Self::Vertex>,
-		sink: impl 'b + Borrow<Self::Vertex>,
-	) -> impl 'b + Iterator<Item = &'a mut Self::EdgeWeight>
+	fn edges_between_mut(
+		&mut self,
+		source: impl Borrow<Self::Vertex>,
+		sink: impl Borrow<Self::Vertex>,
+	) -> impl Iterator<Item = &mut Self::EdgeWeight>
 	{
 		let source = source.borrow().clone();
 		let sink = sink.borrow().clone();

@@ -9,7 +9,7 @@ use crate::{
 		Ensure, Graph, GraphDerefMut,
 	},
 };
-use num_traits::{PrimInt, Unsigned};
+use num_traits::{PrimInt, Unsigned, Zero};
 use std::borrow::Borrow;
 
 /// A marker trait for graphs that are connected.
@@ -23,24 +23,25 @@ pub trait Connected: Unilateral
 	/// Takes a closure that converts an edge's weight into a distance value.
 	/// The distance between two vertices is equal to the distance of the
 	/// edge(s) between them.
-	fn eccentricity_weighted<W: PrimInt + Unsigned>(
-		&self,
-		get_distance: fn(&Self::EdgeWeight) -> W,
-	) -> W
+	fn eccentricity(&self) -> Self::EdgeWeight
 	where
 		Self: EdgeCount + HasVertex + Sized,
+		Self::EdgeWeight: PrimInt + Unsigned,
 	{
 		// We search for all the shortest paths, the eccentricity is the longest one
-		DijkstraShortestPaths::distances(self, get_distance).fold(W::zero(), |max_dist, (_, d2)| {
-			if max_dist < d2
-			{
-				d2
-			}
-			else
-			{
-				max_dist
-			}
-		})
+		DijkstraShortestPaths::distances(self).fold(
+			Self::EdgeWeight::zero(),
+			|max_dist, (_, d2)| {
+				if max_dist < d2
+				{
+					d2
+				}
+				else
+				{
+					max_dist
+				}
+			},
+		)
 	}
 
 	/// Calculates the maximum eccentricity of the graph ([the diameter](https://mathworld.wolfram.com/GraphDiameter.html)).
@@ -48,25 +49,23 @@ pub trait Connected: Unilateral
 	/// Takes a closure that converts an edge's weight into a distance value.
 	/// The distance between two vertices is equal to the distance of the
 	/// edge(s) between them.
-	fn diameter_weighted<W: PrimInt + Unsigned>(
-		&self,
-		get_distance: fn(&Self::EdgeWeight) -> W,
-	) -> W
+	fn diameter(&self) -> Self::EdgeWeight
 	where
 		Self: EdgeCount + Sized,
+		Self::EdgeWeight: PrimInt + Unsigned,
 	{
-		self.all_vertices().fold(W::zero(), |max_ecc, v| {
-			let new_ecc =
-				VertexInGraph::ensure_unvalidated(self, v).eccentricity_weighted(get_distance);
-			if new_ecc > max_ecc
-			{
-				new_ecc
-			}
-			else
-			{
-				max_ecc
-			}
-		})
+		self.all_vertices()
+			.fold(Self::EdgeWeight::zero(), |max_ecc, v| {
+				let new_ecc = VertexInGraph::ensure_unvalidated(self, v).eccentricity();
+				if new_ecc > max_ecc
+				{
+					new_ecc
+				}
+				else
+				{
+					max_ecc
+				}
+			})
 	}
 
 	/// Calculates the minimum eccentricity of the graph ([the radius](https://mathworld.wolfram.com/GraphDiameter.html)).
@@ -74,22 +73,23 @@ pub trait Connected: Unilateral
 	/// Takes a closure that converts an edge's weight into a distance value.
 	/// The distance between two vertices is equal to the distance of the
 	/// edge(s) between them.
-	fn radius_weighted<W: PrimInt + Unsigned>(&self, get_distance: fn(&Self::EdgeWeight) -> W) -> W
+	fn radius(&self) -> Self::EdgeWeight
 	where
 		Self: EdgeCount + Sized,
+		Self::EdgeWeight: PrimInt + Unsigned,
 	{
-		self.all_vertices().fold(W::zero(), |min_ecc, v| {
-			let new_ecc =
-				VertexInGraph::ensure_unvalidated(self, v).eccentricity_weighted(get_distance);
-			if new_ecc < min_ecc
-			{
-				new_ecc
-			}
-			else
-			{
-				min_ecc
-			}
-		})
+		self.all_vertices()
+			.fold(Self::EdgeWeight::zero(), |min_ecc, v| {
+				let new_ecc = VertexInGraph::ensure_unvalidated(self, v).eccentricity();
+				if new_ecc < min_ecc
+				{
+					new_ecc
+				}
+				else
+				{
+					min_ecc
+				}
+			})
 	}
 
 	/// Returns the vertices with eccentricity equal to the radius ([the centers](https://mathworld.wolfram.com/GraphCenter.html)).
@@ -97,18 +97,14 @@ pub trait Connected: Unilateral
 	/// Takes a closure that converts an edge's weight into a distance value.
 	/// The distance between two vertices is equal to the distance of the
 	/// edge(s) between them.
-	fn centers_weighted<W: PrimInt + Unsigned>(
-		&self,
-		get_distance: fn(&Self::EdgeWeight) -> W,
-	) -> impl Iterator<Item = Self::Vertex>
+	fn centers(&self) -> impl Iterator<Item = Self::Vertex>
 	where
 		Self: EdgeCount + Sized,
+		Self::EdgeWeight: PrimInt + Unsigned,
 	{
-		let radius = self.radius_weighted(get_distance);
-		self.all_vertices().filter(move |v| {
-			VertexInGraph::ensure_unvalidated(self, *v).eccentricity_weighted(get_distance)
-				== radius
-		})
+		let radius = self.radius();
+		self.all_vertices()
+			.filter(move |v| VertexInGraph::ensure_unvalidated(self, *v).eccentricity() == radius)
 	}
 }
 

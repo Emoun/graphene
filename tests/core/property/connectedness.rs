@@ -235,46 +235,49 @@ mod module
 mod __
 {
 	use super::*;
-	use graphene::core::Ensure;
+	use graphene::core::{proxy::EdgeWeightMap, Ensure};
 
-	/// Tests `eccentricity_weighted`
+	/// Tests `eccentricity`
 	#[quickcheck]
-	fn eccentricity_weighted(
-		Arb(g): Arb<VertexInGraph<ConnectedGraph<MockGraph<directedness>>>>,
-	) -> bool
+	fn eccentricity(Arb(g): Arb<VertexInGraph<ConnectedGraph<MockGraph<directedness>>>>) -> bool
 	{
-		let eccentricity = g.eccentricity_weighted(|w| w.value);
-		DijkstraShortestPaths::distances(&g, |w| w.value).all(|(_, dist)| dist <= eccentricity)
+		let e_map = EdgeWeightMap::ensure_unvalidated(&g, |_, _, w| w.value);
+		let eccentricity = e_map.eccentricity();
+		let success =
+			DijkstraShortestPaths::distances(&e_map).all(|(_, dist)| dist <= eccentricity);
+		success
 	}
 
-	/// Tests `diameter_weighted`
+	/// Tests `diameter`
 	#[quickcheck]
-	fn diameter_weighted(Arb(g): Arb<ConnectedGraph<MockGraph<directedness>>>) -> bool
+	fn diameter(Arb(g): Arb<ConnectedGraph<MockGraph<directedness>>>) -> bool
 	{
-		let diameter = g.diameter_weighted(|w| w.value);
-		g.all_vertices().all(|v| {
-			VertexInGraph::ensure_unvalidated(&g, v).eccentricity_weighted(|w| w.value) <= diameter
-		})
+		let e_map = EdgeWeightMap::ensure_unvalidated(&g, |_, _, w| w.value);
+		let diameter = e_map.diameter();
+		g.all_vertices()
+			.all(|v| VertexInGraph::ensure_unvalidated(&e_map, v).eccentricity() <= diameter)
 	}
 
-	/// Tests `radius_weighted`
+	/// Tests `radius`
 	#[quickcheck]
-	fn radius_weighted(Arb(g): Arb<ConnectedGraph<MockGraph<directedness>>>) -> bool
+	fn radius(Arb(g): Arb<ConnectedGraph<MockGraph<directedness>>>) -> bool
 	{
-		let radius = g.radius_weighted(|w| w.value);
-		g.all_vertices().all(|v| {
-			VertexInGraph::ensure_unvalidated(&g, v).eccentricity_weighted(|w| w.value) >= radius
-		})
+		let e_map = EdgeWeightMap::ensure_unvalidated(&g, |_, _, w| w.value);
+		let radius = e_map.radius();
+		g.all_vertices()
+			.all(|v| VertexInGraph::ensure_unvalidated(&e_map, v).eccentricity() >= radius)
 	}
 
-	/// Tests `centers_weighted`
+	/// Tests `centers`
 	#[quickcheck]
-	fn centers_weighted(Arb(g): Arb<ConnectedGraph<MockGraph<directedness>>>) -> bool
+	fn centers(Arb(g): Arb<ConnectedGraph<MockGraph<directedness>>>) -> bool
 	{
-		let radius = g.radius_weighted(|w| w.value);
-		g.centers_weighted(|w| w.value).all(|v| {
-			VertexInGraph::ensure_unvalidated(&g, v).eccentricity_weighted(|w| w.value) == radius
-		})
+		let e_map = EdgeWeightMap::ensure_unvalidated(&g, |_, _, w| w.value);
+		let radius = e_map.radius();
+		let success = e_map
+			.centers()
+			.all(|v| VertexInGraph::ensure_unvalidated(&e_map, v).eccentricity() == radius);
+		success
 	}
 }
 
