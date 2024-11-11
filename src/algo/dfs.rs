@@ -1,4 +1,5 @@
 use crate::core::{property::HasVertex, Graph};
+use std::borrow::Borrow;
 
 /// Performs [depth-first traversal](https://mathworld.wolfram.com/Depth-FirstTraversal.html)
 /// of a graph's vertices.
@@ -165,7 +166,7 @@ where
 		// Explore children
 		for (child, weight) in self.graph.edges_sourced_in(to_return.clone())
 		{
-			(self.on_explore)(self, to_return, child, weight);
+			(self.on_explore)(self, to_return, child, weight.borrow());
 			if !self.visited(child.clone())
 			{
 				// Push to stack without exit mark

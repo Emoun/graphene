@@ -128,14 +128,14 @@ impl<D: Directedness, Ew: MockType> MockGraph<D, Ew>
 			{
 				for e_w in other.edges_between(&v, v_done)
 				{
-					self.add_edge_weighted(&new_v, new_v_done, e_w.clone())
+					self.add_edge_weighted(&new_v, new_v_done, e_w.borrow().clone())
 						.unwrap();
 				}
 				if D::directed() && *v_done != v
 				{
 					for e_w in other.edges_between(v_done, &v)
 					{
-						self.add_edge_weighted(new_v_done, &new_v, e_w.clone())
+						self.add_edge_weighted(new_v_done, &new_v, e_w.borrow().clone())
 							.unwrap();
 					}
 				}
@@ -174,6 +174,10 @@ impl<D: Directedness, Ew: MockType> Graph for MockGraph<D, Ew>
 {
 	type Directedness = D;
 	type EdgeWeight = Ew;
+	type EdgeWeightRef<'a>
+		= &'a Ew
+	where
+		Self: 'a;
 	/// We hide u32 behind a struct to ensure our tests aren't dependent
 	/// on graphs using usize as ids
 	type Vertex = MockVertex;

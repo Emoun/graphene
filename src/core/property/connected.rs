@@ -97,10 +97,10 @@ pub trait Connected: Unilateral
 	/// Takes a closure that converts an edge's weight into a distance value.
 	/// The distance between two vertices is equal to the distance of the
 	/// edge(s) between them.
-	fn centers_weighted<'a, W: 'a + PrimInt + Unsigned>(
-		&'a self,
+	fn centers_weighted<W: PrimInt + Unsigned>(
+		&self,
 		get_distance: fn(&Self::EdgeWeight) -> W,
-	) -> impl Iterator<Item = Self::Vertex> + '_
+	) -> impl Iterator<Item = Self::Vertex>
 	where
 		Self: EdgeCount + Sized,
 	{

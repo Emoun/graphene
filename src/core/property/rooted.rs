@@ -30,7 +30,7 @@ pub trait Rooted: HasVertex
 	fn set_root(&mut self, v: impl Borrow<Self::Vertex>) -> Result<(), ()>;
 
 	/// Return true of the given vertex is the root of the graph.
-	/// Otherwise returns false.
+	/// Otherwise, returns false.
 	fn is_root(&self, v: impl Borrow<Self::Vertex>) -> bool
 	{
 		self.root() == *v.borrow()

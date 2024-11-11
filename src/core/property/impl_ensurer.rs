@@ -35,7 +35,7 @@ macro_rules! impl_ensurer {
 #[macro_export]
 macro_rules! base_graph {
 	{
-		$(use <$($generics:ident),+>)? $struct:ty
+		$(use <$($generics:tt),+>)? $struct:ty
 		$(: $($include_props:ident),+
 		as (self $($delegate:tt)+) : $delegate_type:ty)?
 		$(where $($bounds:tt)*)?
@@ -58,7 +58,7 @@ macro_rules! base_graph {
 macro_rules! base_graph_inner {
 	{
 		@struct [  $struct:ty ]
-		@generics [ $($($generics:ident)+)? ]
+		@generics [ $($($generics:tt)+)? ]
 		@delegate [ $delegate_type:ty ]
 		@delegate_to [ $($delegate:tt)+ ]
 		@include [ $($include_props:ident)+ ]
@@ -80,7 +80,7 @@ macro_rules! base_graph_inner {
 	};
 	{
 		@struct [  $struct:ty ]
-		@generics [ $($($generics:ident)+)? ]
+		@generics [ $($($generics:tt)+)? ]
 		@bounds [ $($bounds:tt)* ]
 	} => {
 		impl$(<$($generics),+>)? $crate::core::GraphDeref for $struct
@@ -114,7 +114,7 @@ macro_rules! base_graph_inner {
 macro_rules! impl_properties {
 	{
 		@struct [ $struct:ty ]
-		@generic [ $($generics:ident)* ]
+		@generic [ $($generics:tt)* ]
 		@delegate [ $delegate_type:ty ]
 		@delegate_to [ $($delegate:tt)+ ]
 		$(	@payload [$payload_type:ty]
@@ -132,7 +132,7 @@ macro_rules! impl_properties {
 	};
 	{
 		@struct [ $struct:ty ]
-		@generic [ $($generics:ident)* ]
+		@generic [ $($generics:tt)* ]
 		@delegate [ $delegate_type:ty ]
 		@delegate_to [ $($delegate:tt)+ ]
 		$(	@payload [$payload_type:ty]
@@ -237,6 +237,12 @@ macro_rules! impl_properties {
 					$crate::core::GraphDeref>::Graph as $crate::core::Graph>::Directedness;
 				type EdgeWeight = <<$delegate_type as
 					$crate::core::GraphDeref>::Graph as $crate::core::Graph>::EdgeWeight;
+				type EdgeWeightRef<'a> = <<$delegate_type as
+					$crate::core::GraphDeref>::Graph as $crate::core::Graph>::EdgeWeightRef<'a>
+				where
+					$delegate_type: 'a
+					$(, $generics: 'a)*
+				;
 				type Vertex = <<$delegate_type as
 					$crate::core::GraphDeref>::Graph as $crate::core::Graph>::Vertex;
 				type VertexWeight = <<$delegate_type as
@@ -252,7 +258,7 @@ macro_rules! impl_properties {
 							&'a self,
 							source: impl 'b + std::borrow::Borrow<Self::Vertex>,
 							sink: impl 'b + std::borrow::Borrow<Self::Vertex>,
-						) -> impl 'b + Iterator<Item = &'a Self::EdgeWeight>;
+						) -> impl 'b + Iterator<Item = Self::EdgeWeightRef<'a>>;
 					}
 				}
 			}
@@ -622,7 +628,7 @@ macro_rules! impl_properties {
 
 	{
 		@struct [ $struct:ty ]
-		@generic [ $($generics:ident)* ]
+		@generic [ $($generics:tt)* ]
 		@delegate [ $delegate_type:ty ]
 		@include [ $include_props:ident $($include_props_rest:ident)* ]
 		@bounds [$($bounds:tt)*]
@@ -659,7 +665,7 @@ macro_rules! impl_properties {
 
 	{
 		@struct [ $struct:ty ]
-		@generic [ $($generics:ident)* ]
+		@generic [ $($generics:tt)* ]
 		@delegate [ $delegate_type:ty ]
 		@exclude [ $exclude_props:ident $($exclude_props_rest:ident)* ]
 		@bounds [$($bounds:tt)*]
@@ -686,7 +692,7 @@ macro_rules! impl_properties {
 
 	{
 		@struct [ $struct:ty ]
-		@generic [ $($($generics:ident)+)? ]
+		@generic [ $($($generics:tt)+)? ]
 		@delegate [ $delegate_type:ty ]
 		@exclude []
 		@bounds [$($bounds:tt)*]
@@ -702,7 +708,7 @@ macro_rules! impl_properties {
 	};
 	{
 		@struct [ $struct:ty ]
-		@generic [ $($($generics:ident)+)? ]
+		@generic [ $($($generics:tt)+)? ]
 		@delegate [ $delegate_type:ty ]
 		@include []
 		@bounds [$($bounds:tt)*]

@@ -67,6 +67,15 @@ pub trait Graph
 	/// `()` can be used if no weight is needed.
 	type EdgeWeight;
 
+	/// Return type for methods returning owned or borrowed edge weights.
+	///
+	/// Most graphs are expected to return `&EdgeWeight`. However, some may only
+	/// be able to return 'EdgeWeight' directly. This associated type allows
+	/// graph implementations to control how edge weights are returned.
+	type EdgeWeightRef<'a>: Borrow<Self::EdgeWeight>
+	where
+		Self: 'a;
+
 	/// Whether the graph is directed or not.
 	///
 	/// Only [`Directed`](struct.Directed.html) and
@@ -86,14 +95,14 @@ pub trait Graph
 		&'a self,
 		source: impl 'b + Borrow<Self::Vertex>,
 		sink: impl 'b + Borrow<Self::Vertex>,
-	) -> impl 'b + Iterator<Item = &'a Self::EdgeWeight>;
+	) -> impl 'b + Iterator<Item = Self::EdgeWeightRef<'a>>;
 
 	// Optional methods
 
 	/// Returns copies of all current edges in the graph.
 	fn all_edges(
 		&self,
-	) -> impl '_ + Iterator<Item = (Self::Vertex, Self::Vertex, &Self::EdgeWeight)>
+	) -> impl '_ + Iterator<Item = (Self::Vertex, Self::Vertex, Self::EdgeWeightRef<'_>)>
 	{
 		let mut finished = Vec::new();
 		self.all_vertices()
@@ -150,7 +159,7 @@ pub trait Graph
 	fn edges_sourced_in<'a: 'b, 'b>(
 		&'a self,
 		v: impl 'b + Borrow<Self::Vertex>,
-	) -> impl 'b + Iterator<Item = (Self::Vertex, &'a Self::EdgeWeight)>
+	) -> impl 'b + Iterator<Item = (Self::Vertex, Self::EdgeWeightRef<'a>)>
 	{
 		self.all_vertices().flat_map(move |v2| {
 			self.edges_between(v.borrow().clone(), v2.borrow().clone())
@@ -166,7 +175,7 @@ pub trait Graph
 	fn edges_sinked_in<'a: 'b, 'b>(
 		&'a self,
 		v: impl 'b + Borrow<Self::Vertex>,
-	) -> impl 'b + Iterator<Item = (Self::Vertex, &'a Self::EdgeWeight)>
+	) -> impl 'b + Iterator<Item = (Self::Vertex, Self::EdgeWeightRef<'a>)>
 	{
 		self.all_vertices().flat_map(move |v2| {
 			self.edges_between(v2.borrow().clone(), v.borrow().clone())
@@ -181,7 +190,7 @@ pub trait Graph
 	fn edges_incident_on<'a: 'b, 'b>(
 		&'a self,
 		v: impl 'b + Borrow<Self::Vertex>,
-	) -> impl 'b + Iterator<Item = (Self::Vertex, &'a Self::EdgeWeight)>
+	) -> impl 'b + Iterator<Item = (Self::Vertex, Self::EdgeWeightRef<'a>)>
 	{
 		self.edges_sourced_in(v.borrow().clone()).chain(
 			self.edges_sinked_in(v.borrow().clone())

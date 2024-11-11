@@ -11,7 +11,7 @@ use graphene::{
 };
 use quickcheck::{Arbitrary, Gen};
 use rand::Rng;
-use std::{collections::HashSet, fmt::Debug};
+use std::{borrow::Borrow, collections::HashSet, fmt::Debug};
 
 /// An arbitrary graph with an edge that is guaranteed to be in the graph (the
 /// weight is a clone).
@@ -35,9 +35,10 @@ where
 {
 	fn ensure_unvalidated(c: Self::Ensured, _: ()) -> Self
 	{
-		let edge = c.edges_sourced_in(c.get_vertex()).next().unwrap();
-		let weight = edge.1.clone();
-		let sink = edge.0;
+		let (sink, weight) = {
+			let edge = c.edges_sourced_in(c.get_vertex()).next().unwrap();
+			(edge.0, edge.1.borrow().clone())
+		};
 		Self(c, sink, weight)
 	}
 
@@ -91,9 +92,9 @@ where
 		let (source, sink, weight) = graph
 			.graph()
 			.all_edges()
+			.map(|(so, si, w)| (so, si, w.borrow().clone()))
 			.nth(g.gen_range(0, e_count))
 			.unwrap();
-		let weight = weight.clone();
 		Self(
 			graphene::core::Ensure::ensure_unvalidated(graph, source),
 			sink,
@@ -112,7 +113,7 @@ where
 		let mut lims = limits.clone();
 		lims.insert(Limit::EdgeKeep(v1, v2));
 		result.extend(self.0.shrink_guided(lims).map(|g| {
-			let weight = g.edges_between(v1, v2).next().unwrap().clone();
+			let weight = g.edges_between(v1, v2).next().unwrap().borrow().clone();
 			Self(g, v2, weight.clone())
 		}));
 
@@ -126,6 +127,7 @@ where
 			let mut shrunk_reference_weight_before = false;
 			for w in self.edges_between(v1, v2)
 			{
+				let w = w.borrow();
 				// Remove edge
 				if !saw_reference_edge_before && *w == self.2
 				{
@@ -135,7 +137,7 @@ where
 				else
 				{
 					let mut g = self.clone();
-					g.remove_edge_where_weight(v1, v2, |ref weight| w == *weight)
+					g.remove_edge_where_weight(v1, v2, |weight| w == weight)
 						.unwrap();
 					result.push(g);
 				}

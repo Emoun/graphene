@@ -125,14 +125,14 @@ where
 		{
 			for e_w in mock.edges_between(&v, v_done)
 			{
-				g.add_edge_weighted(new_v.borrow(), new_v_done.borrow(), e_w.clone())
+				g.add_edge_weighted(new_v.borrow(), new_v_done.borrow(), e_w.borrow().clone())
 					.unwrap();
 			}
 			if G::Directedness::directed() && *v_done != v
 			{
 				for e_w in mock.edges_between(v_done, &v)
 				{
-					g.add_edge_weighted(new_v_done.borrow(), new_v.borrow(), e_w.clone())
+					g.add_edge_weighted(new_v_done.borrow(), new_v.borrow(), e_w.borrow().clone())
 						.unwrap();
 				}
 			}

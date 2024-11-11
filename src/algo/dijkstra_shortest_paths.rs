@@ -1,5 +1,6 @@
 use crate::core::{property::HasVertex, Edge, Graph};
 use num_traits::{PrimInt, Unsigned};
+use std::borrow::Borrow;
 
 /// [Dijkstra's shortest paths algorithm](https://mathworld.wolfram.com/DijkstrasAlgorithm.html)
 pub struct DijkstraShortestPaths<'a, G, W>
@@ -10,7 +11,7 @@ where
 	graph: &'a G,
 	visited: Vec<G::Vertex>,
 	// We keep it sorted with the lowest weight at the end for efficiency.
-	queue: Vec<(W, (G::Vertex, G::Vertex, &'a G::EdgeWeight))>,
+	queue: Vec<(W, (G::Vertex, G::Vertex, G::EdgeWeightRef<'a>))>,
 	get_distance: fn(&G::EdgeWeight) -> W,
 }
 
@@ -43,7 +44,7 @@ where
 
 		for (sink, weight) in edges
 		{
-			let new_weight = w + (self.get_distance)(weight);
+			let new_weight = w + (self.get_distance)(weight.borrow());
 			if let Some((old_weight, old_edge)) = self
 				.queue
 				.iter_mut()
@@ -77,7 +78,7 @@ where
 
 		DijkstraShortestPaths::new(graph, get_distance).map(move |(so, si, w)| {
 			let dist = distances.iter().find(|(v, _)| so == *v).unwrap().1;
-			let new_dist = dist + get_distance(w);
+			let new_dist = dist + get_distance(w.borrow());
 			distances.push((si, new_dist));
 			(si, new_dist)
 		})
@@ -102,7 +103,7 @@ where
 	G: 'a + Graph,
 	W: PrimInt + Unsigned,
 {
-	type Item = (G::Vertex, G::Vertex, &'a G::EdgeWeight);
+	type Item = (G::Vertex, G::Vertex, G::EdgeWeightRef<'a>);
 
 	fn next(&mut self) -> Option<Self::Item>
 	{

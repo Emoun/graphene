@@ -17,7 +17,7 @@ pub trait Unique: Graph
 		&self,
 		v1: impl Borrow<Self::Vertex>,
 		v2: impl Borrow<Self::Vertex>,
-	) -> Option<&Self::EdgeWeight>
+	) -> Option<Self::EdgeWeightRef<'_>>
 	{
 		self.edges_between(v1, v2).next()
 	}

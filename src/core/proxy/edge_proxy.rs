@@ -50,6 +50,10 @@ impl<C: Ensure> Graph for EdgeProxyGraph<C>
 {
 	type Directedness = <C::Graph as Graph>::Directedness;
 	type EdgeWeight = ();
+	type EdgeWeightRef<'a>
+		= &'a ()
+	where
+		Self: 'a;
 	type Vertex = <C::Graph as Graph>::Vertex;
 	type VertexWeight = <C::Graph as Graph>::VertexWeight;
 
@@ -65,7 +69,7 @@ impl<C: Ensure> Graph for EdgeProxyGraph<C>
 		&'a self,
 		source: impl 'b + Borrow<Self::Vertex>,
 		sink: impl 'b + Borrow<Self::Vertex>,
-	) -> impl 'b + Iterator<Item = &'a Self::EdgeWeight>
+	) -> impl 'b + Iterator<Item = Self::EdgeWeightRef<'a>>
 	{
 		let applicable = |so, si| {
 			(source.borrow() == so && sink.borrow() == si)

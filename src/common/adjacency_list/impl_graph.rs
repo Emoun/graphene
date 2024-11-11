@@ -13,6 +13,10 @@ where
 {
 	type Directedness = D;
 	type EdgeWeight = Ew;
+	type EdgeWeightRef<'a>
+		= &'a Self::EdgeWeight
+	where
+		Self: 'a;
 	type Vertex = usize;
 	type VertexWeight = Vw;
 
@@ -25,7 +29,7 @@ where
 		&'a self,
 		source: impl 'b + Borrow<Self::Vertex>,
 		sink: impl 'b + Borrow<Self::Vertex>,
-	) -> impl 'b + Iterator<Item = &'a Self::EdgeWeight>
+	) -> impl 'b + Iterator<Item = Self::EdgeWeightRef<'a>>
 	{
 		let source = source.borrow().clone();
 		let sink = sink.borrow().clone();

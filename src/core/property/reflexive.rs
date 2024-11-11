@@ -10,6 +10,10 @@ use std::borrow::Borrow;
 /// it is impossible to add or remove a vertex without doing the same for its
 /// loop edge. Because of this, the edge weight must implement Default, such
 /// that Graph's methods can add edge weights automatically.
+///
+/// TODO: Should be possible for the `Default` requirement to be omitted and two
+/// different ensurers be implemented one taking `Default` and another taking a
+/// closure.
 pub trait Reflexive: Graph
 where
 	Self::EdgeWeight: Default,

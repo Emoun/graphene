@@ -2,20 +2,15 @@ use crate::core::{Edge, Graph};
 
 pub trait Subgraph: Graph
 {
-	/// Edges who's sources are in this subgraph but who's sinks aren't.
+	/// Edges whose sources are in this subgraph but who's sinks aren't.
 	fn exit_edges(&self) -> impl '_ + Iterator<Item = (Self::Vertex, Self::Vertex)>;
 
 	/// Whether this subgraph can reach a vertex in the other subgraph, either
-	/// by sharing a vertex with it, or having an axit edge to one of its
+	/// by sharing a vertex with it, or having an exit edge to one of its
 	/// vertices.
 	fn reaches<G>(&self, other: &G) -> Option<(Self::Vertex, Self::Vertex)>
 	where
-		G: Subgraph<
-			Vertex = Self::Vertex,
-			VertexWeight = Self::VertexWeight,
-			EdgeWeight = Self::EdgeWeight,
-			Directedness = Self::Directedness,
-		>,
+		G: Subgraph<Vertex = Self::Vertex, Directedness = Self::Directedness>,
 	{
 		// Check whether they share any vertex
 		for v in other.all_vertices()

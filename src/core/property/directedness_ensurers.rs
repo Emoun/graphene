@@ -22,6 +22,10 @@ impl<C: Ensure> Graph for DirectedGraph<C>
 {
 	type Directedness = Directed;
 	type EdgeWeight = <C::Graph as Graph>::EdgeWeight;
+	type EdgeWeightRef<'a>
+		= <C::Graph as Graph>::EdgeWeightRef<'a>
+	where
+		Self: 'a;
 	type Vertex = <C::Graph as Graph>::Vertex;
 	type VertexWeight = <C::Graph as Graph>::VertexWeight;
 
@@ -35,7 +39,7 @@ impl<C: Ensure> Graph for DirectedGraph<C>
 				&'a self,
 				source: impl 'b + Borrow<Self::Vertex>,
 				sink: impl 'b + Borrow<Self::Vertex>,
-			) ->  impl 'b + Iterator<Item = &'a Self::EdgeWeight>;
+			) ->  impl 'b + Iterator<Item = Self::EdgeWeightRef<'a>>;
 		}
 	}
 }
@@ -65,6 +69,10 @@ impl<C: Ensure> Graph for UndirectedGraph<C>
 {
 	type Directedness = Undirected;
 	type EdgeWeight = <C::Graph as Graph>::EdgeWeight;
+	type EdgeWeightRef<'a>
+		= <C::Graph as Graph>::EdgeWeightRef<'a>
+	where
+		Self: 'a;
 	type Vertex = <C::Graph as Graph>::Vertex;
 	type VertexWeight = <C::Graph as Graph>::VertexWeight;
 
@@ -78,7 +86,7 @@ impl<C: Ensure> Graph for UndirectedGraph<C>
 				&'a self,
 				source: impl 'b + Borrow<Self::Vertex>,
 				sink: impl 'b + Borrow<Self::Vertex>,
-			) ->  impl 'b + Iterator<Item = &'a Self::EdgeWeight>;
+			) ->  impl 'b + Iterator<Item = Self::EdgeWeightRef<'a>>;
 		}
 	}
 }
