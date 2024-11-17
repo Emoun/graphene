@@ -11,7 +11,7 @@ use crate::{
 use duplicate::duplicate_item;
 use graphene::core::{
 	property::{EdgeCount, HasVertex, RemoveEdge, RemoveVertex, VertexCount, VertexInGraph},
-	Directed, Graph, GraphMut, ReleaseUnloaded, Undirected,
+	Directed, Graph, GraphMut, Release, Undirected,
 };
 
 #[duplicate_item(

@@ -6,7 +6,7 @@ use graphene::{
 	algo::Dfs,
 	core::{
 		property::{AcyclicGraph, AddEdge, HasVertex, VertexInGraph},
-		Directedness, EnsureUnloaded, Graph, ReleaseUnloaded,
+		Directedness, Graph, Guard, Release,
 	},
 	impl_ensurer,
 };
@@ -46,7 +46,7 @@ impl<D: Directedness> GuidedArbGraph for AcyclicGraph<MockGraph<D>>
 			let v2 = verts[g.gen_range(0, verts.len())];
 
 			// Ensure there isn't already a path between the two
-			let v1_in_g: VertexInGraph<_> = graphene::core::Ensure::ensure_unvalidated(&graph, v1);
+			let v1_in_g: VertexInGraph<_> = graphene::core::Ensure::ensure_unchecked(&graph, v1);
 			if v1 != v2 && Dfs::new_simple(&v1_in_g).find(|&v| v == v2).is_none()
 			{
 				graph
@@ -56,7 +56,7 @@ impl<D: Directedness> GuidedArbGraph for AcyclicGraph<MockGraph<D>>
 			}
 		}
 
-		Self::ensure_unvalidated(graph)
+		Self::guard_unchecked(graph)
 	}
 
 	fn shrink_guided(&self, limits: HashSet<Limit>) -> Box<dyn Iterator<Item = Self>>
@@ -65,7 +65,7 @@ impl<D: Directedness> GuidedArbGraph for AcyclicGraph<MockGraph<D>>
 			self.clone()
 				.release()
 				.shrink_guided(limits)
-				.map(|g| Self::ensure_unvalidated(g)),
+				.map(|g| Self::guard_unchecked(g)),
 		)
 	}
 }
@@ -122,7 +122,7 @@ impl<D: Directedness> GuidedArbGraph for CyclicGraph<D>
 				.clone()
 				.release_all()
 				.shrink_guided(limits)
-				.filter(|g| !AcyclicGraph::validate(&g))
+				.filter(|g| !AcyclicGraph::can_guard(&g))
 				.map(|g| Self(g)),
 		)
 	}

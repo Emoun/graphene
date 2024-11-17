@@ -5,7 +5,7 @@ use crate::mock_graph::{
 use graphene::{
 	core::{
 		property::{AddEdge, ConnectedGraph, NewVertex, UnilateralGraph, WeakGraph},
-		Directed, Directedness, EnsureUnloaded, Graph, ReleaseUnloaded, Undirected,
+		Directed, Directedness, Graph, Guard, Release, Undirected,
 	},
 	impl_ensurer,
 };
@@ -151,7 +151,7 @@ impl GuidedArbGraph for ConnectedGraph<MockGraph<Directed>>
 			}
 		}
 
-		Self::ensure_unvalidated(graph)
+		Self::guard_unchecked(graph)
 	}
 
 	fn shrink_guided(&self, limits: HashSet<Limit>) -> Box<dyn Iterator<Item = Self>>
@@ -166,7 +166,7 @@ impl GuidedArbGraph for ConnectedGraph<MockGraph<Directed>>
 
 		graph.shrink_values(&limits, &mut result);
 
-		Box::new(result.into_iter().map(|g| Self::ensure_unvalidated(g)))
+		Box::new(result.into_iter().map(|g| Self::guard_unchecked(g)))
 	}
 }
 
@@ -204,7 +204,7 @@ impl GuidedArbGraph for ConnectedGraph<MockGraph<Undirected>>
 				.unwrap()
 		}
 
-		Self::ensure_unvalidated(graph)
+		Self::guard_unchecked(graph)
 	}
 
 	fn shrink_guided(&self, limits: HashSet<Limit>) -> Box<dyn Iterator<Item = Self>>
@@ -219,7 +219,7 @@ impl GuidedArbGraph for ConnectedGraph<MockGraph<Undirected>>
 
 		graph.shrink_values(&limits, &mut result);
 
-		Box::new(result.into_iter().map(|g| Self::ensure_unvalidated(g)))
+		Box::new(result.into_iter().map(|g| Self::guard_unchecked(g)))
 	}
 }
 
@@ -277,7 +277,7 @@ impl GuidedArbGraph for UnilateralGraph<MockGraph<Directed>>
 			}
 		}
 
-		Self::ensure_unvalidated(graph)
+		Self::guard_unchecked(graph)
 	}
 
 	fn shrink_guided(&self, limits: HashSet<Limit>) -> Box<dyn Iterator<Item = Self>>
@@ -292,7 +292,7 @@ impl GuidedArbGraph for UnilateralGraph<MockGraph<Directed>>
 
 		graph.shrink_values(&limits, &mut result);
 
-		Box::new(result.into_iter().map(|g| Self::ensure_unvalidated(g)))
+		Box::new(result.into_iter().map(|g| Self::guard_unchecked(g)))
 	}
 }
 
@@ -320,7 +320,7 @@ impl GuidedArbGraph for WeakGraph<MockGraph<Directed>>
 	{
 		assert!(e_count >= (v_count.saturating_sub(1)));
 
-		Self::ensure_unvalidated(
+		Self::guard_unchecked(
 			if v_count < 2
 			{
 				MockGraph::arbitrary_fixed(g, v_count, 0)
@@ -377,7 +377,7 @@ impl GuidedArbGraph for WeakGraph<MockGraph<Directed>>
 
 		graph.shrink_values(&limits, &mut result);
 
-		Box::new(result.into_iter().map(|g| Self::ensure_unvalidated(g)))
+		Box::new(result.into_iter().map(|g| Self::guard_unchecked(g)))
 	}
 }
 

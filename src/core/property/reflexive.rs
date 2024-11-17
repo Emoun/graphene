@@ -28,12 +28,12 @@ impl<C: Ensure> Ensure for ReflexiveGraph<C>
 where
 	<C::Graph as Graph>::EdgeWeight: Default,
 {
-	fn ensure_unvalidated(c: Self::Ensured, _: ()) -> Self
+	fn ensure_unchecked(c: Self::Ensured, _: ()) -> Self
 	{
 		Self(c)
 	}
 
-	fn validate(c: &Self::Ensured, _: &()) -> bool
+	fn can_ensure(c: &Self::Ensured, _: &()) -> bool
 	{
 		let g = c.graph();
 		g.all_vertices().all(|v| {

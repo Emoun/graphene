@@ -21,7 +21,7 @@ mod __
 	mod has_vertex
 	{
 		use super::*;
-		use graphene::core::{EnsureUnloaded, ReleaseUnloaded};
+		use graphene::core::{Guard, Release};
 
 		/// Tests that null graphs are rejected.
 		#[test]
@@ -29,14 +29,14 @@ mod __
 		{
 			let null_graph = MockGraph::<directedness>::empty();
 
-			assert!(!HasVertexGraph::validate(&null_graph));
+			assert!(!HasVertexGraph::can_guard(&null_graph));
 		}
 
 		/// Tests that graphs with at least 1 vertex are accepted.
 		#[quickcheck]
 		fn accept_has_vertex(Arb(g): Arb<VertexInGraph<MockGraph<directedness>>>) -> bool
 		{
-			HasVertexGraph::validate(&g.release_all())
+			HasVertexGraph::can_guard(&g.release_all())
 		}
 
 		/// Tests cannot remove a vertex if it's the only one in the graph.
@@ -48,7 +48,7 @@ mod __
 				.new_vertex_weighted(MockVertexWeight { value: 0 })
 				.unwrap();
 
-			let mut g = HasVertexGraph::ensure(g).unwrap();
+			let mut g = HasVertexGraph::guard(g).unwrap();
 
 			assert!(g.remove_vertex(v).is_err())
 		}
@@ -59,7 +59,7 @@ mod __
 			-> bool
 		{
 			let v = g.get_vertex();
-			let mut g = HasVertexGraph::ensure(g.release_all()).unwrap();
+			let mut g = HasVertexGraph::guard(g.release_all()).unwrap();
 
 			g.remove_vertex(v).is_ok()
 		}
@@ -74,20 +74,20 @@ mod __
 	{
 		use super::*;
 		use crate::mock_graph::arbitrary::VertexOutside;
-		use graphene::core::{Ensure, Release};
+		use graphene::core::{Ensure, ReleasePayload};
 
 		/// Tests that graphs with at least 1 vertex are accepted.
 		#[quickcheck]
 		fn accept_in_graph(Arb(g): Arb<VertexInGraph<MockGraph<directedness>>>) -> bool
 		{
-			GraphStruct::validate(&g, &g.get_vertex())
+			GraphStruct::can_ensure(&g, &g.get_vertex())
 		}
 
 		/// Tests that vertices not in the graph are rejected.
 		#[quickcheck]
 		fn reject_not_in_graph(Arb(g): Arb<VertexOutside<MockGraph<directedness>>>) -> bool
 		{
-			!GraphStruct::validate(&g.0, &g.1)
+			!GraphStruct::can_ensure(&g.0, &g.1)
 		}
 
 		/// Tests that can remove a vertex if its not the one guaranteed by
@@ -98,7 +98,7 @@ mod __
 		) -> bool
 		{
 			let (v1, v2) = g.get_both();
-			let mut g = GraphStruct::ensure_unvalidated(g.release_all().0, v1);
+			let mut g = GraphStruct::ensure_unchecked(g.release_all().0, v1);
 
 			g.remove_vertex(v2).is_ok()
 		}
@@ -109,7 +109,7 @@ mod __
 		fn reject_remove_vertex(Arb(g): Arb<VertexInGraph<MockGraph<directedness>>>) -> bool
 		{
 			let v = g.get_vertex();
-			let mut g = GraphStruct::ensure_unvalidated(g, v);
+			let mut g = GraphStruct::ensure_unchecked(g, v);
 
 			g.remove_vertex(v).is_err()
 		}
@@ -119,7 +119,7 @@ mod __
 		fn get_vertex(Arb(g): Arb<VertexInGraph<MockGraph<directedness>>>) -> bool
 		{
 			let v = g.get_vertex();
-			let g = GraphStruct::ensure_unvalidated(g.release_all().0, v);
+			let g = GraphStruct::ensure_unchecked(g.release_all().0, v);
 
 			g.get_method() == v
 		}
@@ -130,7 +130,7 @@ mod __
 		fn set_vertex(Arb(g): Arb<TwoVerticesIn<MockGraph<directedness>, Unique>>) -> bool
 		{
 			let (v1, v2) = g.get_both();
-			let mut g = GraphStruct::ensure_unvalidated(g.release_all().0, v1);
+			let mut g = GraphStruct::ensure_unchecked(g.release_all().0, v1);
 
 			g.set_method(v2).is_ok() && g.get_method() == v2
 		}
@@ -144,7 +144,7 @@ mod __
 		{
 			let v1 = g.0.get_vertex();
 			let v2 = g.1;
-			let mut g = GraphStruct::ensure_unvalidated(g.release_all().0, v1);
+			let mut g = GraphStruct::ensure_unchecked(g.release_all().0, v1);
 
 			g.set_method(v2).is_err()
 		}
@@ -154,9 +154,9 @@ mod __
 	#[quickcheck]
 	fn is_root_true(Arb(g): Arb<VertexInGraph<MockGraph<directedness>>>) -> bool
 	{
-		use graphene::core::{Ensure, ReleaseUnloaded};
+		use graphene::core::{Ensure, Release};
 		let v = g.get_vertex();
-		let g = RootedGraph::ensure_unvalidated(g.release_all(), v);
+		let g = RootedGraph::ensure_unchecked(g.release_all(), v);
 
 		g.is_root(v)
 	}
@@ -165,9 +165,9 @@ mod __
 	#[quickcheck]
 	fn is_root_false(Arb(g): Arb<TwoVerticesIn<MockGraph<directedness>, Unique>>) -> bool
 	{
-		use graphene::core::{Ensure, ReleaseUnloaded};
+		use graphene::core::{Ensure, Release};
 		let (v1, v2) = g.get_both();
-		let g = RootedGraph::ensure_unvalidated(g.release_all(), v1);
+		let g = RootedGraph::ensure_unchecked(g.release_all(), v1);
 
 		!g.is_root(v2)
 	}

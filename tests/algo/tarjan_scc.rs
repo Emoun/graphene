@@ -6,7 +6,7 @@ use graphene::{
 	algo::TarjanScc,
 	core::{
 		property::{ConnectedGraph, Subgraph},
-		Directed, EnsureUnloaded, Graph,
+		Directed, Graph, Guard,
 	},
 };
 
@@ -30,7 +30,7 @@ fn produces_connected_components(Arb(graph): Arb<VertexInGraph<MockGraph<Directe
 {
 	for scc in TarjanScc::new(&graph)
 	{
-		if !ConnectedGraph::validate(&scc)
+		if !ConnectedGraph::can_guard(&scc)
 		{
 			return false;
 		}

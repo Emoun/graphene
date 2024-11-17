@@ -28,12 +28,12 @@ pub struct HasVertexGraph<C: Ensure>(C);
 
 impl<C: Ensure> Ensure for HasVertexGraph<C>
 {
-	fn ensure_unvalidated(c: Self::Ensured, _: ()) -> Self
+	fn ensure_unchecked(c: Self::Ensured, _: ()) -> Self
 	{
 		Self(c)
 	}
 
-	fn validate(c: &Self::Ensured, _: &()) -> bool
+	fn can_ensure(c: &Self::Ensured, _: &()) -> bool
 	{
 		c.graph().all_vertices().next().is_some()
 	}
@@ -110,12 +110,12 @@ where
 
 impl<C: Ensure> Ensure for VertexInGraph<C>
 {
-	fn ensure_unvalidated(c: Self::Ensured, v: <C::Graph as Graph>::Vertex) -> Self
+	fn ensure_unchecked(c: Self::Ensured, v: <C::Graph as Graph>::Vertex) -> Self
 	{
 		Self(c, v)
 	}
 
-	fn validate(c: &Self::Ensured, p: &<C::Graph as Graph>::Vertex) -> bool
+	fn can_ensure(c: &Self::Ensured, p: &<C::Graph as Graph>::Vertex) -> bool
 	{
 		c.graph().contains_vertex(*p)
 	}

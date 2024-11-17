@@ -179,7 +179,7 @@ macro_rules! impl_properties {
 			}
 		}
 
-		//Release
+		//ReleasePayload
 		$crate::impl_properties!{
 			@struct [ $struct ]
 			@generic [ $($generics)* ]
@@ -187,12 +187,12 @@ macro_rules! impl_properties {
 			$(@exclude [ $($exclude_props)* ])?
 			$(@include [ $($include_props)* ])?
 			@bounds [ $($bounds)* ]
-			@trait_id Release [$crate::core]
+			@trait_id ReleasePayload [$crate::core]
 			@implement {
-				type Base = <$delegate_type as $crate::core::Release>::Base ;
+				type Base = <$delegate_type as $crate::core::ReleasePayload>::Base ;
 				type Ensured = $delegate_type;
 				#[allow(unused_parens)]
-				type Payload = ($($payload_type,)?<$delegate_type as $crate::core::Release>::Payload);
+				type Payload = ($($payload_type,)?<$delegate_type as $crate::core::ReleasePayload>::Payload);
 				#[allow(unused_parens)]
 				fn release(self) -> (Self::Ensured, ($($payload_type)?))
 				{
@@ -211,12 +211,12 @@ macro_rules! impl_properties {
 			@bounds [ $($bounds)* ]
 			@trait_id Ensure [$crate::core]
 			@implement {
-				fn ensure_unvalidated(c: Self::Ensured, _p:($($payload_type)?)) -> Self
+				fn ensure_unchecked(c: Self::Ensured, _p:($($payload_type)?)) -> Self
 				{
 					$crate::make_ensurer!(c, _p $($payload_type)?)
 				}
 
-				fn validate(_: &Self::Ensured, _:&($($payload_type)?)) -> bool
+				fn can_ensure(_: &Self::Ensured, _:&($($payload_type)?)) -> bool
 				{
 					true
 				}

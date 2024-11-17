@@ -1,4 +1,4 @@
-use crate::core::{Ensure, Graph, Release};
+use crate::core::{Ensure, Graph, ReleasePayload};
 use delegate::delegate;
 use std::borrow::Borrow;
 
@@ -23,7 +23,7 @@ pub struct EdgeWeightMap<C: Ensure, Ew>(
 impl<C: Ensure, Ew> EdgeWeightMap<C, Ew>
 {
 	pub fn new(
-		c: <Self as Release>::Ensured,
+		c: <Self as ReleasePayload>::Ensured,
 		map: fn(
 			<C::Graph as Graph>::Vertex,
 			<C::Graph as Graph>::Vertex,
@@ -37,7 +37,7 @@ impl<C: Ensure, Ew> EdgeWeightMap<C, Ew>
 
 impl<C: Ensure, Ew> Ensure for EdgeWeightMap<C, Ew>
 {
-	fn ensure_unvalidated(
+	fn ensure_unchecked(
 		c: Self::Ensured,
 		map: fn(
 			<C::Graph as Graph>::Vertex,
@@ -49,7 +49,7 @@ impl<C: Ensure, Ew> Ensure for EdgeWeightMap<C, Ew>
 		Self(c, map)
 	}
 
-	fn validate(
+	fn can_ensure(
 		_: &Self::Ensured,
 		_: &fn(
 			<C::Graph as Graph>::Vertex,

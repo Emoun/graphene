@@ -7,7 +7,7 @@ use graphene::{
 	core::{
 		property::{AddEdge, ConnectedGraph, HasVertex, VertexInGraph},
 		proxy::EdgeWeightMap,
-		Directed, Ensure, Graph, GraphDeref, Release, Undirected,
+		Directed, Ensure, Graph, GraphDeref, ReleasePayload, Undirected,
 	},
 };
 use std::collections::{HashMap, HashSet};
@@ -53,9 +53,8 @@ mod __
 		let v_map = graph.join(&g2);
 
 		// Ensure that no visited vertex comes from outside the start component
-		let e_map = EdgeWeightMap::new(VertexInGraph::ensure_unvalidated(graph, v), |_, _, w| {
-			w.value
-		});
+		let e_map =
+			EdgeWeightMap::new(VertexInGraph::ensure_unchecked(graph, v), |_, _, w| w.value);
 		DijkstraShortestPaths::new(&e_map).all(|(_, v, _)| v_map.values().all(|&new_v| v != new_v))
 	}
 
@@ -132,9 +131,7 @@ fn directed_doesnt_visit_incoming_component(
 			.unwrap();
 	}
 
-	let e_map = EdgeWeightMap::new(VertexInGraph::ensure_unvalidated(graph, v), |_, _, w| {
-		w.value
-	});
+	let e_map = EdgeWeightMap::new(VertexInGraph::ensure_unchecked(graph, v), |_, _, w| w.value);
 	// Ensure that no visited vertex comes from outside the start component
 	DijkstraShortestPaths::new(&e_map).all(|(_, v, _)| v_map.values().all(|&new_v| v != new_v))
 }
@@ -172,8 +169,6 @@ fn directed_visits_outgoing_component(
 
 	// Ensure that all vertices are visited
 	let count = graph.all_vertices().count() - 1;
-	let e_map = EdgeWeightMap::new(VertexInGraph::ensure_unvalidated(graph, v), |_, _, w| {
-		w.value
-	});
+	let e_map = EdgeWeightMap::new(VertexInGraph::ensure_unchecked(graph, v), |_, _, w| w.value);
 	DijkstraShortestPaths::new(&e_map).count() == count
 }

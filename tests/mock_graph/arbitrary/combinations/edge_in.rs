@@ -33,7 +33,7 @@ where
 	G::Graph: TestGraph,
 	<G::Graph as Graph>::EdgeWeight: MockType,
 {
-	fn ensure_unvalidated(c: Self::Ensured, _: ()) -> Self
+	fn ensure_unchecked(c: Self::Ensured, _: ()) -> Self
 	{
 		let (sink, weight) = {
 			let edge = c.edges_sourced_in(c.get_vertex()).next().unwrap();
@@ -42,7 +42,7 @@ where
 		Self(c, sink, weight)
 	}
 
-	fn validate(c: &Self::Ensured, _: &()) -> bool
+	fn can_ensure(c: &Self::Ensured, _: &()) -> bool
 	{
 		c.all_edges().count() >= 1
 	}
@@ -96,7 +96,7 @@ where
 			.nth(g.gen_range(0, e_count))
 			.unwrap();
 		Self(
-			graphene::core::Ensure::ensure_unvalidated(graph, source),
+			graphene::core::Ensure::ensure_unchecked(graph, source),
 			sink,
 			weight,
 		)

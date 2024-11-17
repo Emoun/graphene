@@ -7,7 +7,7 @@ use crate::mock_graph::{
 use duplicate::duplicate_item;
 use graphene::core::{
 	property::{HasVertex, VertexInGraph},
-	Directed, Edge, Graph, ReleaseUnloaded, Undirected,
+	Directed, Edge, Graph, Release, Undirected,
 };
 
 use crate::mock_graph::arbitrary::{Arb, TwoVerticesIn};

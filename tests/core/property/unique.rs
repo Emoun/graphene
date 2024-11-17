@@ -8,7 +8,7 @@ use graphene::core::{
 	property::{
 		AddEdge, HasVertex, NewVertex, Simple, SimpleGraph, Unique, UniqueGraph, VertexInGraph,
 	},
-	Directed, EnsureUnloaded, Graph, ReleaseUnloaded, Undirected,
+	Directed, Graph, Guard, Release, Undirected,
 };
 use static_assertions::assert_impl_all;
 
@@ -31,14 +31,14 @@ mod __
 		#[quickcheck]
 		fn accept_property(g: Arb<test_graph<MockGraph<directedness, edge_type>>>) -> bool
 		{
-			test_graph::validate(&g.0.release_all())
+			test_graph::can_guard(&g.0.release_all())
 		}
 
 		/// Tests that test_graph correctly rejects non-unique graphs.
 		#[quickcheck]
 		fn reject_non_unique(g: Arb<NonUniqueGraph<directedness, edge_type>>) -> bool
 		{
-			!test_graph::validate(&g.0)
+			!test_graph::can_guard(&g.0)
 		}
 
 		/// Tests that a test_graph accepts adding a non-duplicate edge

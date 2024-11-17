@@ -50,20 +50,20 @@ use static_assertions::assert_impl_all;
 mod module
 {
 	use super::*;
-	use graphene::core::{EnsureUnloaded, ReleaseUnloaded};
+	use graphene::core::{Guard, Release};
 
 	/// Tests that the graph correctly identifies graphs with its connectedness.
 	#[quickcheck]
 	fn accept_connected(Arb(g): Arb<arb_connected>) -> bool
 	{
-		connected_graph::validate(&g.release_all())
+		connected_graph::can_guard(&g.release_all())
 	}
 
 	/// Tests that the graph correctly rejects graphs without its connectedness.
 	#[quickcheck]
 	fn reject_unconnected(Arb(g): Arb<arb_unconnected>) -> bool
 	{
-		!connected_graph::validate(&g.release_all())
+		!connected_graph::can_guard(&g.release_all())
 	}
 
 	/// Tests that a graph always accepts adding an edge.
@@ -74,7 +74,7 @@ mod module
 	) -> bool
 	{
 		let (v1, v2) = g.get_both();
-		let mut g = connected_graph::ensure_unvalidated(g.release_all());
+		let mut g = connected_graph::guard_unchecked(g.release_all());
 
 		g.add_edge_weighted(&v1, &v2, e_weight).is_ok()
 	}
@@ -88,7 +88,7 @@ mod module
 	) -> bool
 	{
 		let (v1, v2) = g.get_both();
-		let mut g = connected_graph::ensure_unvalidated(g.release_all());
+		let mut g = connected_graph::guard_unchecked(g.release_all());
 		// To ensure we can remove an edge, we first create an edge to remove
 		g.add_edge_weighted(&v1, &v2, e_weight.clone()).unwrap();
 
@@ -120,15 +120,15 @@ mod module
 		graph
 			.add_edge_weighted(&v1, &v_map[&v2], e_weight.clone())
 			.unwrap();
-		if !connected_graph::validate(&graph)
+		if !connected_graph::can_guard(&graph)
 		{
 			graph
 				.add_edge_weighted(&v_map[&v2], &v1, e_weight.clone())
 				.unwrap();
 		}
-		let mut connected = connected_graph::ensure_unvalidated(graph);
+		let mut connected = connected_graph::guard_unchecked(graph);
 
-		// We now try to remove the the added edge
+		// We now try to remove the added edge
 		connected
 			.remove_edge_where_weight(&v1, &v_map[&v2], |_| true)
 			.is_err()
@@ -184,7 +184,7 @@ mod module
 	// 	}
 	//
 	// 	// We then try to remove the vertex again
-	// 	connected_graph::ensure_unvalidated(graph)
+	// 	connected_graph::ensure_unchecked(graph)
 	// 		.remove_vertex(&v_new)
 	// 		.is_ok()
 	// }
@@ -214,7 +214,7 @@ mod module
 		graph
 			.add_edge_weighted(&new_v, &v_map[&v21], e_weight.clone())
 			.unwrap();
-		if !connected_graph::validate(&graph)
+		if !connected_graph::can_guard(&graph)
 		{
 			let new_v = graph.new_vertex_weighted(v_weight.clone()).unwrap();
 			graph
@@ -224,7 +224,7 @@ mod module
 				.add_edge_weighted(&new_v, &v12, e_weight.clone())
 				.unwrap();
 		}
-		let mut connected = connected_graph::ensure_unvalidated(graph);
+		let mut connected = connected_graph::guard_unchecked(graph);
 
 		// We now try to remove the the added vertex
 		connected.remove_vertex(&new_v).is_err()
@@ -241,7 +241,7 @@ mod __
 	#[quickcheck]
 	fn eccentricity(Arb(g): Arb<VertexInGraph<ConnectedGraph<MockGraph<directedness>>>>) -> bool
 	{
-		let e_map = EdgeWeightMap::ensure_unvalidated(&g, |_, _, w| w.value);
+		let e_map = EdgeWeightMap::ensure_unchecked(&g, |_, _, w| w.value);
 		let eccentricity = e_map.eccentricity();
 		let success =
 			DijkstraShortestPaths::distances(&e_map).all(|(_, dist)| dist <= eccentricity);
@@ -252,31 +252,31 @@ mod __
 	#[quickcheck]
 	fn diameter(Arb(g): Arb<ConnectedGraph<MockGraph<directedness>>>) -> bool
 	{
-		let e_map = EdgeWeightMap::ensure_unvalidated(&g, |_, _, w| w.value);
+		let e_map = EdgeWeightMap::ensure_unchecked(&g, |_, _, w| w.value);
 		let diameter = e_map.diameter();
 		g.all_vertices()
-			.all(|v| VertexInGraph::ensure_unvalidated(&e_map, v).eccentricity() <= diameter)
+			.all(|v| VertexInGraph::ensure_unchecked(&e_map, v).eccentricity() <= diameter)
 	}
 
 	/// Tests `radius`
 	#[quickcheck]
 	fn radius(Arb(g): Arb<ConnectedGraph<MockGraph<directedness>>>) -> bool
 	{
-		let e_map = EdgeWeightMap::ensure_unvalidated(&g, |_, _, w| w.value);
+		let e_map = EdgeWeightMap::ensure_unchecked(&g, |_, _, w| w.value);
 		let radius = e_map.radius();
 		g.all_vertices()
-			.all(|v| VertexInGraph::ensure_unvalidated(&e_map, v).eccentricity() >= radius)
+			.all(|v| VertexInGraph::ensure_unchecked(&e_map, v).eccentricity() >= radius)
 	}
 
 	/// Tests `centers`
 	#[quickcheck]
 	fn centers(Arb(g): Arb<ConnectedGraph<MockGraph<directedness>>>) -> bool
 	{
-		let e_map = EdgeWeightMap::ensure_unvalidated(&g, |_, _, w| w.value);
+		let e_map = EdgeWeightMap::ensure_unchecked(&g, |_, _, w| w.value);
 		let radius = e_map.radius();
 		let success = e_map
 			.centers()
-			.all(|v| VertexInGraph::ensure_unvalidated(&e_map, v).eccentricity() == radius);
+			.all(|v| VertexInGraph::ensure_unchecked(&e_map, v).eccentricity() == radius);
 		success
 	}
 }

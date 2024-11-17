@@ -7,7 +7,7 @@ use graphene::{
 	core::{
 		property::{AddEdge, ConnectedGraph, HasVertex, VertexInGraph},
 		proxy::EdgeWeightMap,
-		Directed, Ensure, Graph, GraphDeref, Release, Undirected,
+		Directed, Ensure, Graph, GraphDeref, ReleasePayload, Undirected,
 	},
 };
 use std::collections::HashSet;
@@ -71,7 +71,7 @@ mod module
 			let v_map = graph.join(&g2);
 
 			// Ensure that no visited vertex comes from outside the start component
-			search_algo_new([&VertexInGraph::ensure_unvalidated(graph, v)])
+			search_algo_new([&VertexInGraph::ensure_unchecked(graph, v)])
 				.all(|visit| v_map.values().all(|&new_v| visit != new_v))
 		}
 	}
@@ -107,7 +107,7 @@ mod module
 		}
 
 		// Ensure that no visited vertex comes from outside the start component
-		search_algo_new([&VertexInGraph::ensure_unvalidated(graph, v)])
+		search_algo_new([&VertexInGraph::ensure_unchecked(graph, v)])
 			.all(|visit| v_map.values().all(|&new_v| visit != new_v))
 	}
 
@@ -143,6 +143,6 @@ mod module
 
 		// Ensure that all vertices are visited except the start
 		let count = graph.all_vertices().count() - 1;
-		search_algo_new([&VertexInGraph::ensure_unvalidated(graph, v)]).count() == count
+		search_algo_new([&VertexInGraph::ensure_unchecked(graph, v)]).count() == count
 	}
 }

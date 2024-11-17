@@ -24,12 +24,12 @@ where
 	G::Graph: TestGraph,
 	<G::Graph as Graph>::EdgeWeight: MockType,
 {
-	fn ensure_unvalidated(c: Self::Ensured, _: ()) -> Self
+	fn ensure_unchecked(c: Self::Ensured, _: ()) -> Self
 	{
 		Self(c, HashSet::new())
 	}
 
-	fn validate(_: &Self::Ensured, _: &()) -> bool
+	fn can_ensure(_: &Self::Ensured, _: &()) -> bool
 	{
 		true
 	}

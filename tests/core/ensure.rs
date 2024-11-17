@@ -2,7 +2,7 @@
 
 use crate::mock_graph::MockVertex;
 use delegate::delegate;
-use graphene::core::{Ensure, Graph, GraphDeref, GraphDerefMut, GraphMut, Release};
+use graphene::core::{Ensure, Graph, GraphDeref, GraphDerefMut, GraphMut, ReleasePayload};
 use std::borrow::Borrow;
 
 /// A mock property that doesn't use mutability.
@@ -40,17 +40,17 @@ impl<C: Ensure> GraphDerefMut for MockEnsurer<C>
 }
 impl<C: Ensure> Ensure for MockEnsurer<C>
 {
-	fn ensure_unvalidated(c: Self::Ensured, p: MockVertex) -> Self
+	fn ensure_unchecked(c: Self::Ensured, p: MockVertex) -> Self
 	{
 		Self(c, p)
 	}
 
-	fn validate(c: &Self::Ensured, p: &MockVertex) -> bool
+	fn can_ensure(c: &Self::Ensured, p: &MockVertex) -> bool
 	{
 		c.graph().all_vertices().count() == p.value as usize
 	}
 }
-impl<C: Ensure> Release for MockEnsurer<C>
+impl<C: Ensure> ReleasePayload for MockEnsurer<C>
 {
 	type Base = C::Base;
 	type Ensured = C;
@@ -145,17 +145,17 @@ impl<C: Ensure> GraphDerefMut for MockUnloadedEnsurer<C>
 }
 impl<C: Ensure> Ensure for MockUnloadedEnsurer<C>
 {
-	fn ensure_unvalidated(c: Self::Ensured, _: ()) -> Self
+	fn ensure_unchecked(c: Self::Ensured, _: ()) -> Self
 	{
 		Self(c)
 	}
 
-	fn validate(c: &Self::Ensured, _: &()) -> bool
+	fn can_ensure(c: &Self::Ensured, _: &()) -> bool
 	{
 		c.graph().all_vertices().count() == 1
 	}
 }
-impl<C: Ensure> Release for MockUnloadedEnsurer<C>
+impl<C: Ensure> ReleasePayload for MockUnloadedEnsurer<C>
 {
 	type Base = C::Base;
 	type Ensured = C;
@@ -265,7 +265,7 @@ mod test_with_payload
 		core::ensure::{MockEnsurer, MockProperty, MockPropertyMut, MockUnloadedEnsurer},
 		mock_graph::{MockDirectedness, MockGraph, MockVertex, MockVertexWeight},
 	};
-	use graphene::core::{BaseGraph, Ensure, Release};
+	use graphene::core::{BaseGraph, Ensure, ReleasePayload};
 
 	/// Test that defining a type alias allows for easy ensuring of a base graph
 	#[test]
@@ -468,7 +468,7 @@ mod test_no_payload
 		core::ensure::{MockProperty, MockPropertyMut, MockUnloadedEnsurer},
 		mock_graph::{MockDirectedness, MockGraph, MockVertexWeight},
 	};
-	use graphene::core::{BaseGraphUnloaded, EnsureUnloaded, ReleaseUnloaded};
+	use graphene::core::{BaseGraphGuard, Guard, Release};
 
 	/// Test that defining a type alias allows for easy ensuring of a base graph
 	#[test]
@@ -478,12 +478,12 @@ mod test_no_payload
 
 		// Test can use `Ensure.ensure_all` on a base graph without needing type
 		// annotation
-		let g = EnsuredGraph::ensure_all(ensurable_graph!()).unwrap();
+		let g = EnsuredGraph::guard_all(ensurable_graph!()).unwrap();
 
 		// Test that `BaseGraph.ensure_all` can be used where the property is defined
 		// elsewhere (in this case by an annotation, but could also be elsewhere and
 		// then solved by type inference)
-		let g2: EnsuredGraph = ensurable_graph!().ensure_all().unwrap();
+		let g2: EnsuredGraph = ensurable_graph!().guard_all().unwrap();
 
 		// Test can remove 1 property
 		let _: MockUnloadedEnsurer<MockGraph<MockDirectedness>> = g.release();
@@ -496,18 +496,17 @@ mod test_no_payload
 	#[test]
 	fn inline_ensuring()
 	{
-		// Test can use `Ensure.ensure_all` on a base graph using inline properties
-		let g =
-			<MockUnloadedEnsurer<MockUnloadedEnsurer<MockGraph<MockDirectedness>>>>::ensure_all(
-				ensurable_graph!(),
-			)
-			.unwrap();
+		// Test can use `Ensure.can_guard` on a base graph using inline properties
+		let g = <MockUnloadedEnsurer<MockUnloadedEnsurer<MockGraph<MockDirectedness>>>>::guard_all(
+			ensurable_graph!(),
+		)
+		.unwrap();
 
-		// Test that `BaseGraph.ensure_all` can be used where the property is defined
+		// Test that `BaseGraph.guard_all` can be used where the property is defined
 		// elsewhere (in this case by an annotation, but could also be elsewhere and
 		// then solved by type inference)
 		let g2: MockUnloadedEnsurer<MockUnloadedEnsurer<MockGraph<MockDirectedness>>> =
-			ensurable_graph!().ensure_all().unwrap();
+			ensurable_graph!().guard_all().unwrap();
 
 		// Test can remove 1 property
 		let _: MockUnloadedEnsurer<MockGraph<MockDirectedness>> = g.release();
@@ -525,7 +524,7 @@ mod test_no_payload
 		let mut g = ensurable_graph!();
 
 		// Test ensuring reference to graph
-		let c_ref = EnsuredGraphRef::ensure_all(&g).unwrap();
+		let c_ref = EnsuredGraphRef::guard_all(&g).unwrap();
 		assert_implements_mock_property!(c_ref);
 
 		// Test still is a MockEnsure after 1 release_all
@@ -539,7 +538,7 @@ mod test_no_payload
 			MockUnloadedEnsurer<MockUnloadedEnsurer<&'a mut MockGraph<MockDirectedness>>>;
 
 		// Test ensuring mutable reference to graph
-		let mut c_ref_mut = EnsuredGraphMut::ensure_all(&mut g).unwrap();
+		let mut c_ref_mut = EnsuredGraphMut::guard_all(&mut g).unwrap();
 		assert_implements_mock_property_mut!(c_ref_mut);
 
 		// Test still is a MockEnsure after 1 release_all
@@ -554,7 +553,7 @@ mod test_no_payload
 		>;
 
 		// Test ensuring graph directly
-		let mut c_owned = EnsuredGraph::ensure_all(g).unwrap();
+		let mut c_owned = EnsuredGraph::guard_all(g).unwrap();
 		assert_implements_mock_property_mut!(c_owned);
 
 		// Test still is a MockEnsure after 1 release_all
@@ -571,20 +570,18 @@ mod test_no_payload
 		let mut g = ensurable_graph!();
 
 		let c_ref =
-			<MockUnloadedEnsurer<MockUnloadedEnsurer<&MockGraph<MockDirectedness>>>>::ensure_all(
-				&g,
-			)
-			.unwrap();
+			<MockUnloadedEnsurer<MockUnloadedEnsurer<&MockGraph<MockDirectedness>>>>::guard_all(&g)
+				.unwrap();
 		assert_implements_mock_property!(c_ref);
 
 		let mut c_ref_mut = <MockUnloadedEnsurer<
 			MockUnloadedEnsurer<&mut MockGraph<MockDirectedness>>,
-		>>::ensure_all(&mut g)
+		>>::guard_all(&mut g)
 		.unwrap();
 		assert_implements_mock_property_mut!(c_ref_mut);
 
 		let mut c_owned =
-			<MockUnloadedEnsurer<MockUnloadedEnsurer<MockGraph<MockDirectedness>>>>::ensure_all(g)
+			<MockUnloadedEnsurer<MockUnloadedEnsurer<MockGraph<MockDirectedness>>>>::guard_all(g)
 				.unwrap();
 		assert_implements_mock_property_mut!(c_owned);
 	}
@@ -596,16 +593,16 @@ mod test_no_payload
 
 		let mut g = ensurable_graph!();
 
-		let c_ref: EnsuredGraph<&MockGraph<MockDirectedness>> = (&g).ensure_all().unwrap();
+		let c_ref: EnsuredGraph<&MockGraph<MockDirectedness>> = (&g).guard_all().unwrap();
 		assert_implements_mock_property!(c_ref);
 		let c_ref_unc = c_ref.release();
 		assert_implements_mock_property!(c_ref_unc);
 
 		let mut c_ref_mut: EnsuredGraph<&mut MockGraph<MockDirectedness>> =
-			(&mut g).ensure_all().unwrap();
+			(&mut g).guard_all().unwrap();
 		assert_implements_mock_property_mut!(c_ref_mut);
 
-		let mut c_owned: EnsuredGraph<MockGraph<MockDirectedness>> = g.ensure_all().unwrap();
+		let mut c_owned: EnsuredGraph<MockGraph<MockDirectedness>> = g.guard_all().unwrap();
 		assert_implements_mock_property_mut!(c_owned);
 	}
 
@@ -615,20 +612,20 @@ mod test_no_payload
 		let mut g = ensurable_graph!();
 
 		let c_ref: MockUnloadedEnsurer<MockUnloadedEnsurer<&MockGraph<MockDirectedness>>> =
-			(&g).ensure_all().unwrap();
+			(&g).guard_all().unwrap();
 		assert_implements_mock_property!(c_ref);
 		let c_ref_unc = c_ref.release();
 		assert_implements_mock_property!(c_ref_unc);
 
 		let mut c_ref_mut: MockUnloadedEnsurer<
 			MockUnloadedEnsurer<&mut MockGraph<MockDirectedness>>,
-		> = (&mut g).ensure_all().unwrap();
+		> = (&mut g).guard_all().unwrap();
 		assert_implements_mock_property_mut!(c_ref_mut);
 		let mut c_ref_mut_unc = c_ref_mut.release();
 		assert_implements_mock_property_mut!(c_ref_mut_unc);
 
 		let c_owned: MockUnloadedEnsurer<MockUnloadedEnsurer<MockGraph<MockDirectedness>>> =
-			g.ensure_all().unwrap();
+			g.guard_all().unwrap();
 		assert_implements_mock_property!(c_owned);
 		let mut c_owned_unc = c_owned.release();
 		assert_implements_mock_property_mut!(c_owned_unc);

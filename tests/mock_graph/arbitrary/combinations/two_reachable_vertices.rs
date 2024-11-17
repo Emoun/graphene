@@ -6,7 +6,7 @@ use graphene::{
 	algo::{Bfs, Dfs},
 	core::{
 		property::{AddEdge, RemoveEdge, VertexInGraph},
-		Ensure, Graph, GraphDerefMut, ReleaseUnloaded,
+		Ensure, Graph, GraphDerefMut, Release,
 	},
 	impl_ensurer,
 };
@@ -77,7 +77,7 @@ where
 		// Find all vertices with outgoing paths
 		for (v, reachable) in vert_reachables.iter_mut()
 		{
-			reachable.extend(Dfs::new_simple(&VertexInGraph::ensure_unvalidated(
+			reachable.extend(Dfs::new_simple(&VertexInGraph::ensure_unchecked(
 				graph.graph(),
 				v.clone(),
 			)));
@@ -109,7 +109,7 @@ where
 		let (v1, v2) = self.0.get_both();
 
 		// First find a path between the vertices
-		let g = VertexInGraph::ensure_unvalidated(self, v1);
+		let g = VertexInGraph::ensure_unchecked(self, v1);
 		let mut bfs = Bfs::new(&g);
 
 		let _ = bfs.find(|&v| v == v2);

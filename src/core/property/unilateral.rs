@@ -34,12 +34,12 @@ impl<C: Ensure> Ensure for UnilateralGraph<C>
 where
 	C::Graph: Graph<Directedness = Directed>,
 {
-	fn ensure_unvalidated(c: Self::Ensured, _: ()) -> Self
+	fn ensure_unchecked(c: Self::Ensured, _: ()) -> Self
 	{
 		Self(c)
 	}
 
-	fn validate(c: &Self::Ensured, _: &()) -> bool
+	fn can_ensure(c: &Self::Ensured, _: &()) -> bool
 	{
 		if let Ok(graph) = HasVertexGraph::ensure(c.graph(), ())
 		{

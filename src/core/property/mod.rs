@@ -51,7 +51,7 @@ where
 	let mut proxy = EdgeProxyGraph::new(g2);
 	proxy.remove_edge(source, sink)?;
 
-	if C::validate(&proxy, &())
+	if C::can_ensure(&proxy, &())
 	{
 		// 	Here we use 'g' again since 'proxy' is no longer used.
 		// The compiler doesn't recognize that 'proxy' isn't used in this blocks,
@@ -87,7 +87,7 @@ where
 		.remove_vertex(&ProxyVertex::Underlying(v.borrow().clone()))
 		.expect("Couldn't remove a vertex from the proxy");
 
-	if C::validate(&proxy, &())
+	if C::can_ensure(&proxy, &())
 	{
 		g.remove_vertex(v)
 	}

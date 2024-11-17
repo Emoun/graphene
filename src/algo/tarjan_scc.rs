@@ -53,7 +53,7 @@ use crate::{
 	core::{
 		property::{ConnectedGraph, HasVertex},
 		proxy::SubgraphProxy,
-		Directed, EnsureUnloaded, Graph,
+		Directed, Graph, Guard,
 	},
 };
 use std::cmp::min;
@@ -82,7 +82,7 @@ use std::cmp::min;
 /// # 	algo::TarjanScc,
 /// # 	common::AdjListGraph,
 /// # 	core::{
-/// # 		EnsureUnloaded,
+/// # 		Guard,
 /// # 		property::{
 /// # 			NewVertex, AddEdge, HasVertexGraph, Subgraph
 /// # 		}
@@ -106,7 +106,7 @@ use std::cmp::min;
 /// graph.add_edge(&v0,&v2).unwrap();
 ///
 /// // We use `HasVertexGraph` because we don't care where we start
-/// let graph = HasVertexGraph::ensure(graph).unwrap();
+/// let graph = HasVertexGraph::guard(graph).unwrap();
 ///
 /// // Initialize algorithm
 /// let mut tarj = TarjanScc::new(&graph);
@@ -253,7 +253,7 @@ where
 					}
 
 					return Some(
-						ConnectedGraph::ensure(scc)
+						ConnectedGraph::guard(scc)
 							.expect("Tarjans algorithm produced non-strongly-connected subgraph"),
 					);
 					// return Some(ConnectedGraph::new(scc));

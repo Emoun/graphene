@@ -15,12 +15,12 @@ pub struct AcyclicGraph<C: Ensure>(C);
 
 impl<C: Ensure> Ensure for AcyclicGraph<C>
 {
-	fn ensure_unvalidated(c: Self::Ensured, _: ()) -> Self
+	fn ensure_unchecked(c: Self::Ensured, _: ()) -> Self
 	{
 		Self(c)
 	}
 
-	fn validate(c: &Self::Ensured, _: &()) -> bool
+	fn can_ensure(c: &Self::Ensured, _: &()) -> bool
 	{
 		fn on_visit<G: Graph>(dfs: &mut Dfs<G, (Vec<G::Vertex>, &mut bool)>, v: G::Vertex)
 		{
@@ -73,7 +73,7 @@ impl<C: Ensure> Ensure for AcyclicGraph<C>
 			if !done.contains(&v)
 			{
 				done.push(v); // not returned by the dfs
-				let g = VertexInGraph::ensure_unvalidated(c.graph(), v);
+				let g = VertexInGraph::ensure_unchecked(c.graph(), v);
 				let dfs = Dfs::new(&g, on_visit, on_exit, on_explore, (Vec::new(), &mut result));
 
 				dfs.for_each(|v| {

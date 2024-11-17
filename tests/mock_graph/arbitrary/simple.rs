@@ -4,7 +4,7 @@ use crate::mock_graph::{
 };
 use graphene::core::{
 	property::{AddEdge, SimpleGraph},
-	EnsureUnloaded, Graph, ReleaseUnloaded, Undirected,
+	Graph, Guard, Release, Undirected,
 };
 use quickcheck::Gen;
 use rand::Rng;
@@ -70,7 +70,7 @@ impl GuidedArbGraph for SimpleGraph<MockGraph<Undirected, ()>>
 			}
 		}
 
-		Self::ensure(graph).unwrap()
+		Self::guard(graph).unwrap()
 	}
 
 	fn shrink_guided(&self, limits: HashSet<Limit>) -> Box<dyn Iterator<Item = Self>>

@@ -1,6 +1,6 @@
 use crate::core::{
 	property::{HasVertex, VertexInGraph},
-	Ensure, Graph, Release,
+	Ensure, Graph, ReleasePayload,
 };
 use std::borrow::Borrow;
 
@@ -50,7 +50,7 @@ where
 	}
 }
 
-impl<C: Ensure> Release for RootedGraph<C>
+impl<C: Ensure> ReleasePayload for RootedGraph<C>
 {
 	type Base = C::Base;
 	type Ensured = C;
@@ -64,14 +64,14 @@ impl<C: Ensure> Release for RootedGraph<C>
 
 impl<C: Ensure> Ensure for RootedGraph<C>
 {
-	fn ensure_unvalidated(c: Self::Ensured, v: <C::Graph as Graph>::Vertex) -> Self
+	fn ensure_unchecked(c: Self::Ensured, v: <C::Graph as Graph>::Vertex) -> Self
 	{
-		Self(VertexInGraph::ensure_unvalidated(c, v))
+		Self(VertexInGraph::ensure_unchecked(c, v))
 	}
 
-	fn validate(c: &Self::Ensured, p: &<C::Graph as Graph>::Vertex) -> bool
+	fn can_ensure(c: &Self::Ensured, p: &<C::Graph as Graph>::Vertex) -> bool
 	{
-		VertexInGraph::<C>::validate(c, p)
+		VertexInGraph::<C>::can_ensure(c, p)
 	}
 }
 
@@ -89,7 +89,7 @@ impl<C: Ensure> Rooted for RootedGraph<C>
 }
 
 impl_ensurer! {
-	use<C> RootedGraph<C>: Release, Ensure, Rooted
+	use<C> RootedGraph<C>: ReleasePayload, Ensure, Rooted
 	as (self.0) : VertexInGraph<C>
 	where C: Ensure
 }

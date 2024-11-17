@@ -7,7 +7,7 @@ use crate::mock_graph::{
 use duplicate::duplicate_item;
 use graphene::core::{
 	property::{Acyclic, AcyclicGraph, AddEdge, HasVertex, NoLoops, RemoveEdge},
-	Directed, EnsureUnloaded, Graph, ReleaseUnloaded, Undirected,
+	Directed, Graph, Guard, Release, Undirected,
 };
 use static_assertions::assert_impl_all;
 
@@ -23,14 +23,14 @@ mod __
 	#[quickcheck]
 	fn accept_acyclic(g: Arb<AcyclicGraph<MockGraph<directedness>>>) -> bool
 	{
-		AcyclicGraph::validate(&g.0.release_all())
+		AcyclicGraph::can_guard(&g.0.release_all())
 	}
 
 	/// Tests that AcyclicGraph correctly rejects cyclic graphs.
 	#[quickcheck]
 	fn reject_cyclic(g: Arb<CyclicGraph<directedness>>) -> bool
 	{
-		!AcyclicGraph::validate(&g.0)
+		!AcyclicGraph::can_guard(&g.0)
 	}
 
 	/// Tests that a AcyclicGraph accepts adding an edge that doesn't
@@ -46,7 +46,7 @@ mod __
 		let edge_count = g.edges_between(source, sink).count();
 		let weight = g.remove_edge(source, sink).unwrap();
 
-		let mut g = AcyclicGraph::ensure_unvalidated(g);
+		let mut g = AcyclicGraph::guard_unchecked(g);
 
 		g.add_edge_weighted(source, sink, weight).is_ok()
 			&& g.edges_between(source, sink).count() == edge_count
@@ -62,7 +62,7 @@ mod __
 		let (v1, v2) = graph.0.get_both();
 		let edge_count = graph.all_edges().count();
 
-		let mut g = AcyclicGraph::ensure_unvalidated(graph.release_all());
+		let mut g = AcyclicGraph::guard_unchecked(graph.release_all());
 
 		g.add_edge_weighted(v2, v1, weight).is_err() && g.all_edges().count() == edge_count
 	}

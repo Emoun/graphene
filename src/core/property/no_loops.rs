@@ -12,12 +12,12 @@ pub struct NoLoopsGraph<C: Ensure>(C);
 
 impl<C: Ensure> Ensure for NoLoopsGraph<C>
 {
-	fn ensure_unvalidated(c: Self::Ensured, _: ()) -> Self
+	fn ensure_unchecked(c: Self::Ensured, _: ()) -> Self
 	{
 		Self(c)
 	}
 
-	fn validate(c: &Self::Ensured, _: &()) -> bool
+	fn can_ensure(c: &Self::Ensured, _: &()) -> bool
 	{
 		c.graph()
 			.all_vertices()

@@ -4,7 +4,7 @@ use crate::mock_graph::{
 };
 use graphene::core::{
 	property::{AddEdge, DirectedGraph, EdgeCount, NewVertex, RemoveEdge, RemoveVertex},
-	Directedness, Edge, EnsureUnloaded, Graph,
+	Directedness, Edge, Graph, Guard,
 };
 use quickcheck::{Arbitrary, Gen};
 use rand::Rng;
@@ -243,7 +243,7 @@ impl<D: Directedness, Ew: MockType> MockGraph<D, Ew>
 			{
 				let mut clone = self.clone();
 				clone.remove_vertex(&v).unwrap();
-				if let Ok(g) = DirectedGraph::ensure(self)
+				if let Ok(g) = DirectedGraph::guard(self)
 				{
 					for (sink, w1) in g.edges_sourced_in(&v)
 					{
