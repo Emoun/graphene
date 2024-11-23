@@ -6,7 +6,7 @@ use duplicate::duplicate_item;
 use std::borrow::Borrow;
 
 /// A marker trait for [simple graphs](https://mathworld.wolfram.com/SimpleGraph.html)
-pub trait Simple: NoLoops + Unique {}
+pub trait Simple: Graph<EdgeWeight = (), Directedness = Undirected> + NoLoops + Unique {}
 
 #[derive(Clone, Debug)]
 pub struct SimpleGraph<C: Ensure>(C);

@@ -138,7 +138,6 @@ where
 /// graph is therefore the first layer. Each layer may need a payload. For
 /// example, an ensurer guaranteeing that a given vertex exists may have the
 /// vertex as a payload.
-///
 pub trait ReleasePayload: Sized + GraphDeref
 {
 	/// The base graph implementation being ensured

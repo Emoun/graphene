@@ -37,7 +37,7 @@ pub trait Rooted: HasVertex
 	}
 }
 
-/// Ensures the a specific vertex is the root of the graph.
+/// Ensures a specific vertex is the root of the graph.
 pub struct RootedGraph<C: Ensure>(VertexInGraph<C>);
 
 impl<C: Ensure> Clone for RootedGraph<C>

@@ -45,7 +45,7 @@ impl<C: Ensure> Graph for DirectedGraph<C>
 }
 
 impl_ensurer! {
-	use<C> DirectedGraph<C>: Ensure, Graph, DirectedConstraint
+	use<C> DirectedGraph<C>: Ensure, Graph, DirectedConstraint, Simple
 	as (self.0) : C
 }
 

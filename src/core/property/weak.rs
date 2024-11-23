@@ -17,8 +17,6 @@ use std::borrow::Borrow;
 /// directed graphs, for undirected ones, they are equal. For this reason, the
 /// companion ensurer graph `WeakGraph` only allows directed graphs. For
 /// undirected graph, simply use `ConnectedGraph`.
-///
-/// For type safety reasons, the trait itself does not restrict directedness.
 pub trait Weak: Graph {}
 
 #[derive(Clone, Debug)]
@@ -91,7 +89,7 @@ where
 impl<C: Ensure> Weak for WeakGraph<C> where C::Graph: Graph<Directedness = Directed> {}
 
 impl_ensurer! {
-	use<C> WeakGraph<C>: Ensure, Weak, RemoveVertex, RemoveEdge,
+	use<C> WeakGraph<C>: Ensure, Weak, RemoveVertex, RemoveEdge, Simple,
 	// A new vertex wouldn't be connected to the rest of the graph
 	NewVertex
 	as (self.0) : C

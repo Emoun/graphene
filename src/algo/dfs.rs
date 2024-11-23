@@ -74,7 +74,7 @@ use std::borrow::Borrow;
 ///
 /// 2. Referenced closure: If Dfs takes a reference to a closure, it no longer
 /// needs to be generic on the closures type. However, it limits where Dfs can
-/// be used, since its now bound by the lifetime of the reference. It also
+/// be used, since it's now bound by the lifetime of the reference. It also
 /// doesn't solve the issue with other struct using Dfs, because you can't have
 /// the closure anywhere when not using the Dfs.
 ///
@@ -269,11 +269,11 @@ where
 	{
 		// The meaning of markers:
 		//
-		// If its on the stack it means we are still visiting it or its children.
+		// If it's on the stack it means we are still visiting it or its children.
 		//
 		// If its exit marked, it means when we are finished visiting it and its
 		// children, we will call the 'on_exit' closure on it, and then pop it.
-		// If its not exit marked, it means this instance of it on the stack was
+		// If it's not exit marked, it means this instance of it on the stack was
 		// never used for visiting this vertex's children and we just pop it, without
 		// calling the closure.
 		//
@@ -281,7 +281,7 @@ where
 		// we are finished doing so. Either way, it shouldn't go on the stack again
 		// at any point.
 
-		// Pop any vertices that we are done visiting (and since its on the top of the
+		// Pop any vertices that we are done visiting (and since it's on the top of the
 		// stack, we must be done visiting its children).
 		while self.advance_next_exit().is_some()
 		{}

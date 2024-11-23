@@ -94,7 +94,7 @@ impl<C: Ensure, Ew> Graph for EdgeWeightMap<C, Ew>
 }
 
 impl_ensurer! {
-	use<C,Ew> EdgeWeightMap<C, Ew>: Ensure, Graph, GraphMut, Reflexive, AddEdge, RemoveEdge
+	use<C,Ew> EdgeWeightMap<C, Ew>: Ensure, Graph, GraphMut, Reflexive, AddEdge, RemoveEdge, Simple
 	as (self.0) : C
 	as (self.1) : fn(
 		<C::Graph as Graph>::Vertex,
