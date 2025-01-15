@@ -6,13 +6,14 @@
 /// Supported property traits:
 /// Directed, Undirected, Unique, NoLoops, Reflexive, Weak, Unilateral,
 /// Connected, Subgraph, Simple
-///
-/// Warning: The Ensure implementation assumes the struct has 1 public member.
-/// If this is not the case, implement it yourself.
 #[macro_export]
 macro_rules! impl_ensurer {
 	{
-		$(use <$($generics:ident),+>)? $struct:ty
+		$(use <
+			$($generics:ident),+
+			$(; $(const $const_gen_id:ident : $const_gen_ty:ty),+)?
+		>)?
+		$struct:ty
 		$(: $( $exclude_props:ident),+)?
 		as (self $($delegate:tt)+) : $type_graph:ty
 		$(as (self $($payload_to:tt)+) : $payload_type:ty)?
@@ -21,6 +22,7 @@ macro_rules! impl_ensurer {
 		$crate::impl_properties!{
 			@struct [ $struct ]
 			@generic [ $($($generics)+)? ]
+			@const_generic [ $($( $([$const_gen_id $const_gen_ty])+ )?)? ]
 			@delegate [ $type_graph ]
 			@delegate_to [ $($delegate)+ ]
 			$(	@payload [$payload_type]
@@ -72,6 +74,7 @@ macro_rules! base_graph_inner {
 		$crate::impl_properties! {
 			@struct [ $struct ]
 			@generic [ $($($generics)+)? ]
+			@const_generic [ ]
 			@delegate [ $delegate_type ]
 			@delegate_to [ $($delegate)+ ]
 			@include [ $($include_props)+ ]
@@ -115,6 +118,7 @@ macro_rules! impl_properties {
 	{
 		@struct [ $struct:ty ]
 		@generic [ $($generics:tt)* ]
+		@const_generic [ $($const_generics:tt)* ]
 		@delegate [ $delegate_type:ty ]
 		@delegate_to [ $($delegate:tt)+ ]
 		$(	@payload [$payload_type:ty]
@@ -133,6 +137,7 @@ macro_rules! impl_properties {
 	{
 		@struct [ $struct:ty ]
 		@generic [ $($generics:tt)* ]
+		@const_generic [ $([$const_gen_id:ident $const_gen_ty:ty])* ]
 		@delegate [ $delegate_type:ty ]
 		@delegate_to [ $($delegate:tt)+ ]
 		$(	@payload [$payload_type:ty]
@@ -147,6 +152,7 @@ macro_rules! impl_properties {
 		$crate::impl_properties!{
 			@struct [ $struct ]
 			@generic [ $($generics)* ]
+			@const_generic [ $([$const_gen_id $const_gen_ty])* ]
 			@delegate [ $delegate_type ]
 			$(@exclude [ $($exclude_props)* ])?
 			$(@include [ $($include_props)* ])?
@@ -166,6 +172,7 @@ macro_rules! impl_properties {
 		$crate::impl_properties!{
 			@struct [ $struct ]
 			@generic [ $($generics)* ]
+			@const_generic [ $([$const_gen_id $const_gen_ty])* ]
 			@delegate [ $delegate_type ]
 			$(@exclude [ $($exclude_props)* ])?
 			$(@include [ $($include_props)* ])?
@@ -183,6 +190,7 @@ macro_rules! impl_properties {
 		$crate::impl_properties!{
 			@struct [ $struct ]
 			@generic [ $($generics)* ]
+			@const_generic [ $([$const_gen_id $const_gen_ty])* ]
 			@delegate [ $delegate_type ]
 			$(@exclude [ $($exclude_props)* ])?
 			$(@include [ $($include_props)* ])?
@@ -205,6 +213,7 @@ macro_rules! impl_properties {
 		$crate::impl_properties!{
 			@struct [ $struct ]
 			@generic [ $($generics)* ]
+			@const_generic [ $([$const_gen_id $const_gen_ty])* ]
 			@delegate [ $delegate_type ]
 			$(@exclude [ $($exclude_props)* ])?
 			$(@include [ $($include_props)* ])?
@@ -227,6 +236,7 @@ macro_rules! impl_properties {
 		$crate::impl_properties!{
 			@struct [ $struct ]
 			@generic [ $($generics)* ]
+			@const_generic [ $([$const_gen_id $const_gen_ty])* ]
 			@delegate [ $delegate_type ]
 			$(@exclude [ $($exclude_props)* ])?
 			$(@include [ $($include_props)* ])?
@@ -268,6 +278,7 @@ macro_rules! impl_properties {
 		$crate::impl_properties!{
 			@struct [ $struct ]
 			@generic [ $($generics)* ]
+			@const_generic [ $([$const_gen_id $const_gen_ty])* ]
 			@delegate [ $delegate_type ]
 			$(@exclude [ $($exclude_props)* ])?
 			$(@include [ $($include_props)* ])?
@@ -299,6 +310,7 @@ macro_rules! impl_properties {
 		$crate::impl_properties!{
 			@struct [ $struct ]
 			@generic [ $($generics)* ]
+			@const_generic [ $([$const_gen_id $const_gen_ty])* ]
 			@delegate [ $delegate_type ]
 			$(@exclude [ $($exclude_props)* ])?
 			$(@include [ $($include_props)* ])?
@@ -323,6 +335,7 @@ macro_rules! impl_properties {
 		$crate::impl_properties!{
 			@struct [ $struct ]
 			@generic [ $($generics)* ]
+			@const_generic [ $([$const_gen_id $const_gen_ty])* ]
 			@delegate [ $delegate_type ]
 			$(@exclude [ $($exclude_props)* ])?
 			$(@include [ $($include_props)* ])?
@@ -347,6 +360,7 @@ macro_rules! impl_properties {
 		$crate::impl_properties!{
 			@struct [ $struct ]
 			@generic [ $($generics)* ]
+			@const_generic [ $([$const_gen_id $const_gen_ty])* ]
 			@delegate [ $delegate_type ]
 			$(@exclude [ $($exclude_props)* ])?
 			$(@include [ $($include_props)* ])?
@@ -375,6 +389,7 @@ macro_rules! impl_properties {
 		$crate::impl_properties!{
 			@struct [ $struct ]
 			@generic [ $($generics)* ]
+			@const_generic [ $([$const_gen_id $const_gen_ty])* ]
 			@delegate [ $delegate_type ]
 			$(@exclude [ $($exclude_props)* ])?
 			$(@include [ $($include_props)* ])?
@@ -405,6 +420,7 @@ macro_rules! impl_properties {
 		$crate::impl_properties!{
 			@struct [ $struct ]
 			@generic [ $($generics)* ]
+			@const_generic [ $([$const_gen_id $const_gen_ty])* ]
 			@delegate [ $delegate_type ]
 			$(@exclude [ $($exclude_props)* ])?
 			$(@include [ $($include_props)* ])?
@@ -424,6 +440,7 @@ macro_rules! impl_properties {
 		$crate::impl_properties!{
 			@struct [ $struct ]
 			@generic [ $($generics)* ]
+			@const_generic [ $([$const_gen_id $const_gen_ty])* ]
 			@delegate [ $delegate_type ]
 			$(@exclude [ $($exclude_props)* ])?
 			$(@include [ $($include_props)* ])?
@@ -443,6 +460,7 @@ macro_rules! impl_properties {
 		$crate::impl_properties!{
 			@struct [ $struct ]
 			@generic [ $($generics)* ]
+			@const_generic [ $([$const_gen_id $const_gen_ty])* ]
 			@delegate [ $delegate_type ]
 			$(@exclude [ $($exclude_props)* ])?
 			$(@include [ $($include_props)* ])?
@@ -459,6 +477,7 @@ macro_rules! impl_properties {
 		$crate::impl_properties!{
 			@struct [ $struct ]
 			@generic [ $($generics)* ]
+			@const_generic [ $([$const_gen_id $const_gen_ty])* ]
 			@delegate [ $delegate_type ]
 			$(@exclude [ $($exclude_props)* ])?
 			$(@include [ $($include_props)* ])?
@@ -475,6 +494,7 @@ macro_rules! impl_properties {
 		$crate::impl_properties!{
 			@struct [ $struct ]
 			@generic [ $($generics)* ]
+			@const_generic [ $([$const_gen_id $const_gen_ty])* ]
 			@delegate [ $delegate_type ]
 			$(@exclude [ $($exclude_props)* ])?
 			$(@include [ $($include_props)* ])?
@@ -493,6 +513,7 @@ macro_rules! impl_properties {
 		$crate::impl_properties!{
 			@struct [ $struct ]
 			@generic [ $($generics)* ]
+			@const_generic [ $([$const_gen_id $const_gen_ty])* ]
 			@delegate [ $delegate_type ]
 			$(@exclude [ $($exclude_props)* ])?
 			$(@include [ $($include_props)* ])?
@@ -509,6 +530,7 @@ macro_rules! impl_properties {
 		$crate::impl_properties!{
 			@struct [ $struct ]
 			@generic [ $($generics)* ]
+			@const_generic [ $([$const_gen_id $const_gen_ty])* ]
 			@delegate [ $delegate_type ]
 			$(@exclude [ $($exclude_props)* ])?
 			$(@include [ $($include_props)* ])?
@@ -525,6 +547,7 @@ macro_rules! impl_properties {
 		$crate::impl_properties!{
 			@struct [ $struct ]
 			@generic [ $($generics)* ]
+			@const_generic [ $([$const_gen_id $const_gen_ty])* ]
 			@delegate [ $delegate_type ]
 			$(@exclude [ $($exclude_props)* ])?
 			$(@include [ $($include_props)* ])?
@@ -541,6 +564,7 @@ macro_rules! impl_properties {
 		$crate::impl_properties!{
 			@struct [ $struct ]
 			@generic [ $($generics)* ]
+			@const_generic [ $([$const_gen_id $const_gen_ty])* ]
 			@delegate [ $delegate_type ]
 			$(@exclude [ $($exclude_props)* ])?
 			$(@include [ $($include_props)* ])?
@@ -564,19 +588,20 @@ macro_rules! impl_properties {
 		$crate::impl_properties!{
 			@struct [ $struct ]
 			@generic [ $($generics)* ]
+			@const_generic [ $([$const_gen_id $const_gen_ty])* [IMPL_PROPERTIES_HASVERTEX_V usize] ]
 			@delegate [ $delegate_type ]
 			$(@exclude [ $($exclude_props)* ])?
 			$(@include [ $($include_props)* ])?
 			@bounds [
 				<$delegate_type as $crate::core::GraphDeref>::Graph:
-					$crate::core::property::HasVertex,
+					$crate::core::property::HasVertex<IMPL_PROPERTIES_HASVERTEX_V>,
 				$($bounds)*
 			]
-			@trait_id HasVertex [$crate::core::property]
+			@trait_id HasVertex <IMPL_PROPERTIES_HASVERTEX_V> [$crate::core::property]
 			@implement {
 				delegate::delegate! {
 					to $crate::core::GraphDeref::graph(&self$($delegate)+) {
-						fn get_vertex(&self) -> Self::Vertex;
+						fn get_vertex_at<const N: usize>(&self) -> Self::Vertex;
 					}
 				}
 			}
@@ -586,6 +611,7 @@ macro_rules! impl_properties {
 		$crate::impl_properties!{
 			@struct [ $struct ]
 			@generic [ $($generics)* ]
+			@const_generic [ $([$const_gen_id $const_gen_ty])* ]
 			@delegate [ $delegate_type ]
 			$(@exclude [ $($exclude_props)* ])?
 			$(@include [ $($include_props)* ])?
@@ -613,6 +639,7 @@ macro_rules! impl_properties {
 		$crate::impl_properties!{
 			@struct [ $struct ]
 			@generic [ $($generics)* ]
+			@const_generic [ $([$const_gen_id $const_gen_ty])* ]
 			@delegate [ $delegate_type ]
 			$(@exclude [ $($exclude_props)* ])?
 			$(@include [ $($include_props)* ])?
@@ -629,10 +656,11 @@ macro_rules! impl_properties {
 	{
 		@struct [ $struct:ty ]
 		@generic [ $($generics:tt)* ]
+		@const_generic [ $($const_generics:tt)* ]
 		@delegate [ $delegate_type:ty ]
 		@include [ $include_props:ident $($include_props_rest:ident)* ]
 		@bounds [$($bounds:tt)*]
-		@trait_id $include_props_id:ident [ $($include_props_path:tt)* ]
+		@trait_id $include_props_id:ident $(<$($trait_gens:ident),+>)? [ $($include_props_path:tt)* ]
 		@implement {$($impl:tt)*}
 	} => {
 		tt_call::tt_if!{
@@ -642,10 +670,11 @@ macro_rules! impl_properties {
 				$crate::impl_properties!{
 					@struct [ $struct ]
 					@generic [ $($generics)* ]
+					@const_generic [ $($const_generics)* ]
 					@delegate [ $delegate_type ]
 					@exclude []
 					@bounds [$($bounds)*]
-					@trait_id $include_props_id [ $($include_props_path)* ]
+					@trait_id $include_props_id $(<$($trait_gens),+>)?[ $($include_props_path)* ]
 					@implement {$($impl)*}
 				}
 			}]
@@ -653,10 +682,11 @@ macro_rules! impl_properties {
 				$crate::impl_properties!{
 					@struct [ $struct ]
 					@generic [ $($generics)* ]
+					@const_generic [ $($const_generics)* ]
 					@delegate [ $delegate_type ]
 					@include [ $($include_props_rest)* ]
 					@bounds [$($bounds)*]
-					@trait_id $include_props_id [ $($include_props_path)* ]
+					@trait_id $include_props_id $(<$($trait_gens),+>)? [ $($include_props_path)* ]
 					@implement {$($impl)*}
 				}
 			}]
@@ -666,10 +696,11 @@ macro_rules! impl_properties {
 	{
 		@struct [ $struct:ty ]
 		@generic [ $($generics:tt)* ]
+		@const_generic [ $($const_generics:tt)* ]
 		@delegate [ $delegate_type:ty ]
 		@exclude [ $exclude_props:ident $($exclude_props_rest:ident)* ]
 		@bounds [$($bounds:tt)*]
-		@trait_id $exclude_props_id:ident [ $($exclude_props_path:tt)* ]
+		@trait_id $exclude_props_id:ident $(<$($trait_gens:ident),+>)?[ $($exclude_props_path:tt)* ]
 		@implement {$($impl:tt)*}
 	} => {
 		tt_call::tt_if!{
@@ -680,10 +711,11 @@ macro_rules! impl_properties {
 				$crate::impl_properties!{
 					@struct [ $struct ]
 					@generic [ $($generics)* ]
+					@const_generic [ $($const_generics)* ]
 					@delegate [ $delegate_type ]
 					@exclude [ $($exclude_props_rest)* ]
 					@bounds [$($bounds)*]
-					@trait_id $exclude_props_id [ $($exclude_props_path)* ]
+					@trait_id $exclude_props_id $(<$($trait_gens),+>)?[ $($exclude_props_path)* ]
 					@implement {$($impl)*}
 				}
 			}]
@@ -693,13 +725,14 @@ macro_rules! impl_properties {
 	{
 		@struct [ $struct:ty ]
 		@generic [ $($($generics:tt)+)? ]
+		@const_generic [ $([$const_gen_id:ident $const_gen_ty:ty])* ]
 		@delegate [ $delegate_type:ty ]
 		@exclude []
 		@bounds [$($bounds:tt)*]
-		@trait_id $exclude_props_id:ident [ $($exclude_props_path:tt)* ]
+		@trait_id $exclude_props_id:ident $(<$($trait_gens:ident),+>)? [ $($exclude_props_path:tt)* ]
 		@implement {$($impl:tt)*}
 	} => {
-		impl$(<$($generics),+>)? $($exclude_props_path)*::$exclude_props_id
+		impl<$($($generics,)+)? $(const $const_gen_id : $const_gen_ty,)*> $($exclude_props_path)*::$exclude_props_id $(<$($trait_gens,)+>)?
 			for $struct
 			where
 				$delegate_type: $crate::core::Ensure,
@@ -709,10 +742,11 @@ macro_rules! impl_properties {
 	{
 		@struct [ $struct:ty ]
 		@generic [ $($($generics:tt)+)? ]
+		@const_generic [ $($const_generics:tt)* ]
 		@delegate [ $delegate_type:ty ]
 		@include []
 		@bounds [$($bounds:tt)*]
-		@trait_id $exclude_props_id:ident [ $($exclude_props_path:tt)* ]
+		@trait_id $exclude_props_id:ident $(<$($trait_gens:ident),+>)? [ $($exclude_props_path:tt)* ]
 		@implement {$($impl:tt)*}
 	} => {}
 }

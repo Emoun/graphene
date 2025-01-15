@@ -96,7 +96,7 @@ where
 			.nth(g.gen_range(0, e_count))
 			.unwrap();
 		Self(
-			graphene::core::Ensure::ensure_unchecked(graph, source),
+			graphene::core::Ensure::ensure_unchecked(graph, [source]),
 			sink,
 			weight,
 		)

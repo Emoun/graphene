@@ -42,7 +42,7 @@ use std::borrow::Borrow;
 /// graph.add_edge(&v1,&v2).unwrap();
 ///
 /// // We use `VertexInGraph` to ensure traversal starts at v0.
-/// let graph = VertexInGraph::ensure(graph, v0).unwrap();
+/// let graph = VertexInGraph::ensure(graph, [v0]).unwrap();
 ///
 /// // Initialize the traversal
 /// let mut dfs = Dfs::new_simple(&graph);

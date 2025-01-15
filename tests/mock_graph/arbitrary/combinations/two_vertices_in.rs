@@ -77,7 +77,7 @@ where
 		{
 			panic!("Vertex not in graph: '{:?}'", v2);
 		}
-		Self(VertexInGraph::ensure(g, v1).unwrap(), v2, PhantomData)
+		Self(VertexInGraph::ensure(g, [v1]).unwrap(), v2, PhantomData)
 	}
 
 	pub fn get_both(&self) -> (MockVertex, MockVertex)
@@ -196,7 +196,7 @@ where
 			// Shrink by making both vertices the same
 			result.push(Self(self.0.clone(), self.get_vertex(), PhantomData));
 			result.push(Self(
-				VertexInGraph::ensure(self.0.clone().release(), self.1).unwrap(),
+				VertexInGraph::ensure(self.0.clone().release(), [self.1]).unwrap(),
 				self.1,
 				PhantomData,
 			));

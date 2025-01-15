@@ -158,7 +158,7 @@ fn directed_visits_outgoing_component(
 
 	// Add edges from start component to the other component
 	graph
-		.add_edge_weighted(&v, &v_map[&v2], weight.clone())
+		.add_edge_weighted(&v[0], &v_map[&v2[0]], weight.clone())
 		.unwrap();
 	for (v1, v2) in verts1.iter().zip(verts2.iter())
 	{

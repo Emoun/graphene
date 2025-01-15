@@ -20,7 +20,7 @@ impl<G: Ensure> EnsuredGraph<G>
 	{
 		if self.0.graph().contains_vertex(v)
 		{
-			Some(VertexInGraph::ensure_unchecked(self.0, v))
+			Some(VertexInGraph::ensure_unchecked(self.0, [v]))
 		}
 		else
 		{
@@ -39,7 +39,7 @@ where
 	) -> Result<VertexInGraph<G>, ()>
 	{
 		let v = self.0.graph_mut().new_vertex_weighted(w)?;
-		Ok(VertexInGraph::ensure_unchecked(self.0, v))
+		Ok(VertexInGraph::ensure_unchecked(self.0, [v]))
 	}
 
 	pub fn new_vertex(self) -> Result<VertexInGraph<G>, ()>

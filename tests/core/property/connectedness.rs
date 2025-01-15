@@ -255,7 +255,7 @@ mod __
 		let e_map = EdgeWeightMap::ensure_unchecked(&g, |_, _, w| w.value);
 		let diameter = e_map.diameter();
 		g.all_vertices()
-			.all(|v| VertexInGraph::ensure_unchecked(&e_map, v).eccentricity() <= diameter)
+			.all(|v| VertexInGraph::ensure_unchecked(&e_map, [v]).eccentricity() <= diameter)
 	}
 
 	/// Tests `radius`
@@ -265,7 +265,7 @@ mod __
 		let e_map = EdgeWeightMap::ensure_unchecked(&g, |_, _, w| w.value);
 		let radius = e_map.radius();
 		g.all_vertices()
-			.all(|v| VertexInGraph::ensure_unchecked(&e_map, v).eccentricity() >= radius)
+			.all(|v| VertexInGraph::ensure_unchecked(&e_map, [v]).eccentricity() >= radius)
 	}
 
 	/// Tests `centers`
@@ -276,7 +276,7 @@ mod __
 		let radius = e_map.radius();
 		let success = e_map
 			.centers()
-			.all(|v| VertexInGraph::ensure_unchecked(&e_map, v).eccentricity() == radius);
+			.all(|v| VertexInGraph::ensure_unchecked(&e_map, [v]).eccentricity() == radius);
 		success
 	}
 }

@@ -73,7 +73,7 @@ impl<C: Ensure> Ensure for AcyclicGraph<C>
 			if !done.contains(&v)
 			{
 				done.push(v); // not returned by the dfs
-				let g = VertexInGraph::ensure_unchecked(c.graph(), v);
+				let g = VertexInGraph::ensure_unchecked(c.graph(), [v]);
 				let dfs = Dfs::new(&g, on_visit, on_exit, on_explore, (Vec::new(), &mut result));
 
 				dfs.for_each(|v| {

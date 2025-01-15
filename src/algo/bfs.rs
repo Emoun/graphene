@@ -44,7 +44,7 @@ use std::collections::VecDeque;
 /// graph.add_edge(&v1,&v3).unwrap();
 ///
 /// // We use `VertexInGraph` to ensure traversal starts at v0.
-/// let graph = VertexInGraph::ensure(graph, v0).unwrap();
+/// let graph = VertexInGraph::ensure(graph, [v0]).unwrap();
 ///
 /// // Initialize the traversal
 /// let mut dfs = Bfs::new(&graph);

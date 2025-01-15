@@ -37,7 +37,7 @@ where
 			.nth(g.gen_range(0, v_count))
 			.unwrap();
 
-		Self::ensure_unchecked(graph, v)
+		Self::ensure_unchecked(graph, [v])
 	}
 
 	fn shrink_guided(&self, mut limits: HashSet<Limit>) -> Box<dyn Iterator<Item = Self>>
@@ -48,7 +48,7 @@ where
 			self.clone()
 				.release()
 				.shrink_guided(limits)
-				.map(move |g| Self::ensure_unchecked(g, v)),
+				.map(move |g| Self::ensure_unchecked(g, [v])),
 		)
 	}
 }

@@ -79,7 +79,7 @@ where
 		{
 			reachable.extend(Dfs::new_simple(&VertexInGraph::ensure_unchecked(
 				graph.graph(),
-				v.clone(),
+				[v.clone()],
 			)));
 			if !U::unique() && graph.graph().edges_between(v.clone(), v.clone()).count() > 0
 			{
@@ -109,7 +109,7 @@ where
 		let (v1, v2) = self.0.get_both();
 
 		// First find a path between the vertices
-		let g = VertexInGraph::ensure_unchecked(self, v1);
+		let g = VertexInGraph::ensure_unchecked(self, [v1]);
 		let mut bfs = Bfs::new(&g);
 
 		let _ = bfs.find(|&v| v == v2);

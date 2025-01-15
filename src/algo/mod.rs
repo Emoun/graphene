@@ -4,6 +4,7 @@ mod bfs;
 mod dfs;
 mod dijkstra_shortest_paths;
 mod tarjan_scc;
+mod shortest_path;
 
 pub use self::{bfs::*, dfs::*, dijkstra_shortest_paths::*, tarjan_scc::*};
 use crate::core::{property::VertexInGraph, Ensure, Graph};
@@ -15,7 +16,7 @@ pub fn path_exists<G: Graph>(
 	sink: impl Borrow<G::Vertex>,
 ) -> bool
 {
-	if let Ok(g) = VertexInGraph::ensure(g, source.borrow().clone())
+	if let Ok(g) = VertexInGraph::ensure(g, [source.borrow().clone()])
 	{
 		if g.contains_vertex(sink.borrow())
 		{

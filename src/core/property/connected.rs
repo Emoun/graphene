@@ -56,7 +56,7 @@ pub trait Connected: Unilateral
 	{
 		self.all_vertices()
 			.fold(Self::EdgeWeight::zero(), |max_ecc, v| {
-				let new_ecc = VertexInGraph::ensure_unchecked(self, v).eccentricity();
+				let new_ecc = VertexInGraph::ensure_unchecked(self, [v]).eccentricity();
 				if new_ecc > max_ecc
 				{
 					new_ecc
@@ -80,7 +80,7 @@ pub trait Connected: Unilateral
 	{
 		self.all_vertices()
 			.fold(Self::EdgeWeight::zero(), |min_ecc, v| {
-				let new_ecc = VertexInGraph::ensure_unchecked(self, v).eccentricity();
+				let new_ecc = VertexInGraph::ensure_unchecked(self, [v]).eccentricity();
 				if new_ecc < min_ecc
 				{
 					new_ecc
@@ -104,7 +104,7 @@ pub trait Connected: Unilateral
 	{
 		let radius = self.radius();
 		self.all_vertices()
-			.filter(move |v| VertexInGraph::ensure_unchecked(self, *v).eccentricity() == radius)
+			.filter(move |v| VertexInGraph::ensure_unchecked(self, [*v]).eccentricity() == radius)
 	}
 }
 

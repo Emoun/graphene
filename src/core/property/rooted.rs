@@ -58,7 +58,8 @@ impl<C: Ensure> ReleasePayload for RootedGraph<C>
 
 	fn release(self) -> (Self::Ensured, <C::Graph as Graph>::Vertex)
 	{
-		self.0.release()
+		let (r1, r2) = self.0.release();
+		(r1, r2[0])
 	}
 }
 
@@ -66,12 +67,12 @@ impl<C: Ensure> Ensure for RootedGraph<C>
 {
 	fn ensure_unchecked(c: Self::Ensured, v: <C::Graph as Graph>::Vertex) -> Self
 	{
-		Self(VertexInGraph::ensure_unchecked(c, v))
+		Self(VertexInGraph::ensure_unchecked(c, [v]))
 	}
 
 	fn can_ensure(c: &Self::Ensured, p: &<C::Graph as Graph>::Vertex) -> bool
 	{
-		VertexInGraph::<C>::can_ensure(c, p)
+		VertexInGraph::<C>::can_ensure(c, &[*p])
 	}
 }
 
@@ -84,7 +85,7 @@ impl<C: Ensure> Rooted for RootedGraph<C>
 
 	fn set_root(&mut self, v: impl Borrow<Self::Vertex>) -> Result<(), ()>
 	{
-		self.0.set_vertex(v)
+		self.0.set_vertex(&[*v.borrow()])
 	}
 }
 

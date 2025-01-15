@@ -46,7 +46,7 @@ impl<D: Directedness> GuidedArbGraph for AcyclicGraph<MockGraph<D>>
 			let v2 = verts[g.gen_range(0, verts.len())];
 
 			// Ensure there isn't already a path between the two
-			let v1_in_g: VertexInGraph<_> = graphene::core::Ensure::ensure_unchecked(&graph, v1);
+			let v1_in_g: VertexInGraph<_> = graphene::core::Ensure::ensure_unchecked(&graph, [v1]);
 			if v1 != v2 && Dfs::new_simple(&v1_in_g).find(|&v| v == v2).is_none()
 			{
 				graph
