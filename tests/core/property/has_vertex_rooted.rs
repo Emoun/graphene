@@ -31,14 +31,34 @@ mod __
 
 			assert!(!HasVertexGraph::can_guard(&null_graph));
 		}
-
-		/// Tests that graphs with at least 1 vertex are accepted.
-		#[quickcheck]
-		fn accept_has_vertex(Arb(g): Arb<VertexInGraph<MockGraph<directedness>>>) -> bool
+		
+		#[duplicate_item(
+			mod_name has_num;
+			[__1] [ 1 ];
+			[__2] [ 2 ];
+			[__3] [ 3 ];
+			[__4] [ 4 ];
+			[__9] [ 9 ];
+		)]
+		mod __
 		{
-			HasVertexGraph::can_guard(&g.release_all())
+			use super::*;
+			
+			/// Tests that graphs with at least has_num>0 vertices are accepted.
+			#[quickcheck]
+			fn accept_has_vertex(Arb(g): Arb<VertexInGraph<MockGraph<directedness>,has_num>>) -> bool
+			{
+				HasVertexGraph::can_guard(&g.release_all())
+			}
+			
+			/// Tests that graphs that already implement HasVertex<has_num>0>.
+			#[quickcheck]
+			fn accept_has_vertex_implemented(Arb(g): Arb<VertexInGraph<MockGraph<directedness>,has_num>>) -> bool
+			{
+				HasVertexGraph::can_guard(&g)
+			}
 		}
-
+		
 		/// Tests cannot remove a vertex if it's the only one in the graph.
 		#[test]
 		fn reject_remove_vertex()
@@ -47,12 +67,12 @@ mod __
 			let v = g
 				.new_vertex_weighted(MockVertexWeight { value: 0 })
 				.unwrap();
-
+				
 			let mut g = HasVertexGraph::guard(g).unwrap();
-
+			
 			assert!(g.remove_vertex(v).is_err())
 		}
-
+		
 		/// Tests that can remove a vertex if there are at least 2.
 		#[quickcheck]
 		fn accept_remove_vertex(Arb(g): Arb<TwoVerticesIn<MockGraph<directedness>, Unique>>)
@@ -60,7 +80,7 @@ mod __
 		{
 			let v = g.get_vertex();
 			let mut g = HasVertexGraph::guard(g.release_all()).unwrap();
-
+			
 			g.remove_vertex(v).is_ok()
 		}
 	}

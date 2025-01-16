@@ -601,7 +601,7 @@ macro_rules! impl_properties {
 			@implement {
 				delegate::delegate! {
 					to $crate::core::GraphDeref::graph(&self$($delegate)+) {
-						fn get_vertex_at<const N: usize>(&self) -> Self::Vertex;
+						fn get_vertex_idx(&self, idx: usize) -> Self::Vertex;
 					}
 				}
 			}

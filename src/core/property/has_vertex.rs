@@ -8,6 +8,10 @@ use std::{
 };
 
 /// A marker trait for graphs with at least 1 vertex.
+///
+/// `V` is the number of vertices that are guaranteed to be in the graph.
+/// If `Unique` is true (default) then indexed vertices methods will never return duplicate
+/// vertices.
 pub trait HasVertex<const V: usize = 1>: Graph
 {
 	/// Ensures this trait cannot be implemented with V=0.
@@ -45,7 +49,7 @@ pub trait HasVertex<const V: usize = 1>: Graph
 	/// struct Struct<const V: usize>(usize);
 	///
 	/// impl<const V: usize> HasVertex<V> for Struct<V> {
-	/// 	fn get_vertex_at<const N:usize>(&self) -> Self::Vertex {
+	/// 	fn get_vertex_idx(&self, idx: usize) -> Self::Vertex {
 	/// 		()
 	/// 	}
 	/// }
@@ -64,20 +68,32 @@ pub trait HasVertex<const V: usize = 1>: Graph
 
 	/// Returns a vertex in the graph.
 	///
-	/// Successive calls do not have to return the same vertex,
+	/// Successive calls do not guarantee to return the same vertex,
 	/// even though the graph hasn't changed.
-	///
-	/// This trait doesn't provide a default implementation for `get_vertex`
-	/// to ensure that "wrapping" ensurers don't accidentally use it, instead
-	/// of actively delegating to the inner class, who might have its own
-	/// implementation.
 	fn get_vertex(&self) -> Self::Vertex
 	{
 		_ = Self::ASSERT_NOT_0;
 		self.get_vertex_at::<0>()
 	}
-
-	fn get_vertex_at<const I: usize>(&self) -> Self::Vertex;
+	
+	/// Returns the I'th vertex guaranteed to be in the vertex.
+	///
+	/// The vertex ordering (i.e. the I) is significant and does not change unless
+	/// the underlying graph type changes it.
+	fn get_vertex_at<const I: usize>(&self) -> Self::Vertex {
+		_ = Self::ASSERT_NOT_0;
+		const {
+			assert!(I < V)
+		}
+		assert!(I < V, "I out of bounds");
+		self.get_vertex_idx(I)
+	}
+	
+	/// Returns vertex guaranteed to be in the vertex at the given index in the ordering.
+	///
+	/// The vertex ordering (i.e. the idx) is significant and does not change unless
+	/// the underlying graph type changes it.
+	fn get_vertex_idx(&self, idx: usize) -> Self::Vertex;
 }
 
 /// Ensures the underlying graph has at least 1 vertex.
@@ -119,8 +135,9 @@ where
 
 impl<C: Ensure, const V: usize> HasVertex<V> for HasVertexGraph<C>
 {
-	fn get_vertex_at<const N: usize>(&self) -> Self::Vertex
+	fn get_vertex_idx(&self, idx: usize) -> Self::Vertex
 	{
+		assert!(idx < V);
 		self.all_vertices()
 			.next()
 			.expect("HasVertexGraph has no vertices.")
@@ -132,11 +149,9 @@ impl_ensurer! {
 	as (self.0) : C
 }
 
-/// Ensures a specific vertex is in the underlying graph.
+/// Ensures a specific vertex or vertices is in the underlying graph.
 ///
-/// That vertex is guaranteed to be returned by any call to `get_vertex` and
-/// cannot be removed from the graph.
-
+/// The designated vertices cannot be removed from the graph.
 #[derive(Clone)]
 pub struct VertexInGraph<C: Ensure, const V: usize = 1>(C, [<C::Graph as Graph>::Vertex; V]);
 
@@ -221,10 +236,10 @@ where
 
 impl<C: Ensure, const V: usize> HasVertex<V> for VertexInGraph<C, V>
 {
-	fn get_vertex_at<const N: usize>(&self) -> Self::Vertex
+	fn get_vertex_idx(&self, idx: usize) -> Self::Vertex
 	{
-		// assert!(N < V);
-		self.1[N]
+		assert!(idx < V);
+		self.1[idx]
 	}
 }
 
