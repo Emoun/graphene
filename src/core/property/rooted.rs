@@ -10,7 +10,7 @@ use std::borrow::Borrow;
 /// A rooted graph always has a root, which cannot be removed (unless another
 /// vertex is designated as the root first).
 ///
-/// Even though rooted graphs always implement `HasVertex`, the `get_vertex`
+/// Even though rooted graphs always implement `HasVertex`, the `any_vertex`
 /// method is not required to always return the root of the graph.
 /// To always get the root, the `root` method can be used.
 pub trait Rooted: HasVertex
@@ -80,7 +80,7 @@ impl<C: Ensure> Rooted for RootedGraph<C>
 {
 	fn root(&self) -> Self::Vertex
 	{
-		self.0.get_vertex()
+		self.0.any_vertex()
 	}
 
 	fn set_root(&mut self, v: impl Borrow<Self::Vertex>) -> Result<(), ()>

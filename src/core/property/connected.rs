@@ -3,10 +3,10 @@ use crate::{
 	core::{
 		property::{
 			proxy_remove_edge_where_weight, proxy_remove_vertex, DirectedGraph, EdgeCount,
-			HasVertex, HasVertexGraph, RemoveEdge, RemoveVertex, Unilateral, VertexInGraph, Weak,
+			RemoveEdge, RemoveVertex, Unilateral, VertexIn, VertexInGraph, Weak,
 		},
 		proxy::ReverseGraph,
-		Ensure, Graph, GraphDerefMut,
+		Ensure, Graph, GraphDerefMut, Release,
 	},
 };
 use num_traits::{PrimInt, Unsigned, Zero};
@@ -25,7 +25,7 @@ pub trait Connected: Unilateral
 	/// edge(s) between them.
 	fn eccentricity(&self) -> Self::EdgeWeight
 	where
-		Self: EdgeCount + HasVertex + Sized,
+		Self: EdgeCount + VertexIn<1> + Sized,
 		Self::EdgeWeight: PrimInt + Unsigned,
 	{
 		// We search for all the shortest paths, the eccentricity is the longest one
@@ -133,8 +133,10 @@ impl<C: Ensure> Ensure for ConnectedGraph<C>
 		let g = c.graph();
 		let v_count = g.all_vertices().count();
 
-		if let Ok(g) = HasVertexGraph::ensure(g, ())
+		if v_count > 0
 		{
+			let v = g.all_vertices().next().unwrap();
+			let g = VertexInGraph::ensure_unchecked(g.release(), [v]);
 			let dfs_count = Dfs::new_simple(&g).count();
 			if (dfs_count + 1) == v_count
 			{

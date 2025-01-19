@@ -6,7 +6,7 @@ use crate::mock_graph::{
 };
 use duplicate::duplicate_item;
 use graphene::core::{
-	property::{HasVertex, VertexInGraph},
+	property::{VertexIn, VertexInGraph},
 	Directed, Edge, Graph, Release, Undirected,
 };
 
@@ -34,7 +34,7 @@ use crate::mock_graph::arbitrary::{Arb, TwoVerticesIn};
 			module					[ module_nested ]
 			method 					[ method_nested ]
 			vertices				[ &v ]
-			vertices_init			[ let v = g.get_vertex().clone() ]
+			vertices_init			[ let v = g.vertex_at::<0>().clone() ]
 			vertices_init_invalid 	[ let v = g.1 ]
 			closure 				[ |e| if closure_nested {Some((e.other(v),e.2))} else {None} ]
 			arb_graph 				[ VertexInGraph ]

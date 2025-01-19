@@ -5,7 +5,7 @@ use duplicate::duplicate_item;
 use graphene::{
 	algo::DijkstraShortestPaths,
 	core::{
-		property::{AddEdge, ConnectedGraph, HasVertex, VertexInGraph},
+		property::{AddEdge, ConnectedGraph, VertexIn, VertexInGraph},
 		proxy::EdgeWeightMap,
 		Directed, Ensure, Graph, GraphDeref, ReleasePayload, Undirected,
 	},
@@ -28,7 +28,7 @@ mod __
 	{
 		// Use a set to ensure we only count each vertex once
 		let mut visited = HashSet::new();
-		visited.insert(mock.get_vertex().clone());
+		visited.insert(mock.vertex_at::<0>().clone());
 		let mut visited_once = true;
 		let e_map = EdgeWeightMap::new(mock.graph(), |_, _, w| w.value);
 		DijkstraShortestPaths::new(&e_map).for_each(|(_, v, _)| {
@@ -63,7 +63,7 @@ mod __
 	fn increasing_path_lengths(Arb(g): Arb<VertexInGraph<MockGraph<directedness>>>) -> bool
 	{
 		let mut path_weights = HashMap::new();
-		path_weights.insert(g.get_vertex().clone(), 0);
+		path_weights.insert(g.vertex_at::<0>().clone(), 0);
 		let mut len = 0;
 
 		let e_map = EdgeWeightMap::new(g, |_, _, w| w.value);
@@ -86,7 +86,7 @@ mod __
 	fn path_source_already_seen(Arb(g): Arb<VertexInGraph<MockGraph<directedness>>>) -> bool
 	{
 		let mut seen = HashSet::new();
-		seen.insert(g.get_vertex().clone());
+		seen.insert(g.vertex_at::<0>().clone());
 
 		let e_map = EdgeWeightMap::new(g, |_, _, w| w.value);
 		for (source, sink, _) in DijkstraShortestPaths::new(&e_map)

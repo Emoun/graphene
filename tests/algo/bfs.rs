@@ -3,7 +3,7 @@ use duplicate::duplicate_item;
 use graphene::{
 	algo::Bfs,
 	core::{
-		property::{ConnectedGraph, HasVertex, VertexInGraph},
+		property::{ConnectedGraph, VertexIn, VertexInGraph},
 		Directed, Undirected,
 	},
 };
@@ -44,7 +44,7 @@ mod __
 	) -> bool
 	{
 		let mut seen = HashSet::new();
-		seen.insert(graph.get_vertex().value);
+		seen.insert(graph.vertex_at::<0>().value);
 
 		let mut bfs = Bfs::new(&graph);
 		while let Some(v) = bfs.next()
@@ -110,7 +110,7 @@ mod __
 		Arb(graph): Arb<VertexInGraph<ConnectedGraph<MockGraph<directedness>>>>,
 	) -> bool
 	{
-		let root = graph.get_vertex();
+		let root = graph.vertex_at::<0>();
 		let mut bfs = Bfs::new(&graph);
 
 		while let Some(v) = bfs.next()
@@ -135,7 +135,7 @@ fn predecessor_path_reaches_root(
 	Arb(graph): Arb<VertexInGraph<ConnectedGraph<MockGraph<Directed>>>>,
 ) -> bool
 {
-	let root = graph.get_vertex();
+	let root = graph.vertex_at::<0>();
 	let mut bfs = Bfs::new(&graph);
 
 	while let Some(v) = bfs.next()

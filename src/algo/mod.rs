@@ -4,7 +4,6 @@ mod bfs;
 mod dfs;
 mod dijkstra_shortest_paths;
 mod tarjan_scc;
-mod shortest_path;
 
 pub use self::{bfs::*, dfs::*, dijkstra_shortest_paths::*, tarjan_scc::*};
 use crate::core::{property::VertexInGraph, Ensure, Graph};

@@ -1,31 +1,56 @@
-use crate::core::{
-	property::{RemoveVertex, Rooted},
-	Ensure, Graph, GraphDerefMut,
-};
+use crate::core::{property::RemoveVertex, Ensure, Graph, GraphDerefMut, Release};
 use std::{
 	borrow::Borrow,
 	fmt::{Debug, Error, Formatter},
 };
 
 /// A marker trait for graphs with at least 1 vertex.
-///
-/// `V` is the number of vertices that are guaranteed to be in the graph.
-/// If `Unique` is true (default) then indexed vertices methods will never return duplicate
-/// vertices.
-pub trait HasVertex<const V: usize = 1>: Graph
+pub trait HasVertex: Graph
 {
-	/// Ensures this trait cannot be implemented with V=0.
+	/// Return a vertex from the graph.
+	///
+	/// May return different vertices on successive calls to the same unmodified
+	/// graph.
+	fn any_vertex(&self) -> Self::Vertex;
+
+	// fn as_vertex_in(self: impl Borrow<Self>) -> VertexInGraph<Self, 1, true>
+	// 	where
+	// 		Self: Ensure,
+	// 		<Self as GraphDeref>::Graph: Graph<Vertex=Self::Vertex>
+	// {
+	// 	let v = self.borrow().any_vertex();
+	// 	VertexInGraph::ensure_unchecked(self, [v])
+	// }
+}
+
+/// For specifying specific vertices in a graph.
+///
+/// This is primarily used as input to various algorithms. E.g. a search
+/// algorithm will require a starting vertex and so might take `VertexIn<1>` as
+/// input. Finding a path between two vertices could likewise take `VertexIn<2,
+/// false>` as input.
+///
+/// The specified vertices are ordered and indexed.
+///
+/// `N` is the number of vertices specified.
+/// `UNIQUE` signifies whether there are any duplicates in the vertices.
+/// If true, there can be no duplicate vertices.
+pub trait VertexIn<const N: usize = 1, const UNIQUE: bool = true>: HasVertex
+{
+	/// Ensures this trait gets valid parameters.
+	///
+	/// This trait does not accept N=0, or N=1 and !UNIQUE.
 	///
 	/// Add a call to this associated type in the implementing type's
-	/// constructor to ensure if that type ever gets v=0, compilation will
-	/// fail.
+	/// constructor to ensure if that type ever get invalid parameters,
+	/// compilation will fail.
 	///
 	/// Example:
 	/// ```compile_fail, E0080
 	/// # use std::borrow::Borrow;
 	/// # use graphene::{
 	/// # 	common::AdjListGraph,
-	/// # 	core::{Directed, Graph, property::HasVertex}
+	/// # 	core::{Directed, Graph, property::{VertexIn, HasVertex}}
 	/// # };
 	/// # impl<const V: usize> Graph for Struct<V> {
 	/// # 	type Vertex = ();
@@ -46,17 +71,22 @@ pub trait HasVertex<const V: usize = 1>: Graph
 	/// # 	}
 	/// #
 	/// # }
-	/// struct Struct<const V: usize>(usize);
+	/// # impl<const N: usize> HasVertex for Struct<N> {
+	/// # 	fn any_vertex(&self) -> Self::Vertex{
+	/// # 		()
+	/// # 	}
+	/// # }
+	/// struct Struct<const N: usize>(usize);
 	///
-	/// impl<const V: usize> HasVertex<V> for Struct<V> {
-	/// 	fn get_vertex_idx(&self, idx: usize) -> Self::Vertex {
+	/// impl<const N: usize> VertexIn<N> for Struct<N> {
+	/// 	fn vertex_at_idx(&self, idx: usize) -> Self::Vertex {
 	/// 		()
 	/// 	}
 	/// }
 	///
 	/// impl<const V: usize> Struct<V> {
 	/// 	fn new() -> Self {
-	/// 		_ = Self::ASSERT_NOT_0; // This ensures errors are thrown if V = 0
+	/// 		_ = Self::ASSERT_VALID_PARAMS; // This ensures errors are thrown if V = 0
 	/// 		Struct(V)
 	/// 	}
 	/// }
@@ -64,44 +94,38 @@ pub trait HasVertex<const V: usize = 1>: Graph
 	/// let _ = Struct::<0>::new(); // Will cause a compile error
 	/// let _ = Struct::<1>::new(); // Will compile successfully
 	/// ```
-	const ASSERT_NOT_0: () = assert!(V > 0, "Found type implementing HasVertex<0>");
+	const ASSERT_VALID_PARAMS: () = {
+		assert!(N > 0, "Found type implementing VertexIn<0>");
+		assert!(
+			N != 1 || UNIQUE,
+			"Found type implementing VertexIn<1, false>"
+		);
+	};
 
-	/// Returns a vertex in the graph.
-	///
-	/// Successive calls do not guarantee to return the same vertex,
-	/// even though the graph hasn't changed.
-	fn get_vertex(&self) -> Self::Vertex
+	/// Returns the I'th vertex specified in the graph.
+	fn vertex_at<const I: usize>(&self) -> Self::Vertex
 	{
-		_ = Self::ASSERT_NOT_0;
-		self.get_vertex_at::<0>()
+		_ = Self::ASSERT_VALID_PARAMS;
+		const { assert!(I < N) }
+		self.vertex_at_idx(I)
 	}
-	
-	/// Returns the I'th vertex guaranteed to be in the vertex.
-	///
-	/// The vertex ordering (i.e. the I) is significant and does not change unless
-	/// the underlying graph type changes it.
-	fn get_vertex_at<const I: usize>(&self) -> Self::Vertex {
-		_ = Self::ASSERT_NOT_0;
-		const {
-			assert!(I < V)
-		}
-		assert!(I < V, "I out of bounds");
-		self.get_vertex_idx(I)
-	}
-	
-	/// Returns vertex guaranteed to be in the vertex at the given index in the ordering.
-	///
-	/// The vertex ordering (i.e. the idx) is significant and does not change unless
-	/// the underlying graph type changes it.
-	fn get_vertex_idx(&self, idx: usize) -> Self::Vertex;
+
+	/// Returns the I'th vertex specified in the graph.
+	fn vertex_at_idx(&self, idx: usize) -> Self::Vertex;
 }
 
 /// Ensures the underlying graph has at least 1 vertex.
-///
-/// Gives no guarantees on which vertex is returned by any given call to
-/// `get_vertex` if the graph has multiple vertices.
 #[derive(Clone)]
 pub struct HasVertexGraph<C: Ensure>(C);
+
+impl<C: Ensure> HasVertexGraph<C>
+{
+	pub fn as_vertex_in(self) -> VertexInGraph<C>
+	{
+		let v = self.any_vertex();
+		VertexInGraph::ensure_unchecked(self.release(), [v])
+	}
+}
 
 impl<C: Ensure> Ensure for HasVertexGraph<C>
 {
@@ -133,11 +157,10 @@ where
 	}
 }
 
-impl<C: Ensure, const V: usize> HasVertex<V> for HasVertexGraph<C>
+impl<C: Ensure> HasVertex for HasVertexGraph<C>
 {
-	fn get_vertex_idx(&self, idx: usize) -> Self::Vertex
+	fn any_vertex(&self) -> Self::Vertex
 	{
-		assert!(idx < V);
 		self.all_vertices()
 			.next()
 			.expect("HasVertexGraph has no vertices.")
@@ -153,9 +176,12 @@ impl_ensurer! {
 ///
 /// The designated vertices cannot be removed from the graph.
 #[derive(Clone)]
-pub struct VertexInGraph<C: Ensure, const V: usize = 1>(C, [<C::Graph as Graph>::Vertex; V]);
+pub struct VertexInGraph<C: Ensure, const V: usize = 1, const UNIQUE: bool = true>(
+	C,
+	[<C::Graph as Graph>::Vertex; V],
+);
 
-impl<C: Ensure, const V: usize> VertexInGraph<C, V>
+impl<C: Ensure, const V: usize, const U: bool> VertexInGraph<C, V, U>
 {
 	/// ```compile_fail, E0080
 	/// use graphene::common::AdjListGraph;
@@ -166,7 +192,7 @@ impl<C: Ensure, const V: usize> VertexInGraph<C, V>
 	/// ```
 	fn new(c: C, vs: [<C::Graph as Graph>::Vertex; V]) -> Self
 	{
-		_ = Self::ASSERT_NOT_0;
+		_ = Self::ASSERT_VALID_PARAMS;
 		Self(c, vs)
 	}
 
@@ -190,7 +216,7 @@ impl<C: Ensure, const V: usize> VertexInGraph<C, V>
 	}
 }
 
-impl<C: Ensure, const V: usize> Debug for VertexInGraph<C, V>
+impl<C: Ensure, const V: usize, const U: bool> Debug for VertexInGraph<C, V, U>
 where
 	C: Debug,
 	<C::Graph as Graph>::Vertex: Debug,
@@ -204,7 +230,7 @@ where
 	}
 }
 
-impl<C: Ensure, const V: usize> Ensure for VertexInGraph<C, V>
+impl<C: Ensure, const V: usize, const U: bool> Ensure for VertexInGraph<C, V, U>
 {
 	fn ensure_unchecked(c: Self::Ensured, v: [<C::Graph as Graph>::Vertex; V]) -> Self
 	{
@@ -217,7 +243,8 @@ impl<C: Ensure, const V: usize> Ensure for VertexInGraph<C, V>
 	}
 }
 
-impl<C: Ensure + GraphDerefMut, const V: usize> RemoveVertex for VertexInGraph<C, V>
+impl<C: Ensure + GraphDerefMut, const V: usize, const U: bool> RemoveVertex
+	for VertexInGraph<C, V, U>
 where
 	C::Graph: RemoveVertex,
 {
@@ -234,32 +261,24 @@ where
 	}
 }
 
-impl<C: Ensure, const V: usize> HasVertex<V> for VertexInGraph<C, V>
+impl<C: Ensure, const V: usize, const U: bool> HasVertex for VertexInGraph<C, V, U>
 {
-	fn get_vertex_idx(&self, idx: usize) -> Self::Vertex
+	fn any_vertex(&self) -> Self::Vertex
 	{
-		assert!(idx < V);
+		self.vertex_at::<0>()
+	}
+}
+
+impl<C: Ensure, const V: usize, const U: bool> VertexIn<V, U> for VertexInGraph<C, V, U>
+{
+	fn vertex_at_idx(&self, idx: usize) -> Self::Vertex
+	{
 		self.1[idx]
 	}
 }
 
-impl<C: Ensure> Rooted for VertexInGraph<C>
-where
-	C::Graph: Rooted,
-{
-	fn root(&self) -> Self::Vertex
-	{
-		self.get_vertex()
-	}
-
-	fn set_root(&mut self, v: impl Borrow<Self::Vertex>) -> Result<(), ()>
-	{
-		self.set_vertex([*v.borrow()])
-	}
-}
-
 impl_ensurer! {
-	use<C ; const V: usize> VertexInGraph<C,V>: Ensure, HasVertex, RemoveVertex, Rooted
+	use<C ; const V: usize, const U: bool> VertexInGraph<C,V,U>: Ensure, HasVertex, VertexIn, RemoveVertex
 	as (self.0) : C
 	as (self.1) : [<C::Graph as Graph>::Vertex;V]
 }

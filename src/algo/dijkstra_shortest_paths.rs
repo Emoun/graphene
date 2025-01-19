@@ -1,4 +1,4 @@
-use crate::core::{property::HasVertex, Edge, Graph};
+use crate::core::{property::VertexIn, Edge, Graph};
 use num_traits::{PrimInt, Unsigned, Zero};
 use std::borrow::Borrow;
 
@@ -21,14 +21,14 @@ where
 {
 	pub fn new(graph: &'a G) -> Self
 	where
-		G: HasVertex,
+		G: VertexIn<1>,
 	{
 		let mut dijk = Self {
 			graph,
 			visited: Vec::new(),
 			queue: Vec::new(),
 		};
-		dijk.visit(graph.get_vertex(), G::EdgeWeight::zero());
+		dijk.visit(graph.vertex_at::<0>(), G::EdgeWeight::zero());
 		dijk
 	}
 
@@ -66,9 +66,9 @@ where
 	/// weighted distance to them
 	pub fn distances(graph: &'a G) -> impl 'a + Iterator<Item = (G::Vertex, G::EdgeWeight)>
 	where
-		G: HasVertex,
+		G: VertexIn<1>,
 	{
-		let mut distances = vec![(graph.get_vertex(), G::EdgeWeight::zero())];
+		let mut distances = vec![(graph.vertex_at::<0>(), G::EdgeWeight::zero())];
 
 		DijkstraShortestPaths::new(graph).map(move |(so, si, w)| {
 			let dist = distances.iter().find(|(v, _)| so == *v).unwrap().1;
@@ -114,7 +114,7 @@ where
 {
 	pub fn new(graph: &'a G) -> Self
 	where
-		G: HasVertex,
+		G: VertexIn<1>,
 	{
 		Self {
 			dijk: DijkstraShortestPaths::new(graph),

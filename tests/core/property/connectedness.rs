@@ -9,8 +9,8 @@ use graphene::{
 	algo::DijkstraShortestPaths,
 	core::{
 		property::{
-			AddEdge, Connected, ConnectedGraph, HasVertex, NewVertex, RemoveEdge, RemoveVertex,
-			Unilateral, UnilateralGraph, VertexInGraph, Weak, WeakGraph,
+			AddEdge, Connected, ConnectedGraph, NewVertex, RemoveEdge, RemoveVertex, Unilateral,
+			UnilateralGraph, VertexIn, VertexInGraph, Weak, WeakGraph,
 		},
 		Directed, Graph, Undirected,
 	},
@@ -109,8 +109,8 @@ mod module
 		e_weight: MockEdgeWeight,
 	) -> bool
 	{
-		let v1 = g1.get_vertex().clone();
-		let v2 = g2.get_vertex().clone();
+		let v1 = g1.vertex_at::<0>().clone();
+		let v2 = g2.vertex_at::<0>().clone();
 		let mut graph = g1.release_all();
 		// We start by joining 2 connected graphs into a unconnected graph with the 2
 		// components

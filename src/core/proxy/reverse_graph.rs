@@ -105,7 +105,7 @@ where
 }
 
 base_graph! {
-	use<C> ReverseGraph<C>: NewVertex, RemoveVertex, HasVertex
+	use<C> ReverseGraph<C>: NewVertex, RemoveVertex, HasVertex, VertexIn
 	as (self.0): C
 	where
 		C: Ensure,

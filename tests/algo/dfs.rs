@@ -5,7 +5,7 @@ use duplicate::duplicate_item;
 use graphene::{
 	algo::Dfs,
 	core::{
-		property::{ConnectedGraph, HasVertex, VertexInGraph},
+		property::{ConnectedGraph, VertexIn, VertexInGraph},
 		Directed, Undirected,
 	},
 };
@@ -27,7 +27,7 @@ mod __
 	{
 		// Ensure the starting vertex is on the stack, so that it is the last
 		// to run 'on_exit'
-		let stack: Cell<Vec<MockVertex>> = Cell::new(vec![mock.get_vertex()]);
+		let stack: Cell<Vec<MockVertex>> = Cell::new(vec![mock.vertex_at::<0>()]);
 		let mut success = true;
 
 		fn on_exit<G>(

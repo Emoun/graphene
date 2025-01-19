@@ -4,7 +4,7 @@ use crate::mock_graph::{
 };
 use graphene::{
 	core::{
-		property::{HasVertex, VertexInGraph},
+		property::{VertexIn, VertexInGraph},
 		Ensure, Graph, GraphDeref, Release,
 	},
 	impl_ensurer,
@@ -82,7 +82,7 @@ where
 
 	pub fn get_both(&self) -> (MockVertex, MockVertex)
 	{
-		(self.0.get_vertex(), self.1)
+		(self.0.vertex_at::<0>(), self.1)
 	}
 
 	pub fn get_two_vertices<Ge: Gen>(g: &mut Ge, graph: &G) -> (MockVertex, MockVertex)
@@ -123,7 +123,7 @@ where
 			}
 			else
 			{
-				verts.filter(|&v| v != c.get_vertex()).next().unwrap()
+				verts.filter(|&v| v != c.vertex_at::<0>()).next().unwrap()
 			}
 		};
 		Self(c, v2, PhantomData)
@@ -191,10 +191,10 @@ where
 				.map(|g| Self(g, self.1, PhantomData)),
 		);
 
-		if !U::unique() && self.get_vertex() != self.1
+		if !U::unique() && self.vertex_at::<0>() != self.1
 		{
 			// Shrink by making both vertices the same
-			result.push(Self(self.0.clone(), self.get_vertex(), PhantomData));
+			result.push(Self(self.0.clone(), self.vertex_at::<0>(), PhantomData));
 			result.push(Self(
 				VertexInGraph::ensure(self.0.clone().release(), [self.1]).unwrap(),
 				self.1,

@@ -31,7 +31,7 @@ mod __
 
 			assert!(!HasVertexGraph::can_guard(&null_graph));
 		}
-		
+
 		#[duplicate_item(
 			mod_name has_num;
 			[__1] [ 1 ];
@@ -43,22 +43,26 @@ mod __
 		mod __
 		{
 			use super::*;
-			
+
 			/// Tests that graphs with at least has_num>0 vertices are accepted.
 			#[quickcheck]
-			fn accept_has_vertex(Arb(g): Arb<VertexInGraph<MockGraph<directedness>,has_num>>) -> bool
+			fn accept_has_vertex(
+				Arb(g): Arb<VertexInGraph<MockGraph<directedness>, has_num>>,
+			) -> bool
 			{
 				HasVertexGraph::can_guard(&g.release_all())
 			}
-			
+
 			/// Tests that graphs that already implement HasVertex<has_num>0>.
 			#[quickcheck]
-			fn accept_has_vertex_implemented(Arb(g): Arb<VertexInGraph<MockGraph<directedness>,has_num>>) -> bool
+			fn accept_has_vertex_implemented(
+				Arb(g): Arb<VertexInGraph<MockGraph<directedness>, has_num>>,
+			) -> bool
 			{
 				HasVertexGraph::can_guard(&g)
 			}
 		}
-		
+
 		/// Tests cannot remove a vertex if it's the only one in the graph.
 		#[test]
 		fn reject_remove_vertex()
@@ -67,30 +71,30 @@ mod __
 			let v = g
 				.new_vertex_weighted(MockVertexWeight { value: 0 })
 				.unwrap();
-				
+
 			let mut g = HasVertexGraph::guard(g).unwrap();
-			
+
 			assert!(g.remove_vertex(v).is_err())
 		}
-		
+
 		/// Tests that can remove a vertex if there are at least 2.
 		#[quickcheck]
 		fn accept_remove_vertex(Arb(g): Arb<TwoVerticesIn<MockGraph<directedness>, Unique>>)
 			-> bool
 		{
-			let v = g.get_vertex();
+			let v = g.any_vertex();
 			let mut g = HasVertexGraph::guard(g.release_all()).unwrap();
-			
+
 			g.remove_vertex(v).is_ok()
 		}
 	}
 
 	#[duplicate_item(
-		GraphStruct 		get_method 		set_method		ensure_wrap(v);
-		[ VertexInGraph ] 	[ get_vertex ] 	[ set_vertex ]	[[v]];
-		[ RootedGraph ] 	[ root ] 		[ set_root ]	[v];
+		mod_name 		GraphStruct 					get_method 		set_method		ensure_wrap(v);
+		[vertex_in]		[ VertexInGraph::<_,1,true> ] 	[ any_vertex ] 	[ set_vertex ]	[[v]];
+		[rooted_graph]	[ RootedGraph ] 				[ root ] 		[ set_root ]	[v];
 	)]
-	mod __
+	mod mod_name
 	{
 		use super::*;
 		use crate::mock_graph::arbitrary::VertexOutside;
@@ -100,7 +104,7 @@ mod __
 		#[quickcheck]
 		fn accept_in_graph(Arb(g): Arb<VertexInGraph<MockGraph<directedness>>>) -> bool
 		{
-			GraphStruct::can_ensure(&g, &ensure_wrap([g.get_vertex()]))
+			GraphStruct::can_ensure(&g, &ensure_wrap([g.any_vertex()]))
 		}
 
 		/// Tests that vertices not in the graph are rejected.
@@ -128,7 +132,7 @@ mod __
 		#[quickcheck]
 		fn reject_remove_vertex(Arb(g): Arb<VertexInGraph<MockGraph<directedness>>>) -> bool
 		{
-			let v = g.get_vertex();
+			let v = g.any_vertex();
 			let mut g = GraphStruct::ensure_unchecked(g, ensure_wrap([v]));
 
 			g.remove_vertex(v).is_err()
@@ -138,7 +142,7 @@ mod __
 		#[quickcheck]
 		fn get_vertex(Arb(g): Arb<VertexInGraph<MockGraph<directedness>>>) -> bool
 		{
-			let v = g.get_vertex();
+			let v = g.any_vertex();
 			let g = GraphStruct::ensure_unchecked(g.release_all().0, ensure_wrap([v]));
 
 			g.get_method() == v
@@ -162,7 +166,7 @@ mod __
 			Arb(g): Arb<VertexOutside<VertexInGraph<MockGraph<directedness>>>>,
 		) -> bool
 		{
-			let v1 = g.0.get_vertex();
+			let v1 = g.0.any_vertex();
 			let v2 = g.1;
 			let mut g = GraphStruct::ensure_unchecked(g.release_all().0, ensure_wrap([v1]));
 
@@ -175,7 +179,7 @@ mod __
 	fn is_root_true(Arb(g): Arb<VertexInGraph<MockGraph<directedness>>>) -> bool
 	{
 		use graphene::core::{Ensure, Release};
-		let v = g.get_vertex();
+		let v = g.any_vertex();
 		let g = RootedGraph::ensure_unchecked(g.release_all(), v);
 
 		g.is_root(v)

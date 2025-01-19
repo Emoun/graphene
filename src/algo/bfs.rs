@@ -1,4 +1,4 @@
-use crate::core::{property::HasVertex, Graph};
+use crate::core::{property::VertexIn, Graph};
 use std::collections::VecDeque;
 
 /// Performs [breadth-first traversal](https://mathworld.wolfram.com/Breadth-FirstTraversal.html)
@@ -83,23 +83,17 @@ where
 {
 	/// Constructs a new `Bfs` to traverse the specified graph.
 	///
-	/// It calls [`get_vertex`] on the graph, making the traversal start from
-	/// the returned vertex. The first call to [`next`] on the constructed `Bfs`
-	/// is guaranteed to return the aforementioned vertex.
-	///
-	/// ### Hint
-	///
-	/// [`VertexInGraph`](../core/property/struct.VertexInGraph.html) can be
-	/// used to select which specific vertex is returned by [`get_vertex`] and
-	/// thereby the starting vertex for the traversal.
+	/// It calls [`vertex_at::<0>()`] on the graph, making the traversal start
+	/// from the returned vertex. The first call to [`next`] on the constructed
+	/// `Bfs` is guaranteed to return the aforementioned vertex.
 	///
 	/// [`next`]: https://doc.rust-lang.org/std/iter/trait.Iterator.html#tymethod.next
-	/// [`get_vertex`]: ../core/property/trait.HasVertex.html#method.get_vertex
+	/// [`vertex_at`]: ../core/property/trait.VertexIn.html#method.vertex_at
 	pub fn new(graph: &'a G) -> Self
 	where
-		G: HasVertex,
+		G: VertexIn<1>,
 	{
-		let v = graph.get_vertex();
+		let v = graph.vertex_at::<0>();
 
 		let mut result = Self {
 			graph,

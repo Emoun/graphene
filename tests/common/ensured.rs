@@ -28,7 +28,7 @@ fn contains_vertex(Arb(graph): Arb<MockGraph<Directed>>, v: MockVertex) -> bool
 	let expected = graph.contains_vertex(v);
 	let result = graph_clone.ensured().contains_vertex(v);
 	let result_is_some = result.is_some();
-	let result_v = result.map_or(v, |graph| graph.get_vertex());
+	let result_v = result.map_or(v, |graph| graph.any_vertex());
 
 	(expected == result_is_some) && (v == result_v)
 }
@@ -50,7 +50,7 @@ fn new_vertex(Arb(mut graph): Arb<MockGraph<Directed>>, _w: MockVertexWeight) ->
 	let expected_v = expected.unwrap_or(MockVertex { value: 0 });
 	let result = graph_clone.ensured().new_vertex(arguments);
 	let result_is_ok = result.is_ok();
-	let result_v = result.map_or(expected_v, |graph| graph.get_vertex());
+	let result_v = result.map_or(expected_v, |graph| graph.any_vertex());
 
 	(expected_is_ok == result_is_ok) && (expected_v == result_v)
 }

@@ -1,4 +1,4 @@
-use crate::core::{property::HasVertex, Graph};
+use crate::core::{property::VertexIn, Graph};
 use std::borrow::Borrow;
 
 /// Performs [depth-first traversal](https://mathworld.wolfram.com/Depth-FirstTraversal.html)
@@ -140,9 +140,9 @@ where
 		payload: F,
 	) -> Self
 	where
-		G: HasVertex,
+		G: VertexIn<1>,
 	{
-		let v = g.get_vertex();
+		let v = g.vertex_at::<0>();
 		let mut result = Self {
 			graph: g,
 			visited: Vec::new(),
@@ -230,7 +230,7 @@ where
 
 impl<'a, G> Dfs<'a, G, ()>
 where
-	G: 'a + HasVertex,
+	G: 'a + VertexIn<1>,
 {
 	/// Constructs a new `Dfs` to traverse the specified graph.
 	///

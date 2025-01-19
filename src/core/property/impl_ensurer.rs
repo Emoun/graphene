@@ -588,20 +588,50 @@ macro_rules! impl_properties {
 		$crate::impl_properties!{
 			@struct [ $struct ]
 			@generic [ $($generics)* ]
-			@const_generic [ $([$const_gen_id $const_gen_ty])* [IMPL_PROPERTIES_HASVERTEX_V usize] ]
+			@const_generic [ $([$const_gen_id $const_gen_ty])* ]
 			@delegate [ $delegate_type ]
 			$(@exclude [ $($exclude_props)* ])?
 			$(@include [ $($include_props)* ])?
 			@bounds [
 				<$delegate_type as $crate::core::GraphDeref>::Graph:
-					$crate::core::property::HasVertex<IMPL_PROPERTIES_HASVERTEX_V>,
+					$crate::core::property::HasVertex,
 				$($bounds)*
 			]
-			@trait_id HasVertex <IMPL_PROPERTIES_HASVERTEX_V> [$crate::core::property]
+			@trait_id HasVertex [$crate::core::property]
 			@implement {
 				delegate::delegate! {
 					to $crate::core::GraphDeref::graph(&self$($delegate)+) {
-						fn get_vertex_idx(&self, idx: usize) -> Self::Vertex;
+						fn any_vertex(&self) -> Self::Vertex;
+					}
+				}
+			}
+		}
+
+		// HasVertex
+		$crate::impl_properties!{
+			@struct [ $struct ]
+			@generic [ $($generics)* ]
+			@const_generic [
+				$([$const_gen_id $const_gen_ty])*
+				[IMPL_PROPERTIES_VERTEXIN_N usize]
+				[IMPL_PROPERTIES_VERTEXIN_U bool]
+			]
+			@delegate [ $delegate_type ]
+			$(@exclude [ $($exclude_props)* ])?
+			$(@include [ $($include_props)* ])?
+			@bounds [
+				<$delegate_type as $crate::core::GraphDeref>::Graph:
+					$crate::core::property::VertexIn<
+						IMPL_PROPERTIES_VERTEXIN_N,IMPL_PROPERTIES_VERTEXIN_U
+					>,
+				$($bounds)*
+			]
+			@trait_id VertexIn <IMPL_PROPERTIES_VERTEXIN_N,IMPL_PROPERTIES_VERTEXIN_U>
+				[$crate::core::property]
+			@implement {
+				delegate::delegate! {
+					to $crate::core::GraphDeref::graph(&self$($delegate)+) {
+						fn vertex_at_idx(&self, idx: usize) -> Self::Vertex;
 					}
 				}
 			}

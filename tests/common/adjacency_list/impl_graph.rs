@@ -10,7 +10,7 @@ use crate::{
 };
 use duplicate::duplicate_item;
 use graphene::core::{
-	property::{EdgeCount, HasVertex, RemoveEdge, RemoveVertex, VertexCount, VertexInGraph},
+	property::{EdgeCount, RemoveEdge, RemoveVertex, VertexCount, VertexIn, VertexInGraph},
 	Directed, Graph, GraphMut, Release, Undirected,
 };
 
@@ -55,7 +55,7 @@ mod __
 	#[quickcheck]
 	fn same_vertex_weight_mut(Arb(mock): Arb<VertexInGraph<MockGraph<directedness>>>) -> bool
 	{
-		let v = mock.get_vertex().clone();
+		let v = mock.vertex_at::<0>().clone();
 		let (mut g, v_map) = adj_list_from_mock(&mock.release_all());
 
 		g.vertex_weight(&v_map[&v]).map(|w| w as *const _)
@@ -106,7 +106,7 @@ mod __
 	#[quickcheck]
 	fn remove_vertex(Arb(mock): Arb<VertexInGraph<MockGraph<directedness>>>) -> bool
 	{
-		let v_remove = mock.get_vertex().clone();
+		let v_remove = mock.vertex_at::<0>().clone();
 		let mock = mock.release_all();
 		let (mut g, v_map) = adj_list_from_mock(&mock);
 		let v_removed = v_map[&v_remove];
@@ -144,7 +144,7 @@ mod __
 	fn remove_edge(Arb(mock): Arb<EdgeIn<MockGraph<directedness>>>) -> bool
 	{
 		let (mut g, v_map) = adj_list_from_mock(&mock);
-		let source = mock.get_vertex();
+		let source = mock.vertex_at::<0>();
 		let EdgeIn(mock, sink, weight) = mock;
 
 		let mapped_source = v_map[&source];

@@ -4,7 +4,7 @@ use crate::mock_graph::{
 };
 use graphene::{
 	core::{
-		property::{AddEdge, HasVertex, RemoveEdge, VertexInGraph},
+		property::{AddEdge, RemoveEdge, VertexIn, VertexInGraph},
 		Directedness, Graph, GraphDerefMut, GraphMut,
 	},
 	impl_ensurer,
@@ -36,7 +36,7 @@ where
 	fn ensure_unchecked(c: Self::Ensured, _: ()) -> Self
 	{
 		let (sink, weight) = {
-			let edge = c.edges_sourced_in(c.get_vertex()).next().unwrap();
+			let edge = c.edges_sourced_in(c.vertex_at::<0>()).next().unwrap();
 			(edge.0, edge.1.borrow().clone())
 		};
 		Self(c, sink, weight)
@@ -104,7 +104,7 @@ where
 
 	fn shrink_guided(&self, limits: HashSet<Limit>) -> Box<dyn Iterator<Item = Self>>
 	{
-		let v1 = self.get_vertex();
+		let v1 = self.vertex_at::<0>();
 		let v2 = self.1;
 		let mut result = Vec::new();
 

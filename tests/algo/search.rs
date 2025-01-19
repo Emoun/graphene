@@ -5,7 +5,7 @@ use duplicate::duplicate_item;
 use graphene::{
 	algo::{Bfs, Dfs, Spfs},
 	core::{
-		property::{AddEdge, ConnectedGraph, HasVertex, VertexInGraph},
+		property::{AddEdge, ConnectedGraph, VertexIn, VertexInGraph},
 		proxy::EdgeWeightMap,
 		Directed, Ensure, Graph, GraphDeref, ReleasePayload, Undirected,
 	},
@@ -45,7 +45,7 @@ mod module
 			let mut visited = HashSet::new();
 
 			// Add the starting vertex to ensure it is not produced.
-			visited.insert(mock.get_vertex().clone());
+			visited.insert(mock.vertex_at::<0>().clone());
 
 			let mut visited_once = true;
 			search_algo_new([mock.graph()]).for_each(|v| {

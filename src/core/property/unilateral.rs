@@ -47,6 +47,7 @@ where
 			// order, so we don't need to sort, just check the first has an edge to it from
 			// the next.
 
+			let graph = graph.as_vertex_in();
 			let mut tarjan = TarjanScc::new(&graph);
 
 			let mut scc_current = tarjan.next();

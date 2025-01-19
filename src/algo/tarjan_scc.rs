@@ -51,7 +51,7 @@
 use crate::{
 	algo::Dfs,
 	core::{
-		property::{ConnectedGraph, HasVertex},
+		property::{ConnectedGraph, VertexIn},
 		proxy::SubgraphProxy,
 		Directed, Graph, Guard,
 	},
@@ -82,9 +82,9 @@ use std::cmp::min;
 /// # 	algo::TarjanScc,
 /// # 	common::AdjListGraph,
 /// # 	core::{
-/// # 		Guard,
+/// # 		Ensure,
 /// # 		property::{
-/// # 			NewVertex, AddEdge, HasVertexGraph, Subgraph
+/// # 			NewVertex, AddEdge, VertexInGraph, Subgraph
 /// # 		}
 /// # 	},
 /// # };
@@ -105,8 +105,7 @@ use std::cmp::min;
 /// // Connect first SCC to second
 /// graph.add_edge(&v0,&v2).unwrap();
 ///
-/// // We use `HasVertexGraph` because we don't care where we start
-/// let graph = HasVertexGraph::guard(graph).unwrap();
+/// let graph = VertexInGraph::ensure(graph, [v0]).unwrap();
 ///
 /// // Initialize algorithm
 /// let mut tarj = TarjanScc::new(&graph);
@@ -160,7 +159,7 @@ where
 
 impl<'a, G> TarjanScc<'a, G>
 where
-	G: 'a + Graph<Directedness = Directed> + HasVertex,
+	G: 'a + Graph<Directedness = Directed> + VertexIn<1>,
 {
 	/// Constructs a new `TarjanScc` to find the [strongly connected components](https://mathworld.wolfram.com/StronglyConnectedComponent.html)
 	/// of the specified graph.
@@ -214,7 +213,7 @@ where
 			Dfs::do_nothing_on_visit,
 			on_exit,
 			Dfs::do_nothing_on_explore,
-			vec![(graph.get_vertex(), 0)],
+			vec![(graph.vertex_at::<0>(), 0)],
 		);
 		Self {
 			dfs,

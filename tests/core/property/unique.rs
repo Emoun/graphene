@@ -49,7 +49,7 @@ mod __
 			e_weight: edge_type,
 		) -> bool
 		{
-			let v = g.get_vertex().clone();
+			let v = g.any_vertex().clone();
 			// To ensure we add a non-duplicate edge,
 			// we create a new vertex and add an edge to it from an existing one.
 			let v2 = g.new_vertex_weighted(v_weight).unwrap();
@@ -64,7 +64,7 @@ mod __
 			weight: edge_type,
 		) -> bool
 		{
-			let source = g.get_vertex();
+			let source = g.any_vertex();
 			let EdgeIn(mut g, sink, _) = g;
 			g.add_edge_weighted(source, sink, weight).is_err()
 		}

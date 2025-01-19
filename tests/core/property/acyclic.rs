@@ -6,7 +6,7 @@ use crate::mock_graph::{
 };
 use duplicate::duplicate_item;
 use graphene::core::{
-	property::{Acyclic, AcyclicGraph, AddEdge, HasVertex, NoLoops, RemoveEdge},
+	property::{Acyclic, AcyclicGraph, AddEdge, NoLoops, RemoveEdge, VertexIn},
 	Directed, Graph, Guard, Release, Undirected,
 };
 use static_assertions::assert_impl_all;
@@ -38,7 +38,7 @@ mod __
 	#[quickcheck]
 	fn accept_add_edge(Arb(g): Arb<EdgeIn<AcyclicGraph<MockGraph<directedness>>>>) -> bool
 	{
-		let source = g.get_vertex();
+		let source = g.vertex_at::<0>();
 		let sink = g.1;
 		let mut g = g.release_all();
 
