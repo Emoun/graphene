@@ -11,7 +11,7 @@
 //! reachable from this vertex. The lowlink value should be seen as the lowest
 //! index reachable.
 //!
-//! When a vertex is pushed in the stack, it is assigned an index. It is also
+//! When a vertex is pushed on the stack, it is assigned an index. It is also
 //! given a lowlink value equal to its index (since we know it can at least
 //! reach itself). When you are finished visiting the children of a vertex,
 //! check all vertices that are reachable from the current one. If they are on
@@ -51,9 +51,9 @@
 use crate::{
 	algo::Dfs,
 	core::{
-		property::{ConnectedGraph, VertexIn},
+		property::{ConnectedGraph, HasVertex, VertexInGraph},
 		proxy::SubgraphProxy,
-		Directed, Graph, Guard,
+		Directed, Ensure, Graph, GraphDeref, Guard,
 	},
 };
 use std::cmp::min;
@@ -105,7 +105,7 @@ use std::cmp::min;
 /// // Connect first SCC to second
 /// graph.add_edge(&v0,&v2).unwrap();
 ///
-/// let graph = VertexInGraph::ensure(graph, [v0]).unwrap();
+/// let graph = VertexInGraph::<_>::ensure(graph, [v0]).unwrap();
 ///
 /// // Initialize algorithm
 /// let mut tarj = TarjanScc::new(&graph);
@@ -146,20 +146,22 @@ use std::cmp::min;
 /// [`subgraphs`]: ../core/property/trait.Subgraph.html
 /// [`Subgraph`]: ../core/property/trait.Subgraph.html
 /// [`Subgraph::reaches`]: ../core/property/trait.Subgraph.html#method.reaches
-pub struct TarjanScc<'a, G>
+pub struct TarjanScc<G>
 where
-	G: 'a + Graph<Directedness = Directed>,
+	G: Ensure + GraphDeref,
+	G::Graph: Graph<Directedness = Directed>,
 {
-	dfs: Dfs<'a, G, Vec<(G::Vertex, usize)>>,
+	dfs: Dfs<VertexInGraph<G>, Vec<(<G::Graph as Graph>::Vertex, usize)>>,
 
-	/// We use this to keep track of which vertices we have check for
+	/// We use this to keep track of which vertices we have to check for
 	/// whether they have been visited.
-	unchecked: Box<dyn 'a + Iterator<Item = G::Vertex>>,
+	unchecked: std::vec::IntoIter<<G::Graph as Graph>::Vertex>,
 }
 
-impl<'a, G> TarjanScc<'a, G>
+impl<G> TarjanScc<G>
 where
-	G: 'a + Graph<Directedness = Directed> + VertexIn<1>,
+	G: Ensure + GraphDeref,
+	G::Graph: Graph<Directedness = Directed> + HasVertex,
 {
 	/// Constructs a new `TarjanScc` to find the [strongly connected components](https://mathworld.wolfram.com/StronglyConnectedComponent.html)
 	/// of the specified graph.
@@ -177,7 +179,7 @@ where
 	/// [`next`]: https://doc.rust-lang.org/std/iter/trait.Iterator.html#tymethod.next
 	/// [`get_vertex`]:
 	/// ../core/property/trait.HasVertex.html#tymethod.get_vertex
-	pub fn new(graph: &'a G) -> Self
+	pub fn new(graph: G) -> Self
 	{
 		/// Implements part of Tarjan's algorithm, namely what happens when we
 		/// are finished visiting a vertex.
@@ -207,36 +209,37 @@ where
 			}
 		}
 
+		let v = graph.graph().any_vertex();
+		let graph = VertexInGraph::ensure_unchecked(graph, [v]);
+		let vs = graph.all_vertices().collect::<Vec<_>>();
+
 		// Push the start vertex on the stack with low-link = 0
 		let dfs = Dfs::new(
 			graph,
-			Dfs::do_nothing_on_visit,
+			Dfs::<VertexInGraph<_>, _>::do_nothing_on_visit,
 			on_exit,
-			Dfs::do_nothing_on_explore,
-			vec![(graph.vertex_at::<0>(), 0)],
+			Dfs::<VertexInGraph<_>, _>::do_nothing_on_explore,
+			vec![(v, 0)],
 		);
 		Self {
 			dfs,
-			unchecked: Box::new(graph.all_vertices()),
+			unchecked: vs.into_iter(),
 		}
 	}
 }
 
-impl<'a, G> Iterator for TarjanScc<'a, G>
-where
-	G: 'a + Graph<Directedness = Directed>,
-{
-	type Item = ConnectedGraph<SubgraphProxy<&'a G>>;
-
-	fn next(&mut self) -> Option<Self::Item>
+macro_rules! next_scc_impl {
 	{
+		$self_tt:ident,
+		$($return_code:tt)*
+	} => {
 		// Repeat until either an SCC is found or all vertices have been visited.
 		loop
 		{
 			// For each vertex we are finished visiting, check if its the root of a SCC.
-			while let Some(v) = self.dfs.advance_next_exit()
+			while let Some(v) = $self_tt.dfs.advance_next_exit()
 			{
-				let stack = &mut self.dfs.payload;
+				let stack = &mut $self_tt.dfs.payload;
 
 				// Find the index of the vertex
 				let index = stack.iter().position(|(v2, _)| *v2 == v).unwrap();
@@ -245,7 +248,7 @@ where
 				{
 					// Vertex is root of SCC, pop stack for all before it
 
-					let mut scc = SubgraphProxy::new(self.dfs.graph);
+					let mut scc = SubgraphProxy::new($self_tt.dfs.graph.0 $($return_code)*);
 					while stack.len() > index
 					{
 						scc.expand(stack.pop().unwrap().0).unwrap();
@@ -261,20 +264,51 @@ where
 			}
 
 			// No SCCs found, let the Dfs run once
-			if let Some(v) = self.dfs.next()
+			if let Some(v) = $self_tt.dfs.next()
 			{
 				// First push vertex onto stack, with lowlink value equal to its index
-				let stack = &mut self.dfs.payload;
+				let stack = &mut $self_tt.dfs.payload;
 				stack.push((v.clone(), stack.len()));
 			}
 			else
 			{
-				let dfs = &mut self.dfs;
-				if !self.unchecked.any(|v| dfs.continue_from(v))
+				let dfs = &mut $self_tt.dfs;
+				if !$self_tt.unchecked.any(|v| dfs.continue_from(v))
 				{
 					return None;
 				}
 			}
 		}
+	}
+}
+
+impl<G> TarjanScc<G>
+where
+	G: Ensure + GraphDeref,
+	G::Graph: Graph<Directedness = Directed>,
+{
+	/// Returns the next strongly connected component `TarjanScc` has found, if
+	/// any.
+	///
+	/// This is similar to `next`, however can be used when `TarjanScc` receives
+	/// a non-copy ensure.
+	///
+	///
+	pub fn next_scc(&mut self) -> Option<ConnectedGraph<SubgraphProxy<&G::Graph>>>
+	{
+		next_scc_impl!(self, .graph())
+	}
+}
+
+impl<G> Iterator for TarjanScc<G>
+where
+	G: Ensure + GraphDeref + Copy,
+	G::Graph: Graph<Directedness = Directed>,
+{
+	type Item = ConnectedGraph<SubgraphProxy<G>>;
+
+	fn next(&mut self) -> Option<Self::Item>
+	{
+		next_scc_impl!(self,)
 	}
 }

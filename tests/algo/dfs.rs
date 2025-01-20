@@ -58,9 +58,9 @@ mod __
 
 		Dfs::new(
 			&mock,
-			Dfs::do_nothing_on_visit,
+			Dfs::<VertexInGraph<_>, _>::do_nothing_on_visit,
 			on_exit,
-			Dfs::do_nothing_on_explore,
+			Dfs::<VertexInGraph<_>, _>::do_nothing_on_explore,
 			(&stack, &mut success),
 		)
 		.for_each(|v| {

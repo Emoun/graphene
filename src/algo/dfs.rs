@@ -1,4 +1,4 @@
-use crate::core::{property::VertexIn, Graph};
+use crate::core::{property::VertexIn, Ensure, Graph, GraphDeref};
 use std::borrow::Borrow;
 
 /// Performs [depth-first traversal](https://mathworld.wolfram.com/Depth-FirstTraversal.html)
@@ -90,9 +90,9 @@ use std::borrow::Borrow;
 ///
 /// [`next`]: https://doc.rust-lang.org/std/iter/trait.Iterator.html#tymethod.next
 /// [`get_vertex`]: ../core/property/trait.HasVertex.html#method.get_vertex
-pub struct Dfs<'a, G, F>
+pub struct Dfs<G, F>
 where
-	G: 'a + Graph,
+	G: Ensure + GraphDeref,
 {
 	/// A reference to the graph being traversed.
 	///
@@ -100,49 +100,61 @@ where
 	/// this reference between calls to
 	/// [`next`](https://doc.rust-lang.org/std/iter/trait.Iterator.html#tymethod.next)
 	/// is undefined behaviour.
-	pub graph: &'a G,
+	pub graph: G,
 
 	/// A custom payload, available to the function called upon a vertex exit.
 	/// See [`new`](#method.new).
 	pub payload: F,
-	visited: Vec<G::Vertex>,
+	visited: Vec<<G::Graph as Graph>::Vertex>,
 
 	/// The vertex on the stack, and whether on_exit should be called upon
 	/// popping.
-	stack: Vec<(G::Vertex, bool)>,
+	stack: Vec<(<G::Graph as Graph>::Vertex, bool)>,
 
 	/// Function to call when visiting a vertex
-	on_visit: fn(&mut Self, G::Vertex),
+	on_visit: fn(&G::Graph, <G::Graph as Graph>::Vertex, &mut F),
 
 	/// Function to call when exiting a vertex.
 	///
 	/// Provides a reference to the graph, the vertex that is exiting,
 	/// and a mutable reference to the payload given to the Dfs.
-	on_exit: fn(&G, G::Vertex, &mut F),
+	on_exit: fn(&G::Graph, <G::Graph as Graph>::Vertex, &mut F),
 
 	/// Function to call when exploring an edge.
 	///
 	/// When a vertex is being visited, this function is called for
 	/// every outgoing edge, regardless of whether the sinked vertex
 	/// (second vertex argument) has already been visited.
-	on_explore: fn(&mut Self, G::Vertex, G::Vertex, &G::EdgeWeight),
+	on_explore: fn(
+		&G::Graph,
+		<G::Graph as Graph>::Vertex,
+		<G::Graph as Graph>::Vertex,
+		&<G::Graph as Graph>::EdgeWeight,
+		&mut F,
+	),
 }
 
-impl<'a, G, F> Dfs<'a, G, F>
+impl<G, F> Dfs<G, F>
 where
-	G: 'a + Graph,
+	G: Ensure + GraphDeref,
 {
 	pub fn new(
-		g: &'a G,
-		on_visit: fn(&mut Self, G::Vertex),
-		on_exit: fn(&G, G::Vertex, &mut F),
-		on_explore: fn(&mut Self, G::Vertex, G::Vertex, &G::EdgeWeight),
+		g: G,
+		on_visit: fn(&G::Graph, <G::Graph as Graph>::Vertex, &mut F),
+		on_exit: fn(&G::Graph, <G::Graph as Graph>::Vertex, &mut F),
+		on_explore: fn(
+			&G::Graph,
+			<G::Graph as Graph>::Vertex,
+			<G::Graph as Graph>::Vertex,
+			&<G::Graph as Graph>::EdgeWeight,
+			&mut F,
+		),
 		payload: F,
 	) -> Self
 	where
-		G: VertexIn<1>,
+		G::Graph: VertexIn<1>,
 	{
-		let v = g.vertex_at::<0>();
+		let v = g.graph().vertex_at::<0>();
 		let mut result = Self {
 			graph: g,
 			visited: Vec::new(),
@@ -157,16 +169,22 @@ where
 		result
 	}
 
-	fn visit(&mut self, to_return: G::Vertex)
+	fn visit(&mut self, to_return: <G::Graph as Graph>::Vertex)
 	{
-		(self.on_visit)(self, to_return);
+		(self.on_visit)(self.graph.graph(), to_return, &mut self.payload);
 		// Mark visited
 		self.visited.push(to_return);
 
 		// Explore children
-		for (child, weight) in self.graph.edges_sourced_in(to_return.clone())
+		for (child, weight) in self.graph.graph().edges_sourced_in(to_return.clone())
 		{
-			(self.on_explore)(self, to_return, child, weight.borrow());
+			(self.on_explore)(
+				self.graph.graph(),
+				to_return,
+				child,
+				weight.borrow(),
+				&mut self.payload,
+			);
 			if !self.visited(child.clone())
 			{
 				// Push to stack without exit mark
@@ -175,7 +193,7 @@ where
 		}
 	}
 
-	pub fn visited(&self, v: G::Vertex) -> bool
+	pub fn visited(&self, v: <G::Graph as Graph>::Vertex) -> bool
 	{
 		self.visited.contains(&v)
 	}
@@ -185,7 +203,7 @@ where
 	///
 	///  If there was nothing to pop and call `on_exit` on, return false,
 	/// otherwise returns true.
-	pub fn advance_next_exit(&mut self) -> Option<G::Vertex>
+	pub fn advance_next_exit(&mut self) -> Option<<G::Graph as Graph>::Vertex>
 	{
 		while let Some(last) = self.stack.last()
 		{
@@ -196,7 +214,7 @@ where
 				// If its exit marked, call the closure on it.
 				if last.1
 				{
-					(self.on_exit)(self.graph, last.0, &mut self.payload);
+					(self.on_exit)(self.graph.graph(), last.0, &mut self.payload);
 					return Some(last.0);
 				}
 			}
@@ -208,7 +226,7 @@ where
 		None
 	}
 
-	pub fn continue_from(&mut self, v: G::Vertex) -> bool
+	pub fn continue_from(&mut self, v: <G::Graph as Graph>::Vertex) -> bool
 	{
 		if !self.visited(v.clone())
 		{
@@ -221,16 +239,25 @@ where
 		}
 	}
 
-	pub fn do_nothing_on_visit(_: &mut Self, _: G::Vertex) {}
+	pub fn do_nothing_on_visit(_: &G::Graph, _: <G::Graph as Graph>::Vertex, _: &mut F) {}
 
-	pub fn do_nothing_on_exit(_: &G, _: G::Vertex, _: &mut F) {}
+	pub fn do_nothing_on_exit(_: &G::Graph, _: <G::Graph as Graph>::Vertex, _: &mut F) {}
 
-	pub fn do_nothing_on_explore(_: &mut Self, _: G::Vertex, _: G::Vertex, _: &G::EdgeWeight) {}
+	pub fn do_nothing_on_explore(
+		_: &G::Graph,
+		_: <G::Graph as Graph>::Vertex,
+		_: <G::Graph as Graph>::Vertex,
+		_: &<G::Graph as Graph>::EdgeWeight,
+		_: &mut F,
+	)
+	{
+	}
 }
 
-impl<'a, G> Dfs<'a, G, ()>
+impl<G> Dfs<G, ()>
 where
-	G: 'a + VertexIn<1>,
+	G: Ensure + GraphDeref,
+	G::Graph: VertexIn<1>,
 {
 	/// Constructs a new `Dfs` to traverse the specified graph.
 	///
@@ -247,7 +274,7 @@ where
 	///
 	/// [`next`]: https://doc.rust-lang.org/std/iter/trait.Iterator.html#tymethod.next
 	/// [`get_vertex`]: ../core/property/trait.HasVertex.html#method.get_vertex
-	pub fn new_simple(g: &'a G) -> Self
+	pub fn new_simple(g: G) -> Self
 	{
 		Self::new(
 			g,
@@ -259,11 +286,11 @@ where
 	}
 }
 
-impl<'a, G, F> Iterator for Dfs<'a, G, F>
+impl<'a, G, F> Iterator for Dfs<G, F>
 where
-	G: 'a + Graph,
+	G: 'a + Ensure + GraphDeref,
 {
-	type Item = G::Vertex;
+	type Item = <G::Graph as Graph>::Vertex;
 
 	fn next(&mut self) -> Option<Self::Item>
 	{

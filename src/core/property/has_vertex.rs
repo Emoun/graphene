@@ -115,7 +115,7 @@ pub trait VertexIn<const N: usize = 1, const UNIQUE: bool = true>: HasVertex
 }
 
 /// Ensures the underlying graph has at least 1 vertex.
-#[derive(Clone)]
+#[derive(Clone, Copy)]
 pub struct HasVertexGraph<C: Ensure>(C);
 
 impl<C: Ensure> HasVertexGraph<C>
@@ -177,7 +177,7 @@ impl_ensurer! {
 /// The designated vertices cannot be removed from the graph.
 #[derive(Clone)]
 pub struct VertexInGraph<C: Ensure, const V: usize = 1, const UNIQUE: bool = true>(
-	C,
+	pub C,
 	[<C::Graph as Graph>::Vertex; V],
 );
 

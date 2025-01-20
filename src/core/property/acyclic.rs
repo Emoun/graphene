@@ -22,45 +22,45 @@ impl<C: Ensure> Ensure for AcyclicGraph<C>
 
 	fn can_ensure(c: &Self::Ensured, _: &()) -> bool
 	{
-		fn on_visit<G: Graph>(dfs: &mut Dfs<G, (Vec<G::Vertex>, &mut bool)>, v: G::Vertex)
+		fn on_visit<G: Graph>(_: &G, v: G::Vertex, payload: &mut (Vec<G::Vertex>, &mut bool))
 		{
-			dfs.payload.0.push(v);
+			payload.0.push(v);
 		}
 		fn on_exit<G: Graph>(_: &G, _: G::Vertex, (stack, _): &mut (Vec<G::Vertex>, &mut bool))
 		{
 			stack.pop();
 		}
 		fn on_explore<G: Graph>(
-			dfs: &mut Dfs<G, (Vec<G::Vertex>, &mut bool)>,
+			graph: &G,
 			source: G::Vertex,
 			sink: G::Vertex,
 			_: &G::EdgeWeight,
+			payload: &mut (Vec<G::Vertex>, &mut bool),
 		)
 		{
 			if G::Directedness::directed()
 			{
-				*dfs.payload.1 |= dfs.payload.0.contains(&sink);
+				*payload.1 |= payload.0.contains(&sink);
 			}
 			else
 			{
 				// Check whether the second to last element is the same as the sink
 				// (the last element is the same as source, since on_visit is called
 				// before exploration)
-				if dfs.payload.0.len() >= 2
-					&& dfs
-						.payload
+				if payload.0.len() >= 2
+					&& payload
 						.0
-						.get(dfs.payload.0.len() - 2)
+						.get(payload.0.len() - 2)
 						.map_or(false, |&v| v == sink)
 				{
 					// This is an edge to the direct predecessor
 					// Therefore, only counts as a cycle if there
 					// are multiple edge between these two
-					*dfs.payload.1 |= dfs.graph.edges_between(source, sink).nth(1).is_some();
+					*payload.1 |= graph.edges_between(source, sink).nth(1).is_some();
 				}
 				else
 				{
-					*dfs.payload.1 |= dfs.visited(sink);
+					*payload.1 |= payload.0.contains(&sink);
 				}
 			}
 		}
