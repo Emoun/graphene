@@ -31,16 +31,18 @@ where
 
 		// Collect V vertices through elimination
 		let mut all_vs: Vec<_> = graph.graph().all_vertices().collect();
-		while all_vs.len() > V
+		let mut chosen_vs = Vec::new();
+		while chosen_vs.len() != V
 		{
-			let remove_idx = g.gen_range(0, all_vs.len());
+			let idx = g.gen_range(0, all_vs.len());
+			chosen_vs.push(all_vs[idx]);
 			if U
 			{
-				all_vs.remove(remove_idx);
+				all_vs.remove(idx);
 			}
 		}
 
-		let final_vs: [_; V] = all_vs.try_into().unwrap();
+		let final_vs: [_; V] = chosen_vs.try_into().unwrap();
 
 		Self::ensure_unchecked(graph, final_vs)
 	}

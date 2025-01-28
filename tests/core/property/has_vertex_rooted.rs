@@ -1,13 +1,10 @@
 /// Tests `HasVertexGraph`, VertexInGraph`, and `RootedGraph`
-use crate::mock_graph::arbitrary::Unique;
-use crate::mock_graph::{
-	arbitrary::{Arb, TwoVerticesIn},
-	MockGraph, MockVertexWeight,
-};
+use crate::mock_graph::{arbitrary::Arb, MockGraph, MockVertexWeight};
 use duplicate::duplicate_item;
 use graphene::core::{
 	property::{
-		HasVertex, HasVertexGraph, NewVertex, RemoveVertex, Rooted, RootedGraph, VertexInGraph,
+		HasVertex, HasVertexGraph, NewVertex, RemoveVertex, Rooted, RootedGraph, VertexIn,
+		VertexInGraph,
 	},
 	Directed, Undirected,
 };
@@ -79,8 +76,9 @@ mod __
 
 		/// Tests that can remove a vertex if there are at least 2.
 		#[quickcheck]
-		fn accept_remove_vertex(Arb(g): Arb<TwoVerticesIn<MockGraph<directedness>, Unique>>)
-			-> bool
+		fn accept_remove_vertex(
+			Arb(g): Arb<VertexInGraph<MockGraph<directedness>, 2, true>>,
+		) -> bool
 		{
 			let v = g.any_vertex();
 			let mut g = HasVertexGraph::guard(g.release_all()).unwrap();
@@ -118,10 +116,11 @@ mod __
 		/// the graph
 		#[quickcheck]
 		fn vertex_in_accept_remove_vertex(
-			Arb(g): Arb<TwoVerticesIn<MockGraph<directedness>, Unique>>,
+			Arb(g): Arb<VertexInGraph<MockGraph<directedness>, 2, true>>,
 		) -> bool
 		{
-			let (v1, v2) = g.get_both();
+			let v1 = g.vertex_at::<0>();
+			let v2 = g.vertex_at::<1>();
 			let mut g = GraphStruct::ensure_unchecked(g.release_all().0, ensure_wrap([v1]));
 
 			g.remove_vertex(v2).is_ok()
@@ -151,9 +150,10 @@ mod __
 		/// Tests that the graph can change the specific underlying
 		/// vertex
 		#[quickcheck]
-		fn set_vertex(Arb(g): Arb<TwoVerticesIn<MockGraph<directedness>, Unique>>) -> bool
+		fn set_vertex(Arb(g): Arb<VertexInGraph<MockGraph<directedness>, 2, true>>) -> bool
 		{
-			let (v1, v2) = g.get_both();
+			let v1 = g.vertex_at::<0>();
+			let v2 = g.vertex_at::<1>();
 			let mut g = GraphStruct::ensure_unchecked(g.release_all().0, ensure_wrap([v1]));
 
 			g.set_method(ensure_wrap([v2])).is_ok() && g.get_method() == v2
@@ -187,10 +187,11 @@ mod __
 
 	/// Tests that RootedGraphs `is_root` returns false when not given the root
 	#[quickcheck]
-	fn is_root_false(Arb(g): Arb<TwoVerticesIn<MockGraph<directedness>, Unique>>) -> bool
+	fn is_root_false(Arb(g): Arb<VertexInGraph<MockGraph<directedness>, 2, true>>) -> bool
 	{
 		use graphene::core::{Ensure, Release};
-		let (v1, v2) = g.get_both();
+		let v1 = g.vertex_at::<0>();
+		let v2 = g.vertex_at::<1>();
 		let g = RootedGraph::ensure_unchecked(g.release_all(), v1);
 
 		!g.is_root(v2)

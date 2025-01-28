@@ -1,7 +1,7 @@
 //! Tests the `core::Connected` trait and its ensurer `core::ConnectedGraph`.
 
 use crate::mock_graph::{
-	arbitrary::{Arb, TwoVerticesIn, UnconnectedGraph},
+	arbitrary::{Arb, UnconnectedGraph},
 	MockDirectedness, MockEdgeWeight, MockGraph, MockVertexWeight,
 };
 use duplicate::duplicate_item;
@@ -69,11 +69,12 @@ mod module
 	/// Tests that a graph always accepts adding an edge.
 	#[quickcheck]
 	fn accept_add_edge_weighted(
-		Arb(g): Arb<TwoVerticesIn<arb_connected>>,
+		Arb(g): Arb<VertexInGraph<arb_connected, 2, false>>,
 		e_weight: MockEdgeWeight,
 	) -> bool
 	{
-		let (v1, v2) = g.get_both();
+		let v1 = g.vertex_at::<0>();
+		let v2 = g.vertex_at::<1>();
 		let mut g = connected_graph::guard_unchecked(g.release_all());
 
 		g.add_edge_weighted(&v1, &v2, e_weight).is_ok()
@@ -83,11 +84,12 @@ mod module
 	/// for connectedness
 	#[quickcheck]
 	fn accept_remove_edge_where_weight(
-		Arb(g): Arb<TwoVerticesIn<arb_connected>>,
+		Arb(g): Arb<VertexInGraph<arb_connected, 2, false>>,
 		e_weight: MockEdgeWeight,
 	) -> bool
 	{
-		let (v1, v2) = g.get_both();
+		let v1 = g.vertex_at::<0>();
+		let v2 = g.vertex_at::<1>();
 		let mut g = connected_graph::guard_unchecked(g.release_all());
 		// To ensure we can remove an edge, we first create an edge to remove
 		g.add_edge_weighted(&v1, &v2, e_weight.clone()).unwrap();
@@ -193,14 +195,16 @@ mod module
 	/// graph unconnected
 	#[quickcheck]
 	fn reject_remove_vertex(
-		Arb(g1): Arb<TwoVerticesIn<arb_reject_remove>>,
-		Arb(g2): Arb<TwoVerticesIn<arb_reject_remove>>,
+		Arb(g1): Arb<VertexInGraph<arb_reject_remove, 2, false>>,
+		Arb(g2): Arb<VertexInGraph<arb_reject_remove, 2, false>>,
 		e_weight: MockEdgeWeight,
 		v_weight: MockVertexWeight,
 	) -> bool
 	{
-		let (v11, v12) = g1.get_both();
-		let (v21, v22) = g2.get_both();
+		let v11 = g1.vertex_at::<0>();
+		let v12 = g1.vertex_at::<1>();
+		let v21 = g2.vertex_at::<0>();
+		let v22 = g2.vertex_at::<1>();
 		let mut graph = g1.0.release_all();
 		// We start by joining 2 connected graphs into a unconnected graph with the 2
 		// components

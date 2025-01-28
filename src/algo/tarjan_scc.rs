@@ -293,7 +293,6 @@ where
 	/// This is similar to `next`, however can be used when `TarjanScc` receives
 	/// a non-copy ensure.
 	///
-	///
 	pub fn next_scc(&mut self) -> Option<ConnectedGraph<SubgraphProxy<&G::Graph>>>
 	{
 		next_scc_impl!(self, .graph())

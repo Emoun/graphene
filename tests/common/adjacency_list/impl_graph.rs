@@ -3,7 +3,7 @@
 use crate::{
 	common::adjacency_list::adj_list_from_mock,
 	mock_graph::{
-		arbitrary::{Arb, EdgeIn, TwoVerticesIn},
+		arbitrary::{Arb, EdgeIn},
 		utilities::unordered_equivalent_lists_equal,
 		MockGraph,
 	},
@@ -65,9 +65,10 @@ mod __
 	/// Tests that when we create an AdjListGraph from a MockGraph,
 	/// any edge in the mock is in the AdjListGraph
 	#[quickcheck]
-	fn edges_between(Arb(mock): Arb<TwoVerticesIn<MockGraph<directedness>>>) -> bool
+	fn edges_between(Arb(mock): Arb<VertexInGraph<MockGraph<directedness>, 2, false>>) -> bool
 	{
-		let (v1, v2) = mock.get_both();
+		let v1 = mock.vertex_at::<0>();
+		let v2 = mock.vertex_at::<1>();
 		let mock = mock.0.release_all();
 		let (g, v_map) = adj_list_from_mock(&mock);
 
@@ -80,9 +81,10 @@ mod __
 	/// Tests that `edges_between_mut` returns the same edges as its immutable
 	/// version
 	#[quickcheck]
-	fn edges_between_mut(Arb(mock): Arb<TwoVerticesIn<MockGraph<directedness>>>) -> bool
+	fn edges_between_mut(Arb(mock): Arb<VertexInGraph<MockGraph<directedness>, 2, false>>) -> bool
 	{
-		let (v1, v2) = mock.get_both();
+		let v1 = mock.vertex_at::<0>();
+		let v2 = mock.vertex_at::<1>();
 		let mock = mock.0.release_all();
 		let (mut g, v_map) = adj_list_from_mock(&mock);
 

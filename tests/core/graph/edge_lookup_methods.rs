@@ -10,7 +10,7 @@ use graphene::core::{
 	Directed, Edge, Graph, Release, Undirected,
 };
 
-use crate::mock_graph::arbitrary::{Arb, TwoVerticesIn};
+use crate::mock_graph::arbitrary::Arb;
 
 #[duplicate_item(
 	duplicate!{
@@ -37,7 +37,7 @@ use crate::mock_graph::arbitrary::{Arb, TwoVerticesIn};
 			vertices_init			[ let v = g.vertex_at::<0>().clone() ]
 			vertices_init_invalid 	[ let v = g.1 ]
 			closure 				[ |e| if closure_nested {Some((e.other(v),e.2))} else {None} ]
-			arb_graph 				[ VertexInGraph ]
+			arb_graph(G) 			[ VertexInGraph<G, 1, true> ]
 			arb_invalid_graph 		[ VertexOutside ]
 			base_graph 				[ MockGraph<directedness_nested> ]
 		]
@@ -52,7 +52,10 @@ use crate::mock_graph::arbitrary::{Arb, TwoVerticesIn};
 			module					[module_nested]
 			method 					[edges_between]
 			vertices				[ &v, &_v2 ]
-			vertices_init			[let (v, _v2) = g.get_both()]
+			vertices_init			[
+				let v = g.vertex_at::<0>();
+				let _v2 = g.vertex_at::<1>()
+			]
 			vertices_init_invalid 	[let v = g.1;let _v2 = g.2]
 			closure 				[
 				|e| {
@@ -63,7 +66,7 @@ use crate::mock_graph::arbitrary::{Arb, TwoVerticesIn};
 					} else {None}
 				}
 			]
-			arb_graph 				[ TwoVerticesIn ]
+			arb_graph(G) 			[ VertexInGraph<G, 2, false> ]
 			arb_invalid_graph 		[ EdgeOutside ]
 			base_graph 				[ MockGraph<directedness> ]
 		]
@@ -75,7 +78,7 @@ mod module
 
 	/// Ensures that all edges are returned.
 	#[quickcheck]
-	fn returns_all_edges(Arb(g): Arb<arb_graph<base_graph>>) -> bool
+	fn returns_all_edges(Arb(g): Arb<arb_graph([base_graph])>) -> bool
 	{
 		vertices_init;
 		let g = g.release_all();

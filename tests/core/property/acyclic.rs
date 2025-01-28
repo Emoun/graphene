@@ -59,7 +59,8 @@ mod __
 		weight: MockEdgeWeight,
 	) -> bool
 	{
-		let (v1, v2) = graph.0.get_both();
+		let v1 = graph.0.vertex_at::<0>();
+		let v2 = graph.0.vertex_at::<1>();
 		let edge_count = graph.all_edges().count();
 
 		let mut g = AcyclicGraph::guard_unchecked(graph.release_all());

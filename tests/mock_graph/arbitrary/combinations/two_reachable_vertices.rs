@@ -1,11 +1,11 @@
 use crate::mock_graph::{
-	arbitrary::{GuidedArbGraph, Limit, NonUnique, TwoVerticesIn, Uniqueness},
+	arbitrary::{GuidedArbGraph, Limit},
 	MockType, TestGraph,
 };
 use graphene::{
 	algo::{Bfs, Dfs},
 	core::{
-		property::{AddEdge, RemoveEdge, VertexInGraph},
+		property::{AddEdge, RemoveEdge, VertexIn, VertexInGraph},
 		Ensure, Graph, GraphDerefMut, Release,
 	},
 	impl_ensurer,
@@ -16,35 +16,34 @@ use std::{collections::HashSet, fmt::Debug};
 
 /// An arbitrary graph and two vertices in it.
 ///
+/// Guarantees that the second vertex is reachable from the first.
+///
 /// Depending on `U`, the two vertices are either allowed to be the same
 /// (`NonUnique`, default), or they must be unique (`Unique`).
 ///
 /// Note: All graphs will have at least 1 vertex for non-unique and 2 vertices
 /// for unique, meaning this type never includes the empty graph.
 #[derive(Clone, Debug)]
-pub struct TwoReachableVerticesIn<G, U = NonUnique>(pub TwoVerticesIn<G, U>)
+pub struct TwoReachableVerticesIn<G, const UNIQUE: bool = false>(pub VertexInGraph<G, 2, UNIQUE>)
 where
 	G: GuidedArbGraph,
 	G::Graph: TestGraph,
-	<G::Graph as Graph>::EdgeWeight: MockType,
-	U: Uniqueness;
+	<G::Graph as Graph>::EdgeWeight: MockType;
 
 impl_ensurer! {
-	use<G,U> TwoReachableVerticesIn<G,U>
-	as (self.0): TwoVerticesIn<G,U>
+	use<G; const U: bool> TwoReachableVerticesIn<G,U>
+	as (self.0): VertexInGraph<G, 2, U>
 	where
 	G: GuidedArbGraph,
 	G::Graph: TestGraph,
 	<G::Graph as Graph>::EdgeWeight: MockType,
-	U: Uniqueness
 }
 
-impl<Gr, U> GuidedArbGraph for TwoReachableVerticesIn<Gr, U>
+impl<Gr, const U: bool> GuidedArbGraph for TwoReachableVerticesIn<Gr, U>
 where
 	Gr: GuidedArbGraph + GraphDerefMut,
 	Gr::Graph: TestGraph + RemoveEdge + AddEdge,
 	<Gr::Graph as Graph>::EdgeWeight: MockType,
-	U: 'static + Uniqueness,
 {
 	fn choose_size<G: Gen>(
 		g: &mut G,
@@ -58,15 +57,13 @@ where
 
 		// we need at least 1 edge. We'll delegate to TwoVerticesIn to ensure we get
 		// at least 1 or 2 vertices (depending on U).
-		TwoVerticesIn::<Gr, U>::choose_size(g, v_min, v_max, std::cmp::max(e_min, 1), e_max)
+		VertexInGraph::<Gr, 2, U>::choose_size(g, v_min, v_max, std::cmp::max(e_min, 1), e_max)
 	}
 
 	fn arbitrary_fixed<G: Gen>(g: &mut G, v_count: usize, e_count: usize) -> Self
 	{
 		// Create a graph with at least 1 or 2 vertices (1 for non-unique, 2 for Unique)
-		let graph = TwoVerticesIn::<Gr, U>::arbitrary_fixed(g, v_count, e_count)
-			.release()
-			.release();
+		let graph = VertexInGraph::<Gr, 2, U>::arbitrary_fixed(g, v_count, e_count).release();
 
 		let mut vert_reachables: Vec<_> = graph
 			.graph()
@@ -81,7 +78,7 @@ where
 				graph.graph(),
 				[v.clone()],
 			)));
-			if !U::unique() && graph.graph().edges_between(v.clone(), v.clone()).count() > 0
+			if !U && graph.graph().edges_between(v.clone(), v.clone()).count() > 0
 			{
 				reachable.push(v.clone());
 			}
@@ -100,13 +97,14 @@ where
 		// Choose a vertex that ends the path
 		let v2 = reachable[g.gen_range(0, reachable.len())];
 
-		Self(TwoVerticesIn::new(graph, v1.clone(), v2))
+		Self(VertexInGraph::ensure_unchecked(graph, [v1.clone(), v2]))
 	}
 
 	fn shrink_guided(&self, mut limits: HashSet<Limit>) -> Box<dyn Iterator<Item = Self>>
 	{
 		let mut result: Vec<Self> = Vec::new();
-		let (v1, v2) = self.0.get_both();
+		let v1 = self.0.vertex_at::<0>();
+		let v2 = self.0.vertex_at::<1>();
 
 		// First find a path between the vertices
 		let g = VertexInGraph::ensure_unchecked(self, [v1]);
@@ -137,7 +135,7 @@ where
 			clone
 				.0
 				.shrink_guided(limits)
-				.map(|g| Self(TwoVerticesIn::new(g.release(), v1, v2)))
+				.map(|g| Self(VertexInGraph::ensure_unchecked(g, [v1, v2])))
 		});
 
 		// Shrink by either removing superfluous edges from last link
@@ -168,8 +166,8 @@ where
 			{
 				g.add_edge_weighted(v1, v1, w).unwrap();
 			}
-			g.1 = v2;
-			result.push(Self(g));
+			let g = g.release();
+			result.push(Self(VertexInGraph::ensure_unchecked(g, [v1, v2])));
 		}
 		Box::new(result.into_iter())
 	}
