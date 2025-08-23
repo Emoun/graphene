@@ -71,7 +71,7 @@ impl<C: Ensure> Prop for SimpleGraph<C> where
 }
 
 impl_ensurer! {
-	use<C> SimpleGraph<C>: Ensure, Unique, NoLoops, Simple, AddEdge
+	use<C> SimpleGraph<C>: Ensure, Unique, NoLoops, Simple, AddEdge, NewLeafDirected
 	as (self.0) : C
 	where C::Graph: Graph<EdgeWeight=(), Directedness=Undirected>
 }

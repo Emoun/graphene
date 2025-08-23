@@ -607,7 +607,7 @@ macro_rules! impl_properties {
 			}
 		}
 
-		// HasVertex
+		// VertexIn
 		$crate::impl_properties!{
 			@struct [ $struct ]
 			@generic [ $($generics)* ]
@@ -680,6 +680,99 @@ macro_rules! impl_properties {
 			]
 			@trait_id Simple [$crate::core::property]
 			@implement {}
+		}
+
+		// Acyclic
+		$crate::impl_properties!{
+			@struct [ $struct ]
+			@generic [ $($generics)* ]
+			@const_generic [ $([$const_gen_id $const_gen_ty])* ]
+			@delegate [ $delegate_type ]
+			$(@exclude [ $($exclude_props)* ])?
+			$(@include [ $($include_props)* ])?
+			@bounds [
+				<$delegate_type as $crate::core::GraphDeref>::Graph:
+					$crate::core::property::Acyclic,
+				$($bounds)*
+			]
+			@trait_id Acyclic [$crate::core::property]
+			@implement {}
+		}
+
+		// Tree
+		$crate::impl_properties!{
+			@struct [ $struct ]
+			@generic [ $($generics)* ]
+			@const_generic [ $([$const_gen_id $const_gen_ty])* ]
+			@delegate [ $delegate_type ]
+			$(@exclude [ $($exclude_props)* ])?
+			$(@include [ $($include_props)* ])?
+			@bounds [
+				<$delegate_type as $crate::core::GraphDeref>::Graph:
+					$crate::core::property::Tree,
+				$($bounds)*
+			]
+			@trait_id Tree [$crate::core::property]
+			@implement {}
+		}
+
+		// NewLeafUndirected
+		$crate::impl_properties!{
+			@struct [ $struct ]
+			@generic [ $($generics)* ]
+			@const_generic [ $([$const_gen_id $const_gen_ty])* ]
+			@delegate [ $delegate_type ]
+			$(@exclude [ $($exclude_props)* ])?
+			$(@include [ $($include_props)* ])?
+			@bounds [
+				$delegate_type: $crate::core::GraphDerefMut,
+				<$delegate_type as $crate::core::GraphDeref>::Graph:
+					$crate::core::property::NewLeafUndirected,
+				$($bounds)*
+			]
+			@trait_id NewLeafUndirected [$crate::core::property]
+			@implement {
+				delegate::delegate! {
+					to $crate::core::GraphDerefMut::graph_mut(&mut self$($delegate)+) {
+						fn new_leaf_weighted(
+							&mut self,
+							parent: impl std::borrow::Borrow<Self::Vertex>,
+							w: Self::VertexWeight,
+							e: Self::EdgeWeight,
+						) -> Result<Self::Vertex, ()>;
+					}
+				}
+			}
+		}
+
+		// NewLeafDirected
+		$crate::impl_properties!{
+			@struct [ $struct ]
+			@generic [ $($generics)* ]
+			@const_generic [ $([$const_gen_id $const_gen_ty])* ]
+			@delegate [ $delegate_type ]
+			$(@exclude [ $($exclude_props)* ])?
+			$(@include [ $($include_props)* ])?
+			@bounds [
+				$delegate_type: $crate::core::GraphDerefMut,
+				<$delegate_type as $crate::core::GraphDeref>::Graph:
+					$crate::core::property::NewLeafDirected,
+				$($bounds)*
+			]
+			@trait_id NewLeafDirected [$crate::core::property]
+			@implement {
+				delegate::delegate! {
+					to $crate::core::GraphDerefMut::graph_mut(&mut self$($delegate)+) {
+						fn new_leaf_weighted(
+							&mut self,
+							parent: impl std::borrow::Borrow<Self::Vertex>,
+							to_new: bool,
+							w: Self::VertexWeight,
+							e: Self::EdgeWeight,
+						) -> Result<Self::Vertex, ()>;
+					}
+				}
+			}
 		}
 	};
 

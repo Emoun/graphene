@@ -34,7 +34,7 @@ jobs:
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        rust-version: [nightly-2024-10-28]
+        rust-version: [nightly-2025-08-23]
     
     steps:
       - uses: actions/checkout@v2

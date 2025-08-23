@@ -11,7 +11,10 @@ pub trait HasVertex: Graph
 	///
 	/// May return different vertices on successive calls to the same unmodified
 	/// graph.
-	fn any_vertex(&self) -> Self::Vertex;
+	fn any_vertex(&self) -> Self::Vertex
+	{
+		self.all_vertices().next().unwrap()
+	}
 
 	// fn as_vertex_in(self: impl Borrow<Self>) -> VertexInGraph<Self, 1, true>
 	// 	where

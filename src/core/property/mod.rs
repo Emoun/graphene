@@ -10,13 +10,14 @@ mod reflexive;
 mod rooted;
 mod simple;
 mod subgraph;
+mod tree;
 mod unilateral;
 mod unique;
 mod weak;
 
 pub use self::{
 	acyclic::*, base_props::*, connected::*, directedness_ensurers::*, has_vertex::*, no_loops::*,
-	reflexive::*, rooted::*, simple::*, subgraph::*, unilateral::*, unique::*, weak::*,
+	reflexive::*, rooted::*, simple::*, subgraph::*, tree::*, unilateral::*, unique::*, weak::*,
 };
 use crate::core::{
 	proxy::{EdgeProxyGraph, ProxyVertex, VertexProxyGraph},

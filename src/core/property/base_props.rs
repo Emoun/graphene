@@ -10,6 +10,7 @@ pub trait NewVertex: Graph
 	fn new_vertex_weighted(&mut self, w: Self::VertexWeight) -> Result<Self::Vertex, ()>;
 
 	// Optional methods
+
 	/// Adds a new vertex to the graph.
 	/// Returns the id of the new vertex.
 	/// The weight of the vertex is the default.

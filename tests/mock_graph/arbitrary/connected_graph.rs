@@ -1,6 +1,6 @@
 use crate::mock_graph::{
 	arbitrary::{GuidedArbGraph, Limit},
-	MockEdgeWeight, MockGraph, MockVertex, MockVertexWeight,
+	MockEdgeWeight, MockGraph, MockType, MockVertex, MockVertexWeight,
 };
 use graphene::{
 	core::{
@@ -14,7 +14,7 @@ use rand::Rng;
 use std::collections::{HashMap, HashSet};
 
 /// This is very inefficient (but never-the-less correct)
-fn is_connected<D: Directedness>(graph: &MockGraph<D>) -> bool
+fn is_connected<D: Directedness, Ew: MockType>(graph: &MockGraph<D, Ew>) -> bool
 {
 	let v_all = graph.all_vertices().collect::<Vec<_>>();
 	let v_count = v_all.len();
@@ -43,7 +43,7 @@ fn is_connected<D: Directedness>(graph: &MockGraph<D>) -> bool
 	}
 }
 
-fn is_unilateral(graph: &MockGraph<Directed>) -> bool
+fn is_unilateral<Ew: MockType>(graph: &MockGraph<Directed, Ew>) -> bool
 {
 	let v_all = graph.all_vertices().collect::<Vec<_>>();
 	let v_count = v_all.len();
@@ -70,7 +70,7 @@ fn is_unilateral(graph: &MockGraph<Directed>) -> bool
 	true
 }
 
-fn is_weak(graph: &MockGraph<Directed>) -> bool
+fn is_weak<Ew: MockType>(graph: &MockGraph<Directed, Ew>) -> bool
 {
 	let v_all = graph.all_vertices().collect::<Vec<_>>();
 	let v_count = v_all.len();
@@ -83,7 +83,11 @@ fn is_weak(graph: &MockGraph<Directed>) -> bool
 
 	let mut visited = Vec::new();
 
-	fn dfs(graph: &MockGraph<Directed>, v: MockVertex, visited: &mut Vec<MockVertex>)
+	fn dfs<Ew: MockType>(
+		graph: &MockGraph<Directed, Ew>,
+		v: MockVertex,
+		visited: &mut Vec<MockVertex>,
+	)
 	{
 		if !visited.contains(&v)
 		{
@@ -383,15 +387,15 @@ impl GuidedArbGraph for WeakGraph<MockGraph<Directed>>
 
 /// An arbitrary graph that is unconnected
 #[derive(Clone, Debug)]
-pub struct UnconnectedGraph<D: Directedness>(pub MockGraph<D>);
+pub struct UnconnectedGraph<D: Directedness, Ew: MockType>(pub MockGraph<D, Ew>);
 
 impl_ensurer! {
-	use<D> UnconnectedGraph<D>
-	as (self.0): MockGraph<D>
-	where D: Directedness
+	use<D,Ew> UnconnectedGraph<D,Ew>
+	as (self.0): MockGraph<D,Ew>
+	where D: Directedness, Ew: MockType
 }
 
-impl<D: Directedness> GuidedArbGraph for UnconnectedGraph<D>
+impl<D: Directedness, Ew: MockType> GuidedArbGraph for UnconnectedGraph<D, Ew>
 {
 	fn choose_size<G: Gen>(
 		g: &mut G,

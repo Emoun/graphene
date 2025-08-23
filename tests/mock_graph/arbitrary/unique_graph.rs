@@ -1,5 +1,5 @@
 use crate::mock_graph::{
-	arbitrary::{GuidedArbGraph, Limit},
+	arbitrary::{choose_size_static_edges, GuidedArbGraph, Limit},
 	MockGraph, MockType,
 };
 use graphene::{
@@ -23,25 +23,12 @@ impl<D: Directedness, Ew: MockType> GuidedArbGraph for UniqueGraph<MockGraph<D, 
 		e_max: usize,
 	) -> (usize, usize)
 	{
-		// Used to calculate the maximum possible number of edges
-		// in a unique graph with a number of vertices
-		let max_allowed =
-			|v: usize| v + ((v * (v.saturating_sub(1))) / (2 - (D::directed() as usize)));
-
-		assert!(
-			e_min <= max_allowed(v_max),
-			"Minimum number of edges higher than theoretically possible: e_min: {}, Max possible: \
-			 {}",
-			e_min,
-			max_allowed(v_max)
-		);
-
-		let v_count = g.gen_range(v_min, v_max);
-
-		let t_max = max_allowed(v_count) + 1;
-		let e_count = g.gen_range(e_min, std::cmp::min(e_max, t_max));
-
-		(v_count, e_count)
+		choose_size_static_edges(g, v_min, v_max, e_min, e_max, |v| {
+			(
+				0,
+				v + ((v * (v.saturating_sub(1))) / (2 - (D::directed() as usize))),
+			)
+		})
 	}
 
 	fn arbitrary_fixed<G: Gen>(g: &mut G, v_count: usize, e_count: usize) -> Self

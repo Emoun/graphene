@@ -28,7 +28,7 @@ mod __
 
 	/// Tests that AcyclicGraph correctly rejects cyclic graphs.
 	#[quickcheck]
-	fn reject_cyclic(g: Arb<CyclicGraph<directedness>>) -> bool
+	fn reject_cyclic(g: Arb<CyclicGraph<directedness, MockEdgeWeight>>) -> bool
 	{
 		!AcyclicGraph::can_guard(&g.0)
 	}

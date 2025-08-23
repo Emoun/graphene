@@ -116,5 +116,4 @@ impl<C: Ensure> Acyclic for AcyclicGraph<C> {}
 impl_ensurer! {
 	use<C> AcyclicGraph<C>: Ensure, Acyclic, NoLoops, AddEdge
 	as (self.0) : C
-	where C: Ensure
 }

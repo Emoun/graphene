@@ -104,6 +104,7 @@ where
 		}
 	}
 
+	#[allow(dangling_pointers_from_temporaries)]
 	fn edges_between_mut(
 		&mut self,
 		source: impl Borrow<Self::Vertex>,

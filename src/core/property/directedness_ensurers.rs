@@ -92,6 +92,6 @@ impl<C: Ensure> Graph for UndirectedGraph<C>
 }
 
 impl_ensurer! {
-	use<C> UndirectedGraph<C>: Ensure, Graph, UndirectedConstraint
+	use<C> UndirectedGraph<C>: Ensure, Graph, UndirectedConstraint, NewLeafDirected
 	as (self.0) : C
 }

@@ -1,6 +1,6 @@
 use crate::mock_graph::{
 	arbitrary::{GuidedArbGraph, Limit},
-	MockEdgeWeight, MockGraph,
+	MockEdgeWeight, MockGraph, MockType,
 };
 use graphene::{
 	algo::Dfs,
@@ -72,17 +72,17 @@ impl<D: Directedness> GuidedArbGraph for AcyclicGraph<MockGraph<D>>
 
 /// An arbitrary graph that is cyclic
 #[derive(Clone, Debug)]
-pub struct CyclicGraph<D: Directedness>(pub MockGraph<D>);
+pub struct CyclicGraph<D: Directedness, Ew: MockType>(pub MockGraph<D, Ew>);
 
 impl_ensurer! {
-	use<D> CyclicGraph<D>:
+	use<D,Ew> CyclicGraph<D,Ew>: Acyclic, Tree, NewLeafUndirected, NewLeafDirected,
 	// Can never impl the following because MockGraph doesn't
 	Reflexive
-	as (self.0) : MockGraph<D>
-	where D: Directedness
+	as (self.0) : MockGraph<D,Ew>
+	where D: Directedness, Ew: MockType
 }
 
-impl<D: Directedness> GuidedArbGraph for CyclicGraph<D>
+impl<D: Directedness, Ew: MockType> GuidedArbGraph for CyclicGraph<D, Ew>
 {
 	fn choose_size<G: Gen>(
 		g: &mut G,
@@ -98,7 +98,7 @@ impl<D: Directedness> GuidedArbGraph for CyclicGraph<D>
 
 	fn arbitrary_fixed<G: Gen>(g: &mut G, v_count: usize, e_count: usize) -> Self
 	{
-		let mut graph = VertexInGraph::<MockGraph<_>>::arbitrary_fixed(g, v_count, e_count);
+		let mut graph = VertexInGraph::<MockGraph<_, Ew>>::arbitrary_fixed(g, v_count, e_count);
 
 		let mut reachable: Vec<_> = Dfs::new_simple(&graph).collect();
 		reachable.push(graph.vertex_at::<0>()); // not added by DFS
@@ -108,7 +108,7 @@ impl<D: Directedness> GuidedArbGraph for CyclicGraph<D>
 			.add_edge_weighted(
 				reachable[g.gen_range(0, reachable.len())],
 				graph.vertex_at::<0>(),
-				MockEdgeWeight::arbitrary(g),
+				Ew::arbitrary(g),
 			)
 			.unwrap();
 
