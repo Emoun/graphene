@@ -1,11 +1,13 @@
 use crate::core::{
 	property::{
-		Acyclic, AcyclicGraph, AddEdge, ConnectedGraph, DirectedGraph, HasVertex, HasVertexGraph,
-		NewVertex, NoLoops, RemoveVertex, Unique, UniqueGraph, Weak, WeakGraph,
+		Acyclic, AcyclicGraph, AddEdge, Connected, ConnectedGraph, DirectedGraph, EdgeCount,
+		HasVertex, HasVertexGraph, NewVertex, NoLoops, RemoveVertex, Unique, UniqueGraph, Weak,
+		WeakGraph,
 	},
 	Directed, Ensure, Graph, GraphDerefMut, Guard,
 };
 use duplicate::duplicate_item;
+use num_traits::{PrimInt, Unsigned};
 use std::borrow::Borrow;
 
 /// A marker trait for [weighted tree graphs](https://mathworld.wolfram.com/WeightedTree.html).
@@ -36,6 +38,47 @@ pub trait Tree: HasVertex + Unique + Weak + Acyclic
 	fn is_leaf(&self, v: impl Borrow<Self::Vertex>) -> bool
 	{
 		self.edges_incident_on(v).count() == 1
+	}
+
+	/// Returns all leaf vertices and their weights.
+	///
+	/// See also: [is_leaf](Self::is_leaf)
+	fn all_leaves_weighted(&self) -> impl Iterator<Item = (Self::Vertex, &Self::VertexWeight)>
+	{
+		self.all_vertices_weighted()
+			.filter(|(v, _)| self.is_leaf(v))
+	}
+
+	/// Returns all leaf vertices and their weights.
+	///
+	/// See also: [is_leaf](Self::is_leaf)
+	fn all_leaves(&self) -> impl Iterator<Item = Self::Vertex>
+	{
+		self.all_leaves_weighted().map(|(v, _)| v)
+	}
+
+	/// Returns whether this tree is [centered](https://mathworld.wolfram.com/CenteredTree.html).
+	///
+	/// Trees are either centered or [bicentered](Self::is_bicentered).
+	fn is_centered(&self) -> bool
+	where
+		Self: Connected,
+		Self: EdgeCount + Sized,
+		Self::EdgeWeight: PrimInt + Unsigned,
+	{
+		self.centers().count() == 1
+	}
+
+	/// Returns whether this tree is [bicentered](https://mathworld.wolfram.com/BicenteredTree.html).
+	///
+	/// Trees are either centered or [centered](Self::is_centered).
+	fn is_bicentered(&self) -> bool
+	where
+		Self: Connected,
+		Self: EdgeCount + Sized,
+		Self::EdgeWeight: PrimInt + Unsigned,
+	{
+		self.centers().count() == 2
 	}
 }
 

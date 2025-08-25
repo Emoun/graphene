@@ -19,10 +19,6 @@ use std::borrow::Borrow;
 pub trait Connected: Unilateral
 {
 	/// Calculates the maximum distance between the designated vertex and any other vertex ([the eccentricity](https://mathworld.wolfram.com/GraphEccentricity.html)).
-	///
-	/// Takes a closure that converts an edge's weight into a distance value.
-	/// The distance between two vertices is equal to the distance of the
-	/// edge(s) between them.
 	fn eccentricity(&self) -> Self::EdgeWeight
 	where
 		Self: EdgeCount + VertexIn<1> + Sized,
@@ -45,10 +41,6 @@ pub trait Connected: Unilateral
 	}
 
 	/// Calculates the maximum eccentricity of the graph ([the diameter](https://mathworld.wolfram.com/GraphDiameter.html)).
-	///
-	/// Takes a closure that converts an edge's weight into a distance value.
-	/// The distance between two vertices is equal to the distance of the
-	/// edge(s) between them.
 	fn diameter(&self) -> Self::EdgeWeight
 	where
 		Self: EdgeCount + Sized,
@@ -69,10 +61,6 @@ pub trait Connected: Unilateral
 	}
 
 	/// Calculates the minimum eccentricity of the graph ([the radius](https://mathworld.wolfram.com/GraphDiameter.html)).
-	///
-	/// Takes a closure that converts an edge's weight into a distance value.
-	/// The distance between two vertices is equal to the distance of the
-	/// edge(s) between them.
 	fn radius(&self) -> Self::EdgeWeight
 	where
 		Self: EdgeCount + Sized,
@@ -93,10 +81,6 @@ pub trait Connected: Unilateral
 	}
 
 	/// Returns the vertices with eccentricity equal to the radius ([the centers](https://mathworld.wolfram.com/GraphCenter.html)).
-	///
-	/// Takes a closure that converts an edge's weight into a distance value.
-	/// The distance between two vertices is equal to the distance of the
-	/// edge(s) between them.
 	fn centers(&self) -> impl Iterator<Item = Self::Vertex>
 	where
 		Self: EdgeCount + Sized,
