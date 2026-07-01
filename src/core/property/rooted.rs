@@ -1,8 +1,11 @@
 use crate::core::{
 	property::{HasVertex, VertexInGraph},
-	Ensure, Graph, ReleasePayload,
+	Ensure, Graph, GraphMut, ReleasePayload,
 };
-use std::borrow::Borrow;
+use std::{
+	borrow::Borrow,
+	fmt::{Debug, Error, Formatter},
+};
 
 /// A maker trait for graphs that are rooted.
 ///
@@ -35,6 +38,18 @@ pub trait Rooted: HasVertex
 	{
 		self.root() == *v.borrow()
 	}
+
+	fn root_weight(&self) -> &Self::VertexWeight
+	{
+		self.vertex_weight(self.root()).unwrap()
+	}
+
+	fn root_weight_mut(&mut self) -> &mut Self::VertexWeight
+	where
+		Self: GraphMut,
+	{
+		self.vertex_weight_mut(self.root()).unwrap()
+	}
 }
 
 /// Ensures a specific vertex is the root of the graph.
@@ -47,6 +62,17 @@ where
 	fn clone(&self) -> Self
 	{
 		Self(self.0.clone())
+	}
+}
+
+impl<C: Ensure> Debug for RootedGraph<C>
+where
+	C: Debug,
+	<C::Graph as Graph>::Vertex: Debug,
+{
+	fn fmt(&self, f: &mut Formatter<'_>) -> Result<(), Error>
+	{
+		f.debug_tuple("RootedGraph").field(&self.0).finish()
 	}
 }
 

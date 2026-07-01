@@ -220,7 +220,7 @@ where
 					edges
 						.iter()
 						.enumerate()
-						.map(move |(si_i, (si, w))| ((so_i, si_i, si, w)))
+						.map(move |(si_i, (si, w))| (so_i, si_i, si, w))
 				})
 				.find(|(so_i, _, si, w)| {
 					((so_i == source.borrow() && *si == sink.borrow())
