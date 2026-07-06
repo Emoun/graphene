@@ -3,8 +3,8 @@ use crate::mock_graph::{arbitrary::Arb, MockGraph, MockVertexWeight};
 use duplicate::duplicate_item;
 use graphene::core::{
 	property::{
-		HasVertex, HasVertexGraph, NewVertex, RemoveVertex, Rooted, RootedGraph, VertexIn,
-		VertexInGraph,
+		HasVertex, HasVertexGraph, NewVertex, RemoveVertex, Rooted, RootedGraph, RootedMut,
+		VertexIn, VertexInGraph,
 	},
 	Directed, Undirected,
 };

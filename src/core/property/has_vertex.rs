@@ -15,15 +15,6 @@ pub trait HasVertex: Graph
 	{
 		self.all_vertices().next().unwrap()
 	}
-
-	// fn as_vertex_in(self: impl Borrow<Self>) -> VertexInGraph<Self, 1, true>
-	// 	where
-	// 		Self: Ensure,
-	// 		<Self as GraphDeref>::Graph: Graph<Vertex=Self::Vertex>
-	// {
-	// 	let v = self.borrow().any_vertex();
-	// 	VertexInGraph::ensure_unchecked(self, [v])
-	// }
 }
 
 /// For specifying specific vertices in a graph.

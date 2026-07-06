@@ -657,6 +657,27 @@ macro_rules! impl_properties {
 					to $crate::core::GraphDeref::graph(&self$($delegate)+) {
 						fn root(&self) -> Self::Vertex;
 					}
+				}
+			}
+		}
+
+		// RootedMut
+		$crate::impl_properties!{
+			@struct [ $struct ]
+			@generic [ $($generics)* ]
+			@const_generic [ $([$const_gen_id $const_gen_ty])* ]
+			@delegate [ $delegate_type ]
+			$(@exclude [ $($exclude_props)* ])?
+			$(@include [ $($include_props)* ])?
+			@bounds [
+				$delegate_type: $crate::core::GraphDerefMut,
+				<$delegate_type as $crate::core::GraphDeref>::Graph:
+					$crate::core::property::RootedMut,
+				$($bounds)*
+			]
+			@trait_id RootedMut [$crate::core::property]
+			@implement {
+				delegate::delegate! {
 					to $crate::core::GraphDerefMut::graph_mut(&mut self$($delegate)+) {
 						fn set_root(&mut self, v: impl std::borrow::Borrow<Self::Vertex>)
 							-> std::result::Result<(), ()>;

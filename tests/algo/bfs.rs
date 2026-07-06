@@ -3,8 +3,8 @@ use duplicate::duplicate_item;
 use graphene::{
 	algo::Bfs,
 	core::{
-		property::{ConnectedGraph, VertexIn, VertexInGraph},
-		Directed, Undirected,
+		property::{ConnectedGraph, Rooted, VertexCount, VertexIn, VertexInGraph},
+		Directed, Graph, Undirected,
 	},
 };
 use std::collections::HashSet;
@@ -127,28 +127,65 @@ mod __
 		}
 		true
 	}
-}
 
-/// Tests that following the predecessors will reach the root.
-#[quickcheck]
-fn predecessor_path_reaches_root(
-	Arb(graph): Arb<VertexInGraph<ConnectedGraph<MockGraph<Directed>>>>,
-) -> bool
-{
-	let root = graph.vertex_at::<0>();
-	let mut bfs = Bfs::new(&graph);
-
-	while let Some(v) = bfs.next()
+	/// Tests that the predecessor tree is correct
+	#[quickcheck]
+	fn predecessor_tree(
+		Arb(graph): Arb<VertexInGraph<ConnectedGraph<MockGraph<directedness>>>>,
+		pre_iter: usize,
+	) -> bool
 	{
-		let mut current = v;
-		while let Some(p) = bfs.predecessor(current)
+		let root = graph.vertex_at::<0>();
+		let mut bfs = Bfs::new(&graph);
+
+		// Iterate some amount before test start
+		(0..(pre_iter % graph.vertex_count())).for_each(|_| {
+			bfs.next();
+		});
+
+		let tree = bfs.predecessor_tree();
+
+		// Tests the search root has is present without predecessor
+
+		if tree.root() == root
 		{
-			current = p;
+			if tree.edges_sourced_in(tree.root()).count() > 0
+			{
+				// Search root has predecessor
+				return false;
+			}
 		}
-		if current != root
+		else
 		{
+			// Search root not in tree
 			return false;
 		}
+
+		// Tests all expected predecessor edges are present
+		for (v, pred) in graph
+			.all_vertices()
+			.filter_map(|v| bfs.predecessor(v).map(|p| (v, p)))
+		{
+			// Tests all predecessor edges are present and alone
+			if vec![pred]
+				!= tree
+					.edges_sourced_in(v)
+					.map(|(si, _)| si)
+					.collect::<Vec<_>>()
+			{
+				return false;
+			}
+		}
+
+		// Tests all present edges are expected
+		for (so, si, _) in tree.all_edges()
+		{
+			if bfs.predecessor(so).unwrap() != si
+			{
+				return false;
+			}
+		}
+
+		true
 	}
-	true
 }

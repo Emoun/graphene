@@ -26,12 +26,6 @@ pub trait Rooted: HasVertex
 	/// returned by successive calls.
 	fn root(&self) -> Self::Vertex;
 
-	/// Designates the given vertex is the root of the graph.
-	///
-	/// Returns error if it was unable to change the root of the graph.
-	/// E.g. if the given vertex is not in the graph.
-	fn set_root(&mut self, v: impl Borrow<Self::Vertex>) -> Result<(), ()>;
-
 	/// Return true of the given vertex is the root of the graph.
 	/// Otherwise, returns false.
 	fn is_root(&self, v: impl Borrow<Self::Vertex>) -> bool
@@ -50,6 +44,18 @@ pub trait Rooted: HasVertex
 	{
 		self.vertex_weight_mut(self.root()).unwrap()
 	}
+}
+
+/// A marker trait for graphs where the root may be changed
+///
+/// See [`Rooted`]
+pub trait RootedMut: Rooted
+{
+	/// Designates the given vertex is the root of the graph.
+	///
+	/// Returns error if it was unable to change the root of the graph.
+	/// E.g. if the given vertex is not in the graph.
+	fn set_root(&mut self, v: impl Borrow<Self::Vertex>) -> Result<(), ()>;
 }
 
 /// Ensures a specific vertex is the root of the graph.
@@ -108,7 +114,10 @@ impl<C: Ensure> Rooted for RootedGraph<C>
 	{
 		self.0.any_vertex()
 	}
+}
 
+impl<C: Ensure> RootedMut for RootedGraph<C>
+{
 	fn set_root(&mut self, v: impl Borrow<Self::Vertex>) -> Result<(), ()>
 	{
 		self.0.set_vertex(&[*v.borrow()])
@@ -116,7 +125,7 @@ impl<C: Ensure> Rooted for RootedGraph<C>
 }
 
 impl_ensurer! {
-	use<C> RootedGraph<C>: ReleasePayload, Ensure, Rooted
+	use<C> RootedGraph<C>: ReleasePayload, Ensure, Rooted, RootedMut
 	as (self.0) : VertexInGraph<C>
 	where C: Ensure
 }

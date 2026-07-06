@@ -1,5 +1,12 @@
-use crate::core::{property::VertexIn, Graph};
-use std::collections::VecDeque;
+use crate::core::{
+	property::{
+		Acyclic, AcyclicGraph, EdgeCount, HasVertex, NoLoops, Rooted, Tree, Unique, VertexCount,
+		VertexIn, Weak, WeakGraph,
+	},
+	Directed, Ensure, Graph,
+};
+use duplicate::duplicate_item;
+use std::{borrow::Borrow, collections::VecDeque};
 
 /// Performs [breadth-first traversal](https://mathworld.wolfram.com/Breadth-FirstTraversal.html)
 /// of a graph's vertices.
@@ -67,6 +74,7 @@ use std::collections::VecDeque;
 ///
 /// [`next`]: https://doc.rust-lang.org/std/iter/trait.Iterator.html#tymethod.next
 /// [`get_vertex`]: ../core/property/trait.HasVertex.html#method.get_vertex
+#[derive(Clone)]
 pub struct Bfs<'a, G>
 where
 	G: 'a + Graph,
@@ -174,6 +182,19 @@ where
 				pred.push((child, Some(v)))
 			});
 	}
+
+	/// Returns a predecessor tree for the current state of the traversal
+	///
+	/// Each edge show the predecessor relationship, where the sink is the
+	/// predecessor of the source. The vertex weights in the predecessor tree
+	/// are the vertices in the original tree The root of the tree is the
+	/// search root.
+	pub fn predecessor_tree(
+		&self,
+	) -> impl '_ + Tree<Vertex = G::Vertex, Directedness = Directed> + Rooted + VertexCount + EdgeCount
+	{
+		PredTree::new(&self.predecessor)
+	}
 }
 
 impl<'a, G> Iterator for Bfs<'a, G>
@@ -194,4 +215,85 @@ where
 			None
 		}
 	}
+}
+
+/// A graph tracking predecessors between vertices
+struct PredTree<'a, V: Copy + Eq>(&'a Vec<(V, Option<V>)>);
+
+impl<'a, V: Copy + Eq> PredTree<'a, V>
+{
+	fn new(v: &'a Vec<(V, Option<V>)>) -> Self
+	{
+		assert!(v.len() >= 1);
+		let result = Self(v);
+		assert!(AcyclicGraph::can_ensure(&result, &()));
+		assert!(WeakGraph::can_ensure(&result, &()));
+		result
+	}
+}
+
+impl<'a, V: Copy + Eq> Graph for PredTree<'a, V>
+{
+	type Directedness = Directed;
+	type EdgeWeight = ();
+	type EdgeWeightRef<'b>
+		= &'b Self::EdgeWeight
+	where
+		Self: 'b;
+	type Vertex = V;
+	type VertexWeight = ();
+
+	fn all_vertices_weighted(&self) -> impl Iterator<Item = (Self::Vertex, &Self::VertexWeight)>
+	{
+		self.0.iter().map(|(v, _)| (*v, &()))
+	}
+
+	fn edges_between(
+		&self,
+		source: impl Borrow<Self::Vertex>,
+		sink: impl Borrow<Self::Vertex>,
+	) -> impl Iterator<Item = Self::EdgeWeightRef<'_>>
+	{
+		self.0
+			.iter()
+			.filter(move |(v, p)| v == source.borrow() && p.map_or(false, |p| p == *sink.borrow()))
+			.map(|(_, _)| &())
+	}
+}
+
+#[duplicate_item(
+	prop; [HasVertex]; [Unique]; [Weak]; [Acyclic]; [NoLoops]; [Tree];
+)]
+impl<'a, V: Copy + Eq> prop for PredTree<'a, V> {}
+
+impl<'a, V: Copy + Eq> VertexCount for PredTree<'a, V>
+{
+	type Count = usize;
+
+	fn vertex_count(&self) -> Self::Count
+	{
+		self.0.len()
+	}
+}
+
+impl<'a, V: Copy + Eq> EdgeCount for PredTree<'a, V>
+{
+	type Count = usize;
+
+	fn edge_count(&self) -> Self::Count
+	{
+		self.0.len() - 1
+	}
+}
+
+impl<'a, V: Copy + Eq> Rooted for PredTree<'a, V>
+{
+	fn root(&self) -> Self::Vertex
+	{
+		self.0.iter().find(|(_, p)| p.is_none()).unwrap().0
+	}
+}
+
+base_graph! {
+	use<'a, V> PredTree<'a, V> where V: Copy + Eq
 }
