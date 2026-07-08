@@ -1,28 +1,17 @@
-use crate::core::{property::VertexIn, Ensure, Graph, GraphDeref};
+use crate::{
+	algo::search::{Retained, Search},
+	core::{property::VertexIn, Ensure, Graph, GraphDeref},
+};
 use std::borrow::Borrow;
 
-/// Performs [depth-first traversal](https://mathworld.wolfram.com/Depth-FirstTraversal.html)
+/// Performs [depth-first search](https://mathworld.wolfram.com/Depth-FirstTraversal.html)
 /// of a graph's vertices.
-///
-/// Even though the 's' in its name implies a search, this struct only performs
-/// traversal, delegating the searching to the user.
-///
-/// It implements [`Iterator`](https://doc.rust-lang.org/std/iter/trait.Iterator.html). [`next`]
-/// is therefore the primary way to use this struct.
-/// Each call will traverse the graph just enough to visit the next vertex and
-/// return it. The initial vertex visited is the one returned by calling the
-/// graph's [`get_vertex`] method. That vertex is never returned
-/// by a call to [`next`].
-///
-/// When the traversal is finished, either because all vertices in the graph
-/// have been visited or because no more vertices can be reached,
-/// [`next`] will return [`None`](https://doc.rust-lang.org/std/option/enum.Option.html#variant.None).
 ///
 /// ### Simple Usage
 ///
 /// ```
 /// # use graphene::{
-/// # 	algo::Dfs,
+/// # 	algo::{search::{Dfs, Search}},
 /// # 	common::AdjListGraph,
 /// # 	core::{
 /// # 		Ensure,
@@ -41,11 +30,11 @@ use std::borrow::Borrow;
 /// graph.add_edge(&v0,&v1).unwrap();
 /// graph.add_edge(&v1,&v2).unwrap();
 ///
-/// // We use `VertexInGraph` to ensure traversal starts at v0.
+/// // We use `VertexInGraph` to ensure the search starts at v0.
 /// let graph = VertexInGraph::ensure(graph, [v0]).unwrap();
 ///
-/// // Initialize the traversal
-/// let mut dfs = Dfs::new_simple(&graph);
+/// // Initialize the search
+/// let mut dfs = Dfs::new_simple(&graph).retain(&graph);
 ///
 /// // We search for the first vertex with weight == 1.
 /// let found_vertex = dfs.find(|&v| graph.vertex_weight(&v).unwrap() == &1).unwrap();
@@ -53,19 +42,19 @@ use std::borrow::Borrow;
 /// ```
 ///
 /// The most basic use of this struct is through the
-/// [`new_simple`](#method.new_simple) function which creates a traversal over
+/// [`new_simple`](#method.new_simple) function which creates a search over
 /// the given graph. In our example above, we use this to implement an actual
 /// search, by using [`find`](https://doc.rust-lang.org/std/iter/trait.Iterator.html#method.find), looking for the
 /// first vertex visited that has a given weight.
-/// Since traversal is lazy, `v2` was never visited, since `v1` was found before
-/// `v2` was explored. Therefore, we could theoretically continue the traversal
-/// on the same dfs.
+/// Since searching is lazy, `v2` was never visited, since `v1` was found before
+/// `v2` was explored. Therefore, we could theoretically continue the search on
+/// the same dfs.
 ///
 /// ### Notes
 ///
 /// _Why isn't `on_exit` a closure?_
 ///
-/// There are Three possibilities for an API using closures:
+/// There are three possibilities for an API using closures:
 ///
 /// 1. Direct closure : This requires Dfs to be generic on the closures type.
 /// this is possible but means Dfs cannot be used in places where its explicit
@@ -75,7 +64,7 @@ use std::borrow::Borrow;
 /// 2. Referenced closure: If Dfs takes a reference to a closure, it no longer
 /// needs to be generic on the closures type. However, it limits where Dfs can
 /// be used, since it's now bound by the lifetime of the reference. It also
-/// doesn't solve the issue with other struct using Dfs, because you can't have
+/// doesn't solve the issue with other structs using Dfs, because you can't have
 /// the closure anywhere when not using the Dfs.
 ///
 /// 3. Boxed closure: Technically possible, but requires `std` and imposes
@@ -86,22 +75,11 @@ use std::borrow::Borrow;
 /// a function and taking `on_exit_args`, that's basically what a closure is.
 ///
 /// ### Related
-/// - [Bfs](struct.Bfs.html): Another graph traversal but using breadth-first.
-///
-/// [`next`]: https://doc.rust-lang.org/std/iter/trait.Iterator.html#tymethod.next
-/// [`get_vertex`]: ../core/property/trait.HasVertex.html#method.get_vertex
+/// - [Bfs](struct.Bfs.html): Another graph search but using breadth-first.
 pub struct Dfs<G, F>
 where
 	G: Ensure + GraphDeref,
 {
-	/// A reference to the graph being traversed.
-	///
-	/// This is use by `Dfs` when doing the traversal. Mutating
-	/// this reference between calls to
-	/// [`next`](https://doc.rust-lang.org/std/iter/trait.Iterator.html#tymethod.next)
-	/// is undefined behaviour.
-	pub graph: G,
-
 	/// A custom payload, available to the function called upon a vertex exit.
 	/// See [`new`](#method.new).
 	pub payload: F,
@@ -139,7 +117,7 @@ where
 	G: Ensure + GraphDeref,
 {
 	pub fn new(
-		g: G,
+		g: impl Borrow<G>,
 		on_visit: fn(&G::Graph, <G::Graph as Graph>::Vertex, &mut F),
 		on_exit: fn(&G::Graph, <G::Graph as Graph>::Vertex, &mut F),
 		on_explore: fn(
@@ -154,9 +132,8 @@ where
 	where
 		G::Graph: VertexIn<1>,
 	{
-		let v = g.graph().vertex_at::<0>();
+		let v = g.borrow().graph().vertex_at::<0>();
 		let mut result = Self {
-			graph: g,
 			visited: Vec::new(),
 			stack: vec![(v, true)],
 			on_visit,
@@ -165,21 +142,21 @@ where
 			payload,
 		};
 		// We never result the starting vertex, so throw it away
-		result.visit(v);
+		result.visit(g, v);
 		result
 	}
 
-	fn visit(&mut self, to_return: <G::Graph as Graph>::Vertex)
+	fn visit(&mut self, graph: impl Borrow<G>, to_return: <G::Graph as Graph>::Vertex)
 	{
-		(self.on_visit)(self.graph.graph(), to_return, &mut self.payload);
+		(self.on_visit)(graph.borrow().graph(), to_return, &mut self.payload);
 		// Mark visited
 		self.visited.push(to_return);
 
 		// Explore children
-		for (child, weight) in self.graph.graph().edges_sourced_in(to_return.clone())
+		for (child, weight) in graph.borrow().graph().edges_sourced_in(to_return.clone())
 		{
 			(self.on_explore)(
-				self.graph.graph(),
+				graph.borrow().graph(),
 				to_return,
 				child,
 				weight.borrow(),
@@ -203,7 +180,10 @@ where
 	///
 	///  If there was nothing to pop and call `on_exit` on, return false,
 	/// otherwise returns true.
-	pub fn advance_next_exit(&mut self) -> Option<<G::Graph as Graph>::Vertex>
+	pub fn advance_next_exit(
+		&mut self,
+		graph: impl Borrow<G>,
+	) -> Option<<G::Graph as Graph>::Vertex>
 	{
 		while let Some(last) = self.stack.last()
 		{
@@ -214,7 +194,7 @@ where
 				// If its exit marked, call the closure on it.
 				if last.1
 				{
-					(self.on_exit)(self.graph.graph(), last.0, &mut self.payload);
+					(self.on_exit)(graph.borrow().graph(), last.0, &mut self.payload);
 					return Some(last.0);
 				}
 			}
@@ -259,7 +239,7 @@ where
 	G: Ensure + GraphDeref,
 	G::Graph: VertexIn<1>,
 {
-	/// Constructs a new `Dfs` to traverse the specified graph.
+	/// Constructs a new `Dfs` to search the specified graph.
 	///
 	/// It calls [`get_vertex`] on the graph, making the traversal start from
 	/// the returned vertex. The first call to [`next`]
@@ -274,7 +254,7 @@ where
 	///
 	/// [`next`]: https://doc.rust-lang.org/std/iter/trait.Iterator.html#tymethod.next
 	/// [`get_vertex`]: ../core/property/trait.HasVertex.html#method.get_vertex
-	pub fn new_simple(g: G) -> Self
+	pub fn new_simple(g: impl Borrow<G>) -> Self
 	{
 		Self::new(
 			g,
@@ -286,13 +266,31 @@ where
 	}
 }
 
-impl<'a, G, F> Iterator for Dfs<G, F>
+impl<G, F> Retained<G, Dfs<G, F>>
 where
-	G: 'a + Ensure + GraphDeref,
+	G: Ensure + GraphDeref,
 {
-	type Item = <G::Graph as Graph>::Vertex;
+	pub fn visited(&self, v: <G::Graph as Graph>::Vertex) -> bool
+	{
+		self.search.visited.contains(&v)
+	}
 
-	fn next(&mut self) -> Option<Self::Item>
+	pub fn advance_next_exit(&mut self) -> Option<<G::Graph as Graph>::Vertex>
+	{
+		self.search.advance_next_exit(&self.graph)
+	}
+
+	pub fn continue_from(&mut self, v: <G::Graph as Graph>::Vertex) -> bool
+	{
+		self.search.continue_from(v)
+	}
+}
+
+impl<G, F> Search<G> for Dfs<G, F>
+where
+	G: Ensure + GraphDeref,
+{
+	fn next(&mut self, g: impl Borrow<G>) -> Option<<G::Graph as Graph>::Vertex>
 	{
 		// The meaning of markers:
 		//
@@ -310,7 +308,7 @@ where
 
 		// Pop any vertices that we are done visiting (and since it's on the top of the
 		// stack, we must be done visiting its children).
-		while self.advance_next_exit().is_some()
+		while self.advance_next_exit(g.borrow()).is_some()
 		{}
 
 		// Get the top of the stack. This is necessarily a non-visited vertex.
@@ -319,7 +317,7 @@ where
 		// Exit mark, since we will use it for exploring its children
 		self.stack.last_mut()?.1 = true;
 
-		self.visit(to_return);
+		self.visit(g, to_return);
 
 		Some(to_return)
 	}

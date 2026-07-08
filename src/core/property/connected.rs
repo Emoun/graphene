@@ -1,5 +1,5 @@
 use crate::{
-	algo::{Dfs, DijkstraShortestPaths},
+	algo::{search::new_search_retained, DijkstraShortestPaths},
 	core::{
 		property::{
 			proxy_remove_edge_where_weight, proxy_remove_vertex, DirectedGraph, EdgeCount,
@@ -121,14 +121,14 @@ impl<C: Ensure> Ensure for ConnectedGraph<C>
 		{
 			let v = g.all_vertices().next().unwrap();
 			let g = VertexInGraph::ensure_unchecked(g.release(), [v]);
-			let dfs_count = Dfs::new_simple(&g).count();
-			if (dfs_count + 1) == v_count
+			let traverse_count = new_search_retained(&g).count();
+			if (traverse_count + 1) == v_count
 			{
-				// If its undirected, no more needs to be done
+				// If it's undirected, no more needs to be done
 				if let Ok(g) = DirectedGraph::ensure(g, ())
 				{
 					let reverse = ReverseGraph::new(g);
-					if (Dfs::new_simple(&reverse).count() + 1) != v_count
+					if (new_search_retained(&reverse).count() + 1) != v_count
 					{
 						return false;
 					}

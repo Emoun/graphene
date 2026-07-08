@@ -3,7 +3,7 @@ use crate::mock_graph::{
 	MockType, TestGraph,
 };
 use graphene::{
-	algo::{Bfs, Dfs},
+	algo::{search::new_search_retained, Bfs},
 	core::{
 		property::{AddEdge, RemoveEdge, VertexIn, VertexInGraph},
 		Ensure, Graph, GraphDerefMut, Release,
@@ -74,10 +74,8 @@ where
 		// Find all vertices with outgoing paths
 		for (v, reachable) in vert_reachables.iter_mut()
 		{
-			reachable.extend(Dfs::new_simple(&VertexInGraph::ensure_unchecked(
-				graph.graph(),
-				[v.clone()],
-			)));
+			let g1 = VertexInGraph::ensure_unchecked(graph.graph(), [v.clone()]);
+			reachable.extend(new_search_retained(g1));
 			if !U && graph.graph().edges_between(v.clone(), v.clone()).count() > 0
 			{
 				reachable.push(v.clone());

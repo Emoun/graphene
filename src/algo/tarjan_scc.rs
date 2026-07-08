@@ -49,7 +49,7 @@
 //! produced, and if so return it. If not, we can continue the algorithm and if
 //! the Dfs is done, check for any unvisited vertices.
 use crate::{
-	algo::Dfs,
+	algo::search::{Dfs, Retained, Search},
 	core::{
 		property::{ConnectedGraph, HasVertex, VertexInGraph},
 		proxy::SubgraphProxy,
@@ -62,7 +62,7 @@ use std::cmp::min;
 ///
 /// It implements [`Iterator`](https://doc.rust-lang.org/std/iter/trait.Iterator.html). [`next`]
 /// is therefore the primary way to use this struct.
-/// Each call to [`next`] will traverse the graph enough to identify a strongly
+/// Each call to [`next`] will search the graph enough to identify a strongly
 /// connected component (SCC) and return it.
 ///
 ///
@@ -151,7 +151,10 @@ where
 	G: Ensure + GraphDeref,
 	G::Graph: Graph<Directedness = Directed>,
 {
-	dfs: Dfs<VertexInGraph<G>, Vec<(<G::Graph as Graph>::Vertex, usize)>>,
+	dfs: Retained<
+		VertexInGraph<G>,
+		Dfs<VertexInGraph<G>, Vec<(<G::Graph as Graph>::Vertex, usize)>>,
+	>,
 
 	/// We use this to keep track of which vertices we have to check for
 	/// whether they have been visited.
@@ -215,14 +218,14 @@ where
 
 		// Push the start vertex on the stack with low-link = 0
 		let dfs = Dfs::new(
-			graph,
+			&graph,
 			Dfs::<VertexInGraph<_>, _>::do_nothing_on_visit,
 			on_exit,
 			Dfs::<VertexInGraph<_>, _>::do_nothing_on_explore,
 			vec![(v, 0)],
 		);
 		Self {
-			dfs,
+			dfs: dfs.retain(graph),
 			unchecked: vs.into_iter(),
 		}
 	}
@@ -236,10 +239,10 @@ macro_rules! next_scc_impl {
 		// Repeat until either an SCC is found or all vertices have been visited.
 		loop
 		{
-			// For each vertex we are finished visiting, check if its the root of a SCC.
+			// For each vertex we are finished visiting, check if it's the root of an SCC.
 			while let Some(v) = $self_tt.dfs.advance_next_exit()
 			{
-				let stack = &mut $self_tt.dfs.payload;
+				let stack = &mut $self_tt.dfs.search.payload;
 
 				// Find the index of the vertex
 				let index = stack.iter().position(|(v2, _)| *v2 == v).unwrap();
@@ -267,7 +270,7 @@ macro_rules! next_scc_impl {
 			if let Some(v) = $self_tt.dfs.next()
 			{
 				// First push vertex onto stack, with lowlink value equal to its index
-				let stack = &mut $self_tt.dfs.payload;
+				let stack = &mut $self_tt.dfs.search.payload;
 				stack.push((v.clone(), stack.len()));
 			}
 			else

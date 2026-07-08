@@ -1,9 +1,12 @@
-use crate::mock_graph::arbitrary::Arb;
-/// Common tests for all 'searching' algorithms.
-use crate::mock_graph::{MockEdgeWeight, MockGraph};
+//! Common tests for all 'searching' algorithms.
+
+use crate::mock_graph::{arbitrary::Arb, MockEdgeWeight, MockGraph};
 use duplicate::duplicate_item;
 use graphene::{
-	algo::{Bfs, Dfs, Spfs},
+	algo::{
+		search::{new_search_retained, Dfs, Search},
+		Bfs, Spfs,
+	},
 	core::{
 		property::{AddEdge, ConnectedGraph, VertexIn, VertexInGraph},
 		proxy::EdgeWeightMap,
@@ -14,13 +17,17 @@ use std::collections::HashSet;
 
 #[duplicate_item(
 	module		search_algo_new(graph);
-	[ dfs ]		[ Dfs::new_simple(graph) ];
+	[ dfs ]		[
+		let ref_graph = graph;
+		Dfs::new_simple(ref_graph).retain(ref_graph)
+	];
 	[ bfs ]		[ Bfs::new(graph) ];
 	[ spfs ]	[
 		let ref_graph = graph;
 		let map_graph = EdgeWeightMap::new(ref_graph, |_,_,w| w.value);
 		Spfs::new(&map_graph)
-	]
+	];
+	[new_search_retained]	[new_search_retained(graph)];
 )]
 mod module
 {

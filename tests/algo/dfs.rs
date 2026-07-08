@@ -3,7 +3,7 @@
 use crate::mock_graph::{arbitrary::Arb, MockGraph, MockVertex};
 use duplicate::duplicate_item;
 use graphene::{
-	algo::Dfs,
+	algo::search::{Dfs, Search},
 	core::{
 		property::{ConnectedGraph, VertexIn, VertexInGraph},
 		Directed, Undirected,
@@ -63,6 +63,7 @@ mod __
 			Dfs::<VertexInGraph<_>, _>::do_nothing_on_explore,
 			(&stack, &mut success),
 		)
+		.retain(&mock)
 		.for_each(|v| {
 			// When a vertex is produced by the Dfs, put it on the stack.
 			let mut s = stack.take();

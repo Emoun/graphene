@@ -16,7 +16,7 @@ use std::{borrow::Borrow, collections::VecDeque};
 ///
 /// It implements [`Iterator`](https://doc.rust-lang.org/std/iter/trait.Iterator.html). [`next`]
 /// is therefore the primary way to use this struct.
-/// Each call will traverse the graph just enough to visit the next vertex and
+/// Each call will search the graph just enough to visit the next vertex and
 /// return it. The initial vertex visited is the one returned by calling the
 /// graph's [`get_vertex`] method. That vertex is never returned
 /// by the a call to [`next`].
@@ -89,7 +89,7 @@ impl<'a, G> Bfs<'a, G>
 where
 	G: 'a + Graph,
 {
-	/// Constructs a new `Bfs` to traverse the specified graph.
+	/// Constructs a new `Bfs` to search the specified graph.
 	///
 	/// It calls [`vertex_at::<0>()`] on the graph, making the traversal start
 	/// from the returned vertex. The first call to [`next`] on the constructed
