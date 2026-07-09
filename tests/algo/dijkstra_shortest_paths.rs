@@ -1,9 +1,12 @@
-use crate::mock_graph::arbitrary::{Arb, VerticesIn};
-/// tests `DijkstraShortestPath`
-use crate::mock_graph::{MockEdgeWeight, MockGraph};
+//! tests `DijkstraShortestPath`
+
+use crate::mock_graph::{
+	arbitrary::{Arb, VerticesIn},
+	MockEdgeWeight, MockGraph,
+};
 use duplicate::duplicate_item;
 use graphene::{
-	algo::DijkstraShortestPaths,
+	algo::{DijkstraShortestPaths, Retainable},
 	core::{
 		property::{AddEdge, ConnectedGraph, VertexIn, VertexInGraph},
 		proxy::EdgeWeightMap,
@@ -31,9 +34,11 @@ mod __
 		visited.insert(mock.vertex_at::<0>().clone());
 		let mut visited_once = true;
 		let e_map = EdgeWeightMap::new(mock.graph(), |_, _, w| w.value);
-		DijkstraShortestPaths::new(&e_map).for_each(|(_, v, _)| {
-			visited_once &= visited.insert(v);
-		});
+		DijkstraShortestPaths::new(&e_map)
+			.retain(&e_map)
+			.for_each(|(_, v, _)| {
+				visited_once &= visited.insert(v);
+			});
 
 		// We ensure all vertices were visited, but only once
 		visited.len() == mock.all_vertices().count() && visited_once
@@ -55,7 +60,9 @@ mod __
 		// Ensure that no visited vertex comes from outside the start component
 		let e_map =
 			EdgeWeightMap::new(VertexInGraph::ensure_unchecked(graph, v), |_, _, w| w.value);
-		DijkstraShortestPaths::new(&e_map).all(|(_, v, _)| v_map.values().all(|&new_v| v != new_v))
+		DijkstraShortestPaths::new(&e_map)
+			.retain(&e_map)
+			.all(|(_, v, _)| v_map.values().all(|&new_v| v != new_v))
 	}
 
 	/// Tests that the paths returned are always increasing.
@@ -67,7 +74,7 @@ mod __
 		let mut len = 0;
 
 		let e_map = EdgeWeightMap::new(g, |_, _, w| w.value);
-		for (source, sink, w) in DijkstraShortestPaths::new(&e_map)
+		for (source, sink, w) in DijkstraShortestPaths::new(&e_map).retain(&e_map)
 		{
 			let len_to_source = path_weights[&source];
 			let len_to_sink = len_to_source + w;
@@ -89,7 +96,7 @@ mod __
 		seen.insert(g.vertex_at::<0>().clone());
 
 		let e_map = EdgeWeightMap::new(g, |_, _, w| w.value);
-		for (source, sink, _) in DijkstraShortestPaths::new(&e_map)
+		for (source, sink, _) in DijkstraShortestPaths::new(&e_map).retain(&e_map)
 		{
 			if !seen.contains(&source)
 			{
@@ -133,7 +140,9 @@ fn directed_doesnt_visit_incoming_component(
 
 	let e_map = EdgeWeightMap::new(VertexInGraph::ensure_unchecked(graph, v), |_, _, w| w.value);
 	// Ensure that no visited vertex comes from outside the start component
-	DijkstraShortestPaths::new(&e_map).all(|(_, v, _)| v_map.values().all(|&new_v| v != new_v))
+	DijkstraShortestPaths::new(&e_map)
+		.retain(&e_map)
+		.all(|(_, v, _)| v_map.values().all(|&new_v| v != new_v))
 }
 
 /// Tests for directed graphs that any component with an edge to it from the
@@ -170,5 +179,5 @@ fn directed_visits_outgoing_component(
 	// Ensure that all vertices are visited
 	let count = graph.all_vertices().count() - 1;
 	let e_map = EdgeWeightMap::new(VertexInGraph::ensure_unchecked(graph, v), |_, _, w| w.value);
-	DijkstraShortestPaths::new(&e_map).count() == count
+	DijkstraShortestPaths::new(&e_map).retain(&e_map).count() == count
 }

@@ -5,21 +5,15 @@
 //! module only handle the traversal, delegating the searching to the user.
 //!
 //! [`Search`] is the main trait implemented by the various search algorithms.
-//! The algorithms do not themselves own or borrow the graph they are searching,
-//! allowing for mutable access to the graphs while searching it.
-//! The [`Search::next`] borrows the graph being searched every time, returning
-//! the next vertex in the search.
-//!
-//! If mutable access to the searched graph is not needed during a searching, the [`Search::retain`] method is provided by all search algorithms, returning an [`Iterator`](https://doc.rust-lang.org/std/iter/trait.Iterator.html) which retains ownership/borrowing of the graph during the search.
-//! This is likely the most straightforward and often used way of searching.
 //!
 //! # Searching
 //!
 //! All searches must have a starting vertex, which is designated by
-//! [`VertexIn::vertex_at::<0>`]. Calling [`Search::next`] or [`Iterator::next`] then iteratively returns vertices in the [connected component](https://mathworld.wolfram.com/ConnectedComponent.html) of the starting vertex.
-//! The starting vertex itself will never be returned by these methods.
-//! [`None`] is returned when all vertices in the connected component have been
-//! returned.
+//! [`VertexIn::vertex_at::<0>`]. Calling [`Search::next`] or [`Iterator::next`]
+//! then iteratively returns vertices in the [connected component](https://mathworld.wolfram.com/ConnectedComponent.html)
+//! of the starting vertex. The starting vertex itself will never be returned by
+//! these methods. [`None`] is returned when all vertices in the connected
+//! component have been returned.
 //!
 //! The order of returned vertices is dependent on the specific search algorithm
 //! used. Functions are provided for when the order is not important in addition
@@ -63,11 +57,15 @@
 //! ```
 mod dfs;
 mod search;
+mod spfs;
 
-pub use dfs::*;
-pub use search::*;
+pub use self::{dfs::*, search::*, spfs::*};
 
-use crate::core::{property::VertexIn, GraphDeref};
+use crate::{
+	algo::{Retainable, Retained},
+	core::{property::VertexIn, GraphDeref},
+};
+
 /// Initializes a new search using an unspecified algorithm.
 pub fn new_search<G>(graph: G) -> impl Search<G::Graph>
 where

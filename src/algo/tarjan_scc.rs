@@ -49,7 +49,10 @@
 //! produced, and if so return it. If not, we can continue the algorithm and if
 //! the Dfs is done, check for any unvisited vertices.
 use crate::{
-	algo::search::{Dfs, Retained, Search},
+	algo::{
+		retain::{Retainable, Retained},
+		search::Dfs,
+	},
 	core::{
 		property::{ConnectedGraph, HasVertex, VertexInGraph},
 		proxy::SubgraphProxy,
@@ -242,7 +245,7 @@ macro_rules! next_scc_impl {
 			// For each vertex we are finished visiting, check if it's the root of an SCC.
 			while let Some(v) = $self_tt.dfs.advance_next_exit()
 			{
-				let stack = &mut $self_tt.dfs.search.payload;
+				let stack = &mut $self_tt.dfs.algo.payload;
 
 				// Find the index of the vertex
 				let index = stack.iter().position(|(v2, _)| *v2 == v).unwrap();
@@ -270,7 +273,7 @@ macro_rules! next_scc_impl {
 			if let Some(v) = $self_tt.dfs.next()
 			{
 				// First push vertex onto stack, with lowlink value equal to its index
-				let stack = &mut $self_tt.dfs.search.payload;
+				let stack = &mut $self_tt.dfs.algo.payload;
 				stack.push((v.clone(), stack.len()));
 			}
 			else

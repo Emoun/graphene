@@ -1,62 +1,60 @@
-use crate::core::{property::VertexIn, Edge, Graph};
+use crate::{
+	algo::retain::{Retainable, UnretainedIterator},
+	core::{property::VertexIn, Edge, Graph},
+};
 use num_traits::{PrimInt, Unsigned, Zero};
 use std::borrow::Borrow;
-
 /// [Dijkstra's shortest paths algorithm](https://mathworld.wolfram.com/DijkstrasAlgorithm.html)
-pub struct DijkstraShortestPaths<'a, G>
+pub struct DijkstraShortestPaths<G>
 where
-	G: 'a + Graph,
+	G: Graph,
 	G::EdgeWeight: PrimInt + Unsigned,
 {
-	graph: &'a G,
 	visited: Vec<G::Vertex>,
 	// We keep it sorted with the lowest weight at the end for efficiency.
-	queue: Vec<(G::EdgeWeight, (G::Vertex, G::Vertex, G::EdgeWeightRef<'a>))>,
+	queue: Vec<(G::EdgeWeight, (G::Vertex, G::Vertex))>,
 }
 
-impl<'a, G> DijkstraShortestPaths<'a, G>
+impl<G> DijkstraShortestPaths<G>
 where
-	G: 'a + Graph,
+	G: Graph,
 	G::EdgeWeight: PrimInt + Unsigned,
 {
-	pub fn new(graph: &'a G) -> Self
+	pub fn new(graph: &G) -> Self
 	where
 		G: VertexIn<1>,
 	{
 		let mut dijk = Self {
-			graph,
 			visited: Vec::new(),
 			queue: Vec::new(),
 		};
-		dijk.visit(graph.vertex_at::<0>(), G::EdgeWeight::zero());
+		dijk.visit(graph, graph.vertex_at::<0>(), G::EdgeWeight::zero());
 		dijk
 	}
 
-	fn visit(&mut self, v: G::Vertex, w: G::EdgeWeight)
+	fn visit(&mut self, graph: impl Borrow<G>, v: G::Vertex, w: G::EdgeWeight)
 	{
 		self.visited.push(v);
 		let visited = &self.visited;
-		let edges = self.graph.edges_sourced_in(v)
+		let edges = graph.borrow().edges_sourced_in(v)
 			// Remove any edge to a visited vertex
 			.filter(|(edge, _)| !visited.contains(&edge));
 
 		for (sink, weight) in edges
 		{
 			let new_weight = w + *weight.borrow();
-			if let Some((old_weight, old_edge)) = self
-				.queue
-				.iter_mut()
-				.find(|(_, (_, vert, _))| *vert == sink)
+			if let Some((old_weight, old_edge)) =
+				self.queue.iter_mut().find(|(_, (_, vert))| *vert == sink)
 			{
 				if *old_weight > new_weight
 				{
 					*old_weight = new_weight;
-					*old_edge = (v, sink, weight);
+					*old_edge = (v, sink);
 				}
 			}
 			else
 			{
-				self.queue.push((new_weight, (v, sink, weight)));
+				self.queue.push((new_weight, (v, sink)));
 			}
 		}
 		self.queue.sort_by(|(w1, _), (w2, _)| w2.cmp(w1));
@@ -64,73 +62,55 @@ where
 
 	/// Returns the vertices reachable from the designated vertex and the
 	/// weighted distance to them
-	pub fn distances(graph: &'a G) -> impl 'a + Iterator<Item = (G::Vertex, G::EdgeWeight)>
+	pub fn distances(graph: &G) -> impl Iterator<Item = (G::Vertex, G::EdgeWeight)> + use<'_, G>
 	where
 		G: VertexIn<1>,
 	{
 		let mut distances = vec![(graph.vertex_at::<0>(), G::EdgeWeight::zero())];
 
-		DijkstraShortestPaths::new(graph).map(move |(so, si, w)| {
+		Self::new(graph).retain(graph).map(move |(so, si, w)| {
 			let dist = distances.iter().find(|(v, _)| so == *v).unwrap().1;
-			let new_dist = dist + *w.borrow();
+			let new_dist = dist + w;
 			distances.push((si, new_dist));
 			(si, new_dist)
 		})
 	}
-}
 
-impl<'a, G> Iterator for DijkstraShortestPaths<'a, G>
-where
-	G: 'a + Graph,
-	G::EdgeWeight: PrimInt + Unsigned,
-{
-	type Item = (G::Vertex, G::Vertex, G::EdgeWeightRef<'a>);
-
-	fn next(&mut self) -> Option<Self::Item>
+	pub fn shortest_edge_between(graph: &G, so: G::Vertex, si: G::Vertex) -> G::EdgeWeightRef<'_>
 	{
-		let (weight, result) = self.queue.pop()?;
-
-		self.visit(result.sink(), weight);
-
-		Some(result)
+		let mut edges = graph.edges_between(so, si);
+		let first = edges.next().unwrap();
+		let weight = edges.fold(first, |acc, w| {
+			if *acc.borrow() < *w.borrow()
+			{
+				acc
+			}
+			else
+			{
+				w
+			}
+		});
+		weight
 	}
 }
 
-/// Shortest-Path-First search
-///
-/// next() doesn't return the starting vertex.
-pub struct Spfs<'a, G>
+impl<G> UnretainedIterator<G> for DijkstraShortestPaths<G>
 where
-	G: 'a + Graph,
+	G: Graph,
 	G::EdgeWeight: PrimInt + Unsigned,
 {
-	dijk: DijkstraShortestPaths<'a, G>,
-}
+	type Item = (G::Vertex, G::Vertex, G::EdgeWeight);
 
-impl<'a, G> Spfs<'a, G>
-where
-	G: 'a + Graph,
-	G::EdgeWeight: PrimInt + Unsigned,
-{
-	pub fn new(graph: &'a G) -> Self
-	where
-		G: VertexIn<1>,
+	fn next(&mut self, graph: &G) -> Option<Self::Item>
 	{
-		Self {
-			dijk: DijkstraShortestPaths::new(graph),
-		}
-	}
-}
+		let (weight, edge) = self.queue.pop()?;
 
-impl<'a, G> Iterator for Spfs<'a, G>
-where
-	G: 'a + Graph,
-	G::EdgeWeight: PrimInt + Unsigned,
-{
-	type Item = G::Vertex;
+		self.visit(graph.borrow(), edge.sink(), weight);
 
-	fn next(&mut self) -> Option<Self::Item>
-	{
-		Some(self.dijk.next()?.1)
+		Some((
+			edge.source(),
+			edge.sink(),
+			*Self::shortest_edge_between(graph, edge.source(), edge.sink()).borrow(),
+		))
 	}
 }

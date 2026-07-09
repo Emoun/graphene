@@ -3,7 +3,7 @@
 use crate::mock_graph::{arbitrary::Arb, MockGraph, MockVertex};
 use duplicate::duplicate_item;
 use graphene::{
-	algo::search::{Dfs, Search},
+	algo::{search::Dfs, Retainable},
 	core::{
 		property::{ConnectedGraph, VertexIn, VertexInGraph},
 		Directed, Undirected,

@@ -1,5 +1,5 @@
 use crate::{
-	algo::search::{Retained, Search},
+	algo::retain::{Retained, UnretainedIterator},
 	core::{property::VertexIn, Graph, GraphDeref},
 };
 use std::borrow::Borrow;
@@ -11,7 +11,7 @@ use std::borrow::Borrow;
 ///
 /// ```
 /// # use graphene::{
-/// # 	algo::{search::{Dfs, Search}},
+/// # 	algo::{Retainable, search::{Dfs, Search}},
 /// # 	common::AdjListGraph,
 /// # 	core::{
 /// # 		Ensure,
@@ -248,25 +248,27 @@ where
 {
 	pub fn visited(&self, v: <G::Graph as Graph>::Vertex) -> bool
 	{
-		self.search.visited.contains(&v)
+		self.algo.visited.contains(&v)
 	}
 
 	pub fn advance_next_exit(&mut self) -> Option<<G::Graph as Graph>::Vertex>
 	{
-		self.search.advance_next_exit(self.graph.graph())
+		self.algo.advance_next_exit(self.graph.graph())
 	}
 
 	pub fn continue_from(&mut self, v: <G::Graph as Graph>::Vertex) -> bool
 	{
-		self.search.continue_from(v)
+		self.algo.continue_from(v)
 	}
 }
 
-impl<G, F> Search<G> for Dfs<G, F>
+impl<G, F> UnretainedIterator<G> for Dfs<G, F>
 where
 	G: Graph,
 {
-	fn next(&mut self, g: impl Borrow<G>) -> Option<G::Vertex>
+	type Item = G::Vertex;
+
+	fn next(&mut self, g: &G) -> Option<Self::Item>
 	{
 		// The meaning of markers:
 		//

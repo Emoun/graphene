@@ -4,8 +4,8 @@ use crate::mock_graph::{arbitrary::Arb, MockEdgeWeight, MockGraph};
 use duplicate::duplicate_item;
 use graphene::{
 	algo::{
-		search::{new_search_retained, Dfs, Search},
-		Bfs, Spfs,
+		search::{new_search_retained, Dfs, Spfs},
+		Bfs, Retainable,
 	},
 	core::{
 		property::{AddEdge, ConnectedGraph, VertexIn, VertexInGraph},
@@ -25,7 +25,7 @@ use std::collections::HashSet;
 	[ spfs ]	[
 		let ref_graph = graph;
 		let map_graph = EdgeWeightMap::new(ref_graph, |_,_,w| w.value);
-		Spfs::new(&map_graph)
+		Spfs::new(&map_graph).retain(map_graph)
 	];
 	[new_search_retained]	[new_search_retained(graph)];
 )]

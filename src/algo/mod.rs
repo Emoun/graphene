@@ -2,10 +2,11 @@
 
 mod bfs;
 mod dijkstra_shortest_paths;
+mod retain;
 pub mod search;
 mod tarjan_scc;
 
-pub use self::{bfs::*, dijkstra_shortest_paths::*, tarjan_scc::*};
+pub use self::{bfs::*, dijkstra_shortest_paths::*, retain::*, tarjan_scc::*};
 use crate::{
 	algo::search::new_search_retained,
 	core::{property::VertexInGraph, Ensure, Graph},

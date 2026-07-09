@@ -1,8 +1,5 @@
 use crate::{
-	algo::{
-		path_exists,
-		search::{Dfs, Search},
-	},
+	algo::{path_exists, search::Dfs, Retainable},
 	core::{
 		property::{AddEdge, NoLoops, VertexInGraph},
 		Directedness, Ensure, Graph, GraphDerefMut,
