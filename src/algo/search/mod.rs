@@ -67,21 +67,21 @@ mod search;
 pub use dfs::*;
 pub use search::*;
 
-use crate::core::{property::VertexIn, Ensure, GraphDeref};
+use crate::core::{property::VertexIn, GraphDeref};
 /// Initializes a new search using an unspecified algorithm.
-pub fn new_search<G>(graph: G) -> impl Search<G>
+pub fn new_search<G>(graph: G) -> impl Search<G::Graph>
 where
-	G: Ensure + GraphDeref,
+	G: GraphDeref,
 	G::Graph: VertexIn<1>,
 {
-	Dfs::new_simple(&graph)
+	Dfs::new_simple(graph.graph())
 }
 
 /// Initializes a new retained search using an unspecified algorithm.
-pub fn new_search_retained<G>(graph: G) -> Retained<G, impl Search<G>>
+pub fn new_search_retained<G>(graph: G) -> Retained<G, impl Search<G::Graph>>
 where
-	G: Ensure + GraphDeref,
+	G: GraphDeref,
 	G::Graph: VertexIn<1>,
 {
-	Dfs::new_simple(&graph).retain(graph)
+	Dfs::new_simple(graph.graph()).retain(graph)
 }

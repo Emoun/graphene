@@ -1,6 +1,6 @@
 use crate::{
 	algo::search::{Retained, Search},
-	core::{property::VertexIn, Ensure, Graph, GraphDeref},
+	core::{property::VertexIn, Graph, GraphDeref},
 };
 use std::borrow::Borrow;
 
@@ -78,59 +78,47 @@ use std::borrow::Borrow;
 /// - [Bfs](struct.Bfs.html): Another graph search but using breadth-first.
 pub struct Dfs<G, F>
 where
-	G: Ensure + GraphDeref,
+	G: Graph,
 {
 	/// A custom payload, available to the function called upon a vertex exit.
 	/// See [`new`](#method.new).
 	pub payload: F,
-	visited: Vec<<G::Graph as Graph>::Vertex>,
+	visited: Vec<G::Vertex>,
 
 	/// The vertex on the stack, and whether on_exit should be called upon
 	/// popping.
-	stack: Vec<(<G::Graph as Graph>::Vertex, bool)>,
+	stack: Vec<(G::Vertex, bool)>,
 
 	/// Function to call when visiting a vertex
-	on_visit: fn(&G::Graph, <G::Graph as Graph>::Vertex, &mut F),
+	on_visit: fn(&G, G::Vertex, &mut F),
 
 	/// Function to call when exiting a vertex.
 	///
 	/// Provides a reference to the graph, the vertex that is exiting,
 	/// and a mutable reference to the payload given to the Dfs.
-	on_exit: fn(&G::Graph, <G::Graph as Graph>::Vertex, &mut F),
+	on_exit: fn(&G, G::Vertex, &mut F),
 
 	/// Function to call when exploring an edge.
 	///
 	/// When a vertex is being visited, this function is called for
 	/// every outgoing edge, regardless of whether the sinked vertex
 	/// (second vertex argument) has already been visited.
-	on_explore: fn(
-		&G::Graph,
-		<G::Graph as Graph>::Vertex,
-		<G::Graph as Graph>::Vertex,
-		&<G::Graph as Graph>::EdgeWeight,
-		&mut F,
-	),
+	on_explore: fn(&G, G::Vertex, G::Vertex, &G::EdgeWeight, &mut F),
 }
 
 impl<G, F> Dfs<G, F>
 where
-	G: Ensure + GraphDeref,
+	G: Graph,
 {
 	pub fn new(
 		g: impl Borrow<G>,
-		on_visit: fn(&G::Graph, <G::Graph as Graph>::Vertex, &mut F),
-		on_exit: fn(&G::Graph, <G::Graph as Graph>::Vertex, &mut F),
-		on_explore: fn(
-			&G::Graph,
-			<G::Graph as Graph>::Vertex,
-			<G::Graph as Graph>::Vertex,
-			&<G::Graph as Graph>::EdgeWeight,
-			&mut F,
-		),
+		on_visit: fn(&G, G::Vertex, &mut F),
+		on_exit: fn(&G, G::Vertex, &mut F),
+		on_explore: fn(&G, G::Vertex, G::Vertex, &G::EdgeWeight, &mut F),
 		payload: F,
 	) -> Self
 	where
-		G::Graph: VertexIn<1>,
+		G: VertexIn<1>,
 	{
 		let v = g.borrow().graph().vertex_at::<0>();
 		let mut result = Self {
@@ -146,7 +134,7 @@ where
 		result
 	}
 
-	fn visit(&mut self, graph: impl Borrow<G>, to_return: <G::Graph as Graph>::Vertex)
+	fn visit(&mut self, graph: impl Borrow<G>, to_return: G::Vertex)
 	{
 		(self.on_visit)(graph.borrow().graph(), to_return, &mut self.payload);
 		// Mark visited
@@ -170,7 +158,7 @@ where
 		}
 	}
 
-	pub fn visited(&self, v: <G::Graph as Graph>::Vertex) -> bool
+	pub fn visited(&self, v: G::Vertex) -> bool
 	{
 		self.visited.contains(&v)
 	}
@@ -180,10 +168,7 @@ where
 	///
 	///  If there was nothing to pop and call `on_exit` on, return false,
 	/// otherwise returns true.
-	pub fn advance_next_exit(
-		&mut self,
-		graph: impl Borrow<G>,
-	) -> Option<<G::Graph as Graph>::Vertex>
+	pub fn advance_next_exit(&mut self, graph: impl Borrow<G>) -> Option<G::Vertex>
 	{
 		while let Some(last) = self.stack.last()
 		{
@@ -206,7 +191,7 @@ where
 		None
 	}
 
-	pub fn continue_from(&mut self, v: <G::Graph as Graph>::Vertex) -> bool
+	pub fn continue_from(&mut self, v: G::Vertex) -> bool
 	{
 		if !self.visited(v.clone())
 		{
@@ -219,25 +204,16 @@ where
 		}
 	}
 
-	pub fn do_nothing_on_visit(_: &G::Graph, _: <G::Graph as Graph>::Vertex, _: &mut F) {}
+	pub fn do_nothing_on_visit(_: &G, _: G::Vertex, _: &mut F) {}
 
-	pub fn do_nothing_on_exit(_: &G::Graph, _: <G::Graph as Graph>::Vertex, _: &mut F) {}
+	pub fn do_nothing_on_exit(_: &G, _: G::Vertex, _: &mut F) {}
 
-	pub fn do_nothing_on_explore(
-		_: &G::Graph,
-		_: <G::Graph as Graph>::Vertex,
-		_: <G::Graph as Graph>::Vertex,
-		_: &<G::Graph as Graph>::EdgeWeight,
-		_: &mut F,
-	)
-	{
-	}
+	pub fn do_nothing_on_explore(_: &G, _: G::Vertex, _: G::Vertex, _: &G::EdgeWeight, _: &mut F) {}
 }
 
 impl<G> Dfs<G, ()>
 where
-	G: Ensure + GraphDeref,
-	G::Graph: VertexIn<1>,
+	G: Graph + VertexIn<1>,
 {
 	/// Constructs a new `Dfs` to search the specified graph.
 	///
@@ -266,9 +242,9 @@ where
 	}
 }
 
-impl<G, F> Retained<G, Dfs<G, F>>
+impl<G, F> Retained<G, Dfs<G::Graph, F>>
 where
-	G: Ensure + GraphDeref,
+	G: GraphDeref,
 {
 	pub fn visited(&self, v: <G::Graph as Graph>::Vertex) -> bool
 	{
@@ -277,7 +253,7 @@ where
 
 	pub fn advance_next_exit(&mut self) -> Option<<G::Graph as Graph>::Vertex>
 	{
-		self.search.advance_next_exit(&self.graph)
+		self.search.advance_next_exit(self.graph.graph())
 	}
 
 	pub fn continue_from(&mut self, v: <G::Graph as Graph>::Vertex) -> bool
@@ -288,9 +264,9 @@ where
 
 impl<G, F> Search<G> for Dfs<G, F>
 where
-	G: Ensure + GraphDeref,
+	G: Graph,
 {
-	fn next(&mut self, g: impl Borrow<G>) -> Option<<G::Graph as Graph>::Vertex>
+	fn next(&mut self, g: impl Borrow<G>) -> Option<G::Vertex>
 	{
 		// The meaning of markers:
 		//

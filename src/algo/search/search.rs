@@ -1,10 +1,10 @@
-use crate::core::{Ensure, Graph, GraphDeref};
+use crate::core::{Graph, GraphDeref};
 use std::borrow::Borrow;
 
 /// A search algorithm that does not retain the searched graph.
 pub trait Search<G>
 where
-	G: Ensure + GraphDeref,
+	G: Graph,
 	Self: Sized,
 {
 	/// Returns the next vertex in teh search of the given graph
@@ -12,11 +12,11 @@ where
 	/// Assumes the same graph is given for every call.
 	/// Changing the graph's vertices or edges between calls may cause an error
 	/// in the search.
-	fn next(&mut self, g: impl Borrow<G>) -> Option<<G::Graph as Graph>::Vertex>;
+	fn next(&mut self, g: impl Borrow<G>) -> Option<G::Vertex>;
 
 	/// Turns the search into a retained search, continuing the search using the
 	/// given graph.
-	fn retain(self, graph: G) -> Retained<G, Self>
+	fn retain<GD: GraphDeref<Graph = G>>(self, graph: GD) -> Retained<GD, Self>
 	{
 		Retained {
 			search: self,
@@ -34,8 +34,8 @@ where
 /// needs to be mutated (carefully) or the search is done.
 pub struct Retained<G, S>
 where
-	G: Ensure + GraphDeref,
-	S: Search<G>,
+	G: GraphDeref,
+	S: Search<G::Graph>,
 {
 	/// The underlying search state
 	pub search: S,
@@ -46,13 +46,13 @@ where
 
 impl<G, S> Iterator for Retained<G, S>
 where
-	G: Ensure + GraphDeref,
-	S: Search<G>,
+	G: GraphDeref,
+	S: Search<G::Graph>,
 {
 	type Item = <G::Graph as Graph>::Vertex;
 
 	fn next(&mut self) -> Option<Self::Item>
 	{
-		self.search.next(&self.graph)
+		self.search.next(self.graph.graph())
 	}
 }
