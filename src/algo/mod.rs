@@ -1,16 +1,16 @@
 //! A collection of graph algorithm implementations.
 
-mod bfs;
 mod dijkstra_shortest_paths;
 mod retain;
 pub mod search;
 mod tarjan_scc;
 
-pub use self::{bfs::*, dijkstra_shortest_paths::*, retain::*, tarjan_scc::*};
+pub use self::{dijkstra_shortest_paths::*, retain::*, tarjan_scc::*};
 use crate::{
-	algo::search::new_search_retained,
+	algo::search::new_search,
 	core::{property::VertexInGraph, Ensure, Graph},
 };
+pub use search::bfs::*;
 use std::borrow::Borrow;
 
 pub fn path_exists<G: Graph>(
@@ -23,7 +23,8 @@ pub fn path_exists<G: Graph>(
 	{
 		if g.contains_vertex(sink.borrow())
 		{
-			return new_search_retained(&g)
+			return new_search(&g)
+				.retain(g)
 				.find(|v| v == sink.borrow())
 				.is_some();
 		}

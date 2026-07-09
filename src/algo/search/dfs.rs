@@ -111,7 +111,7 @@ where
 	G: Graph,
 {
 	pub fn new(
-		g: impl Borrow<G>,
+		g: &G,
 		on_visit: fn(&G, G::Vertex, &mut F),
 		on_exit: fn(&G, G::Vertex, &mut F),
 		on_explore: fn(&G, G::Vertex, G::Vertex, &G::EdgeWeight, &mut F),
@@ -120,7 +120,7 @@ where
 	where
 		G: VertexIn<1>,
 	{
-		let v = g.borrow().graph().vertex_at::<0>();
+		let v = g.graph().vertex_at::<0>();
 		let mut result = Self {
 			visited: Vec::new(),
 			stack: vec![(v, true)],
@@ -134,17 +134,17 @@ where
 		result
 	}
 
-	fn visit(&mut self, graph: impl Borrow<G>, to_return: G::Vertex)
+	fn visit(&mut self, graph: &G, to_return: G::Vertex)
 	{
-		(self.on_visit)(graph.borrow().graph(), to_return, &mut self.payload);
+		(self.on_visit)(graph.graph(), to_return, &mut self.payload);
 		// Mark visited
 		self.visited.push(to_return);
 
 		// Explore children
-		for (child, weight) in graph.borrow().graph().edges_sourced_in(to_return.clone())
+		for (child, weight) in graph.graph().edges_sourced_in(to_return.clone())
 		{
 			(self.on_explore)(
-				graph.borrow().graph(),
+				graph.graph(),
 				to_return,
 				child,
 				weight.borrow(),
@@ -168,7 +168,7 @@ where
 	///
 	///  If there was nothing to pop and call `on_exit` on, return false,
 	/// otherwise returns true.
-	pub fn advance_next_exit(&mut self, graph: impl Borrow<G>) -> Option<G::Vertex>
+	pub fn advance_next_exit(&mut self, graph: &G) -> Option<G::Vertex>
 	{
 		while let Some(last) = self.stack.last()
 		{
@@ -179,7 +179,7 @@ where
 				// If its exit marked, call the closure on it.
 				if last.1
 				{
-					(self.on_exit)(graph.borrow().graph(), last.0, &mut self.payload);
+					(self.on_exit)(graph.graph(), last.0, &mut self.payload);
 					return Some(last.0);
 				}
 			}
@@ -230,7 +230,7 @@ where
 	///
 	/// [`next`]: https://doc.rust-lang.org/std/iter/trait.Iterator.html#tymethod.next
 	/// [`get_vertex`]: ../core/property/trait.HasVertex.html#method.get_vertex
-	pub fn new_simple(g: impl Borrow<G>) -> Self
+	pub fn new_simple(g: &G) -> Self
 	{
 		Self::new(
 			g,
@@ -286,7 +286,7 @@ where
 
 		// Pop any vertices that we are done visiting (and since it's on the top of the
 		// stack, we must be done visiting its children).
-		while self.advance_next_exit(g.borrow()).is_some()
+		while self.advance_next_exit(g).is_some()
 		{}
 
 		// Get the top of the stack. This is necessarily a non-visited vertex.

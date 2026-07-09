@@ -1,7 +1,7 @@
 use crate::mock_graph::{arbitrary::Arb, MockGraph};
 use duplicate::duplicate_item;
 use graphene::{
-	algo::Bfs,
+	algo::{Bfs, Retainable, UnretainedIterator},
 	core::{
 		property::{ConnectedGraph, Rooted, VertexCount, VertexIn, VertexInGraph},
 		Directed, Graph, Undirected,
@@ -24,15 +24,15 @@ mod __
 	) -> bool
 	{
 		let mut depth = 0;
-		let mut bfs = Bfs::new(&graph);
+		let mut bfs = Bfs::new(&graph).retain(&graph);
 
 		while let Some(v) = bfs.next()
 		{
-			if bfs.depth(v) < depth
+			if bfs.algo.depth(v) < depth
 			{
 				return false;
 			}
-			depth = bfs.depth(v);
+			depth = bfs.algo.depth(v);
 		}
 		true
 	}
@@ -47,7 +47,7 @@ mod __
 		seen.insert(graph.vertex_at::<0>().value);
 
 		let mut bfs = Bfs::new(&graph);
-		while let Some(v) = bfs.next()
+		while let Some(v) = bfs.next(&graph)
 		{
 			if let Some(p) = bfs.predecessor(v)
 			{
@@ -70,7 +70,7 @@ mod __
 	{
 		let mut bfs = Bfs::new(&graph);
 
-		while let Some(v) = bfs.next()
+		while let Some(v) = bfs.next(&graph)
 		{
 			if let Some(p) = bfs.predecessor(v)
 			{
@@ -91,7 +91,7 @@ mod __
 	{
 		let mut bfs = Bfs::new(&graph);
 
-		while let Some(v) = bfs.next()
+		while let Some(v) = bfs.next(&graph)
 		{
 			if bfs.depth(v) > 0
 			{
@@ -113,7 +113,7 @@ mod __
 		let root = graph.vertex_at::<0>();
 		let mut bfs = Bfs::new(&graph);
 
-		while let Some(v) = bfs.next()
+		while let Some(v) = bfs.next(&graph)
 		{
 			let mut current = v;
 			while let Some(p) = bfs.predecessor(current)
@@ -140,7 +140,7 @@ mod __
 
 		// Iterate some amount before test start
 		(0..(pre_iter % graph.vertex_count())).for_each(|_| {
-			bfs.next();
+			bfs.next(&graph);
 		});
 
 		let tree = bfs.predecessor_tree();

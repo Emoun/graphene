@@ -4,7 +4,7 @@ use crate::mock_graph::{arbitrary::Arb, MockEdgeWeight, MockGraph};
 use duplicate::duplicate_item;
 use graphene::{
 	algo::{
-		search::{new_search_retained, Dfs, Spfs},
+		search::{new_search, Dfs, Spfs},
 		Bfs, Retainable,
 	},
 	core::{
@@ -17,17 +17,13 @@ use std::collections::HashSet;
 
 #[duplicate_item(
 	module		search_algo_new(graph);
-	[ dfs ]		[
-		let ref_graph = graph;
-		Dfs::new_simple(ref_graph).retain(ref_graph)
-	];
-	[ bfs ]		[ Bfs::new(graph) ];
+	[ dfs ]		[ Dfs::new_simple(graph).retain(graph) ];
+	[ bfs ]		[ Bfs::new(graph).retain(graph) ];
 	[ spfs ]	[
-		let ref_graph = graph;
-		let map_graph = EdgeWeightMap::new(ref_graph, |_,_,w| w.value);
+		let map_graph = EdgeWeightMap::new(graph, |_,_,w| w.value);
 		Spfs::new(&map_graph).retain(map_graph)
 	];
-	[new_search_retained]	[new_search_retained(graph)];
+	[new_search_retained]	[new_search(graph).retain(graph)];
 )]
 mod module
 {
@@ -78,8 +74,8 @@ mod module
 			let v_map = graph.join(&g2);
 
 			// Ensure that no visited vertex comes from outside the start component
-			search_algo_new([&VertexInGraph::ensure_unchecked(graph, v)])
-				.all(|visit| v_map.values().all(|&new_v| visit != new_v))
+			let g = VertexInGraph::ensure_unchecked(graph, v);
+			search_algo_new([&g]).all(|visit| v_map.values().all(|&new_v| visit != new_v))
 		}
 	}
 
@@ -114,8 +110,8 @@ mod module
 		}
 
 		// Ensure that no visited vertex comes from outside the start component
-		search_algo_new([&VertexInGraph::ensure_unchecked(graph, v)])
-			.all(|visit| v_map.values().all(|&new_v| visit != new_v))
+		let g = VertexInGraph::ensure_unchecked(graph, v);
+		search_algo_new([&g]).all(|visit| v_map.values().all(|&new_v| visit != new_v))
 	}
 
 	/// Tests for directed graphs that any component with an edge to it from the
@@ -150,6 +146,7 @@ mod module
 
 		// Ensure that all vertices are visited except the start
 		let count = graph.all_vertices().count() - 1;
-		search_algo_new([&VertexInGraph::ensure_unchecked(graph, v)]).count() == count
+		let g = VertexInGraph::ensure_unchecked(graph, v);
+		search_algo_new([&g]).count() == count
 	}
 }

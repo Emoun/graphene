@@ -3,7 +3,7 @@ use crate::mock_graph::{
 	MockEdgeWeight, MockGraph, MockType,
 };
 use graphene::{
-	algo::{path_exists, search::new_search_retained},
+	algo::{path_exists, search::new_search, Retainable},
 	core::{
 		property::{AcyclicGraph, AddEdge, VertexIn, VertexInGraph},
 		Directedness, Graph, Guard, Release,
@@ -100,7 +100,7 @@ impl<D: Directedness, Ew: MockType> GuidedArbGraph for CyclicGraph<D, Ew>
 	{
 		let mut graph = VertexInGraph::<MockGraph<_, Ew>>::arbitrary_fixed(g, v_count, e_count);
 
-		let mut reachable: Vec<_> = new_search_retained(&graph).collect();
+		let mut reachable: Vec<_> = new_search(&graph).retain(&graph).collect();
 		reachable.push(graph.vertex_at::<0>()); // not added by DFS
 
 		// Add random edge back to the beginning

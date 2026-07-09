@@ -24,7 +24,7 @@
 //! unspecified algorithm:
 //! ```
 //! use graphene::{
-//! 	algo::search::{new_search_retained, Search},
+//! 	algo::{search::{new_search, Search}, Retainable},
 //! 	common::AdjListGraph,
 //! 	core::{
 //! 		Ensure,
@@ -49,37 +49,25 @@
 //! let graph = VertexInGraph::ensure(graph, [v0]).unwrap();
 //!
 //! // Initialize the search
-//! let mut search = new_search_retained(&graph);
+//! let mut search = new_search(&graph).retain(&graph);
 //!
 //! // We search for the first vertex with weight == 1.
 //! let found_vertex = search.find(|&v| graph.vertex_weight(&v).unwrap() == &1).unwrap();
 //! assert_eq!(v1, found_vertex)
 //! ```
+pub mod bfs;
 mod dfs;
 mod search;
 mod spfs;
 
 pub use self::{dfs::*, search::*, spfs::*};
 
-use crate::{
-	algo::{Retainable, Retained},
-	core::{property::VertexIn, GraphDeref},
-};
+use crate::core::{property::VertexIn, Graph};
 
 /// Initializes a new search using an unspecified algorithm.
-pub fn new_search<G>(graph: G) -> impl Search<G::Graph>
+pub fn new_search<G>(graph: &G) -> impl Search<G>
 where
-	G: GraphDeref,
-	G::Graph: VertexIn<1>,
+	G: Graph + VertexIn<1>,
 {
-	Dfs::new_simple(graph.graph())
-}
-
-/// Initializes a new retained search using an unspecified algorithm.
-pub fn new_search_retained<G>(graph: G) -> Retained<G, impl Search<G::Graph>>
-where
-	G: GraphDeref,
-	G::Graph: VertexIn<1>,
-{
-	Dfs::new_simple(graph.graph()).retain(graph)
+	Dfs::new_simple(graph)
 }

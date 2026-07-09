@@ -3,7 +3,7 @@ use crate::mock_graph::{
 	MockType, TestGraph,
 };
 use graphene::{
-	algo::{search::new_search_retained, Bfs},
+	algo::{search::new_search, Bfs, Retainable},
 	core::{
 		property::{AddEdge, RemoveEdge, VertexIn, VertexInGraph},
 		Ensure, Graph, GraphDerefMut, Release,
@@ -75,7 +75,7 @@ where
 		for (v, reachable) in vert_reachables.iter_mut()
 		{
 			let g1 = VertexInGraph::ensure_unchecked(graph.graph(), [v.clone()]);
-			reachable.extend(new_search_retained(g1));
+			reachable.extend(new_search(&g1).retain(g1));
 			if !U && graph.graph().edges_between(v.clone(), v.clone()).count() > 0
 			{
 				reachable.push(v.clone());
@@ -106,7 +106,7 @@ where
 
 		// First find a path between the vertices
 		let g = VertexInGraph::ensure_unchecked(self, [v1]);
-		let mut bfs = Bfs::new(&g);
+		let mut bfs = Bfs::new(&g).retain(&g);
 
 		let _ = bfs.find(|&v| v == v2);
 
@@ -115,7 +115,7 @@ where
 		while sink != v1
 		{
 			limits.insert(Limit::VertexKeep(sink));
-			let source = bfs.predecessor(sink).unwrap();
+			let source = bfs.algo.predecessor(sink).unwrap();
 			limits.insert(Limit::EdgeKeep(source, sink));
 			sink = source;
 		}
@@ -146,7 +146,7 @@ where
 			}
 			else
 			{
-				bfs.predecessor(v2).unwrap()
+				bfs.algo.predecessor(v2).unwrap()
 			};
 			let sink = v2;
 			let mut g = clone.clone();

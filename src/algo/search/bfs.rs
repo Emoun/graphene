@@ -1,9 +1,12 @@
-use crate::core::{
-	property::{
-		Acyclic, AcyclicGraph, EdgeCount, HasVertex, NoLoops, Rooted, Tree, Unique, VertexCount,
-		VertexIn, Weak, WeakGraph,
+use crate::{
+	algo::UnretainedIterator,
+	core::{
+		property::{
+			Acyclic, AcyclicGraph, EdgeCount, HasVertex, NoLoops, Rooted, Tree, Unique,
+			VertexCount, VertexIn, Weak, WeakGraph,
+		},
+		Directed, Ensure, Graph,
 	},
-	Directed, Ensure, Graph,
 };
 use duplicate::duplicate_item;
 use std::{borrow::Borrow, collections::VecDeque};
@@ -29,7 +32,7 @@ use std::{borrow::Borrow, collections::VecDeque};
 ///
 /// ```
 /// # use graphene::{
-/// # 	algo::Bfs,
+/// # 	algo::{Bfs, Retainable},
 /// # 	common::AdjListGraph,
 /// # 	core::{
 /// # 		Ensure,
@@ -54,10 +57,10 @@ use std::{borrow::Borrow, collections::VecDeque};
 /// let graph = VertexInGraph::ensure(graph, [v0]).unwrap();
 ///
 /// // Initialize the traversal
-/// let mut dfs = Bfs::new(&graph);
+/// let mut bfs = Bfs::new(&graph).retain(&graph);
 ///
 /// // We search for the first vertex with weight == 2.
-/// let found_vertex = dfs.find(|&v| graph.vertex_weight(&v).unwrap() == &2).unwrap();
+/// let found_vertex = bfs.find(|&v| graph.vertex_weight(&v).unwrap() == &2).unwrap();
 /// assert_eq!(v2, found_vertex)
 /// ```
 ///
@@ -75,19 +78,18 @@ use std::{borrow::Borrow, collections::VecDeque};
 /// [`next`]: https://doc.rust-lang.org/std/iter/trait.Iterator.html#tymethod.next
 /// [`get_vertex`]: ../core/property/trait.HasVertex.html#method.get_vertex
 #[derive(Clone)]
-pub struct Bfs<'a, G>
+pub struct Bfs<G>
 where
-	G: 'a + Graph,
+	G: Graph,
 {
-	graph: &'a G,
 	queue: VecDeque<G::Vertex>,
 	visited: Vec<G::Vertex>,
 	predecessor: Vec<(G::Vertex, Option<G::Vertex>)>,
 }
 
-impl<'a, G> Bfs<'a, G>
+impl<G> Bfs<G>
 where
-	G: 'a + Graph,
+	G: Graph,
 {
 	/// Constructs a new `Bfs` to search the specified graph.
 	///
@@ -97,19 +99,18 @@ where
 	///
 	/// [`next`]: https://doc.rust-lang.org/std/iter/trait.Iterator.html#tymethod.next
 	/// [`vertex_at`]: ../core/property/trait.VertexIn.html#method.vertex_at
-	pub fn new(graph: &'a G) -> Self
+	pub fn new(graph: &G) -> Self
 	where
 		G: VertexIn<1>,
 	{
 		let v = graph.vertex_at::<0>();
 
 		let mut result = Self {
-			graph,
 			queue: VecDeque::new(),
 			visited: vec![v],
 			predecessor: vec![(v, None)],
 		};
-		result.explore(v);
+		result.explore(graph, v);
 		result
 	}
 
@@ -158,13 +159,13 @@ where
 
 	/// Explores the outgoing edges from the given vertex,
 	/// queueing up any previously unvisited vertices.
-	fn explore(&mut self, v: G::Vertex)
+	fn explore(&mut self, graph: &G, v: G::Vertex)
 	{
 		let visited = &mut self.visited;
 		let queue = &mut self.queue;
 		let pred = &mut self.predecessor;
 
-		self.graph
+		graph
 			.edges_sourced_in(v)
 			.filter_map(|(child, _)| {
 				if !visited.contains(&child)
@@ -197,17 +198,17 @@ where
 	}
 }
 
-impl<'a, G> Iterator for Bfs<'a, G>
+impl<G> UnretainedIterator<G> for Bfs<G>
 where
-	G: 'a + Graph,
+	G: Graph,
 {
 	type Item = G::Vertex;
 
-	fn next(&mut self) -> Option<Self::Item>
+	fn next(&mut self, graph: &G) -> Option<Self::Item>
 	{
 		if let Some(v) = self.queue.pop_front()
 		{
-			self.explore(v);
+			self.explore(graph, v);
 			Some(v)
 		}
 		else
