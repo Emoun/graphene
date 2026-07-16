@@ -1,8 +1,5 @@
 use crate::mock_graph::{MockEdgeWeight, MockVertex, MockVertexWeight};
-use graphene::core::{
-	property::{AddEdge, NewVertex},
-	Directedness, Graph,
-};
+use graphene::core::{property::AddEdge, Directedness, Graph};
 use std::{borrow::Borrow, collections::HashMap};
 #[macro_export]
 macro_rules! holds_if{
@@ -100,24 +97,23 @@ pub fn unordered_equivalent_lists_equal<L: PartialEq<R>, R: PartialEq<L>>(
 /// Each vertex in the mock gets a new vertex in `g`.
 /// All edges are copied to the respective new vertices.
 /// All weights are cloned.
-pub fn auto_copy_from<G, M>(g: &mut G, mock: &M) -> HashMap<MockVertex, G::Vertex>
+pub fn auto_copy_from<G, M, F>(g: &mut G, mock: &M, new_vertex: F) -> HashMap<MockVertex, G::Vertex>
 where
-	G: NewVertex<VertexWeight = MockVertexWeight, EdgeWeight = MockEdgeWeight> + AddEdge,
+	G: Graph<VertexWeight = MockVertexWeight, EdgeWeight = MockEdgeWeight> + AddEdge,
 	M: Graph<
 		Vertex = MockVertex,
 		Directedness = G::Directedness,
 		VertexWeight = MockVertexWeight,
 		EdgeWeight = MockEdgeWeight,
 	>,
+	F: Fn(&mut G, MockVertex, MockVertexWeight) -> G::Vertex,
 {
 	// Add all the vertices, remembering which mock vertices match which real
 	// vertices
 	let mut vertex_map = HashMap::new();
 	for v in mock.all_vertices()
 	{
-		let new_v = g
-			.new_vertex_weighted(mock.vertex_weight(&v).unwrap().clone())
-			.unwrap();
+		let new_v = new_vertex(g, v, mock.vertex_weight(&v).unwrap().clone());
 		vertex_map.insert(v, new_v.clone());
 
 		// Insert all edge to/from the finished vertices

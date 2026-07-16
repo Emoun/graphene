@@ -44,3 +44,13 @@ where
 		}
 	}
 }
+
+impl<Vw, Ew, D> Default for AdjListGraph<Vw, Ew, D>
+where
+	D: Directedness,
+{
+	fn default() -> Self
+	{
+		Self::new()
+	}
+}
