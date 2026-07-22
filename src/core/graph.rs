@@ -1,5 +1,5 @@
-use crate::core::Directedness;
-use std::{borrow::Borrow, iter::Iterator};
+use crate::core::{Directedness, MaybeOwned};
+use std::{borrow::Borrow, iter::Iterator, ops::Deref};
 
 /// The basic graph trait, providing vertex and edge inspection.
 ///
@@ -70,9 +70,13 @@ pub trait Graph
 	/// Return type for methods returning owned or borrowed edge weights.
 	///
 	/// Most graphs are expected to return `&EdgeWeight`. However, some may only
-	/// be able to return 'EdgeWeight' directly. This associated type allows
-	/// graph implementations to control how edge weights are returned.
-	type EdgeWeightRef<'a>: Borrow<Self::EdgeWeight>
+	/// be able to return `EdgeWeight` directly as an owned value. This
+	/// associated type allows graph implementations to control how edge
+	/// weights are returned.
+	///
+	/// The [`MaybeOwned::into_borrowed`] can be used to get a reference that
+	/// borrows the graph instead of the `EdgeWeightRef`.
+	type EdgeWeightRef<'a>: MaybeOwned<'a> + Deref<Target = Self::EdgeWeight>
 	where
 		Self: 'a;
 

@@ -1,4 +1,4 @@
-use crate::core::{Ensure, Graph, ReleasePayload};
+use crate::core::{Ensure, Graph, Owned, ReleasePayload};
 use delegate::delegate;
 use std::borrow::Borrow;
 
@@ -67,7 +67,7 @@ impl<C: Ensure, Ew> Graph for EdgeWeightMap<C, Ew>
 	type Directedness = <C::Graph as Graph>::Directedness;
 	type EdgeWeight = Ew;
 	type EdgeWeightRef<'a>
-		= Ew
+		= Owned<Ew>
 	where
 		Self: 'a;
 	type Vertex = <C::Graph as Graph>::Vertex;
@@ -89,7 +89,7 @@ impl<C: Ensure, Ew> Graph for EdgeWeightMap<C, Ew>
 		self.0
 			.graph()
 			.edges_between(*source.borrow(), *sink.borrow())
-			.map(move |e| (self.1)(*source.borrow(), *sink.borrow(), e.borrow()))
+			.map(move |e| Owned((self.1)(*source.borrow(), *sink.borrow(), &*e)))
 	}
 }
 

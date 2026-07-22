@@ -11,7 +11,7 @@ use graphene::{
 };
 use quickcheck::{Arbitrary, Gen};
 use rand::Rng;
-use std::{borrow::Borrow, collections::HashSet, fmt::Debug};
+use std::{collections::HashSet, fmt::Debug};
 
 /// An arbitrary graph with an edge that is guaranteed to be in the graph (the
 /// weight is a clone).
@@ -37,7 +37,7 @@ where
 	{
 		let (sink, weight) = {
 			let edge = c.edges_sourced_in(c.vertex_at::<0>()).next().unwrap();
-			(edge.0, edge.1.borrow().clone())
+			(edge.0, edge.1.clone())
 		};
 		Self(c, sink, weight)
 	}
@@ -92,7 +92,7 @@ where
 		let (source, sink, weight) = graph
 			.graph()
 			.all_edges()
-			.map(|(so, si, w)| (so, si, w.borrow().clone()))
+			.map(|(so, si, w)| (so, si, w.clone()))
 			.nth(g.gen_range(0, e_count))
 			.unwrap();
 		Self(
@@ -113,7 +113,7 @@ where
 		let mut lims = limits.clone();
 		lims.insert(Limit::EdgeKeep(v1, v2));
 		result.extend(self.0.shrink_guided(lims).map(|g| {
-			let weight = g.edges_between(v1, v2).next().unwrap().borrow().clone();
+			let weight = g.edges_between(v1, v2).next().unwrap().clone();
 			Self(g, v2, weight.clone())
 		}));
 
@@ -127,7 +127,6 @@ where
 			let mut shrunk_reference_weight_before = false;
 			for w in self.edges_between(v1, v2)
 			{
-				let w = w.borrow();
 				// Remove edge
 				if !saw_reference_edge_before && *w == self.2
 				{
@@ -137,7 +136,7 @@ where
 				else
 				{
 					let mut g = self.clone();
-					g.remove_edge_where_weight(v1, v2, |weight| w == weight)
+					g.remove_edge_where_weight(v1, v2, |weight| *w == *weight)
 						.unwrap();
 					result.push(g);
 				}

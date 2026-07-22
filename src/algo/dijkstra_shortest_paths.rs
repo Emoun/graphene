@@ -42,7 +42,7 @@ where
 
 		for (sink, weight) in edges
 		{
-			let new_weight = w + *weight.borrow();
+			let new_weight = w + *weight;
 			if let Some((old_weight, old_edge)) =
 				self.queue.iter_mut().find(|(_, (_, vert))| *vert == sink)
 			{
@@ -81,7 +81,7 @@ where
 		let mut edges = graph.edges_between(so, si);
 		let first = edges.next().unwrap();
 		let weight = edges.fold(first, |acc, w| {
-			if *acc.borrow() < *w.borrow()
+			if *acc < *w
 			{
 				acc
 			}
@@ -110,7 +110,7 @@ where
 		Some((
 			edge.source(),
 			edge.sink(),
-			*Self::shortest_edge_between(graph, edge.source(), edge.sink()).borrow(),
+			*Self::shortest_edge_between(graph, edge.source(), edge.sink()),
 		))
 	}
 }

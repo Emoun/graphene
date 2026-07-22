@@ -50,7 +50,7 @@ pub trait VertexIn<const N: usize = 1, const UNIQUE: bool = true>: HasVertex
 	/// # 	type Vertex = ();
 	/// # 	type VertexWeight = ();
 	/// # 	type EdgeWeight = ();
-	/// # 	type EdgeWeightRef<'a> = () where Self: 'a;
+	/// # 	type EdgeWeightRef<'a> = &'a () where Self: 'a;
 	/// # 	type Directedness = Directed;
 	/// #
 	/// # 	fn all_vertices_weighted(&self) -> impl Iterator<Item=(Self::Vertex, &Self::VertexWeight)>
