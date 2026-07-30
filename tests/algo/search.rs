@@ -4,26 +4,36 @@ use crate::mock_graph::{arbitrary::Arb, MockEdgeWeight, MockGraph};
 use duplicate::duplicate_item;
 use graphene::{
 	algo::{
-		search::{new_search, Dfs, Spfs},
+		search::{new_search, Dfs, Spfs, Topo},
 		Bfs, Retainable,
 	},
 	core::{
-		property::{AddEdge, ConnectedGraph, VertexIn, VertexInGraph},
+		property::{AcyclicGraph, AddEdge, ConnectedGraph, VertexIn, VertexInGraph},
 		proxy::EdgeWeightMap,
-		Directed, Ensure, Graph, GraphDeref, ReleasePayload, Undirected,
+		Directed, Ensure, Graph, GraphDeref, Guard, ReleasePayload, Undirected,
 	},
 };
+use quickcheck::TestResult;
 use std::collections::HashSet;
 
 #[duplicate_item(
-	module		search_algo_new(graph);
-	[ dfs ]		[ Dfs::new_simple(graph).retain(graph) ];
-	[ bfs ]		[ Bfs::new(graph).retain(graph) ];
-	[ spfs ]	[
+	module		directions						search_algo_new(graph);
+	[ dfs ]		[[ Directed ]; [ Undirected ]]	[ Dfs::new_simple(graph).retain(graph) ];
+	[ bfs ]		[[ Directed ]; [ Undirected ]]	[ Bfs::new(graph).retain(graph) ];
+	[ spfs ]	[[ Directed ]; [ Undirected ]]	[ {
 		let map_graph = EdgeWeightMap::new(graph, |_,_,w| w.value);
 		Spfs::new(&map_graph).retain(map_graph)
-	];
-	[new_search_retained]	[new_search(graph).retain(graph)];
+	} ];
+	[new_search_retained]	[[ Directed ]; [ Undirected ]]	[new_search(graph).retain(graph)];
+	[ topo ]	[[ Directed ]]	[ {
+		let guarded: Result<AcyclicGraph<&_>,_> = Guard::guard_all(graph);
+
+		if let Ok(guarded) = guarded {
+			Topo::new(&guarded).retain(guarded)
+		} else {
+			return TestResult::discard()
+		}
+	} ];
 )]
 mod module
 {
@@ -31,7 +41,7 @@ mod module
 	use crate::mock_graph::arbitrary::VerticesIn;
 
 	#[duplicate_item(
-		directedness; [ Directed ]; [ Undirected ]
+		directedness; directions
 	)]
 	mod __
 	{
@@ -42,7 +52,7 @@ mod module
 		#[quickcheck]
 		fn visits_component_once(
 			Arb(mock): Arb<VertexInGraph<ConnectedGraph<MockGraph<directedness>>>>,
-		) -> bool
+		) -> TestResult
 		{
 			// Use a set to ensure we only count each vertex once
 			let mut visited = HashSet::new();
@@ -57,7 +67,7 @@ mod module
 			});
 
 			// We ensure all vertices were visited, but only once
-			visited.len() == mock.all_vertices().count() && visited_once
+			TestResult::from_bool(visited.len() == mock.all_vertices().count() && visited_once)
 		}
 
 		/// Tests that no vertices outside a connected component are produced
@@ -65,7 +75,7 @@ mod module
 		fn visits_none_outside_component(
 			Arb(g1): Arb<VertexInGraph<ConnectedGraph<MockGraph<directedness>>>>,
 			Arb(g2): Arb<MockGraph<directedness>>,
-		) -> bool
+		) -> TestResult
 		{
 			// Our starting connected component
 			let (mut graph, (v, _)) = g1.release_all();
@@ -75,7 +85,9 @@ mod module
 
 			// Ensure that no visited vertex comes from outside the start component
 			let g = VertexInGraph::ensure_unchecked(graph, v);
-			search_algo_new([&g]).all(|visit| v_map.values().all(|&new_v| visit != new_v))
+			TestResult::from_bool(
+				search_algo_new([&g]).all(|visit| v_map.values().all(|&new_v| visit != new_v)),
+			)
 		}
 	}
 
@@ -94,7 +106,7 @@ mod module
 		>,
 		Arb(VerticesIn(g2, g2_verts)): Arb<VerticesIn<MockGraph<Directed>>>,
 		weight: MockEdgeWeight,
-	) -> bool
+	) -> TestResult
 	{
 		let (mut graph, (v, _)) = comp.release_all();
 
@@ -111,7 +123,9 @@ mod module
 
 		// Ensure that no visited vertex comes from outside the start component
 		let g = VertexInGraph::ensure_unchecked(graph, v);
-		search_algo_new([&g]).all(|visit| v_map.values().all(|&new_v| visit != new_v))
+		TestResult::from_bool(
+			search_algo_new([&g]).all(|visit| v_map.values().all(|&new_v| visit != new_v)),
+		)
 	}
 
 	/// Tests for directed graphs that any component with an edge to it from the
@@ -125,7 +139,7 @@ mod module
 			VerticesIn<VertexInGraph<ConnectedGraph<MockGraph<Directed>>>>,
 		>,
 		weight: MockEdgeWeight,
-	) -> bool
+	) -> TestResult
 	{
 		let (mut graph, (v, _)) = comp1.release_all();
 		let (g2, (v2, _)) = comp2.release_all();
@@ -146,7 +160,8 @@ mod module
 
 		// Ensure that all vertices are visited except the start
 		let count = graph.all_vertices().count() - 1;
-		let g = VertexInGraph::ensure_unchecked(graph, v);
-		search_algo_new([&g]).count() == count
+		let g = VertexInGraph::ensure_unchecked(&graph, v);
+
+		TestResult::from_bool(search_algo_new([&g]).count() == count)
 	}
 }

@@ -59,8 +59,9 @@ pub mod bfs;
 mod dfs;
 mod search;
 mod spfs;
+mod topo;
 
-pub use self::{dfs::*, search::*, spfs::*};
+pub use self::{dfs::*, search::*, spfs::*, topo::*};
 
 use crate::core::{property::VertexIn, Graph};
 
