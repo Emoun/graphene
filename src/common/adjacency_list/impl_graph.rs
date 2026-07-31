@@ -162,7 +162,23 @@ where
 					{}
 				}
 			}
-			Ok(self.vertices.remove(*v.borrow()).0)
+
+			let removed_weight = self.vertices.swap_remove(*v.borrow()).0;
+			let swapped_index = self.vertices.len();
+
+			// Any edge that targeting the old last index, must now target this index
+			for (_, edges) in self.vertices.iter_mut()
+			{
+				for (t, _) in edges.iter_mut()
+				{
+					if *t == swapped_index
+					{
+						*t = *v.borrow();
+					}
+				}
+			}
+
+			Ok(removed_weight)
 		}
 		else
 		{

@@ -9,10 +9,16 @@ use crate::{
 	},
 };
 use duplicate::duplicate_item;
-use graphene::core::{
-	property::{EdgeCount, RemoveEdge, RemoveVertex, VertexCount, VertexIn, VertexInGraph},
-	Directed, Graph, GraphMut, Release, Undirected,
+use graphene::{
+	common::AdjListGraph,
+	core::{
+		property::{
+			EdgeCount, NewVertex, RemoveEdge, RemoveVertex, VertexCount, VertexIn, VertexInGraph,
+		},
+		Directed, Graph, GraphMut, Release, Undirected,
+	},
 };
+use quickcheck::TestResult;
 
 #[duplicate_item(
 	directedness; [Directed]; [Undirected];
@@ -146,39 +152,84 @@ mod __
 
 	/// Tests that removing a vertex works as expected for AdjListGraph
 	#[quickcheck]
-	fn adj_list_remove_vertex(Arb(mock): Arb<VertexInGraph<MockGraph<directedness>>>) -> bool
+	fn adj_list_remove_vertex(Arb(mock): Arb<VertexInGraph<MockGraph<directedness>>>)
+		-> TestResult
 	{
-		let v_remove = mock.vertex_at::<0>().clone();
+		let mv_remove = mock.vertex_at::<0>().clone();
 		let mock = mock.release_all();
-		let (mut g, v_map) = adj_list_from_mock(&mock);
-		let v_removed = v_map[&v_remove];
+
+		// To be able to identify if add edges are correct after removing a vertex,
+		// we need to be able to uniquely identify all vertices even after removal.
+		// Therefore, we use the mock graph's vertices in the weight for identification
+		let mut g = AdjListGraph::new();
+		let v_map = crate::mock_graph::utilities::auto_copy_from(&mut g, &mock, |g, mv, w| {
+			g.new_vertex_weighted((mv, w)).unwrap()
+		});
+		let v_removed = v_map[&mv_remove];
 
 		if g.remove_vertex(&v_removed).is_err()
 		{
-			false
+			TestResult::failed()
 		}
 		else
 		{
-			let removed_weight = mock.vertex_weight(v_remove).unwrap();
-
 			let expected_vertex_count = mock.vertex_count() - 1;
-			let expected_edge_count = mock.edge_count() - mock.edges_incident_on(v_remove).count();
+			let expected_edge_count = mock.edge_count() - mock.edges_incident_on(mv_remove).count();
 
-			let expected_vertices_with_removed_weight = mock
-				.all_vertex_weights()
-				.filter(|w| *w == removed_weight)
-				.count() - 1;
+			let remaining_vertices_untouched = mock
+				.all_vertices_weighted()
+				.filter(|(v, _)| *v != mv_remove)
+				.all(|(mv, w)| {
+					g.all_vertices_weighted()
+						.find(|(_, (mv2, w2))| *mv2 == mv && w == w2)
+						.is_some()
+				});
 
-			let actual_vertices_with_removed_weight = g
-				.all_vertex_weights()
-				.filter(|w| *w == removed_weight)
-				.count();
+			// Check if all remaining vertices have the expected edges
+			let correct_edges = g.all_vertices_weighted().all(|(v, (mv, _))| {
+				// All edges in the graph are in the mock
+				let in_graph_so = g.edges_sourced_in(v).all(|(v2, ew)| {
+					let mv2 = g.vertex_weight(v2).unwrap().0;
+					mock.edges_between(mv, mv2).find(|ew2| ew == *ew2).is_some()
+				});
+				let in_graph_si = g.edges_sinked_in(v).all(|(v2, ew)| {
+					let mv2 = g.vertex_weight(v2).unwrap().0;
+					mock.edges_between(mv2, mv).find(|ew2| ew == *ew2).is_some()
+				});
 
-			g.vertex_count() == expected_vertex_count
-				&& g.edge_count() == expected_edge_count
-				&& actual_vertices_with_removed_weight == expected_vertices_with_removed_weight
+				// All edges in the mock (except those removed) are in the graph
+				let in_mock_so = mock
+					.edges_sourced_in(mv)
+					.filter(|(mv2, _)| *mv2 != mv_remove)
+					.all(|(mv2, ew)| {
+						let v2 = g
+							.all_vertices_weighted()
+							.find(|(_, (mv3, _))| *mv3 == mv2)
+							.unwrap()
+							.0;
+						g.edges_between(v, v2).find(|ew2| ew == *ew2).is_some()
+					});
+				let in_mock_si = mock
+					.edges_sinked_in(mv)
+					.filter(|(mv2, _)| *mv2 != mv_remove)
+					.all(|(mv2, ew)| {
+						let v2 = g
+							.all_vertices_weighted()
+							.find(|(_, (mv3, _))| *mv3 == mv2)
+							.unwrap()
+							.0;
+						g.edges_between(v2, v).find(|ew2| ew == *ew2).is_some()
+					});
 
-			// TODO: Test that the right edges were removed?
+				in_graph_so && in_graph_si && in_mock_so && in_mock_si
+			});
+
+			TestResult::from_bool(
+				g.vertex_count() == expected_vertex_count
+					&& g.edge_count() == expected_edge_count
+					&& remaining_vertices_untouched
+					&& correct_edges,
+			)
 		}
 	}
 }

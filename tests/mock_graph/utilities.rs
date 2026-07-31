@@ -99,7 +99,7 @@ pub fn unordered_equivalent_lists_equal<L: PartialEq<R>, R: PartialEq<L>>(
 /// All weights are cloned.
 pub fn auto_copy_from<G, M, F>(g: &mut G, mock: &M, new_vertex: F) -> HashMap<MockVertex, G::Vertex>
 where
-	G: Graph<VertexWeight = MockVertexWeight, EdgeWeight = MockEdgeWeight> + AddEdge,
+	G: Graph<EdgeWeight = MockEdgeWeight> + AddEdge,
 	M: Graph<
 		Vertex = MockVertex,
 		Directedness = G::Directedness,
